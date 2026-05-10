@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
@@ -43,7 +44,7 @@ test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }
     await once(server, 'close')
   })
 
-  const response = await fetch(`http://localhost:${server.address().port}`, {
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     dispatcher: agent
   })
 

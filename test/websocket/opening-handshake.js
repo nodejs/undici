@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -27,7 +28,7 @@ test('WebSocket connecting to server that isn\'t a Websocket server', (t) => {
       res.end()
       server.unref()
     }).listen(0, () => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
       // Server isn't a websocket server
       ws.onmessage = ws.onopen = reject
@@ -49,7 +50,7 @@ test('Open event is emitted', (t) => {
       ws.close(1000)
     })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     ws.onmessage = ws.onerror = reject
     ws.addEventListener('open', (t) => {
@@ -96,7 +97,7 @@ test('WebSocket on H2', { skip: crypto == null }, async (t) => {
       rejectUnauthorized: false
     }
   })
-  const ws = new WebSocket(`wss://localhost:${server.address().port}`, { dispatcher, protocols: ['chat'] })
+  const ws = new WebSocket(`wss://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher, protocols: ['chat'] })
 
   t.after(() => {
     // Cleanup - Seems that due to the nature of H2 we need to remove the error listener
@@ -236,7 +237,7 @@ test('WebSocket falls back to HTTP/1.1 upgrade when H2 extended CONNECT is unava
       rejectUnauthorized: false
     }
   })
-  const ws = new WebSocket(`wss://localhost:${server.address().port}`, { dispatcher })
+  const ws = new WebSocket(`wss://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
 
   t.after(async () => {
     ws.onerror = null
@@ -282,7 +283,7 @@ test('WebSocket falls back to HTTP/1.1 upgrade when H2 CONNECT support is omitte
       rejectUnauthorized: false
     }
   })
-  const ws = new WebSocket(`wss://localhost:${server.address().port}`, { dispatcher })
+  const ws = new WebSocket(`wss://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
 
   t.after(async () => {
     ws.onerror = null
@@ -316,7 +317,7 @@ test('Multiple protocols are joined by a comma', (t) => {
       resolve()
     })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`, ['chat', 'echo'])
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, ['chat', 'echo'])
     ws.addEventListener('open', () => ws.close())
   })
 })
@@ -328,7 +329,7 @@ test('Server doesn\'t send Sec-WebSocket-Protocol header when protocols are used
 
       req.socket.destroy()
     }).listen(0, () => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`, 'chat')
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, 'chat')
 
       ws.onopen = reject
 
@@ -349,7 +350,7 @@ test('Server sends invalid Upgrade header', (t) => {
 
       req.socket.destroy()
     }).listen(0, () => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
       ws.onopen = reject
 
@@ -371,7 +372,7 @@ test('Server sends invalid Connection header', (t) => {
 
       req.socket.destroy()
     }).listen(0, () => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
       ws.onopen = reject
 
@@ -394,7 +395,7 @@ test('Server sends invalid Sec-WebSocket-Accept header', (t) => {
 
       req.socket.destroy()
     }).listen(0, () => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
       ws.onopen = reject
 
@@ -425,7 +426,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeat
 
       res.end()
     }).listen(0, () => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
       ws.onopen = reject
 
@@ -456,7 +457,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeat
 
       res.end()
     }).listen(0, () => {
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`, 'chat')
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, 'chat')
 
       ws.onopen = reject
 

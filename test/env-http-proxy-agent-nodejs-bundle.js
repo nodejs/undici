@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, after, before } = require('node:test')
 const { EnvHttpProxyAgent, setGlobalDispatcher, fetch: undiciFetch } = require('../index-fetch')
@@ -39,7 +40,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     proxy.on('connect', (req, clientSocket, head) => {
       // Check that the proxy is actually used to tunnel the request sent below.
       const [hostname, port] = req.url.split(':')
-      strictEqual(hostname, 'localhost')
+      strictEqual(hostname, LOOPBACK_HOST)
       strictEqual(port, server.address().port.toString())
 
       const serverSocket = net.connect(port, hostname, () => {
@@ -70,8 +71,8 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
 
     // Use setGlobalDispatcher and EnvHttpProxyAgent from Node.js
     // and make sure that they work together.
-    const proxyAddress = `http://localhost:${proxy.address().port}`
-    const serverAddress = `http://localhost:${server.address().port}`
+    const proxyAddress = `http://${LOOPBACK_HOST}:${proxy.address().port}`
+    const serverAddress = `http://${LOOPBACK_HOST}:${server.address().port}`
     process.env.http_proxy = proxyAddress
     setGlobalDispatcher(new EnvHttpProxyAgent())
 

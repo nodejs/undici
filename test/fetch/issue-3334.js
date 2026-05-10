@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -17,7 +18,7 @@ test('a non-empty origin is not appended (issue #3334)', async (t) => {
   t.after(server.close.bind(server))
   await once(server, 'listening')
 
-  await fetch(`http://localhost:${server.address().port}`, {
+  await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     headers: { origin },
     body: '',
     method: 'POST',

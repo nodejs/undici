@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const { once } = require('node:events')
@@ -37,7 +38,7 @@ test('Should handle h2 DELETE request with body', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -82,7 +83,7 @@ test('Should not send Content-Length for h2 DELETE without body', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },

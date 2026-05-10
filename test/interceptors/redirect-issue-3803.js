@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { FormData, request, Agent, interceptors } = require('../..')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
@@ -26,14 +27,14 @@ test('redirecting works with a FormData body', async (t) => {
   const body = new FormData()
   body.append('hello', 'world')
 
-  const { context } = await request(`http://localhost:${server.address().port}/1`, {
+  const { context } = await request(`http://${LOOPBACK_HOST}:${server.address().port}/1`, {
     body,
     method: 'POST',
     dispatcher: agent
   })
 
   plan.deepStrictEqual(context.history, [
-    new URL(`http://localhost:${server.address().port}/1`),
-    new URL(`http://localhost:${server.address().port}/2`)
+    new URL(`http://${LOOPBACK_HOST}:${server.address().port}/1`),
+    new URL(`http://${LOOPBACK_HOST}:${server.address().port}/2`)
   ])
 })

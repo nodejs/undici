@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const EventEmitter = require('node:events')
 const { Client, errors } = require('../..')
@@ -25,7 +26,7 @@ test('Abort before sending request (no body)', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const ee = new EventEmitter()
     t.after(client.destroy.bind(client))
 
@@ -74,7 +75,7 @@ test('Abort before sending request (no body) async iterator', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const ee = new EventEmitter()
     t.after(client.destroy.bind(client))
 
@@ -117,7 +118,7 @@ test('Abort while waiting response (no body)', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
@@ -141,7 +142,7 @@ test('Abort while waiting response (write headers started) (no body)', async (t)
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
@@ -163,7 +164,7 @@ test('Abort while waiting response (write headers and write body started) (no bo
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET', signal: ee }, (err, response) => {
@@ -192,7 +193,7 @@ function waitingWithBody (body, type) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
@@ -222,7 +223,7 @@ function writeHeadersStartedWithBody (body, type) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {
@@ -250,7 +251,7 @@ function writeBodyStartedWithBody (body, type) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'POST', body, signal: ee }, (err, response) => {

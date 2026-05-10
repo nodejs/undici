@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { fetch, Agent } = require('../..')
@@ -14,7 +15,7 @@ test('should create a PerformanceResourceTiming after each fetch request', (t, d
   t.plan(8)
 
   const obs = new PerformanceObserver(list => {
-    const expectedResourceEntryName = `http://localhost:${server.address().port}/`
+    const expectedResourceEntryName = `http://${LOOPBACK_HOST}:${server.address().port}/`
 
     const entries = list.getEntries()
     t.assert.strictEqual(entries.length, 1)
@@ -39,7 +40,7 @@ test('should create a PerformanceResourceTiming after each fetch request', (t, d
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   }).listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.assert.strictEqual('ok', await body.text())
   })
 
@@ -64,7 +65,7 @@ test('should include encodedBodySize in performance entry', (t, done) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   }).listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.assert.strictEqual('ok', await body.text())
   })
 
@@ -100,7 +101,7 @@ test('timing entries should be in order', (t, done) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   }).listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}/redirect`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/redirect`)
     t.assert.strictEqual('ok', await body.text())
   })
 
@@ -132,7 +133,7 @@ test('redirect timing entries should be included when redirecting', (t, done) =>
     }
     res.end('ok')
   }).listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}/redirect`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/redirect`)
     t.assert.strictEqual('ok', await body.text())
   })
 
@@ -160,7 +161,7 @@ test('responseStart should be greater than 0 with composed interceptor', (t, don
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   }).listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}`, { dispatcher })
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
     t.assert.strictEqual('ok', await body.text())
   })
 

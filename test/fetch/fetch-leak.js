@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -23,7 +24,7 @@ test('do not leak', (t, done) => {
     if (isDone) {
       return
     }
-    url ??= new URL(`http://127.0.0.1:${server.address().port}`)
+    url ??= new URL(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const controller = new AbortController()
     fetch(url, { signal: controller.signal })
       .then(res => res.arrayBuffer())

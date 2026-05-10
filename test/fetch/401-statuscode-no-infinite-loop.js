@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -17,7 +18,7 @@ test('Receiving a 401 status code should not cause infinite retry loop', async (
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const response = await fetch(`http://localhost:${server.address().port}`)
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
   assert.strictEqual(response.status, 401)
 })
 
@@ -30,7 +31,7 @@ test('Receiving a 401 status code should not fail for stream-backed request bodi
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const response = await fetch(`http://localhost:${server.address().port}`, {
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     method: 'PUT',
     duplex: 'half',
     body: new ReadableStream({
@@ -54,7 +55,7 @@ test('Receiving a 401 status code should work for POST with JSON body', async (t
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const response = await fetch(`http://localhost:${server.address().port}`, {
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ data: 'test' })

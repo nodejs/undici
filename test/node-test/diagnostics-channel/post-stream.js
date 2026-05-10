@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const { Readable } = require('node:stream')
@@ -48,7 +49,7 @@ test('Diagnostics channel - post stream', (t) => {
 
     const { host, hostname, protocol, port, servername } = connectParams
 
-    assert.equal(host, `localhost:${server.address().port}`)
+    assert.equal(host, `${LOOPBACK_HOST}:${server.address().port}`)
     assert.equal(hostname, 'localhost')
     assert.equal(port, String(server.address().port))
     assert.equal(protocol, 'http:')
@@ -64,7 +65,7 @@ test('Diagnostics channel - post stream', (t) => {
 
     const { host, hostname, protocol, port, servername } = connectParams
 
-    assert.equal(host, `localhost:${server.address().port}`)
+    assert.equal(host, `${LOOPBACK_HOST}:${server.address().port}`)
     assert.equal(hostname, 'localhost')
     assert.equal(port, String(server.address().port))
     assert.equal(protocol, 'http:')
@@ -77,7 +78,7 @@ test('Diagnostics channel - post stream', (t) => {
 
     const expectedHeaders = [
       'POST / HTTP/1.1',
-      `host: localhost:${server.address().port}`,
+      `host: ${LOOPBACK_HOST}:${server.address().port}`,
       'connection: keep-alive',
       'bar: bar',
       'hello: world'
@@ -148,7 +149,7 @@ test('Diagnostics channel - post stream', (t) => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         keepAliveTimeout: 300e3
       })
 

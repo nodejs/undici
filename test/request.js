@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
 const { test, after, describe } = require('node:test')
@@ -222,7 +223,7 @@ describe('DispatchOptions#maxRedirections', () => {
 
     const res = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       maxRedirections: 0
     })
 
@@ -250,7 +251,7 @@ describe('DispatchOptions#reset', () => {
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
-      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.connection, 'close')
       res.statusCode = 200
       res.end('hello')
@@ -270,7 +271,7 @@ describe('DispatchOptions#reset', () => {
 
     const { body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       reset: true
     })
     await body.dump()
@@ -281,7 +282,7 @@ describe('DispatchOptions#reset', () => {
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
-      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.connection, 'keep-alive')
       res.statusCode = 200
       res.end('hello')
@@ -301,7 +302,7 @@ describe('DispatchOptions#reset', () => {
 
     const { body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       reset: false
     })
     await body.dump()
@@ -312,7 +313,7 @@ describe('DispatchOptions#reset', () => {
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
-      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.connection, 'close')
       res.statusCode = 200
       res.end('hello')
@@ -332,7 +333,7 @@ describe('DispatchOptions#reset', () => {
 
     const { body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       headers: {
         connection: 'close'
       }
@@ -347,7 +348,7 @@ describe('Should include headers from iterable objects', scope => {
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
-      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.hello, 'world')
       res.statusCode = 200
       res.end('hello')
@@ -370,7 +371,7 @@ describe('Should include headers from iterable objects', scope => {
 
     const { body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       reset: true,
       headers
     })
@@ -382,7 +383,7 @@ describe('Should include headers from iterable objects', scope => {
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
-      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.hello, 'world')
       res.statusCode = 200
       res.end('hello')
@@ -405,7 +406,7 @@ describe('Should include headers from iterable objects', scope => {
 
     const { body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       reset: true,
       headers
     })
@@ -417,7 +418,7 @@ describe('Should include headers from iterable objects', scope => {
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
-      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.hello, 'world')
       res.statusCode = 200
       res.end('hello')
@@ -443,7 +444,7 @@ describe('Should include headers from iterable objects', scope => {
 
     const { body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       reset: true,
       headers
     })
@@ -455,7 +456,7 @@ describe('Should include headers from iterable objects', scope => {
 
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       t.strictEqual('GET', req.method)
-      t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+      t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
       t.strictEqual(req.headers.hello, 'world')
       res.statusCode = 200
       res.end('hello')
@@ -484,7 +485,7 @@ describe('Should include headers from iterable objects', scope => {
 
       const { body } = await request({
         method: 'GET',
-        origin: `http://localhost:${server.address().port}`,
+        origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
         reset: true,
         headers
       })
@@ -526,7 +527,7 @@ describe('Should include headers from iterable objects', scope => {
 
     await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       reset: true,
       headers
     }).catch((err) => {
@@ -553,7 +554,7 @@ test('request should include statusText in response', async t => {
 
   const { statusText, body } = await request({
     method: 'GET',
-    origin: `http://localhost:${server.address().port}`,
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
     path: '/'
   })
 
@@ -575,7 +576,7 @@ describe('connection header per RFC 7230', () => {
 
     const { statusCode, body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       headers: { connection: 'close' }
     })
     await body.dump()
@@ -594,7 +595,7 @@ describe('connection header per RFC 7230', () => {
 
     const { statusCode, body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       headers: { connection: 'keep-alive' }
     })
     await body.dump()
@@ -613,7 +614,7 @@ describe('connection header per RFC 7230', () => {
 
     const { statusCode, body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       headers: {
         'x-custom-header': 'value',
         connection: 'x-custom-header'
@@ -635,7 +636,7 @@ describe('connection header per RFC 7230', () => {
 
     const { statusCode, body } = await request({
       method: 'GET',
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       headers: {
         'x-custom-header': 'value',
         connection: 'close, x-custom-header'

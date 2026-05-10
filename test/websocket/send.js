@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { test, describe } = require('node:test')
 const { WebSocketServer } = require('ws')
@@ -47,7 +48,7 @@ test('Sending >= 2^16 bytes', async (t) => {
 
   const payload = Buffer.allocUnsafe(2 ** 16).fill('Hello')
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   registerCleanup(t, ws, server)
 
   await once(ws, 'open')
@@ -71,7 +72,7 @@ test('Sending >= 126, < 2^16 bytes', async (t) => {
 
   const payload = Buffer.allocUnsafe(126).fill('Hello')
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   registerCleanup(t, ws, server)
 
   await once(ws, 'open')
@@ -95,7 +96,7 @@ test('Sending < 126 bytes', async (t) => {
 
   const payload = Buffer.allocUnsafe(125).fill('Hello')
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   registerCleanup(t, ws, server)
 
   await once(ws, 'open')
@@ -110,7 +111,7 @@ test('Sending < 126 bytes', async (t) => {
 
 test('Sending data after close', async (t) => {
   const server = new WebSocketServer({ port: 0 })
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   registerCleanup(t, ws, server)
 
   const connection = once(server, 'connection')
@@ -133,7 +134,7 @@ test('Sending data after close', async (t) => {
 
 test('Sending data before connected', (t) => {
   const server = new WebSocketServer({ port: 0 })
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   registerCleanup(t, ws, server)
 
@@ -151,7 +152,7 @@ test('Sending data before connected', (t) => {
 describe('Sending data to a server', () => {
   test('Send with string', async (t) => {
     const server = new WebSocketServer({ port: 0 })
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
     registerCleanup(t, ws, server)
 
     const connection = once(server, 'connection')
@@ -172,7 +173,7 @@ describe('Sending data to a server', () => {
     new Uint8Array(ab).set(message)
 
     const server = new WebSocketServer({ port: 0 })
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
     registerCleanup(t, ws, server)
 
     const connection = once(server, 'connection')
@@ -190,7 +191,7 @@ describe('Sending data to a server', () => {
   test('Send with Blob', async (t) => {
     const blob = new Blob(['hello'])
     const server = new WebSocketServer({ port: 0 })
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
     registerCleanup(t, ws, server)
 
     const connection = once(server, 'connection')
@@ -208,7 +209,7 @@ describe('Sending data to a server', () => {
   test('Cannot send with SharedArrayBuffer', async (t) => {
     const sab = new SharedArrayBuffer(0)
     const server = new WebSocketServer({ port: 0 })
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
     registerCleanup(t, ws, server)
 
     const connection = once(server, 'connection')

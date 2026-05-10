@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { describe, test, after } = require('node:test')
 const assert = require('node:assert/strict')
 const { once } = require('node:events')
@@ -92,7 +93,7 @@ test('agent should call callback after closing internal pools', async (t) => {
   server.listen(0, () => {
     const dispatcher = new Agent()
 
-    const origin = `http://localhost:${server.address().port}`
+    const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     request(origin, { dispatcher })
       .then(() => {
@@ -144,7 +145,7 @@ test('agent should close internal pools', async (t) => {
   server.listen(0, () => {
     const dispatcher = new Agent()
 
-    const origin = `http://localhost:${server.address().port}`
+    const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     request(origin, { dispatcher })
       .then(() => {
@@ -185,7 +186,7 @@ test('agent should destroy internal pools and call callback', async (t) => {
   server.listen(0, () => {
     const dispatcher = new Agent()
 
-    const origin = `http://localhost:${server.address().port}`
+    const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     request(origin, { dispatcher })
       .then(() => {
@@ -247,7 +248,7 @@ test('agent should destroy internal pools', async t => {
   server.listen(0, () => {
     const dispatcher = new Agent()
 
-    const origin = `http://localhost:${server.address().port}`
+    const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     request(origin, { dispatcher })
       .then(() => {
@@ -286,7 +287,7 @@ test('multiple connections', async t => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const origin = `http://localhost:${server.address().port}`
+    const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
     const dispatcher = new Agent({ connections })
 
     t.after(() => { dispatcher.close.bind(dispatcher)() })
@@ -343,7 +344,7 @@ test('agent factory supports URL parameter', async (t) => {
 
   server.listen(0, () => {
     p.doesNotThrow(() => dispatcher.dispatch({
-      origin: new URL(`http://localhost:${server.address().port}`),
+      origin: new URL(`http://${LOOPBACK_HOST}:${server.address().port}`),
       path: '/',
       method: 'GET'
     }, noopHandler))
@@ -381,7 +382,7 @@ test('agent factory supports string parameter', async (t) => {
 
   server.listen(0, () => {
     p.doesNotThrow(() => dispatcher.dispatch({
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       path: '/',
       method: 'GET'
     }, noopHandler))
@@ -397,7 +398,7 @@ test('with globalAgent', async t => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -405,7 +406,7 @@ test('with globalAgent', async t => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    request(`http://localhost:${server.address().port}`)
+    request(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .then(({ statusCode, headers, body }) => {
         p.strictEqual(statusCode, 200)
         p.strictEqual(headers['content-type'], 'text/plain')
@@ -432,7 +433,7 @@ test('with local agent', async t => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -446,7 +447,7 @@ test('with local agent', async t => {
   })
 
   server.listen(0, () => {
-    request(`http://localhost:${server.address().port}`, { dispatcher })
+    request(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
       .then(({ statusCode, headers, body }) => {
         p.strictEqual(statusCode, 200)
         p.strictEqual(headers['content-type'], 'text/plain')
@@ -483,7 +484,7 @@ test('with globalAgent', async t => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -492,7 +493,7 @@ test('with globalAgent', async t => {
 
   server.listen(0, () => {
     stream(
-      `http://localhost:${server.address().port}`,
+      `http://${LOOPBACK_HOST}:${server.address().port}`,
       {
         opaque: new PassThrough()
       },
@@ -524,7 +525,7 @@ test('with a local agent', async t => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -543,7 +544,7 @@ test('with a local agent', async t => {
 
   server.listen(0, () => {
     stream(
-      `http://localhost:${server.address().port}`,
+      `http://${LOOPBACK_HOST}:${server.address().port}`,
       {
         dispatcher,
         opaque: new PassThrough()
@@ -584,7 +585,7 @@ test('with globalAgent', async t => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -595,7 +596,7 @@ test('with globalAgent', async t => {
     const bufs = []
 
     pipeline(
-      `http://localhost:${server.address().port}`,
+      `http://${LOOPBACK_HOST}:${server.address().port}`,
       {},
       ({ statusCode, headers, body }) => {
         p.strictEqual(statusCode, 200)
@@ -625,7 +626,7 @@ test('with a local agent', async t => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -638,7 +639,7 @@ test('with a local agent', async t => {
     const bufs = []
 
     pipeline(
-      `http://localhost:${server.address().port}`,
+      `http://${LOOPBACK_HOST}:${server.address().port}`,
       { dispatcher },
       ({ statusCode, headers, body }) => {
         p.strictEqual(statusCode, 200)
@@ -734,7 +735,7 @@ test('dispatch validations', async t => {
 
   server.listen(0, () => {
     p.doesNotThrow(() => dispatcher.dispatch({
-      origin: new URL(`http://localhost:${server.address().port}`),
+      origin: new URL(`http://${LOOPBACK_HOST}:${server.address().port}`),
       path: '/',
       method: 'GET'
     }, noopHandler))
@@ -774,7 +775,7 @@ test('drain', async t => {
 
   server.listen(0, () => {
     p.strictEqual(dispatcher.dispatch({
-      origin: `http://localhost:${server.address().port}`,
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
       method: 'GET',
       path: '/'
     }, new Handler()), false)
@@ -800,7 +801,7 @@ test('global api', async t => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const origin = `http://localhost:${server.address().port}`
+    const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
     await request(origin, { path: '/foo' })
     await request(`${origin}/foo`)
     await request({ origin, path: '/foo' })
@@ -867,10 +868,10 @@ test('stats', async t => {
   })
 
   server.listen(0, () => {
-    request(`http://localhost:${server.address().port}`, { dispatcher })
+    request(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
       .then(({ statusCode, headers, body }) => {
         p.strictEqual(statusCode, 200)
-        const originForStats = `http://localhost:${server.address().port}`
+        const originForStats = `http://${LOOPBACK_HOST}:${server.address().port}`
         const agentStats = dispatcher.stats[originForStats]
         p.strictEqual(agentStats.connected, 1)
         p.strictEqual(agentStats.pending, 0)

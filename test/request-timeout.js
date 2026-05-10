@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { resolve: pathResolve } = require('node:path')
 const { test, after, beforeEach } = require('node:test')
@@ -41,7 +42,7 @@ test('request timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 500 })
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { headersTimeout: 500 })
     after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err, response) => {
@@ -64,7 +65,7 @@ test('request timeout with readable body', async (t) => {
   after(() => unlinkSync(tempfile))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 1e3 })
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { headersTimeout: 1e3 })
     after(() => client.destroy())
 
     const body = createReadStream(tempfile)
@@ -91,7 +92,7 @@ test('body timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { bodyTimeout: 50 })
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { bodyTimeout: 50 })
     after(() => client.destroy())
 
     tickOnConnect(client, () => {
@@ -132,7 +133,7 @@ test('overridden request timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { headersTimeout: 500 })
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { headersTimeout: 500 })
     after(() => client.destroy())
 
     tickOnConnect(client, () => {
@@ -163,7 +164,7 @@ test('overridden body timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { bodyTimeout: 500 })
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { bodyTimeout: 500 })
     after(() => client.destroy())
 
     tickOnConnect(client, () => {
@@ -204,7 +205,7 @@ test('With EE signal', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 50
     })
     const ee = new EventEmitter()
@@ -242,7 +243,7 @@ test('With abort-controller signal', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 50
     })
     const abortController = new AbortController()
@@ -282,7 +283,7 @@ test('Abort before timeout (EE)', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 50
     })
     after(() => client.destroy())
@@ -318,7 +319,7 @@ test('Abort before timeout (abort-controller)', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 50
     })
     after(() => client.destroy())
@@ -352,7 +353,7 @@ test('Timeout with pipelining', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 10,
       headersTimeout: 50
     })
@@ -393,7 +394,7 @@ test('Global option', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 50
     })
     after(() => client.destroy())
@@ -430,7 +431,7 @@ test('Request options overrides global option', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 50
     })
     after(() => client.destroy())
@@ -457,7 +458,7 @@ test('client.destroy should cancel the timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 100
     })
 
@@ -487,7 +488,7 @@ test('client.close should wait for the timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 100
     })
     after(() => client.destroy())
@@ -570,7 +571,7 @@ test('Disable request timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 0,
       connectTimeout: 0
     })
@@ -613,7 +614,7 @@ test('Disable request timeout for a single request', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 0,
       connectTimeout: 0
     })
@@ -656,7 +657,7 @@ test('stream timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, { connectTimeout: 0 })
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { connectTimeout: 0 })
     after(() => client.destroy())
 
     client.stream({
@@ -692,7 +693,7 @@ test('stream custom timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 30e3
     })
     after(() => client.destroy())
@@ -730,7 +731,7 @@ test('pipeline timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const buf = Buffer.alloc(1e6).toString()
@@ -785,7 +786,7 @@ test('pipeline timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       headersTimeout: 30e3
     })
     after(() => client.destroy())
@@ -837,7 +838,7 @@ test('client.close should not deadlock', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 200,
       headersTimeout: 100
     })

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
@@ -18,7 +19,7 @@ test('close waits for queued requests to finish', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, function (err, data) {
@@ -62,7 +63,7 @@ test('destroy invoked all pending callbacks', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 2
     })
     after(() => client.destroy())
@@ -96,7 +97,7 @@ test('destroy invoked all pending callbacks ticked', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 2
     })
     after(() => client.destroy())
@@ -126,7 +127,7 @@ test('close waits until socket is destroyed', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     makeRequest()
@@ -163,7 +164,7 @@ test('close should still reconnect', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     t.ok(makeRequest())
@@ -200,7 +201,7 @@ test('close should call callback once finished', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     t.ok(makeRequest())
@@ -281,7 +282,7 @@ test('close socket and reconnect after maxRequestsPerClient reached', async (t) 
       socketToIdMap.set(sock, nextConnectionId++)
     })
     const client = new Client(
-      `http://localhost:${server.address().port}`,
+      `http://${LOOPBACK_HOST}:${server.address().port}`,
       { maxRequestsPerClient: 2 }
     )
     after(() => client.destroy())
@@ -318,7 +319,7 @@ test('close socket and reconnect after maxRequestsPerClient reached (async)', as
       socketToIdMap.set(sock, nextConnectionId++)
     })
     const client = new Client(
-      `http://localhost:${server.address().port}`,
+      `http://${LOOPBACK_HOST}:${server.address().port}`,
       { maxRequestsPerClient: 2 }
     )
     after(() => client.destroy())
@@ -353,7 +354,7 @@ test('should not close socket when no maxRequestsPerClient is provided', async (
     server.on('connection', () => {
       connections++
     })
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     await makeRequest()

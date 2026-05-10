@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
@@ -81,7 +82,7 @@ test('basic get', async (t) => {
 
   await new Promise(resolve => server.listen(0, resolve))
 
-  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+  const pool = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     connections: 1
   })
 
@@ -106,7 +107,7 @@ test('replaces stale client when connections limit is reached', async (t) => {
 
   await new Promise(resolve => server.listen(0, resolve))
 
-  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+  const pool = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     connections: 1,
     clientTtl: 1
   })
@@ -148,7 +149,7 @@ test('connect/disconnect event(s)', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
-    const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+    const pool = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: clients,
       keepAliveTimeoutThreshold: 100
     })
@@ -189,7 +190,7 @@ test('busy', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+    const client = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 2,
       pipelining: 2
     })
@@ -240,7 +241,7 @@ test('factory option with basic get request', async (t) => {
 
   await promisify(server.listen).call(server, 0)
 
-  const client = new RoundRobinPool(`http://localhost:${server.address().port}`, opts)
+  const client = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, opts)
 
   t.after(client.destroy.bind(client))
 
@@ -281,7 +282,7 @@ test('round-robin distribution with multiple requests', async (t) => {
 
   await new Promise(resolve => server.listen(0, resolve))
 
-  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+  const pool = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     connections: 3
   })
 
@@ -323,7 +324,7 @@ test('round-robin wraps around correctly', async (t) => {
   after(() => server.close())
   await new Promise(resolve => server.listen(0, resolve))
 
-  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+  const pool = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     connections: 2
   })
 
@@ -351,7 +352,7 @@ test('close/destroy behavior', async (t) => {
   after(() => server.close())
   await new Promise(resolve => server.listen(0, resolve))
 
-  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`)
+  const pool = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   t.strictEqual(pool.destroyed, false)
   t.strictEqual(pool.closed, false)
@@ -377,7 +378,7 @@ test('verifies round-robin kGetDispatcher cycling algorithm', async (t) => {
   const clientOrder = []
   let clientIdCounter = 0
 
-  const pool = new RoundRobinPool(`http://localhost:${server.address().port}`, {
+  const pool = new RoundRobinPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     connections: 3,
     factory: (origin, opts) => {
       const client = new Client(origin, opts)

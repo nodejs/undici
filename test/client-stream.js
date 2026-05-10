@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
@@ -13,14 +14,14 @@ test('stream get', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -61,14 +62,14 @@ test('stream promise get', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -103,14 +104,14 @@ test('stream GET destroy res', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.stream({
@@ -169,7 +170,7 @@ test('stream GET remote destroy', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.stream({
@@ -215,7 +216,7 @@ test('stream response resume back pressure and non standard error', async (t) =>
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const pt = new PassThrough()
@@ -262,7 +263,7 @@ test('stream waits only for writable side', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -334,7 +335,7 @@ test('stream destroy if not readable', async (t) => {
   const pt = new PassThrough()
   pt.readable = false
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -365,7 +366,7 @@ test('stream server side destroy', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     client.stream({
@@ -390,7 +391,7 @@ test('stream invalid return', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     client.stream({
@@ -415,7 +416,7 @@ test('stream body without destroy', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -448,7 +449,7 @@ test('stream factory abort', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     const signal = new EE()
@@ -478,7 +479,7 @@ test('stream factory throw', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     client.stream({
@@ -519,7 +520,7 @@ test('stream CONNECT throw', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     client.stream({
@@ -543,7 +544,7 @@ test('stream abort after complete', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -577,7 +578,7 @@ test('stream abort before dispatch', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     const pt = new PassThrough()
@@ -608,7 +609,7 @@ test('trailers', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -638,7 +639,7 @@ test('stream ignore 1xx', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -675,7 +676,7 @@ test('stream ignore 1xx and use onInfo', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -718,7 +719,7 @@ test('stream backpressure', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
     client.on('disconnect', () => {
       if (!client.closed && !client.destroyed) {
@@ -753,7 +754,7 @@ test('stream body destroyed on invalid callback', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     const body = new Readable({
@@ -782,7 +783,7 @@ test('stream needDrain', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => {
       client.destroy()
     })
@@ -843,7 +844,7 @@ test('stream legacy needDrain', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => {
       client.destroy()
     })

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, describe } = require('node:test')
 const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const {
@@ -337,7 +338,7 @@ describe('normalizeOrigin', () => {
     t.plan(2)
 
     t.assert.strictEqual(normalizeOrigin('http://192.168.1.1'), 'http://192.168.1.1')
-    t.assert.strictEqual(normalizeOrigin('http://127.0.0.1:3000'), 'http://127.0.0.1:3000')
+    t.assert.strictEqual(normalizeOrigin(`http://${LOOPBACK_HOST}:3000`), `http://${LOOPBACK_HOST}:3000`)
   })
 
   test('should handle IPv6 addresses', (t) => {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -35,7 +36,7 @@ test('pull dont\'t push', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const res = await fetch(`http://localhost:${server.address().port}`)
+  const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   // Some time is needed to fill the buffer
   await sleep(1000)

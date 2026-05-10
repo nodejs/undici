@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
@@ -17,7 +18,7 @@ test('CRLF injection in upgrade header via CRLF sequence', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     try {
@@ -48,7 +49,7 @@ test('CRLF injection in upgrade header via lone CR', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     try {
@@ -79,7 +80,7 @@ test('CRLF injection in upgrade header via lone LF', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     try {
@@ -110,7 +111,7 @@ test('CRLF injection in upgrade header via null byte', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     try {
@@ -141,7 +142,7 @@ test('CRLF injection in upgrade option via client.request', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     try {
@@ -172,7 +173,7 @@ test('valid upgrade value is accepted', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const { socket } = await client.upgrade({

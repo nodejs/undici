@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -21,7 +22,7 @@ test('issue 2009', async (t) => {
 
   for (let i = 0; i < 10; i++) {
     await t.assert.doesNotReject(
-      fetch(`http://localhost:${server.address().port}`).then(
+      fetch(`http://${LOOPBACK_HOST}:${server.address().port}`).then(
         async (resp) => {
           await resp.body.cancel('Some message')
         }

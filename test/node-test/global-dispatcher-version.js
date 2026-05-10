@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const assert = require('node:assert')
 const { test } = require('node:test')
 const { spawnSync } = require('node:child_process')
@@ -26,7 +27,7 @@ test('setGlobalDispatcher does not break Node.js global fetch', () => {
       await once(server, 'listening')
 
       setGlobalDispatcher(new Agent())
-      const url = 'http://127.0.0.1:' + server.address().port
+      const url = 'http://${LOOPBACK_HOST}:' + server.address().port
       const res = await fetch(url)
       process.stdout.write(await res.text())
 
@@ -71,7 +72,7 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
         throw new Error('expected v1 global dispatcher to be a Dispatcher1Wrapper')
       }
 
-      const url = 'http://127.0.0.1:' + server.address().port
+      const url = 'http://${LOOPBACK_HOST}:' + server.address().port
       const res = await fetch(url)
       const body = await res.text()
 
@@ -111,7 +112,7 @@ test('Dispatcher1Wrapper bridges legacy handlers to a new Agent', () => {
       const dispatcherV1 = Symbol.for('undici.globalDispatcher.1')
       globalThis[dispatcherV1] = new Dispatcher1Wrapper(new Agent())
 
-      const url = 'http://127.0.0.1:' + server.address().port
+      const url = 'http://${LOOPBACK_HOST}:' + server.address().port
       const res = await fetch(url)
       process.stdout.write(await res.text())
 

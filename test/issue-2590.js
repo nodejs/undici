@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { request } = require('..')
@@ -21,17 +22,17 @@ test('aborting request with custom reason', async (t) => {
   ac2.abort() // no reason
 
   await t.rejects(
-    request(`http://localhost:${server.address().port}`, { signal: timeout }),
+    request(`http://${LOOPBACK_HOST}:${server.address().port}`, { signal: timeout }),
     timeout.reason
   )
 
   await t.rejects(
-    request(`http://localhost:${server.address().port}`, { signal: ac.signal }),
+    request(`http://${LOOPBACK_HOST}:${server.address().port}`, { signal: ac.signal }),
     /Error: aborted/
   )
 
   await t.rejects(
-    request(`http://localhost:${server.address().port}`, { signal: ac2.signal }),
+    request(`http://${LOOPBACK_HOST}:${server.address().port}`, { signal: ac2.signal }),
     { name: 'AbortError' }
   )
 

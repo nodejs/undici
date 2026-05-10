@@ -1,7 +1,7 @@
 'use strict'
 
 const { createServer } = require('node:http')
-const hostname = '127.0.0.1'
+const { LOOPBACK_HOST } = require('./node-http')
 
 const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
   res.statusCode = 200
@@ -21,10 +21,10 @@ async function sendInDelayedChunks (res, payload, delay) {
   }
 }
 
-server.listen(0, hostname, () => {
+server.listen(0, LOOPBACK_HOST, () => {
   if (process.send) {
-    process.send(`http://${hostname}:${server.address().port}/`)
+    process.send(`http://${LOOPBACK_HOST}:${server.address().port}/`)
   } else {
-    console.log(`http://${hostname}:${server.address().port}/`)
+    console.log(`http://${LOOPBACK_HOST}:${server.address().port}/`)
   }
 })

@@ -1,4 +1,5 @@
 'use strict'
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { platform } = require('node:os')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
@@ -64,7 +65,7 @@ test('Should handle preemptive network error', { skip }, async t => {
   await once(server, 'listening')
 
   const response = await client.request({
-    origin: `http://localhost:${server.address().port}`,
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`,
     ...requestOptions
   })
   const body = await response.body.text()
@@ -114,7 +115,7 @@ test('Should dump on abort', { skip }, async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump({ maxSize: 512 }))
 
   after(async () => {
@@ -180,7 +181,7 @@ test('Should dump on already aborted request', { skip }, async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump({ maxSize: 512 }))
 
   after(async () => {
@@ -221,7 +222,7 @@ test('Should dump response body up to limit (default)', { skip }, async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump())
 
   after(async () => {
@@ -265,7 +266,7 @@ test('Should dump response body up to limit and ignore trailers', { skip }, asyn
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump())
 
   after(async () => {
@@ -301,7 +302,7 @@ test('Should forward common error', { skip }, async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump())
 
   after(async () => {
@@ -439,7 +440,7 @@ test('Should dump response body up to limit (opts)', { skip }, async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump({ maxSize: 1 * 1024 }))
 
   after(async () => {
@@ -480,7 +481,7 @@ test('Should abort if content length grater than max size', { skip }, async t =>
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump({ maxSize: 1 * 1024, abortOnDumped: false }))
 
   after(async () => {
@@ -521,7 +522,7 @@ test('Should dump response body up to limit (dispatch opts)', { skip }, async t 
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump())
 
   after(async () => {
@@ -563,7 +564,7 @@ test('Should abort if content length grater than max size (dispatch opts)', { sk
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(dump())
 
   after(async () => {

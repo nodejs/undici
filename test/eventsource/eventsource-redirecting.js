@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { once } = require('node:events')
 const http = require('node:http')
 const { test, describe } = require('node:test')
@@ -93,16 +94,16 @@ describe('EventSource - redirecting', () => {
     const targetPort = targetServer.address().port
 
     const sourceServer = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
-      res.writeHead(301, undefined, { Location: `http://127.0.0.1:${targetPort}/target` })
+      res.writeHead(301, undefined, { Location: `http://${LOOPBACK_HOST}:${targetPort}/target` })
       res.end()
     })
 
     await once(sourceServer.listen(0), 'listening')
     const sourcePort = sourceServer.address().port
 
-    const eventSourceInstance = new EventSource(`http://127.0.0.1:${sourcePort}/redirect`)
+    const eventSourceInstance = new EventSource(`http://${LOOPBACK_HOST}:${sourcePort}/redirect`)
     eventSourceInstance.onmessage = (event) => {
-      t.assert.strictEqual(event.origin, `http://127.0.0.1:${targetPort}`)
+      t.assert.strictEqual(event.origin, `http://${LOOPBACK_HOST}:${targetPort}`)
       eventSourceInstance.close()
       targetServer.close()
       sourceServer.close()

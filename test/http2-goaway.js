@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
@@ -36,7 +37,7 @@ test('#3046 - GOAWAY Frame', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -106,7 +107,7 @@ test('#3753 - Handle GOAWAY Gracefully', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -191,7 +192,7 @@ test('#5089 - Handle GOAWAY Gracefully', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },

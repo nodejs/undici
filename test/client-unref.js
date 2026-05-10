@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { Worker, isMainThread, workerData } = require('node:worker_threads')
 
 if (isMainThread) {
@@ -20,7 +21,7 @@ if (isMainThread) {
     server.listen(0)
 
     await once(server, 'listening')
-    const url = `http://localhost:${server.address().port}`
+    const url = `http://${LOOPBACK_HOST}:${server.address().port}`
     const worker = new Worker(__filename, { workerData: { url } })
     worker.on('exit', code => {
       t.strictEqual(code, 0)

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, afterEach } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -79,7 +80,7 @@ test('fetch', async (t) => {
       res.end()
     }).listen(0)
 
-    setGlobalOrigin(`http://localhost:${server.address().port}`)
+    setGlobalOrigin(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(closeServerAsPromise(server))
     await once(server, 'listening')
 
@@ -92,12 +93,12 @@ test('fetch', async (t) => {
       res.end()
     }).listen(0)
 
-    setGlobalOrigin(`http://localhost:${server.address().port}`)
+    setGlobalOrigin(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(closeServerAsPromise(server))
     await once(server, 'listening')
 
     const response = await fetch('/relative/path')
 
-    t.assert.strictEqual(response.url, `http://localhost:${server.address().port}/relative/path`)
+    t.assert.strictEqual(response.url, `http://${LOOPBACK_HOST}:${server.address().port}/relative/path`)
   })
 })

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
@@ -18,7 +19,7 @@ test('check cloned', async (t) => {
     })
   })
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   ws.addEventListener('open', () => {
     ws.send(new Blob([buffer]))

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -25,7 +26,7 @@ test('Agent clientTtl cleanup does not trigger unhandled rejections', async (t) 
     process.once('unhandledRejection', onUnhandled)
     after(() => process.removeListener('unhandledRejection', onUnhandled))
 
-    const origin = `http://localhost:${server.address().port}`
+    const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     const res1 = await request(origin, { dispatcher: agent })
     t.strictEqual(res1.statusCode, 200)

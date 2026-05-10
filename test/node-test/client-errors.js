@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const assert = require('node:assert')
 const https = require('node:https')
 const net = require('node:net')
@@ -37,7 +38,7 @@ test('GET errors and reconnect with pipelining 1', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 1
     })
     t.after(client.destroy.bind(client))
@@ -91,7 +92,7 @@ test('GET errors and reconnect with pipelining 3', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 3
     })
     t.after(client.destroy.bind(client))
@@ -153,7 +154,7 @@ function errorAndPipelining (type) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({
@@ -228,7 +229,7 @@ function errorAndChunkedEncodingPipelining (type) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({
@@ -673,7 +674,7 @@ test('POST which fails should error response', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     function checkError (err) {
@@ -768,7 +769,7 @@ test('client destroy cleanup', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    client = new Client(`http://localhost:${server.address().port}`)
+    client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     const body = new Readable({ read () {} })
@@ -798,7 +799,7 @@ test('throwing async-iterator causes error', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({
@@ -832,7 +833,7 @@ test('client async-iterator destroy cleanup', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    client = new Client(`http://localhost:${server.address().port}`)
+    client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     const body = wrapWithAsyncIterable(['asd'], true)
@@ -862,7 +863,7 @@ test('GET errors body', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
@@ -886,7 +887,7 @@ test('validate request body', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     client.request({
@@ -954,7 +955,7 @@ function socketFailWrite (type) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       const preBody = new Readable({ read () {} })
@@ -995,7 +996,7 @@ function socketFailEndWrite (type) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 2
       })
       t.after(client.destroy.bind(client))
@@ -1042,7 +1043,7 @@ test('queued request should not fail on socket destroy', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 1
     })
     t.after(client.destroy.bind(client))
@@ -1081,7 +1082,7 @@ test('queued request should fail on client destroy', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 1
     })
     t.after(client.destroy.bind(client))
@@ -1125,7 +1126,7 @@ test('retry idempotent inflight', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 3
     })
     t.after(() => { return client.close() })
@@ -1240,7 +1241,7 @@ test('CONNECT throws in next tick', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({
@@ -1304,7 +1305,7 @@ test('invalid body chunk does not crash', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({
@@ -1352,7 +1353,7 @@ test('headers overflow', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       maxHeaderSize: 10
     })
     t.after(client.destroy.bind(client))
@@ -1376,15 +1377,15 @@ test('SocketError should expose socket details (net)', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
       p.ok(err instanceof errors.SocketError)
       if (err.socket.remoteFamily === 'IPv4') {
         p.strictEqual(err.socket.remoteFamily, 'IPv4')
-        p.strictEqual(err.socket.localAddress, '127.0.0.1')
-        p.strictEqual(err.socket.remoteAddress, '127.0.0.1')
+        p.strictEqual(err.socket.localAddress, LOOPBACK_HOST)
+        p.strictEqual(err.socket.remoteAddress, LOOPBACK_HOST)
       } else {
         p.strictEqual(err.socket.remoteFamily, 'IPv6')
         p.strictEqual(err.socket.localAddress, '::1')
@@ -1410,7 +1411,7 @@ test('SocketError should expose socket details (tls)', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       tls: {
         rejectUnauthorized: false
       }
@@ -1421,8 +1422,8 @@ test('SocketError should expose socket details (tls)', async (t) => {
       p.ok(err instanceof errors.SocketError)
       if (err.socket.remoteFamily === 'IPv4') {
         p.strictEqual(err.socket.remoteFamily, 'IPv4')
-        p.strictEqual(err.socket.localAddress, '127.0.0.1')
-        p.strictEqual(err.socket.remoteAddress, '127.0.0.1')
+        p.strictEqual(err.socket.localAddress, LOOPBACK_HOST)
+        p.strictEqual(err.socket.remoteAddress, LOOPBACK_HOST)
       } else {
         p.strictEqual(err.socket.remoteFamily, 'IPv6')
         p.strictEqual(err.socket.localAddress, '::1')
@@ -1448,7 +1449,7 @@ test('parser error', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client.request({ path: '/', method: 'GET' }, (err) => {

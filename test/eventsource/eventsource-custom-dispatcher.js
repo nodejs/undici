@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createServer } = require('node:http')
 const { Agent, EventSource } = require('../..')
 const { test } = require('node:test')
@@ -27,7 +28,7 @@ test('EventSource allows setting custom dispatcher.', (t, done) => {
       }
     }
 
-    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`, {
+    const eventSourceInstance = new EventSource(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       dispatcher: new CustomHeaderAgent()
     })
     t.after(() => {
@@ -60,7 +61,7 @@ test('EventSource allows setting custom dispatcher in EventSourceDict.', (t, don
       }
     }
 
-    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`, {
+    const eventSourceInstance = new EventSource(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       node: {
         dispatcher: new CustomHeaderAgent()
       }

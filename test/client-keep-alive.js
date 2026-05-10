@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
@@ -22,7 +23,7 @@ test('keep-alive header', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   client.request({
@@ -59,7 +60,7 @@ test('keep-alive header 0', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     keepAliveTimeoutThreshold: 500
   })
   after(() => client.close())
@@ -92,7 +93,7 @@ test('keep-alive header 1', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   client.request({
@@ -146,7 +147,7 @@ test('HEAD keep-alive header reuses socket when connection header is fragmented'
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.destroy())
 
   const disconnect = once(client, 'disconnect')
@@ -187,7 +188,7 @@ test('keep-alive header no postfix', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   client.request({
@@ -227,7 +228,7 @@ test('keep-alive not timeout', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     keepAliveTimeout: 1e3
   })
   after(() => client.close())
@@ -268,7 +269,7 @@ test('keep-alive threshold', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     keepAliveTimeout: 30e3,
     keepAliveTimeoutThreshold: 29e3
   })
@@ -311,7 +312,7 @@ test('keep-alive max keepalive', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     keepAliveTimeout: 30e3,
     keepAliveMaxTimeout: 1e3
   })
@@ -353,7 +354,7 @@ test('connection close', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     pipelining: 2
   })
   after(() => client.close())
@@ -409,7 +410,7 @@ test('Disable keep alive', async (t) => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 0 })
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { pipelining: 0 })
   after(() => client.close())
 
   client.request({

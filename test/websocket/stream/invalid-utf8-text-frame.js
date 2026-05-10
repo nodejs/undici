@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { WebSocketServer } = require('ws')
@@ -19,7 +20,7 @@ test('WebSocketStream sends close code 1007 when receiving invalid UTF-8 in a te
     })
   })
 
-  const wss = new WebSocketStream(`ws://127.0.0.1:${server.address().port}`)
+  const wss = new WebSocketStream(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   // Swallow the expected unclean-close rejection on the client side.
   wss.closed.catch(() => {})
 

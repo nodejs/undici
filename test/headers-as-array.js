@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
@@ -17,7 +18,7 @@ test('handle headers as array', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -49,7 +50,7 @@ test('handle multi-valued headers as array', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -81,7 +82,7 @@ test('handle headers with array', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -113,7 +114,7 @@ test('handle multi-valued headers', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -139,7 +140,7 @@ test('fail if headers array is odd', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -168,7 +169,7 @@ test('fail if headers is not an object or an array', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -197,7 +198,7 @@ test('fail if duplicate content-length headers (different case)', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -221,7 +222,7 @@ test('fail if duplicate content-length headers (same case)', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -245,7 +246,7 @@ test('fail if duplicate host headers (different case)', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -268,7 +269,7 @@ test('fail if duplicate host headers (same case)', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => { res.end() })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({

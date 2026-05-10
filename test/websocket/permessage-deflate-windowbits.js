@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
 const http = require('node:http')
@@ -127,7 +128,7 @@ describe('permessage-deflate server_max_window_bits', () => {
     await new Promise(resolve => server.listen(0, resolve))
     after(() => server.close())
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     const [event] = await once(client, 'message')
     t.assert.ok(event.data)
@@ -139,7 +140,7 @@ describe('permessage-deflate server_max_window_bits', () => {
     await new Promise(resolve => server.listen(0, resolve))
     after(() => server.close())
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     const [event] = await once(client, 'message')
     t.assert.ok(event.data)
@@ -151,7 +152,7 @@ describe('permessage-deflate server_max_window_bits', () => {
     await new Promise(resolve => server.listen(0, resolve))
     after(() => server.close())
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     const [event] = await once(client, 'error')
     t.assert.ok(event.error instanceof Error)
@@ -162,7 +163,7 @@ describe('permessage-deflate server_max_window_bits', () => {
     await new Promise(resolve => server.listen(0, resolve))
     after(() => server.close())
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     const [event] = await once(client, 'error')
     t.assert.ok(event.error instanceof Error)
@@ -173,7 +174,7 @@ describe('permessage-deflate server_max_window_bits', () => {
     await new Promise(resolve => server.listen(0, resolve))
     after(() => server.close())
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     const [event] = await once(client, 'error')
     t.assert.ok(event.error instanceof Error)
@@ -184,7 +185,7 @@ describe('permessage-deflate server_max_window_bits', () => {
     await new Promise(resolve => server.listen(0, resolve))
     after(() => server.close())
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     const [event] = await once(client, 'error')
     // The key assertion: we got an error event instead of crashing
@@ -206,7 +207,7 @@ describe('permessage-deflate server_max_window_bits', () => {
       process.off('uncaughtException', handler)
     })
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     await Promise.race([
       once(client, 'error'),
@@ -222,7 +223,7 @@ describe('permessage-deflate server_max_window_bits', () => {
     await new Promise(resolve => server.listen(0, resolve))
     after(() => server.close())
 
-    const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+    const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     // Wait for either error or close event
     const result = await Promise.race([

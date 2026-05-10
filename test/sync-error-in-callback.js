@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client } = require('..')
@@ -17,7 +18,7 @@ test('synchronous error in request callback should reach uncaughtException handl
     server.listen(0, resolve)
   })
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   const testError = new Error('sync error in callback')
@@ -78,7 +79,7 @@ test('synchronous error thrown immediately in request callback', async (t) => {
     server.listen(0, resolve)
   })
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   const testError = new Error('immediate sync error')
@@ -134,7 +135,7 @@ test('synchronous error in request callback with error parameter', async (t) => 
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({

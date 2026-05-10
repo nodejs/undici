@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const diagnosticsChannel = require('node:diagnostics_channel')
@@ -30,7 +31,7 @@ test('Diagnostics channel - error', (t) => {
 
   return new Promise((resolve) => {
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         keepAliveTimeout: 300e3
       })
 

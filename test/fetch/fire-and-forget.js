@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { randomFillSync } = require('node:crypto')
 const { setTimeout: sleep, setImmediate: nextTick } = require('node:timers/promises')
 const { test } = require('node:test')
@@ -105,7 +106,7 @@ test('does not need the body to be consumed to continue', { timeout: 180_000 }, 
     server.listen(0, resolve)
   })
 
-  const url = new URL(`http://127.0.0.1:${server.address().port}`)
+  const url = new URL(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   const batch = 50
   const delay = 0

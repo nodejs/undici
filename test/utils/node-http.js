@@ -2,6 +2,8 @@
 
 const util = require('node:util')
 
+const LOOPBACK_HOST = '127.0.0.1'
+
 function closeServerAsPromise (server) {
   return () => {
     server.closeIdleConnections()
@@ -19,6 +21,7 @@ function closeClientAndServerAsPromise (client, server) {
 }
 
 module.exports = {
+  LOOPBACK_HOST,
   closeServerAsPromise,
   closeClientAndServerAsPromise
 }

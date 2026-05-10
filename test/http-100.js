@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
@@ -18,7 +19,7 @@ test('ignore informational response', async (t) => {
   server.listen(0)
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   client.on('disconnect', () => {
@@ -57,7 +58,7 @@ test('error 103 body', async (t) => {
   server.listen(0)
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   after(() => server.close())
   after(() => client.close())
@@ -85,7 +86,7 @@ test('error 100 body', async (t) => {
   server.listen(0)
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   client.request({
@@ -111,7 +112,7 @@ test('error 101 upgrade', async (t) => {
   server.listen(0)
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   client.request({
@@ -137,7 +138,7 @@ test('1xx response without timeouts', async t => {
   server.listen(0)
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     bodyTimeout: 0,
     headersTimeout: 0
   })

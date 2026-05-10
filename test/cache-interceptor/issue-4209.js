@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after } = require('node:test')
 const { equal, notEqual, deepStrictEqual } = require('node:assert')
 const { createServer } = require('node:http')
@@ -74,7 +75,7 @@ test('issue #4209 - different query strings do not collide in the cache', async 
     await dispatcher.close()
   })
 
-  const origin = `http://localhost:${server.address().port}`
+  const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   // First request with ?i=0 – hits origin
   const r0 = await request(`${origin}/?i=0`, { dispatcher })
@@ -123,7 +124,7 @@ test('issue #4209 - query object form also keyed distinctly', async () => {
     await dispatcher.close()
   })
 
-  const origin = `http://localhost:${server.address().port}`
+  const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const r0 = await request(origin, { dispatcher, query: { i: 0 } })
   const b0 = await r0.body.text()

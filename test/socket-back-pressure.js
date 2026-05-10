@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { once } = require('node:events')
 const { Client } = require('..')
@@ -32,7 +33,7 @@ test('socket back-pressure', async (t) => {
   server.listen(0)
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     pipelining: 1
   })
   after(() => client.close())

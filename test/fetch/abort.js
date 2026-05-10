@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -15,7 +16,7 @@ test('allows aborting with custom errors', async (t) => {
   await t.test('Using AbortSignal.timeout with cause', async (t) => {
     t.plan(2)
     try {
-      await fetch(`http://localhost:${server.address().port}`, {
+      await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         signal: AbortSignal.timeout(50)
       })
       t.assert.fail('should throw')
@@ -38,7 +39,7 @@ test('allows aborting with custom errors', async (t) => {
     ac.abort() // no reason
 
     await t.assert.rejects(
-      fetch(`http://localhost:${server.address().port}`, {
+      fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         signal: ac.signal
       }),
       {

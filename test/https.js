@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client } = require('..')
@@ -18,7 +19,7 @@ test('https get with tls opts', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       tls: {
         rejectUnauthorized: false
       }
@@ -60,7 +61,7 @@ test('https get with tls opts ip', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`https://127.0.0.1:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       tls: {
         rejectUnauthorized: false
       }

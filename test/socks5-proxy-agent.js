@@ -8,6 +8,7 @@ const { InvalidArgumentError } = require('../lib/core/errors')
 const Socks5ProxyAgent = require('../lib/dispatcher/socks5-proxy-agent')
 const { createServer } = require('node:http')
 const { TestSocks5Server } = require('./fixtures/socks5-test-server')
+const { LOOPBACK_HOST } = require('./utils/node-http')
 
 test('Socks5ProxyAgent - constructor validation', async (t) => {
   const p = tspl(t, { plan: 4 })
@@ -302,8 +303,8 @@ test('Socks5ProxyAgent - requests to different origins are routed correctly', as
     res.end(JSON.stringify({ server: 'B', path: req.url }))
   })
 
-  await new Promise((resolve) => serverA.listen(0, '127.0.0.1', resolve))
-  await new Promise((resolve) => serverB.listen(0, '127.0.0.1', resolve))
+  await new Promise((resolve) => serverA.listen(0, LOOPBACK_HOST, resolve))
+  await new Promise((resolve) => serverB.listen(0, LOOPBACK_HOST, resolve))
   const portA = serverA.address().port
   const portB = serverB.address().port
 
@@ -314,15 +315,15 @@ test('Socks5ProxyAgent - requests to different origins are routed correctly', as
   after(() => serverA.close())
   after(() => serverB.close())
 
-  const proxyWrapper = new Socks5ProxyAgent(`socks5://127.0.0.1:${socksAddress.port}`)
+  const proxyWrapper = new Socks5ProxyAgent(`socks5://${LOOPBACK_HOST}:${socksAddress.port}`)
 
   // First request goes to server A — establishes a pool
-  const respA = await request(`http://127.0.0.1:${portA}/a`, { dispatcher: proxyWrapper })
+  const respA = await request(`http://${LOOPBACK_HOST}:${portA}/a`, { dispatcher: proxyWrapper })
   p.equal(respA.statusCode, 200)
   p.deepEqual(await respA.body.json(), { server: 'A', path: '/a' })
 
   // Second request goes to server B — must NOT reuse the pool from origin A
-  const respB = await request(`http://127.0.0.1:${portB}/b`, { dispatcher: proxyWrapper })
+  const respB = await request(`http://${LOOPBACK_HOST}:${portB}/b`, { dispatcher: proxyWrapper })
   p.equal(respB.statusCode, 200)
   p.deepEqual(await respB.body.json(), { server: 'B', path: '/b' }, 'request to origin B must reach server B, not server A')
 

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
@@ -24,7 +25,7 @@ test('request post blob', async (t) => {
 
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(client.destroy.bind(client))
   client.on('disconnect', () => {
     if (!client.closed && !client.destroyed) {
@@ -65,7 +66,7 @@ test('request post arrayBuffer', async (t) => {
 
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.destroy())
   client.on('disconnect', () => {
     if (!client.closed && !client.destroyed) {

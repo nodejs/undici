@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after, describe } = require('node:test')
 const { strictEqual } = require('node:assert')
 const { createServer } = require('node:http')
@@ -25,7 +26,7 @@ test('revalidates the request when the response is stale', async () => {
   server.listen(0)
   await once(server, 'listening')
 
-  const dispatcher = new Client(`http://localhost:${server.address().port}`)
+  const dispatcher = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     .compose(interceptors.cache())
 
   after(async () => {
@@ -33,7 +34,7 @@ test('revalidates the request when the response is stale', async () => {
     await dispatcher.close()
   })
 
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   {
     const res = await request(url, { dispatcher })
@@ -104,7 +105,7 @@ describe('revalidates the request, handles 304s during stale-while-revalidate', 
     server.listen(0)
     await once(server, 'listening')
 
-    const dispatcher = new Client(`http://localhost:${server.address().port}`)
+    const dispatcher = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -112,7 +113,7 @@ describe('revalidates the request, handles 304s during stale-while-revalidate', 
       await dispatcher.close()
     })
 
-    const url = `http://localhost:${server.address().port}`
+    const url = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     // initial request, cache the response
     {

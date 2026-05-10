@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const { Client } = require('..')
@@ -26,7 +27,7 @@ test('stream body without destroy', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   ctx.after(async () => {
     await client.destroy()
     await closeServer(server)
@@ -62,7 +63,7 @@ test('IncomingMessage', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const proxyClient = new Client(`http://localhost:${server.address().port}`)
+  const proxyClient = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   proxyClient.on('disconnect', () => {
     if (!proxyClient.closed && !proxyClient.destroyed) {
       t.fail('unexpected disconnect')

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
@@ -41,7 +42,7 @@ test('Should handle h2 request without body', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -87,7 +88,7 @@ test('Should send content-length: 0 for empty h2 requests with payload-expecting
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -128,7 +129,7 @@ test('Should end h2 zero-length request bodies with headers', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: { rejectUnauthorized: false }
   })
   after(() => client.close())
@@ -192,7 +193,7 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -260,7 +261,7 @@ test('Should handle h2 request raw response headers', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -322,7 +323,7 @@ test('Should handle h2 request with body (stream)', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -388,7 +389,7 @@ test('Should handle h2 GET and HEAD requests with body', async () => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -464,7 +465,7 @@ test('Should handle h2 request with body (iterable)', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -526,7 +527,7 @@ test('Should handle h2 request with body (Blob)', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -590,7 +591,7 @@ test('Should handle h2 request with body (Blob:ArrayBuffer)',
     after(() => server.close())
     await once(server.listen(0), 'listening')
 
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
@@ -649,7 +650,7 @@ test('#3803 - sending FormData bodies works', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },

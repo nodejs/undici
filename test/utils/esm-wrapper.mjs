@@ -1,5 +1,6 @@
 import { createServer } from 'node:http'
 import { test, after } from 'node:test'
+import nodeHttp from './node-http.js'
 import undici, {
   Agent,
   Client,
@@ -14,13 +15,15 @@ import undici, {
   stream
 } from '../../index.js'
 
+const { LOOPBACK_HOST } = nodeHttp
+
 test('imported Client works with basic GET', (t, done) => {
   t.plan(10)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.assert.strictEqual('/', req.url)
     t.assert.strictEqual('GET', req.method)
-    t.assert.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.assert.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     t.assert.strictEqual(undefined, req.headers.foo)
     t.assert.strictEqual('bar', req.headers.bar)
     t.assert.strictEqual(undefined, req.headers['content-length'])
@@ -36,7 +39,7 @@ test('imported Client works with basic GET', (t, done) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -118,7 +121,7 @@ test('default import top-level request works with opts.dispatcher', async (t) =>
     await new Promise((resolve) => server.close(resolve))
   })
 
-  const { statusCode, body } = await undici.request(`http://127.0.0.1:${server.address().port}`, {
+  const { statusCode, body } = await undici.request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     dispatcher
   })
 

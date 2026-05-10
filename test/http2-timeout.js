@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
@@ -32,7 +33,7 @@ test('Should handle http2 stream timeout', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -82,7 +83,7 @@ test('http2 stream timeout keeps open-stream counter non-negative', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: { rejectUnauthorized: false },
     allowH2: true,
     bodyTimeout: 50,

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { Client } = require('../..')
 const { createServer } = require('node:http')
@@ -54,7 +55,7 @@ test('async hooks', async (t) => {
   t.after(() => server.close.bind(server)())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => client.destroy.bind(client)())
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
@@ -158,7 +159,7 @@ test('async hooks client is destroyed', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
@@ -193,7 +194,7 @@ test('async hooks pipeline handler', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     setCurrentTransaction({ hello: 'world2' })

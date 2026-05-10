@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -23,7 +24,7 @@ test('content-length header is removed on redirect', async (t) => {
 
   const body = 'a+b+c'
 
-  await t.assert.doesNotReject(fetch(`http://localhost:${server.address().port}/redirect`, {
+  await t.assert.doesNotReject(fetch(`http://${LOOPBACK_HOST}:${server.address().port}/redirect`, {
     method: 'POST',
     body,
     headers: {

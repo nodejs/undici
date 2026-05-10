@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
 const { test, after } = require('node:test')
@@ -21,7 +22,7 @@ test('should validate content-type CRLF Injection', async (t) => {
 
   await once(server, 'listening')
   try {
-    await request(`http://localhost:${server.address().port}`, {
+    await request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'GET',
       headers: {
         'content-type': 'application/json\r\n\r\nGET /foo2 HTTP/1.1'

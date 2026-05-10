@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 // Regression test for https://github.com/nodejs/undici/issues/4989
 //
 // Importing undici v8 sets a global dispatcher (including the legacy
@@ -55,7 +56,7 @@ test('globalThis.WebSocket connects to h2+http1.1 server after undici import', a
 
   // globalThis.WebSocket is Node.js's native WebSocket (backed by bundled undici).
   // It reads the global dispatcher set by the undici v8 import above.
-  const ws = new globalThis.WebSocket(`wss://localhost:${server.address().port}`)
+  const ws = new globalThis.WebSocket(`wss://${LOOPBACK_HOST}:${server.address().port}`)
 
   await Promise.race([
     new Promise((resolve, reject) => {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -23,7 +24,7 @@ test('abort the request on the other side if the stream is canceled', async (t) 
 
   await once(server.listen(0), 'listening')
 
-  const url = new URL(`http://127.0.0.1:${server.address().port}`)
+  const url = new URL(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   const response = await fetch(url)
 

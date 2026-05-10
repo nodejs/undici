@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
@@ -57,7 +58,7 @@ test('Should retry status code', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
@@ -152,7 +153,7 @@ test('Should account for network and response errors', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
@@ -223,7 +224,7 @@ test('Issue #3288 - request with body (asynciterable)', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
@@ -300,7 +301,7 @@ test('Should use retry-after header for retries', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
@@ -385,7 +386,7 @@ test('Should use retry-after header for retries (date)', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
@@ -467,7 +468,7 @@ test('Should retry with defaults', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {
@@ -560,7 +561,7 @@ test('Should handle 206 partial content', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: (...args) => {
         return client.dispatch(...args)
@@ -643,7 +644,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(
       dispatchOptions,
       {
@@ -744,7 +745,7 @@ test('retrying a request with a body', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: new RequestHandler(dispatchOptions, (err, data) => {
@@ -816,7 +817,7 @@ test('retrying a request with a body (stream)', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: new RequestHandler(dispatchOptions, (err, data) => {
@@ -890,7 +891,7 @@ test('retrying a request with a body (buffer)', async t => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: new RequestHandler(dispatchOptions, (err, data) => {
@@ -934,7 +935,7 @@ test('should not error if request is not meant to be retried', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const chunks = []
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
@@ -1023,7 +1024,7 @@ test('Should be able to properly pass the minTimeout to the RetryContext when co
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: new RequestHandler(dispatchOptions, (err, data) => {
@@ -1100,7 +1101,7 @@ test('Issue#2986 - Handle custom 206', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: (...args) => {
         return client.dispatch(...args)
@@ -1196,7 +1197,7 @@ test('Should resume 206 response with unknown complete length Content-Range', as
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: (...args) => {
         return client.dispatch(...args)
@@ -1296,7 +1297,7 @@ test('Issue#3128 - Support if-match', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: (...args) => {
         return client.dispatch(...args)
@@ -1396,7 +1397,7 @@ test('Issue#3128 - Should ignore weak etags', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: (...args) => {
         return client.dispatch(...args)
@@ -1496,7 +1497,7 @@ test('Weak etags are ignored on range-requests', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: (...args) => {
         return client.dispatch(...args)
@@ -1591,7 +1592,7 @@ test('Should throw RequestRetryError when Content-Range mismatch', async t => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: (...args) => {
         return client.dispatch(...args)
@@ -1686,7 +1687,7 @@ test('Should use retry-after header for retries (date) but date format is wrong'
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const handler = new RetryHandler(dispatchOptions, {
       dispatch: client.dispatch.bind(client),
       handler: {

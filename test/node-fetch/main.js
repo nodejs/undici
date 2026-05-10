@@ -24,6 +24,7 @@ const RequestOrig = require('../../lib/web/fetch/request.js').Request
 const TestServer = require('./utils/server.js')
 const { createServer } = require('node:http')
 const { default: tspl } = require('@matteo.collina/tspl')
+const { LOOPBACK_HOST } = require('../utils/node-http')
 
 const {
   Uint8Array: VMUint8Array
@@ -1625,7 +1626,7 @@ describe('node-fetch', () => {
     })
     after(() => server.close())
     server.listen(0, () => {
-      const url = `http://localhost:${server.address().port}`
+      const url = `http://${LOOPBACK_HOST}:${server.address().port}`
       const options = {
         method: 'HEAD'
       }

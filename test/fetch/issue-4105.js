@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -27,7 +28,7 @@ test('markResourceTiming responseStatus is set', async (t) => {
     })
   }).observe({ type: 'resource', buffered: true })
 
-  const response = await fetch(`http://localhost:${server.address().port}`)
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
   await response.text()
 
   await promise.promise

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { WebSocketServer } = require('ws')
@@ -23,7 +24,7 @@ test('Client fails the connection if receiving a masked frame', async (t) => {
     socket.write(buffer, () => ws.close())
   })
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   ws.addEventListener('close', (e) => {
     t.assert.deepStrictEqual(e.code, 1006)

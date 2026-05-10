@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createSecureServer } = require('node:http2')
 const { createServer } = require('node:http')
 const { createReadStream, readFileSync } = require('node:fs')
@@ -38,7 +39,7 @@ test('[Fetch] Issue#2311', async (t) => {
   server.listen()
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -46,7 +47,7 @@ test('[Fetch] Issue#2311', async (t) => {
   })
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       method: 'POST',
@@ -87,7 +88,7 @@ test('[Fetch] Simple GET with h2', async (t) => {
   server.listen()
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -95,7 +96,7 @@ test('[Fetch] Simple GET with h2', async (t) => {
   })
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       method: 'GET',
@@ -146,7 +147,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) 
   server.listen()
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -154,7 +155,7 @@ test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) 
   })
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       method: 'POST',
@@ -207,7 +208,7 @@ test(
     server.listen(0)
     await once(server, 'listening')
 
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
@@ -217,7 +218,7 @@ test(
     t.after(closeClientAndServerAsPromise(client, server))
 
     const response = await fetch(
-      `https://localhost:${server.address().port}/`,
+      `https://${LOOPBACK_HOST}:${server.address().port}/`,
       // Needs to be passed to disable the reject unauthorized
       {
         method: 'PUT',
@@ -269,7 +270,7 @@ test('Should handle h2 request with body (Blob)', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -279,7 +280,7 @@ test('Should handle h2 request with body (Blob)', async (t) => {
   t.after(closeClientAndServerAsPromise(client, server))
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       body,
@@ -334,7 +335,7 @@ test(
     server.listen(0)
     await once(server, 'listening')
 
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
@@ -344,7 +345,7 @@ test(
     t.after(closeClientAndServerAsPromise(client, server))
 
     const response = await fetch(
-      `https://localhost:${server.address().port}/`,
+      `https://${LOOPBACK_HOST}:${server.address().port}/`,
       // Needs to be passed to disable the reject unauthorized
       {
         body,
@@ -381,7 +382,7 @@ test('Issue#2415', async (t) => {
   server.listen()
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -389,7 +390,7 @@ test('Issue#2415', async (t) => {
   })
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       method: 'GET',
@@ -433,7 +434,7 @@ test('Issue #2386', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -443,7 +444,7 @@ test('Issue #2386', async (t) => {
   t.after(closeClientAndServerAsPromise(client, server))
 
   await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       body,
@@ -483,7 +484,7 @@ test('Issue #3046', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -493,7 +494,7 @@ test('Issue #3046', async (t) => {
   t.after(closeClientAndServerAsPromise(client, server))
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       method: 'GET',
@@ -516,7 +517,7 @@ test('[Fetch] Empty POST without h2 has Content-Length', async (t) => {
     res.end(`content-length:${req.headers['content-length']}`)
   }).listen(0)
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   t.after(async () => {
     server.close()
@@ -528,7 +529,7 @@ test('[Fetch] Empty POST without h2 has Content-Length', async (t) => {
   await once(server, 'listening')
 
   const response = await fetch(
-    `http://localhost:${server.address().port}/`, {
+    `http://${LOOPBACK_HOST}:${server.address().port}/`, {
       method: 'POST',
       dispatcher: client
     }
@@ -555,7 +556,7 @@ test('[Fetch] Empty POST with h2 has Content-Length', async (t) => {
   server.listen()
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -565,7 +566,7 @@ test('[Fetch] Empty POST with h2 has Content-Length', async (t) => {
   t.after(closeClientAndServerAsPromise(client, server))
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://${LOOPBACK_HOST}:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       method: 'POST',

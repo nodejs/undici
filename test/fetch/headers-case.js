@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { fetch, Headers, Request } = require('../..')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -18,7 +19,7 @@ test('Headers retain keys case-sensitive', async (t) => {
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
   for (const headers of [
     new Headers([['Content-Type', 'text/plain']]),
     { 'Content-Type': 'text/plain' },

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const crypto = require('node:crypto')
 const https = require('node:https')
 const { test } = require('node:test')
@@ -24,7 +25,7 @@ test('Validate CA fingerprint with a custom connector', async t => {
 
   server.listen(0, function () {
     const connector = buildConnector({ rejectUnauthorized: false })
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect (opts, cb) {
         connector(opts, (err, socket) => {
           if (err) {
@@ -71,7 +72,7 @@ test('Bad CA fingerprint with a custom connector', async t => {
 
   server.listen(0, function () {
     const connector = buildConnector({ rejectUnauthorized: false })
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect (opts, cb) {
         connector(opts, (err, socket) => {
           if (err) {

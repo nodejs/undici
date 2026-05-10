@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
@@ -35,7 +36,7 @@ test('Should support H2 connection', async t => {
 
   await once(server.listen(0), 'listening')
 
-  authority = `localhost:${server.address().port}`
+  authority = `${LOOPBACK_HOST}:${server.address().port}`
   const client = new Client(`https://${authority}`, {
     connect: {
       rejectUnauthorized: false
@@ -90,7 +91,7 @@ test('Should support H2 connection(multiple requests)', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -148,7 +149,7 @@ test('Should support H2 connection (headers as array)', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -207,7 +208,7 @@ test('Should support multiple header values with semicolon separator', async t =
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -290,7 +291,7 @@ test('Should support H2 connection(POST Buffer)', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },

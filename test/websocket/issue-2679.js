@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { WebSocketServer } = require('ws')
@@ -19,7 +20,7 @@ test('Close without receiving code does not send an invalid payload', async (t) 
 
   server.on('error', (err) => t.assert.ifError(err))
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   await once(client, 'open')
 
   await once(client, 'close')

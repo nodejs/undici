@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { test } = require('node:test')
@@ -43,9 +44,9 @@ test('MockAgent net connect keeps multipart boundaries in sync with fetch header
 
   const previousDispatcher = getGlobalDispatcher()
   const mockAgent = new MockAgent()
-  const origin = `http://localhost:${server.address().port}`
+  const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
-  mockAgent.enableNetConnect(`localhost:${server.address().port}`)
+  mockAgent.enableNetConnect(`${LOOPBACK_HOST}:${server.address().port}`)
   setGlobalDispatcher(mockAgent)
 
   t.after(async () => {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { EventEmitter } = require('node:events')
@@ -113,7 +114,7 @@ test('connect/disconnect event(s)', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const pool = new Pool(`http://localhost:${server.address().port}`, {
+    const pool = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: clients,
       keepAliveTimeoutThreshold: 100
     })
@@ -155,10 +156,10 @@ test('basic get', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
-    t.strictEqual(client[kUrl].origin, `http://localhost:${server.address().port}`)
+    t.strictEqual(client[kUrl].origin, `http://${LOOPBACK_HOST}:${server.address().port}`)
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.ifError(err)
@@ -244,7 +245,7 @@ test('basic get error async/await', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     await client.request({ path: '/', method: 'GET' })
@@ -274,7 +275,7 @@ test('basic get with async/await', async (t) => {
   after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
-  const client = new Pool(`http://localhost:${server.address().port}`)
+  const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.destroy())
 
   const { statusCode, headers, body } = await client.request({ path: '/', method: 'GET' })
@@ -300,7 +301,7 @@ test('stream get async/await', async (t) => {
   after(() => server.close())
 
   await promisify(server.listen.bind(server))(0)
-  const client = new Pool(`http://localhost:${server.address().port}`)
+  const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.destroy())
 
   await client.stream({ path: '/', method: 'GET' }, ({ statusCode, headers }) => {
@@ -321,7 +322,7 @@ test('stream get error async/await', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     await client.stream({ path: '/', method: 'GET' }, () => {
@@ -347,7 +348,7 @@ test('pipeline get', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const bufs = []
@@ -460,7 +461,7 @@ test('busy', async (t) => {
   const connections = 2
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections,
       pipelining: 2
     })
@@ -529,7 +530,7 @@ test('pool upgrade promise', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const { headers, socket } = await client.upgrade({
@@ -579,7 +580,7 @@ test('pool connect', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const { socket } = await client.connect({
@@ -621,7 +622,7 @@ test('pool connect with clientTtl specified', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       clientTtl: 10
     })
 
@@ -662,7 +663,7 @@ test('pool replaces stale client when connections limit is reached', async (t) =
 
   await new Promise(resolve => server.listen(0, resolve))
 
-  const client = new Pool(`http://localhost:${server.address().port}`, {
+  const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     connections: 1,
     clientTtl: 1
   })
@@ -756,7 +757,7 @@ test('pool dispatch', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     let buf = ''
@@ -806,7 +807,7 @@ test('300 requests succeed', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1
     })
     after(() => client.destroy())
@@ -841,7 +842,7 @@ test('pool connect error', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     try {
@@ -875,7 +876,7 @@ test('pool upgrade error', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     try {
@@ -901,7 +902,7 @@ test('pool dispatch error', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -959,7 +960,7 @@ test('pool request abort in queue', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1006,7 +1007,7 @@ test('pool stream abort in queue', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1053,7 +1054,7 @@ test('pool pipeline abort in queue', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1100,7 +1101,7 @@ test('pool stream constructor error destroy body', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1156,7 +1157,7 @@ test('pool request constructor error destroy body', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1208,7 +1209,7 @@ test('pool close waits for all requests', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1256,7 +1257,7 @@ test('pool destroyed', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1283,7 +1284,7 @@ test('pool destroy fails queued requests', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`, {
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       pipelining: 1
     })
@@ -1332,10 +1333,10 @@ test('stats', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
-    t.strictEqual(client[kUrl].origin, `http://localhost:${server.address().port}`)
+    t.strictEqual(client[kUrl].origin, `http://${LOOPBACK_HOST}:${server.address().port}`)
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
       t.ifError(err)

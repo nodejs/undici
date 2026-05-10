@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -28,7 +29,7 @@ test('should decompress gzip response', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -70,7 +71,7 @@ test('should decompress deflate response', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -112,7 +113,7 @@ test('should decompress brotli response', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -154,7 +155,7 @@ test('should decompress zstd response', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -191,7 +192,7 @@ test('should pass through uncompressed response', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -229,7 +230,7 @@ test('should pass through unsupported encoding', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -271,7 +272,7 @@ test('should pass through error responses (4xx, 5xx)', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -308,7 +309,7 @@ test('should pass through 204 No Content responses', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -342,7 +343,7 @@ test('should pass through 304 Not Modified responses', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -381,7 +382,7 @@ test('should handle large compressed responses', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -423,7 +424,7 @@ test('should handle case-insensitive content-encoding', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -465,7 +466,7 @@ test('should remove content-length header when decompressing', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -507,7 +508,7 @@ test('should allow decompressing 5xx responses when skipErrorResponses is false'
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor({ skipErrorResponses: false }))
 
   after(async () => {
@@ -550,7 +551,7 @@ test('should allow custom skipStatusCodes', async t => {
 
   // Skip decompression for 201 status codes
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor({ skipStatusCodes: [201, 204, 304] }))
 
   after(async () => {
@@ -598,7 +599,7 @@ test('should decompress multiple encodings in correct order', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -640,7 +641,7 @@ test('should handle legacy encoding names (x-gzip)', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -678,7 +679,7 @@ test('should pass through responses with unsupported encoding in chain', async t
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -720,7 +721,7 @@ test('should handle empty encoding values', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -762,7 +763,7 @@ test('should handle multiple pause/resume cycles during decompression', async t 
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -834,7 +835,7 @@ test('should handle controller pause with chained decompression', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -904,7 +905,7 @@ test('should behave like fetch() for compressed responses', async t => {
   server.listen(0)
   await once(server, 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const { fetch } = require('../..')
   const fetchResponse = await fetch(baseUrl)
@@ -964,7 +965,7 @@ test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async t 
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -1002,7 +1003,7 @@ test(`should reject more than ${MAX_CONTENT_ENCODINGS} content-encodings`, async
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -1041,7 +1042,7 @@ test('should reject excessive content-encoding chains', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(createDecompressInterceptor())
 
   after(async () => {
@@ -1090,7 +1091,7 @@ test('should work with global dispatcher for both fetch() and request()', async 
   server.listen(0)
   await once(server, 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const originalDispatcher = getGlobalDispatcher()
 

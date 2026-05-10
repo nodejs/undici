@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { createServer, createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 const { test } = require('node:test')
@@ -58,7 +59,7 @@ test('Should support h2c connection', async t => {
 
   server.listen()
   await once(server, 'listening')
-  authority = `localhost:${server.address().port}`
+  authority = `${LOOPBACK_HOST}:${server.address().port}`
   const client = new H2CClient(`http://${authority}/`)
 
   t.after(() => client.close())
@@ -86,7 +87,7 @@ test('Should support h2c connection with body', async t => {
 
   server.listen()
   await once(server, 'listening')
-  const client = new H2CClient(`http://localhost:${server.address().port}/`)
+  const client = new H2CClient(`http://${LOOPBACK_HOST}:${server.address().port}/`)
 
   t.after(() => client.close())
   t.after(() => server.close())
@@ -127,7 +128,7 @@ test('Should queue h2c requests above the remote max concurrent streams setting'
 
   server.listen()
   await once(server, 'listening')
-  const client = new H2CClient(`http://localhost:${server.address().port}/`, {
+  const client = new H2CClient(`http://${LOOPBACK_HOST}:${server.address().port}/`, {
     maxConcurrentStreams: 10,
     pipelining: 10
   })
@@ -161,7 +162,7 @@ test('Should reject request if not h2c supported', async t => {
 
   server.listen()
   await once(server, 'listening')
-  const client = new H2CClient(`http://localhost:${server.address().port}/`)
+  const client = new H2CClient(`http://${LOOPBACK_HOST}:${server.address().port}/`)
 
   t.after(() => client.destroy())
   t.after(() => server.close())
@@ -275,7 +276,7 @@ test('Pool with useH2c and connections > 1 should not raise HTTPParserError', as
 
   server.listen(0)
   await once(server, 'listening')
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
   const pool = new Pool(url, { useH2c: true, connections: 2 })
 
   t.after(() => pool.close())

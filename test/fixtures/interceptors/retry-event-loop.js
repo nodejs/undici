@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const {
@@ -17,7 +18,7 @@ server.on('request', (req, res) => {
 server.listen(0)
 once(server, 'listening').then(() => {
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(
     retry({
       maxTimeout: 1000,

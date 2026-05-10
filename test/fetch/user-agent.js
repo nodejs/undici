@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const events = require('node:events')
 const http = require('node:http')
@@ -16,7 +17,7 @@ test('user-agent defaults correctly', async (t) => {
 
   server.listen(0)
   await events.once(server, 'listening')
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
   const [nodeBuildJSON, undiciJSON] = await Promise.all([
     nodeBuild.fetch(url).then((body) => body.json()),
     undici.fetch(url).then((body) => body.json())
@@ -34,7 +35,7 @@ test('set user-agent for fetch', async (t) => {
 
   server.listen(0)
   await events.once(server, 'listening')
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
   const [nodeBuildJSON, undiciJSON] = await Promise.all([
     nodeBuild.fetch(url, { headers: { 'user-agent': 'AcmeCo Crawler - acme.co - node@acme.co' } }).then((body) => body.json()),
     undici.fetch(url, {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const http = require('node:http')
@@ -97,7 +98,7 @@ test('basic dispatch get', async (t) => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     p.strictEqual(undefined, req.headers.foo)
     p.strictEqual('bar', req.headers.bar)
     p.strictEqual('', req.headers.baz)
@@ -113,7 +114,7 @@ test('basic dispatch get', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const bufs = []
@@ -151,7 +152,7 @@ test('trailers dispatch get', async (t) => {
   const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
-    p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    p.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     p.strictEqual(undefined, req.headers.foo)
     p.strictEqual('bar', req.headers.bar)
     p.strictEqual(undefined, req.headers['content-length'])
@@ -168,7 +169,7 @@ test('trailers dispatch get', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const bufs = []
@@ -218,7 +219,7 @@ test('dispatch onResponseStart error', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const _err = new Error()
@@ -255,7 +256,7 @@ test('dispatch onResponseEnd error', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const _err = new Error()
@@ -292,7 +293,7 @@ test('dispatch onResponseData error', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const _err = new Error()
@@ -329,7 +330,7 @@ test('dispatch onRequestStart error', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const _err = new Error()
@@ -379,7 +380,7 @@ test('connect call onRequestUpgrade once', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     let recvData = ''
@@ -431,7 +432,7 @@ test('dispatch onResponseStart missing', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     client.dispatch({
@@ -464,7 +465,7 @@ test('dispatch onResponseData missing', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     client.dispatch({
@@ -497,7 +498,7 @@ test('dispatch onResponseEnd missing', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     client.dispatch({
@@ -530,7 +531,7 @@ test('dispatch onResponseError missing', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     try {
@@ -567,7 +568,7 @@ test('dispatch CONNECT onRequestUpgrade missing', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => client.destroy.bind(client)())
 
     client.dispatch({
@@ -598,7 +599,7 @@ test('dispatch upgrade onRequestUpgrade missing', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     client.dispatch({
@@ -629,7 +630,7 @@ test('dispatch pool onResponseError missing', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     try {
@@ -656,7 +657,7 @@ test('dispatch onBodySent not a function', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     client.dispatch({
@@ -686,7 +687,7 @@ test('dispatch onBodySent buffer', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
     const body = 'hello 🚀'
     client.dispatch({
@@ -725,7 +726,7 @@ test('dispatch onBodySent stream', async (t) => {
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   const body = stream.Readable.from(chunks)
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
     let sentBytes = 0
     let currentChunk = 0
@@ -766,7 +767,7 @@ test('dispatch onBodySent async-iterable', (t, done) => {
   const chunks = ['he', 'llo', 'world', '🚀']
   const toSendBytes = chunks.reduce((a, b) => a + Buffer.byteLength(b), 0)
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
     let sentBytes = 0
     let currentChunk = 0
@@ -801,7 +802,7 @@ test('dispatch onBodySent throws error', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
     const body = 'hello'
     client.dispatch({
@@ -834,7 +835,7 @@ test('dispatches in expected order', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   server.listen(0, () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
     t.after(() => { return client.close() })
 
@@ -882,7 +883,7 @@ test('onResponseStarted is called with interceptor', async (t) => {
   const p = tspl(t, { plan: 2 })
 
   server.listen(0, () => {
-    const pool = new Pool(`http://localhost:${server.address().port}`)
+    const pool = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const client = pool.compose((dispatch) => (opts, handler) => dispatch(opts, handler))
 
     t.after(() => { return pool.close() })
@@ -925,7 +926,7 @@ test('dispatches in expected order for http2', async (t) => {
   const p = tspl(t, { plan: 1 })
 
   server.listen(0, () => {
-    const client = new Pool(`https://localhost:${server.address().port}`, {
+    const client = new Pool(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
@@ -977,7 +978,7 @@ test('Issue#3065 - fix bad destroy handling', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       }
@@ -1070,7 +1071,7 @@ test('Issue#3065 - fix bad destroy handling (h2)', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },

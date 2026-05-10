@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
@@ -15,7 +16,7 @@ test('request invalid content-length', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -108,7 +109,7 @@ function invalidContentLength (bodyType) {
     })
     after(() => server.close())
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       after(() => client.close())
 
       client.once('disconnect', () => {
@@ -170,7 +171,7 @@ function zeroContentLength (bodyType) {
     })
     after(() => server.close())
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       after(() => client.close())
 
       client.request({
@@ -206,7 +207,7 @@ test('request streaming no body data when content-length=0', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -247,7 +248,7 @@ test('response invalid content length with close', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 0
     })
     after(() => client.close())
@@ -281,7 +282,7 @@ test('request streaming with Readable.from(buf)', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -323,7 +324,7 @@ test('request DELETE, content-length=0, with body', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -382,7 +383,7 @@ test('content-length shouldSendContentLength=false', async (t) => {
   })
   after(() => server.close())
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({

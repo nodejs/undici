@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const http = require('node:http')
 const { fetch } = require('../../')
 const { once, setMaxListeners } = require('node:events')
@@ -33,7 +34,7 @@ test('long-lived-abort-controller', async (t) => {
   // Unfortunately we are relying on GC and implementation details here.
   for (let i = 0; i < 2000; i++) {
     // make request
-    const res = await fetch(`http://localhost:${server.address().port}`, {
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       signal: controller.signal
     })
 

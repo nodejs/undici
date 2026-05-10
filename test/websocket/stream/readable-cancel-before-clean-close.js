@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 
@@ -36,7 +37,7 @@ test('WebSocketStream does not throw when readable is canceled before a clean cl
     server.close()
   })
 
-  const wss = new WebSocketStream(`ws://127.0.0.1:${server.address().port}`)
+  const wss = new WebSocketStream(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   const { readable } = await wss.opened
 
   await readable.cancel(new Error('client cancel')).catch(() => {})

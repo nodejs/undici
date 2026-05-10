@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const { Client } = require('../..')
@@ -18,7 +19,7 @@ test('client does not hang when connector throws synchronously', async (t) => {
   after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: () => {
         throw new Error('connector boom')
       }
@@ -52,7 +53,7 @@ test('client recovers after connector stops throwing', async (t) => {
 
   server.listen(0, () => {
     let shouldThrow = true
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: (opts, cb) => {
         if (shouldThrow) {
           throw new Error('connector boom')

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -15,7 +16,7 @@ test('fetch preserves trailing ? in request URL', async (t) => {
   await once(server, 'listening')
   t.after(closeServerAsPromise(server))
 
-  const base = `http://localhost:${server.address().port}`
+  const base = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const cases = [
     ['/echo', '/echo'],

@@ -15,6 +15,7 @@ const { unlink } = require('node:fs/promises')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
 const { SnapshotAgent, setGlobalDispatcher, getGlobalDispatcher, request } = require('../..')
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 
 function snapshotPath (suffix) {
   return join(tmpdir(), `undici-issue-4663-${suffix}-${process.pid}-${Date.now()}.json`)
@@ -31,7 +32,7 @@ async function startLiveServer (t) {
     server.close()
   })
   const { port } = server.address()
-  return `http://127.0.0.1:${port}`
+  return `http://${LOOPBACK_HOST}:${port}`
 }
 
 function restoreGlobalDispatcher (t) {

@@ -12,6 +12,7 @@ const pem = require('@metcoder95/https-pem')
 
 const { Client, errors } = require('..')
 const { kQueue, kRunningIdx } = require('../lib/core/symbols')
+const { LOOPBACK_HOST } = require('./utils/node-http')
 
 test('Dispatcher#Stream', async t => {
   t = tspl(t, { plan: 4 })
@@ -37,7 +38,7 @@ test('Dispatcher#Stream', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -91,7 +92,7 @@ test('Dispatcher#Pipeline', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -151,7 +152,7 @@ test('Dispatcher#Connect', async t => {
       t.fail(err)
     })
 
-    const forward = new Client(`https://localhost:${server.address().port}`, {
+    const forward = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
@@ -232,7 +233,7 @@ test('Dispatcher#Upgrade - Should throw on non-websocket upgrade', async t => {
   t = tspl(t, { plan: 1 })
 
   server.listen(0, async () => {
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false
       },
@@ -273,7 +274,7 @@ test('Dispatcher#Upgrade', async t => {
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -328,7 +329,7 @@ test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgr
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -373,7 +374,7 @@ test('Dispatcher#Upgrade rejects if stream closes before response headers', asyn
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -406,7 +407,7 @@ test('Dispatcher#Connect rejects if stream closes before response headers', asyn
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -451,7 +452,7 @@ test('Dispatcher#Upgrade rejects websocket upgrade on non-200 HTTP/2 response', 
 
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -488,7 +489,7 @@ test('Dispatcher#destroy', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -581,7 +582,7 @@ test('Should handle h2 request without body', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -627,7 +628,7 @@ test('Should clear h2 request stream references before completing a response', a
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -736,7 +737,7 @@ test('Should send http2 PING frames', async t => {
 
   t = tspl(t, { plan: 2 })
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
   await once(server, 'listening')
 
   const client = new Client(`https://${server.address().address}:${server.address().port}`, {
@@ -807,7 +808,7 @@ test('Should not send http2 PING frames if interval === 0', async t => {
 
   t = tspl(t, { plan: 2 })
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
   await once(server, 'listening')
 
   const client = new Client(`https://${server.address().address}:${server.address().port}`, {
@@ -878,7 +879,7 @@ test('Should not send http2 PING frames after connection is closed', async t => 
 
   t = tspl(t, { plan: 2 })
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
   await once(server, 'listening')
 
   const client = new Client(`https://${server.address().address}:${server.address().port}`, {

@@ -1,4 +1,5 @@
 const { test, describe } = require('node:test')
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { request, Agent, Pool } = require('..')
@@ -30,7 +31,7 @@ describe('Agent should close inactive clients', () => {
         return pool
       }
     })
-    const { statusCode } = await request(`http://localhost:${server.address().port}`, { dispatcher: agent })
+    const { statusCode } = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
     assert.equal(statusCode, 200)
 
     await p
@@ -100,7 +101,7 @@ describe('Agent should not close active clients', () => {
 
     const socketSequence = []
     for (let i = 0; i < 5; i++) {
-      const { statusCode, headers, body } = await request(`http://localhost:${server.address().port}`, {
+      const { statusCode, headers, body } = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         dispatcher: agent
       })
 
@@ -141,7 +142,7 @@ describe('Agent should not close active clients', () => {
 
     const socketSequence = []
     for (let i = 0; i < 5; i++) {
-      const { statusCode, headers, body } = await request(`http://localhost:${server.address().port}`, {
+      const { statusCode, headers, body } = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         dispatcher: agent
       })
 

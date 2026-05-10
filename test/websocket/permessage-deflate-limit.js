@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { randomFillSync } = require('node:crypto')
@@ -23,7 +24,7 @@ test('Compressed message under limit decompresses successfully', async (t) => {
     ws.send(Buffer.alloc(1024, 0x41), { binary: true })
   })
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   const [event] = await once(client, 'message')
   t.assert.strictEqual(event.data.size, 1024)
@@ -77,7 +78,7 @@ test('Custom maxPayloadSize allows messages under limit', async (t) => {
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   const [event] = await once(client, 'message')
   t.assert.strictEqual(event.data.size, dataSize, 'Message under limit should be received')
@@ -106,7 +107,7 @@ test('Messages at exactly the limit succeed', async (t) => {
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   const [event] = await once(client, 'message')
   t.assert.strictEqual(event.data.size, limit, 'Message at exactly the limit should succeed')
@@ -148,7 +149,7 @@ test('Compressed frame payload over wire-size limit is rejected', async (t) => {
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   client.addEventListener('message', () => {
     messageReceived = true
@@ -189,7 +190,7 @@ test('Messages over the limit are rejected', async (t) => {
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   client.addEventListener('message', () => {
     messageReceived = true
@@ -237,7 +238,7 @@ test('Limit can be disabled by setting maxPayloadSize to 0', async (t) => {
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
   const timeout = Symbol('timeout')
 
   const result = await Promise.race([
@@ -285,7 +286,7 @@ test('Fragmented compressed payload over total limit is rejected', async (t) => 
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   client.addEventListener('message', () => {
     messageReceived = true
@@ -325,7 +326,7 @@ test('Raw uncompressed payload over immediate limit is rejected', async (t) => {
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   client.addEventListener('message', () => {
     messageReceived = true
@@ -365,7 +366,7 @@ test('Raw uncompressed payload over 16-bit extended limit is rejected', async (t
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   client.addEventListener('message', () => {
     messageReceived = true
@@ -405,7 +406,7 @@ test('Raw uncompressed payload over 64-bit extended limit is rejected', async (t
 
   t.after(() => agent.close())
 
-  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const client = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: agent })
 
   client.addEventListener('message', () => {
     messageReceived = true

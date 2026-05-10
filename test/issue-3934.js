@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -26,7 +27,7 @@ test('request preserves multiple header values', async (t) => {
 
   const {
     headers
-  } = await request(`http://localhost:${server.address().port}`, { dispatcher: retryAgent })
+  } = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: retryAgent })
 
   assert.deepStrictEqual(headers['set-cookie'], ['a', 'b', 'c'])
 })
@@ -50,7 +51,7 @@ test('WrapHandler preserves latin1 header bytes', async (t) => {
 
   const {
     headers
-  } = await request(`http://localhost:${server.address().port}`, { dispatcher: retryAgent })
+  } = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher: retryAgent })
 
   assert.strictEqual(headers['x-test'], expected)
 })

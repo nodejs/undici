@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { tspl } = require('@matteo.collina/tspl')
@@ -35,7 +36,7 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
 
   // Start server on a random port
   await new Promise(resolve => server.listen(0, resolve))
-  const serverUrl = `https://localhost:${server.address().port}`
+  const serverUrl = `https://${LOOPBACK_HOST}:${server.address().port}`
 
   t.after(closeServerAsPromise(server))
 

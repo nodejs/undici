@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after, mock } = require('node:test')
 const { Client } = require('..')
@@ -23,7 +24,7 @@ test('custom session passed to client will be used in tls connect call', async (
   server.listen(0, async () => {
     const session = Buffer.from('test-session')
 
-    const client = new Client(`https://localhost:${server.address().port}`, {
+    const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
       connect: {
         rejectUnauthorized: false,
         session

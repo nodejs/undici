@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./node-http')
 const { createServer } = require('node:http')
 const { after } = require('node:test')
 
@@ -17,7 +18,7 @@ function startServer (handler) {
     const server = createServer({ joinDuplicateHeaders: true }, handler)
 
     server.listen(0, () => {
-      resolve(`localhost:${server.address().port}`)
+      resolve(`${LOOPBACK_HOST}:${server.address().port}`)
     })
 
     after(close(server))

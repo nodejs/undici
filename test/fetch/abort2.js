@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -25,7 +26,7 @@ test('parallel fetch with the same AbortController works as expected', async (t)
   const abortController = new AbortController()
 
   async function makeRequest () {
-    const result = await fetch(`http://localhost:${server.address().port}`, {
+    const result = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       signal: abortController.signal
     }).then(response => response.json())
 

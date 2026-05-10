@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
@@ -19,7 +20,7 @@ describe('Cache Interceptor', () => {
       res.end('asd')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -68,7 +69,7 @@ describe('Cache Interceptor', () => {
       }
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -148,7 +149,7 @@ describe('Cache Interceptor', () => {
 
     await once(server, 'listening')
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache({
         cacheByDefault: 1000
       }))
@@ -186,7 +187,7 @@ describe('Cache Interceptor', () => {
       res.end('asd')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -264,7 +265,7 @@ describe('Cache Interceptor', () => {
       res.end('asd')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -339,7 +340,7 @@ describe('Cache Interceptor', () => {
       res.end('asd')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -423,7 +424,7 @@ describe('Cache Interceptor', () => {
       }
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -497,7 +498,7 @@ describe('Cache Interceptor', () => {
       originalDelete(key)
     }
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache({
         store,
         methods: ['GET'] // explicitly only cache GET methods
@@ -539,7 +540,7 @@ describe('Cache Interceptor', () => {
 
     after(() => server.close())
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache({
         store: {
           get () {
@@ -588,7 +589,7 @@ describe('Cache Interceptor', () => {
       res.end()
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -638,7 +639,7 @@ describe('Cache Interceptor', () => {
 
     after(() => server.close())
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache({
         cacheByDefault: 3600
       }))
@@ -688,7 +689,7 @@ describe('Cache Interceptor', () => {
       }
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -763,7 +764,7 @@ describe('Cache Interceptor', () => {
         res.end()
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -832,7 +833,7 @@ describe('Cache Interceptor', () => {
         }
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -897,7 +898,7 @@ describe('Cache Interceptor', () => {
         res.end()
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -961,7 +962,7 @@ describe('Cache Interceptor', () => {
         }
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -1018,7 +1019,7 @@ describe('Cache Interceptor', () => {
         fail('shouln\'t have reached this')
       }
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({ store }))
 
       after(async () => {
@@ -1046,7 +1047,7 @@ describe('Cache Interceptor', () => {
         requestsToOrigin++
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -1122,7 +1123,7 @@ describe('Cache Interceptor', () => {
         }
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -1235,7 +1236,7 @@ describe('Cache Interceptor', () => {
         res.end(body)
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(async () => {
@@ -1291,7 +1292,7 @@ describe('Cache Interceptor', () => {
         res.end(body)
       }).listen(0)
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({ cacheByDefault: 60 }))
 
       after(async () => {
@@ -1338,7 +1339,7 @@ describe('Cache Interceptor', () => {
       res.end(body)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -1388,7 +1389,7 @@ describe('Cache Interceptor', () => {
       res.end(body)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -1438,7 +1439,7 @@ describe('Cache Interceptor', () => {
       res.end(body)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -1498,7 +1499,7 @@ describe('Cache Interceptor', () => {
       }
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -1567,7 +1568,7 @@ describe('Cache Interceptor', () => {
       }
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache())
 
     after(async () => {
@@ -1624,7 +1625,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: ['localhost']
         }))
@@ -1663,7 +1664,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: ['http://example.com']
         }))
@@ -1702,7 +1703,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: [/localhost/]
         }))
@@ -1741,7 +1742,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: [/example\.com/]
         }))
@@ -1780,7 +1781,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: ['http://other.com', /localhost/]
         }))
@@ -1819,7 +1820,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(() => client.close())
@@ -1856,7 +1857,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: []
         }))
@@ -1919,7 +1920,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: ['LOCALHOST']
         }))
@@ -1958,7 +1959,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache({
           origins: ['example.com']
         }))
@@ -2007,7 +2008,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      const origin = `http://localhost:${server.address().port}`
+      const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
       const client = new Client(origin)
         .compose(interceptors.cache({ store }))
 
@@ -2064,7 +2065,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      const origin = `http://localhost:${server.address().port}`
+      const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
       const client = new Client(origin)
         .compose(interceptors.cache({ store, type: 'private' }))
 
@@ -2119,7 +2120,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      const origin = `http://localhost:${server.address().port}`
+      const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
       const client = new Client(origin)
         .compose(interceptors.cache({ store }))
 
@@ -2155,7 +2156,7 @@ describe('Cache Interceptor', () => {
 
       await once(server, 'listening')
 
-      const origin = `http://localhost:${server.address().port}`
+      const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
       const client = new Client(origin)
         .compose(interceptors.cache({ store }))
 
@@ -2184,7 +2185,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(() => client.close())
@@ -2222,7 +2223,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(() => client.close())
@@ -2260,7 +2261,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(() => client.close())
@@ -2298,7 +2299,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(() => client.close())
@@ -2335,7 +2336,7 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         .compose(interceptors.cache())
 
       after(() => client.close())

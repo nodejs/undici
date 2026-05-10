@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
@@ -19,7 +20,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response-body')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -65,7 +66,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.headers['accept-encoding']}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -109,7 +110,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.headers['accept-encoding']}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -163,7 +164,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.url}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -200,7 +201,7 @@ describe('Deduplicate Interceptor', () => {
       res.destroy()
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -241,7 +242,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('cached-response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
       .compose(interceptors.cache())
 
@@ -280,7 +281,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('non-cached-response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
       .compose(interceptors.cache())
 
@@ -327,7 +328,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -373,7 +374,7 @@ describe('Deduplicate Interceptor', () => {
       res.end()
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -417,7 +418,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -469,7 +470,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -514,7 +515,7 @@ describe('Deduplicate Interceptor', () => {
       res.destroy() // Simulate error
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -562,7 +563,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.url}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -606,7 +607,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.headers.authorization}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -652,7 +653,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.headers.cookie}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -698,7 +699,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.headers.authorization}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -744,7 +745,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response ${requestsToOrigin}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ skipHeaderNames: ['x-no-dedupe'] }))
 
     after(async () => {
@@ -790,7 +791,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response ${requestsToOrigin}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ skipHeaderNames: ['X-No-Dedupe'] }))
 
     after(async () => {
@@ -836,7 +837,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ skipHeaderNames: ['x-no-dedupe'] }))
 
     after(async () => {
@@ -880,7 +881,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response ${requestsToOrigin}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ skipHeaderNames: ['x-skip-1', 'x-skip-2'] }))
 
     after(async () => {
@@ -946,7 +947,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ excludeHeaderNames: ['x-request-id'] }))
 
     after(async () => {
@@ -992,7 +993,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ excludeHeaderNames: ['X-Request-ID'] }))
 
     after(async () => {
@@ -1038,7 +1039,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response for ${req.headers['accept-encoding']}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ excludeHeaderNames: ['x-request-id'] }))
 
     after(async () => {
@@ -1084,7 +1085,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('response')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ excludeHeaderNames: ['x-request-id', 'x-correlation-id'] }))
 
     after(async () => {
@@ -1130,7 +1131,7 @@ describe('Deduplicate Interceptor', () => {
       res.end(`response ${requestsToOrigin}`)
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -1177,7 +1178,7 @@ describe('Deduplicate Interceptor', () => {
       res.end('chunk-2')
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate())
 
     after(async () => {
@@ -1227,7 +1228,7 @@ describe('Deduplicate Interceptor', () => {
       res.end()
     }).listen(0)
 
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.deduplicate({ maxBufferSize: 16 * 1024 }))
 
     after(async () => {

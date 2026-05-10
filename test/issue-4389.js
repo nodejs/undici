@@ -1,4 +1,5 @@
 'use strict'
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { describe, test } = require('node:test')
 const assert = require('node:assert')
 const { once } = require('node:events')
@@ -23,7 +24,7 @@ describe('Interceptor should not break multi-value headers', () => {
 
     const dispatcher = new Agent().compose((dispatch) => dispatch)
 
-    const { headers } = await fetch(`http://localhost:${server.address().port}`, { dispatcher })
+    const { headers } = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
     assert.deepStrictEqual(headers.getSetCookie(), ['a=1', 'b=2', 'c=3'])
   })
 
@@ -40,7 +41,7 @@ describe('Interceptor should not break multi-value headers', () => {
 
     const dispatcher = new Agent().compose((dispatch) => dispatch)
 
-    const { headers } = await fetch(`http://localhost:${server.address().port}`, { dispatcher })
+    const { headers } = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
     assert.deepStrictEqual(headers.get('x-test-header'), '1, 2, 3')
   })
 })

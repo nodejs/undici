@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { request } = require('..')
 const http = require('node:http')
 const { once } = require('node:events')
+const { LOOPBACK_HOST } = require('./utils/node-http')
 
 test('inflight and close', async (t) => {
   t = tspl(t, { plan: 3 })
@@ -17,10 +18,10 @@ test('inflight and close', async (t) => {
 
   after(() => server.close())
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
   await once(server, 'listening')
 
-  const url = `http://127.0.0.1:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const first = await request(url)
   t.ok(true, 'first response')

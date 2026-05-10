@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -23,6 +24,6 @@ test('No warning when reusing AbortController', async (t) => {
 
   const controller = new AbortController()
   for (let i = 0; i < 15; i++) {
-    await fetch(`http://localhost:${server.address().port}`, { signal: controller.signal })
+    await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, { signal: controller.signal })
   }
 })

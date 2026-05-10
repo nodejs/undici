@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
@@ -29,7 +30,7 @@ test('Pool.request() throws if opts.dispatcher is provided', async (t) => {
     await once(server, 'close')
   })
 
-  const pool = new Pool(`http://localhost:${server.address().port}`)
+  const pool = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => pool.close())
 
   const otherAgent = new Agent()
@@ -63,10 +64,10 @@ test('Client.request() throws if opts.dispatcher is provided', async (t) => {
     await once(server, 'close')
   })
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
-  const otherPool = new Pool(`http://localhost:${server.address().port}`)
+  const otherPool = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => otherPool.close())
 
   try {
@@ -92,7 +93,7 @@ test('Top-level request() still works with opts.dispatcher', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const pool = new Pool(`http://localhost:${server.address().port}`)
+  const pool = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   after(async () => {
     await pool.close()
@@ -100,7 +101,7 @@ test('Top-level request() still works with opts.dispatcher', async (t) => {
     await once(server, 'close')
   })
 
-  const { statusCode, body } = await request(`http://localhost:${server.address().port}`, {
+  const { statusCode, body } = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     method: 'GET',
     dispatcher: pool
   })

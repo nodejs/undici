@@ -1,4 +1,5 @@
 'use strict'
+const { LOOPBACK_HOST } = require('./utils/node-http')
 /* global WeakRef, FinalizationRegistry */
 
 const { tspl } = require('@matteo.collina/tspl')
@@ -39,7 +40,7 @@ test('gc should collect the client if, and only if, there are no active sockets'
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeoutThreshold: 100
     })
     client.once('disconnect', () => {
@@ -86,7 +87,7 @@ test('gc should collect the pool if, and only if, there are no active sockets', 
   })
 
   server.listen(0, () => {
-    const pool = new Pool(`http://localhost:${server.address().port}`, {
+    const pool = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 1,
       keepAliveTimeoutThreshold: 500
     })

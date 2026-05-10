@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { Client } = require('../../')
@@ -21,7 +22,7 @@ test('validations', async t => {
   })
 
   server.listen(0, async () => {
-    const url = `http://localhost:${server.address().port}`
+    const url = `http://${LOOPBACK_HOST}:${server.address().port}`
     client = new Client(url)
 
     await t.test('path', () => {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
@@ -38,7 +39,7 @@ test('Agent should support H2 connection', async t => {
   after(() => client.close())
 
   const response = await client.request({
-    origin: `https://localhost:${server.address().port}`,
+    origin: `https://${LOOPBACK_HOST}:${server.address().port}`,
     path: '/',
     method: 'GET',
     headers: {

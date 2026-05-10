@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -23,7 +24,7 @@ test('issue #2828, dispatcher is allowed in RequestInit options', async (t) => {
   t.after(server.close.bind(server))
   await once(server, 'listening')
 
-  const request = new Request(`http://localhost:${server.address().port}`, {
+  const request = new Request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     dispatcher: new CustomAgent()
   })
 

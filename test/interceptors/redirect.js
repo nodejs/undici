@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -837,7 +838,7 @@ test('same-origin redirect preserves plain object headers with polluted Object.p
   try {
     await once(server, 'listening')
 
-    const res = await undici.request(`http://localhost:${server.address().port}/redirect`, {
+    const res = await undici.request(`http://${LOOPBACK_HOST}:${server.address().port}/redirect`, {
       dispatcher: new undici.Agent({}).compose(redirect({ maxRedirections: 1 })),
       headers: {
         'X-Custom': 'ok'

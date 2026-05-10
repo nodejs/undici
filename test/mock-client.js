@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, after, describe } = require('node:test')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
@@ -213,7 +214,7 @@ test('MockClient - should be able to set as globalDispatcher', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   after(() => mockAgent.close())
@@ -254,7 +255,7 @@ test('MockClient - should support query params', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   after(() => mockAgent.close())
@@ -297,7 +298,7 @@ test('MockClient - should intercept query params with hardcoded path', async (t)
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   after(() => mockAgent.close())
@@ -339,7 +340,7 @@ test('MockClient - should intercept query params regardless of key ordering', as
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   after(() => mockAgent.close())
@@ -389,7 +390,7 @@ test('MockClient - should be able to use as a local dispatcher', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   after(() => mockAgent.close())
@@ -427,7 +428,7 @@ test('MockClient - basic intercept with MockClient.request', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   after(() => mockAgent.close())
@@ -473,7 +474,7 @@ test('MockClient - cleans mocks', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   after(() => mockAgent.close())

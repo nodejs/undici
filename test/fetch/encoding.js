@@ -4,6 +4,7 @@ const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test, before, after, describe } = require('node:test')
 const { fetch, Client } = require('../..')
+const { LOOPBACK_HOST } = require('../utils/node-http')
 
 describe('content-encoding handling', () => {
   const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
@@ -55,7 +56,7 @@ describe('content-encoding handling', () => {
   })
 
   test('content-encoding header', async (t) => {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepalive: false,
       headers: { 'accept-encoding': 'deflate, gzip' }
     })
@@ -66,7 +67,7 @@ describe('content-encoding handling', () => {
   })
 
   test('content-encoding header is case-iNsENsITIve', async (t) => {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepalive: false,
       headers: { 'accept-encoding': 'DeFlAtE, GzIp' }
     })
@@ -77,7 +78,7 @@ describe('content-encoding handling', () => {
   })
 
   test('should decompress zstandard response', async (t) => {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepalive: false,
       headers: { 'accept-encoding': 'zstd' }
     })
@@ -109,7 +110,7 @@ describe('content-encoding chain limit', () => {
       res.flushHeaders()
       res.end('test')
     })
-    await once(server.listen(0, '127.0.0.1'), 'listening')
+    await once(server.listen(0, LOOPBACK_HOST), 'listening')
   })
 
   after(() => {
@@ -118,10 +119,10 @@ describe('content-encoding chain limit', () => {
   })
 
   test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
-    const client = new Client(`http://127.0.0.1:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => client.close())
 
-    const response = await fetch(`http://127.0.0.1:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       dispatcher: client,
       keepalive: false,
       headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS) }
@@ -133,11 +134,11 @@ describe('content-encoding chain limit', () => {
   })
 
   test(`should reject more than ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
-    const client = new Client(`http://127.0.0.1:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => client.close())
 
     await t.assert.rejects(
-      fetch(`http://127.0.0.1:${server.address().port}`, {
+      fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         dispatcher: client,
         keepalive: false,
         headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS + 1) }
@@ -150,11 +151,11 @@ describe('content-encoding chain limit', () => {
   })
 
   test('should reject excessive content-encoding chains', async (t) => {
-    const client = new Client(`http://127.0.0.1:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => client.close())
 
     await t.assert.rejects(
-      fetch(`http://127.0.0.1:${server.address().port}`, {
+      fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         dispatcher: client,
         keepalive: false,
         headers: { 'x-encoding-count': '100' }

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 
@@ -26,7 +27,7 @@ test('websocketstream opened.readable should expose text message payloads only',
     socket.send(JSON.stringify({ event: 'Ready', data: { id: 1010 } }))
   })
 
-  const url = `ws://127.0.0.1:${server.address().port}/`
+  const url = `ws://${LOOPBACK_HOST}:${server.address().port}/`
 
   for (let run = 1; run <= 100; run++) {
     const wss = new WebSocketStream(url)

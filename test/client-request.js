@@ -2,6 +2,7 @@
 
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe, before } = require('node:test')
 const { Client, errors } = require('..')
@@ -28,7 +29,7 @@ test('request dump head', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     let dumped = false
@@ -65,7 +66,7 @@ test('request dump big', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     let dumped = false
@@ -102,7 +103,7 @@ test('request dump', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     let dumped = false
@@ -135,7 +136,7 @@ test('request dump with abort signal', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client.request({
@@ -175,7 +176,7 @@ test('request dump with POJO as invalid signal', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client.request({
@@ -212,7 +213,7 @@ test('request dump with aborted signal', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client.request({
@@ -252,7 +253,7 @@ test('request hwm', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client.request({
@@ -283,7 +284,7 @@ test('request abort before headers', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client[kConnect](() => {
@@ -323,7 +324,7 @@ test('request body destroyed on invalid callback', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const body = new Readable({
@@ -357,7 +358,7 @@ test('trailers', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const { body, trailers } = await client.request({
@@ -398,7 +399,7 @@ test('destroy socket abruptly', async (t) => {
   })
 
   await promisify(server.listen.bind(server))(0)
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   const { statusCode, body } = await client.request({
@@ -443,7 +444,7 @@ test('destroy socket abruptly with keep-alive', async (t) => {
   })
 
   await promisify(server.listen.bind(server))(0)
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   const { statusCode, body } = await client.request({
@@ -480,7 +481,7 @@ test('request json', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -506,7 +507,7 @@ test('request long multibyte json', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -532,7 +533,7 @@ test('request text', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -616,7 +617,7 @@ describe('headers', () => {
     before(async () => {
       server.listen(0)
       await EE.once(server, 'listening')
-      serverAddress = `localhost:${server.address().port}`
+      serverAddress = `${LOOPBACK_HOST}:${server.address().port}`
     })
 
     after(() => {
@@ -659,7 +660,7 @@ describe('headers', () => {
     before(async () => {
       server.listen(0)
       await EE.once(server, 'listening')
-      serverAddress = `localhost:${server.address().port}`
+      serverAddress = `${LOOPBACK_HOST}:${server.address().port}`
     })
 
     after(() => {
@@ -723,7 +724,7 @@ test('request long multibyte text', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -750,7 +751,7 @@ test('request blob', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -779,7 +780,7 @@ test('request arrayBuffer', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -808,7 +809,7 @@ test('request bytes', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -837,7 +838,7 @@ test('request body', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -872,7 +873,7 @@ test('request post body no missing data', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -909,7 +910,7 @@ test('request post body no extra data handler', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const reqBody = new Readable({
@@ -947,7 +948,7 @@ test('request with onInfo callback', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     await client.request({
@@ -977,7 +978,7 @@ test('request with onInfo callback but socket is destroyed before end of respons
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
     try {
       await client.request({
@@ -1025,7 +1026,7 @@ test('request onInfo callback headers parsing', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   const { body } = await client.request({
@@ -1064,7 +1065,7 @@ test('request raw responseHeaders', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   const { body, headers } = await client.request({
@@ -1093,7 +1094,7 @@ test('request formData', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1125,7 +1126,7 @@ test('request text2', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1185,7 +1186,7 @@ test('request with FormData body', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     await client.request({
@@ -1218,7 +1219,7 @@ test('request post body Buffer from string', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1252,7 +1253,7 @@ test('request post body Buffer from buffer', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1286,7 +1287,7 @@ test('request post body Uint8Array', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1320,7 +1321,7 @@ test('request post body Uint32Array', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1354,7 +1355,7 @@ test('request post body Float64Array', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1388,7 +1389,7 @@ test('request post body BigUint64Array', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1422,7 +1423,7 @@ test('request post body DataView', async (t) => {
   })
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     const { body } = await client.request({
@@ -1452,7 +1453,7 @@ test('request multibyte json with setEncoding', async (t) => {
   after(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     const { body } = await client.request({
@@ -1480,7 +1481,7 @@ test('request multibyte text with setEncoding', async (t) => {
   after(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     const { body } = await client.request({
@@ -1508,7 +1509,7 @@ test('request multibyte text with setEncoding', async (t) => {
   after(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(client.destroy.bind(client))
 
     const { body } = await client.request({
@@ -1539,7 +1540,7 @@ test('#3736 - Aborted Response (without consuming body)', async (t) => {
   server.listen(0)
 
   await EE.once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
   after(server.close.bind(server))
   after(client.destroy.bind(client))

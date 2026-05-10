@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { ok } = require('node:assert')
 const { test, after, describe } = require('node:test')
@@ -37,7 +38,7 @@ describe('strictContentLength: false', () => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         strictContentLength: false
       })
       after(() => client.close())
@@ -158,7 +159,7 @@ describe('strictContentLength: false', () => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         strictContentLength: false
       })
       after(() => client.close())
@@ -204,7 +205,7 @@ describe('strictContentLength: false', () => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         strictContentLength: false
       })
       after(() => client.close())
@@ -250,7 +251,7 @@ describe('strictContentLength: false', () => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         strictContentLength: false
       })
       after(() => client.close())
@@ -296,7 +297,7 @@ describe('strictContentLength: false', () => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         strictContentLength: false
       })
       after(() => client.close())
@@ -342,7 +343,7 @@ describe('strictContentLength: false', () => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         strictContentLength: false
       })
       after(() => client.close())
@@ -387,7 +388,7 @@ describe('strictContentLength: false', () => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         strictContentLength: false
       })
       after(() => client.close())

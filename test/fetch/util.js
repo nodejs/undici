@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { describe, test } = require('node:test')
 const util = require('../../lib/web/fetch/util')
 const { HeadersList } = require('../../lib/web/fetch/headers')
@@ -120,7 +121,7 @@ test('isURLPotentiallyTrustworthy', (t) => {
   const valid = [
     'http://localhost',
     'http://localhost.',
-    'http://127.0.0.1',
+    `http://${LOOPBACK_HOST}`,
     'http://[::1]',
     'https://something.com',
     'wss://hello.com',
@@ -301,7 +302,7 @@ describe('isOriginIPPotentiallyTrustworthy()', () => {
     ['::', false],
     ['126.0.0.0', false],
     ['127.0.0.0', true],
-    ['127.0.0.1', true],
+    [LOOPBACK_HOST, true],
     ['127.255.255.255', true],
     ['128.255.255.255', false]
   ].forEach(([ip, expected]) => {

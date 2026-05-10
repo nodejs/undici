@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { Client, errors } = require('../..')
 const { createServer } = require('node:http')
@@ -20,7 +21,7 @@ test('aborted response errors', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
@@ -48,7 +49,7 @@ test('aborted req', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.request({
@@ -78,7 +79,7 @@ test('abort', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.dispatch({
@@ -118,7 +119,7 @@ test('abort pipelined', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 2
     })
     t.after(client.destroy.bind(client))
@@ -189,7 +190,7 @@ test('propagate unallowed throws in request.onError', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.dispatch({

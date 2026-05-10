@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -25,7 +26,7 @@ test('Redirecting a bunch does not cause a MaxListenersExceededWarning', async (
 
   process.emitWarning = t.assert.fail.bind(t)
 
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
   const response = await fetch(url, { redirect: 'follow' })
 
   t.assert.deepStrictEqual(response.url, `${url}/${redirects - 1}`)

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, after, describe } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -282,7 +283,7 @@ test('MockAgent - [kClients] should match encapsulated agent', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const agent = new Agent()
   after(() => agent.close())
@@ -314,7 +315,7 @@ test('MockAgent - basic intercept with MockAgent.request', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   after(() => mockAgent.close())
@@ -360,7 +361,7 @@ test('MockAgent - basic intercept with request', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -405,7 +406,7 @@ test('MockAgent - should support local agents', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
 
@@ -453,7 +454,7 @@ test('MockAgent - should support specifying custom agents to mock', async (t) =>
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const agent = new Agent()
   after(() => agent.close())
@@ -502,7 +503,7 @@ test('MockAgent - basic Client intercept with request', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   setGlobalDispatcher(mockAgent)
@@ -549,7 +550,7 @@ test('MockAgent - basic intercept with multiple pools', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -603,7 +604,7 @@ test('MockAgent - should handle multiple responses for an interceptor', async (t
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -669,7 +670,7 @@ test('MockAgent - should call original Pool dispatch if request not found', asyn
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -701,7 +702,7 @@ test('MockAgent - should call original Client dispatch if request not found', as
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   setGlobalDispatcher(mockAgent)
@@ -732,7 +733,7 @@ test('MockAgent - should handle string responses', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -798,7 +799,7 @@ test('MockAgent - handle delays to simulate work', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -838,7 +839,7 @@ test('MockAgent - should persist requests', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1101,7 +1102,7 @@ test('MockAgent - handle persists with delayed requests', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1149,7 +1150,7 @@ test('MockAgent - calling close on a mock pool should not affect other mock pool
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1209,7 +1210,7 @@ test('MockAgent - close removes all registered mock clients', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent({ connections: 1 })
   setGlobalDispatcher(mockAgent)
@@ -1267,7 +1268,7 @@ test('MockAgent - close removes all registered mock pools', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1303,7 +1304,7 @@ test('MockAgent - should handle replyWithError', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1334,7 +1335,7 @@ test('MockAgent - should support setting a reply to respond a set amount of time
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1387,7 +1388,7 @@ test('MockAgent - persist overrides times', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1445,7 +1446,7 @@ test('MockAgent - matcher should not find mock dispatch if path is of unsupporte
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1481,7 +1482,7 @@ test('MockAgent - should match path with regex', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1529,7 +1530,7 @@ test('MockAgent - should match path with function', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1565,7 +1566,7 @@ test('MockAgent - should match method with regex', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1601,7 +1602,7 @@ test('MockAgent - should match method with function', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1637,7 +1638,7 @@ test('MockAgent - should match body with regex', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1675,7 +1676,7 @@ test('MockAgent - should match body with function', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1712,7 +1713,7 @@ test('MockAgent - should match headers with string', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1787,7 +1788,7 @@ test('MockAgent - should match headers with regex', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1862,7 +1863,7 @@ test('MockAgent - should match headers with function', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1938,7 +1939,7 @@ test('MockAgent - should match url with regex', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -1974,7 +1975,7 @@ test('MockAgent - should match url with function', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2010,7 +2011,7 @@ test('MockAgent - handle default reply headers', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2050,7 +2051,7 @@ test('MockAgent - handle default reply trailers', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2090,7 +2091,7 @@ test('MockAgent - return calculated content-length if specified', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2130,7 +2131,7 @@ test('MockAgent - return calculated content-length for object response if specif
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2171,7 +2172,7 @@ test('MockAgent - should activate and deactivate mock clients', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2235,7 +2236,7 @@ test('MockAgent - enableNetConnect should allow all original dispatches to be ca
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2275,7 +2276,7 @@ test('MockAgent - enableNetConnect with a host string should allow all original 
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2287,7 +2288,7 @@ test('MockAgent - enableNetConnect with a host string should allow all original 
     method: 'GET'
   }).reply(200, 'foo')
 
-  mockAgent.enableNetConnect(`localhost:${server.address().port}`)
+  mockAgent.enableNetConnect(`${LOOPBACK_HOST}:${server.address().port}`)
 
   const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
@@ -2315,7 +2316,7 @@ test('MockAgent - enableNetConnect when called with host string multiple times s
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2328,7 +2329,7 @@ test('MockAgent - enableNetConnect when called with host string multiple times s
   }).reply(200, 'foo')
 
   mockAgent.enableNetConnect('example.com:9999')
-  mockAgent.enableNetConnect(`localhost:${server.address().port}`)
+  mockAgent.enableNetConnect(`${LOOPBACK_HOST}:${server.address().port}`)
 
   const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
@@ -2356,7 +2357,7 @@ test('MockAgent - enableNetConnect with a host regex should allow all original d
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2368,7 +2369,7 @@ test('MockAgent - enableNetConnect with a host regex should allow all original d
     method: 'GET'
   }).reply(200, 'foo')
 
-  mockAgent.enableNetConnect(new RegExp(`localhost:${server.address().port}`))
+  mockAgent.enableNetConnect(new RegExp(`${LOOPBACK_HOST}:${server.address().port}`))
 
   const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
@@ -2396,7 +2397,7 @@ test('MockAgent - enableNetConnect with a function should allow all original dis
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2408,7 +2409,7 @@ test('MockAgent - enableNetConnect with a function should allow all original dis
     method: 'GET'
   }).reply(200, 'foo')
 
-  mockAgent.enableNetConnect((value) => value === `localhost:${server.address().port}`)
+  mockAgent.enableNetConnect((value) => value === `${LOOPBACK_HOST}:${server.address().port}`)
 
   const { statusCode, headers, body } = await request(`${baseUrl}/foo`, {
     method: 'GET'
@@ -2450,7 +2451,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for path
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2483,7 +2484,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for meth
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2516,7 +2517,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for body
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2551,7 +2552,7 @@ test('MockAgent - enableNetConnect should throw if dispatch not matched for head
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2592,7 +2593,7 @@ test('MockAgent - disableNetConnect should throw if dispatch not found by net co
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2623,7 +2624,7 @@ test('MockAgent - headers function interceptor', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2684,7 +2685,7 @@ test('MockAgent - should include intercept count in error when intercepts are ex
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   setGlobalDispatcher(mockAgent)
@@ -2730,7 +2731,7 @@ test('MockAgent - clients are not garbage collected', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   // Create the dispatcher and disable net connect so we can make sure it matches properly
   const dispatcher = new MockAgent()
@@ -2991,7 +2992,7 @@ test('MockAgent - Sending ReadableStream body', async (t) => {
 
   await once(server.listen(0), 'listening')
 
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const response = await fetch(url, {
     method: 'POST',
@@ -3058,7 +3059,7 @@ test('MockAgent - headers should be array of strings (fetch)', async (t) => {
 
     await once(server.listen(0), 'listening')
 
-    const baseUrl = `http://localhost:${server.address().port}`
+    const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     const mockAgent = new MockAgent({ acceptNonStandardSearchParameters: true })
     after(() => mockAgent.close())
@@ -3105,7 +3106,7 @@ test('MockAgent - should not accept non-standard search parameters when acceptNo
 
   await once(server.listen(0), 'listening')
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   after(() => mockAgent.close())

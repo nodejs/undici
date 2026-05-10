@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const dc = require('node:diagnostics_channel')
 const { once } = require('node:events')
@@ -65,7 +66,7 @@ test('diagnostics channel - undici:websocket:open includes handshake response ov
 
   dc.channel('undici:websocket:open').subscribe(openListener)
 
-  const ws = new WebSocket(`wss://localhost:${server.address().port}`, { dispatcher })
+  const ws = new WebSocket(`wss://${LOOPBACK_HOST}:${server.address().port}`, { dispatcher })
 
   t.after(async () => {
     dc.channel('undici:websocket:open').unsubscribe(openListener)

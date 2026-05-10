@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -20,7 +21,7 @@ test('override HEAD reset', async (t) => {
   after(() => server.close())
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   let done

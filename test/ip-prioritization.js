@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
@@ -15,7 +16,7 @@ test('HTTP/1.1 Request Prioritization', async (t) => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`, {
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: (opts, cb) => {
       const socket = require('node:net').connect({
         ...opts,

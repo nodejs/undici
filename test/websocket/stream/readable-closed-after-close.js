@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocketStream } = require('../../..')
@@ -8,7 +9,7 @@ const { WebSocketStream } = require('../../..')
 test('ReadableStream is closed properly', async (t) => {
   const server = new WebSocketServer({ port: 0 })
 
-  const wss = new WebSocketStream(`ws://localhost:${server.address().port}`)
+  const wss = new WebSocketStream(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   t.after(() => server.close())
 

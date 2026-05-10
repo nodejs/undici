@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe } = require('node:test')
 const { Client, errors } = require('..')
@@ -20,7 +21,7 @@ describe('max response size', async (t) => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: -1 })
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { maxResponseSize: -1 })
       after(() => client.close())
 
       client.on('disconnect', () => {
@@ -59,7 +60,7 @@ describe('max response size', async (t) => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, { maxResponseSize: 0 })
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, { maxResponseSize: 0 })
       after(() => client.close())
 
       client.on('disconnect', () => {
@@ -98,7 +99,7 @@ describe('max response size', async (t) => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         maxResponseSize: 1
       })
 

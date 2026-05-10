@@ -6,7 +6,7 @@ const { createServer } = require('node:http')
 const { WebSocketServer } = require('ws')
 
 const { WebSocket } = require('../..')
-const { closeServerAsPromise } = require('../utils/node-http')
+const { LOOPBACK_HOST, closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/4889
 test('websocket auth retry preserves path when URL contains credentials', async (t) => {
@@ -53,10 +53,10 @@ test('websocket auth retry preserves path when URL contains credentials', async 
     t.assert.fail(`unexpected upgrade attempt #${attempts}`)
   })
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
   await once(server, 'listening')
 
-  const ws = new WebSocket(`ws://user:pass@127.0.0.1:${server.address().port}/path`)
+  const ws = new WebSocket(`ws://user:pass@${LOOPBACK_HOST}:${server.address().port}/path`)
 
   await new Promise((resolve, reject) => {
     ws.addEventListener('open', resolve, { once: true })

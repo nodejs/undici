@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const { Client, Pool } = require('..')
@@ -12,7 +13,7 @@ test('connect through proxy', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   server.on('request', (req, res) => {
@@ -53,7 +54,7 @@ test('connect through proxy with auth', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   proxy.authenticate = function (req) {
@@ -101,7 +102,7 @@ test('connect through proxy with auth but invalid credentials', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   proxy.authenticate = function (req) {
@@ -141,7 +142,7 @@ test('connect through proxy (with pool)', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   server.on('request', (req, res) => {

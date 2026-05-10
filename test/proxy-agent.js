@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const diagnosticsChannel = require('node:diagnostics_channel')
@@ -194,7 +195,7 @@ test('use proxy-agent to connect through proxy (keep alive)', async (t) => {
     _connectParams = connectParams
   })
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
@@ -239,7 +240,7 @@ test('use proxy-agent to connect through proxy', async (t) => {
   const proxy = await buildProxy()
   delete proxy.authenticate
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
   const parsedOrigin = new URL(serverUrl)
@@ -295,7 +296,7 @@ test('use proxy agent to connect through proxy using Pool', async (t) => {
     res.end()
   })
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const clientFactory = (url, options) => {
     return new Pool(url, options)
@@ -315,7 +316,7 @@ test('use proxy-agent to connect through proxy using path with params', async (t
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
@@ -351,7 +352,7 @@ test('use proxy-agent to connect through proxy using path with params with tunne
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
   const parsedOrigin = new URL(serverUrl)
@@ -387,7 +388,7 @@ test('use proxy-agent to connect through proxy with basic auth in URL', async (t
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = new URL(`http://user:pass@localhost:${proxy.address().port}`)
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
@@ -428,7 +429,7 @@ test('use proxy-agent to connect through proxy with username-only auth in URL', 
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = new URL(`http://user:@localhost:${proxy.address().port}`)
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
@@ -469,7 +470,7 @@ test('use proxy-agent to connect through proxy with username-only auth in URL wi
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = new URL(`http://user@localhost:${proxy.address().port}`)
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
@@ -510,7 +511,7 @@ test('use proxy-agent to connect through proxy with basic auth in URL with tunne
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = new URL(`http://user:pass@localhost:${proxy.address().port}`)
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
   const parsedOrigin = new URL(serverUrl)
@@ -551,7 +552,7 @@ test('use proxy-agent to connect through proxy with username-only auth in URL wi
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = new URL(`http://user:@localhost:${proxy.address().port}`)
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
   const parsedOrigin = new URL(serverUrl)
@@ -592,7 +593,7 @@ test('use proxy-agent with auth', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     auth: Buffer.from('user:pass').toString('base64'),
@@ -637,7 +638,7 @@ test('use proxy-agent with auth with tunneling enabled', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     auth: Buffer.from('user:pass').toString('base64'),
@@ -682,7 +683,7 @@ test('use proxy-agent with token', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     token: `Bearer ${Buffer.from('user:pass').toString('base64')}`,
@@ -727,7 +728,7 @@ test('use proxy-agent with token with tunneling enabled', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     token: `Bearer ${Buffer.from('user:pass').toString('base64')}`,
@@ -772,7 +773,7 @@ test('use proxy-agent with custom headers', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
@@ -806,7 +807,7 @@ test('use proxy-agent with custom headers with tunneling enabled', async (t) => 
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
@@ -840,7 +841,7 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent(proxyUrl)
 
@@ -899,7 +900,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
   const parsedOrigin = new URL(serverUrl)
@@ -941,7 +942,7 @@ test('use proxy-agent with setGlobalDispatcher with tunneling enabled', async (t
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
   const parsedOrigin = new URL(serverUrl)
@@ -982,7 +983,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
@@ -991,7 +992,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   after(() => setGlobalDispatcher(defaultDispatcher))
 
   const expectedHeaders = {
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'keep-alive',
     'test-header': 'value',
     accept: '*/*',
@@ -1032,7 +1033,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
@@ -1041,7 +1042,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
   after(() => setGlobalDispatcher(defaultDispatcher))
 
   const expectedHeaders = {
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'keep-alive',
     'test-header': 'value',
     accept: '*/*',
@@ -1053,7 +1054,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
 
   const expectedProxyHeaders = {
     'proxy-connection': 'keep-alive',
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'close'
   }
 
@@ -1082,7 +1083,7 @@ test('should throw when proxy does not return 200', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   proxy.on('connect', () => {
@@ -1116,7 +1117,7 @@ test('should throw when proxy does not return 200 with tunneling enabled', async
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   proxy.authenticate = function (_req) {
@@ -1144,7 +1145,7 @@ test('pass ProxyAgent proxy status code error when using fetch - #2161', async (
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
   proxy.authenticate = function (_req) {
@@ -1172,7 +1173,7 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
   const server = await buildSSLServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `https://localhost:${server.address().port}`
+  const serverUrl = `https://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
@@ -1208,7 +1209,7 @@ test('Proxy via HTTP to HTTPS endpoint', async (t) => {
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
   t.deepStrictEqual(json, {
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'keep-alive'
   })
 
@@ -1222,7 +1223,7 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
   const server = await buildSSLServer()
   const proxy = await buildSSLProxy()
 
-  const serverUrl = `https://localhost:${server.address().port}`
+  const serverUrl = `https://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `https://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
@@ -1264,7 +1265,7 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
   t.deepStrictEqual(json, {
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'keep-alive'
   })
 
@@ -1278,7 +1279,7 @@ test('Proxy via HTTPS to HTTP endpoint with tunneling enabled', async (t) => {
   const server = await buildServer()
   const proxy = await buildSSLProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `https://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
@@ -1311,7 +1312,7 @@ test('Proxy via HTTPS to HTTP endpoint with tunneling enabled', async (t) => {
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
   t.deepStrictEqual(json, {
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'keep-alive'
   })
 
@@ -1325,7 +1326,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling enabled', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
 
@@ -1353,7 +1354,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling enabled', async (t) => {
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
   t.deepStrictEqual(json, {
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'keep-alive'
   })
 
@@ -1367,7 +1368,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
 
@@ -1400,7 +1401,7 @@ test('Proxy via HTTP to HTTP endpoint with tunneling disabled', async (t) => {
   const data = await request(serverUrl, { dispatcher: proxyAgent })
   const json = await data.body.json()
   t.deepStrictEqual(json, {
-    host: `localhost:${server.address().port}`,
+    host: `${LOOPBACK_HOST}:${server.address().port}`,
     connection: 'keep-alive'
   })
 
@@ -1414,7 +1415,7 @@ test('Proxy via HTTPS to HTTP fails on wrong SNI', async (t) => {
   const server = await buildServer()
   const proxy = await buildSSLProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `https://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({
     uri: proxyUrl,
@@ -1465,13 +1466,13 @@ test('ProxyAgent keeps customized host in request headers - #3019', async (t) =>
   const server = await buildServer()
   const proxy = await buildProxy()
 
-  const serverUrl = `http://localhost:${server.address().port}`
+  const serverUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
   const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
   const customHost = 'example.com'
 
   proxy.on('connect', (req) => {
-    t.strictEqual(req.headers.host, `localhost:${server.address().port}`)
+    t.strictEqual(req.headers.host, `${LOOPBACK_HOST}:${server.address().port}`)
   })
 
   server.on('request', (req, res) => {

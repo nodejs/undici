@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after, describe } = require('node:test')
 const { strictEqual, notStrictEqual } = require('node:assert')
 const { createServer } = require('node:http')
@@ -74,7 +75,7 @@ describe('cache interceptor with async store', () => {
     await once(server, 'listening')
 
     const store = new AsyncCacheStore()
-    const dispatcher = new Client(`http://localhost:${server.address().port}`)
+    const dispatcher = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache({ store }))
 
     after(async () => {
@@ -82,7 +83,7 @@ describe('cache interceptor with async store', () => {
       await dispatcher.close()
     })
 
-    const url = `http://localhost:${server.address().port}`
+    const url = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     // First request, populates cache
     {
@@ -135,7 +136,7 @@ describe('cache interceptor with async store', () => {
     await once(server, 'listening')
 
     const store = new AsyncCacheStore()
-    const dispatcher = new Client(`http://localhost:${server.address().port}`)
+    const dispatcher = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache({ store }))
 
     after(async () => {
@@ -143,7 +144,7 @@ describe('cache interceptor with async store', () => {
       await dispatcher.close()
     })
 
-    const url = `http://localhost:${server.address().port}`
+    const url = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     // First request
     {
@@ -197,7 +198,7 @@ describe('cache interceptor with async store', () => {
     await once(server, 'listening')
 
     const store = new AsyncCacheStore()
-    const dispatcher = new Client(`http://localhost:${server.address().port}`)
+    const dispatcher = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .compose(interceptors.cache({ store }))
 
     after(async () => {
@@ -205,7 +206,7 @@ describe('cache interceptor with async store', () => {
       await dispatcher.close()
     })
 
-    const url = `http://localhost:${server.address().port}`
+    const url = `http://${LOOPBACK_HOST}:${server.address().port}`
 
     // First request without X-Custom-Header or X-Another-Header
     // These will be stored as null in the vary record

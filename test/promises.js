@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client, Pool } = require('..')
@@ -19,7 +20,7 @@ test('basic get, async await support', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -73,7 +74,7 @@ test('basic POST with string, async await support', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -109,7 +110,7 @@ test('basic POST with Buffer, async await support', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -145,7 +146,7 @@ test('basic POST with stream, async await support', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -188,7 +189,7 @@ test('basic POST with async-iterator, async await support', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {
@@ -252,7 +253,7 @@ test('20 times GET with pipelining 10, async await support', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 10
     })
     after(() => client.close())
@@ -308,7 +309,7 @@ test('pool, async await support', async (t) => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Pool(`http://localhost:${server.address().port}`)
+    const client = new Pool(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.on('disconnect', () => {

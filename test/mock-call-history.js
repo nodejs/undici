@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, describe } = require('node:test')
 const { MockCallHistory, MockCallHistoryLog } = require('../lib/mock/mock-call-history')
 const { kMockCallHistoryAddLog } = require('../lib/mock/mock-symbols')
@@ -241,7 +242,7 @@ describe('MockCallHistory - filterCalls without options', () => {
 
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:4000' })
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
-    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: `https://${LOOPBACK_HOST}:4000` })
 
     const filtered = mockCallHistoryHello.filterCalls({ host: /localhost/ })
 
@@ -255,7 +256,7 @@ describe('MockCallHistory - filterCalls without options', () => {
 
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:1000' })
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
-    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: `https://${LOOPBACK_HOST}:4000` })
 
     const filtered = mockCallHistoryHello.filterCalls({ port: '1000' })
 
@@ -269,7 +270,7 @@ describe('MockCallHistory - filterCalls without options', () => {
 
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/#hello', origin: 'http://localhost:1000' })
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
-    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: `https://${LOOPBACK_HOST}:4000` })
 
     const filtered = mockCallHistoryHello.filterCalls({ hash: '#hello' })
 
@@ -283,7 +284,7 @@ describe('MockCallHistory - filterCalls without options', () => {
 
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '#hello', origin: 'http://localhost:1000' })
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000' })
-    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: `https://${LOOPBACK_HOST}:4000` })
 
     const filtered = mockCallHistoryHello.filterCalls({ fullUrl: 'http://localhost:1000/#hello' })
 
@@ -297,7 +298,7 @@ describe('MockCallHistory - filterCalls without options', () => {
 
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/', origin: 'http://localhost:1000', method: 'POST' })
     mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/yes', origin: 'http://localhost:4000', method: 'GET' })
-    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: 'https://127.0.0.1:4000', method: 'PUT' })
+    mockCallHistoryHello[kMockCallHistoryAddLog]({ path: '/noop', origin: `https://${LOOPBACK_HOST}:4000`, method: 'PUT' })
 
     const filtered = mockCallHistoryHello.filterCalls({ method: /(PUT|GET)/ })
 

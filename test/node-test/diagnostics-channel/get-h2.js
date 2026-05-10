@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
@@ -26,7 +27,7 @@ test('Diagnostics channel - get support H2', async t => {
   await once(server, 'listening')
 
   diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
-    t.strictEqual(request.origin, `https://localhost:${server.address().port}`)
+    t.strictEqual(request.origin, `https://${LOOPBACK_HOST}:${server.address().port}`)
     t.strictEqual(request.completed, false)
     t.strictEqual(request.method, 'GET')
     t.strictEqual(request.path, '/')
@@ -41,7 +42,7 @@ test('Diagnostics channel - get support H2', async t => {
     t.strictEqual(_socket, socket)
     const expectedHeaders = [
       'x-my-header: foo',
-      `:authority: localhost:${server.address().port}`,
+      `:authority: ${LOOPBACK_HOST}:${server.address().port}`,
       ':method: GET',
       ':path: /',
       ':scheme: https'
@@ -49,7 +50,7 @@ test('Diagnostics channel - get support H2', async t => {
     t.strictEqual(headers, expectedHeaders.join('\r\n') + '\r\n')
   })
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },

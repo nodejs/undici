@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { WebSocketServer } = require('ws')
@@ -23,7 +24,7 @@ test('Receiving a close frame with invalid utf-8', (t, done) => {
   })
 
   const events = []
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
   t.after(() => { ws.close() })
 
   ws.addEventListener('close', (e) => {

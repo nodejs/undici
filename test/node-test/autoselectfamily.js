@@ -7,6 +7,7 @@ const dnsPacket = require('dns-packet')
 const { createServer } = require('node:http')
 const { Client, Agent, request } = require('../..')
 const { tspl } = require('@matteo.collina/tspl')
+const { LOOPBACK_HOST } = require('../utils/node-http')
 
 /*
  * IMPORTANT
@@ -48,7 +49,7 @@ function createDnsServer (ipv6Addr, ipv4Addr, cb) {
       questions: parsed.questions,
       answers: [
         { type: 'AAAA', class: 'IN', name: 'example.org', data: '::1', ttl: 123 },
-        { type: 'A', class: 'IN', name: 'example.org', data: '127.0.0.1', ttl: 123 }
+        { type: 'A', class: 'IN', name: 'example.org', data: LOOPBACK_HOST, ttl: 123 }
       ]
     })
 
@@ -57,7 +58,7 @@ function createDnsServer (ipv6Addr, ipv4Addr, cb) {
 
   socket.bind(0, () => {
     const resolver = new Resolver()
-    resolver.setServers([`127.0.0.1:${socket.address().port}`])
+    resolver.setServers([`${LOOPBACK_HOST}:${socket.address().port}`])
 
     cb(null, { dnsServer: socket, lookup: _lookup.bind(null, resolver) })
   })
@@ -66,7 +67,7 @@ function createDnsServer (ipv6Addr, ipv4Addr, cb) {
 test('with autoSelectFamily enable the request succeeds when using request', { skip }, async (t) => {
   const p = tspl(t, { plan: 3 })
 
-  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+  createDnsServer('::1', LOOPBACK_HOST, function (_, { dnsServer, lookup }) {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
@@ -76,7 +77,7 @@ test('with autoSelectFamily enable the request succeeds when using request', { s
       dnsServer.close()
     })
 
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, LOOPBACK_HOST, () => {
       const agent = new Agent({ connect: { lookup }, autoSelectFamily: true })
 
       request(
@@ -106,7 +107,7 @@ test('with autoSelectFamily enable the request succeeds when using request', { s
 test('with autoSelectFamily enable the request succeeds when using a client', { skip }, async (t) => {
   const p = tspl(t, { plan: 3 })
 
-  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+  createDnsServer('::1', LOOPBACK_HOST, function (_, { dnsServer, lookup }) {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
@@ -116,7 +117,7 @@ test('with autoSelectFamily enable the request succeeds when using a client', { 
       dnsServer.close()
     })
 
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, LOOPBACK_HOST, () => {
       const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup }, autoSelectFamily: true })
 
       t.after(client.destroy.bind(client))
@@ -147,7 +148,7 @@ test('with autoSelectFamily enable the request succeeds when using a client', { 
 test('with autoSelectFamily disabled the request fails when using request', { skip }, async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+  createDnsServer('::1', LOOPBACK_HOST, function (_, { dnsServer, lookup }) {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
@@ -157,7 +158,7 @@ test('with autoSelectFamily disabled the request fails when using request', { sk
       dnsServer.close()
     })
 
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, LOOPBACK_HOST, () => {
       const agent = new Agent({ connect: { lookup, autoSelectFamily: false } })
 
       request(`http://example.org:${server.address().port}`, {
@@ -175,7 +176,7 @@ test('with autoSelectFamily disabled the request fails when using request', { sk
 test('with autoSelectFamily disabled via Agent.Options["autoSelectFamily"] the request fails when using request', { skip }, async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+  createDnsServer('::1', LOOPBACK_HOST, function (_, { dnsServer, lookup }) {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
@@ -185,7 +186,7 @@ test('with autoSelectFamily disabled via Agent.Options["autoSelectFamily"] the r
       dnsServer.close()
     })
 
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, LOOPBACK_HOST, () => {
       const agent = new Agent({ autoSelectFamily: false, connect: { lookup } })
 
       request(`http://example.org:${server.address().port}`, {
@@ -203,7 +204,7 @@ test('with autoSelectFamily disabled via Agent.Options["autoSelectFamily"] the r
 test('with autoSelectFamily disabled the request fails when using a client', { skip }, async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+  createDnsServer('::1', LOOPBACK_HOST, function (_, { dnsServer, lookup }) {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
@@ -213,7 +214,7 @@ test('with autoSelectFamily disabled the request fails when using a client', { s
       dnsServer.close()
     })
 
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, LOOPBACK_HOST, () => {
       const client = new Client(`http://example.org:${server.address().port}`, { connect: { lookup, autoSelectFamily: false } })
       t.after(client.destroy.bind(client))
 
@@ -232,7 +233,7 @@ test('with autoSelectFamily disabled the request fails when using a client', { s
 test('with autoSelectFamily disabled via Client.Options["autoSelectFamily"] the request fails when using a client', { skip }, async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  createDnsServer('::1', '127.0.0.1', function (_, { dnsServer, lookup }) {
+  createDnsServer('::1', LOOPBACK_HOST, function (_, { dnsServer, lookup }) {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.end('hello')
     })
@@ -242,7 +243,7 @@ test('with autoSelectFamily disabled via Client.Options["autoSelectFamily"] the 
       dnsServer.close()
     })
 
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, LOOPBACK_HOST, () => {
       const client = new Client(`http://example.org:${server.address().port}`, { autoSelectFamily: false, connect: { lookup } })
       t.after(client.destroy.bind(client))
 

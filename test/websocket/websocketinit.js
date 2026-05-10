@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, describe } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket, Dispatcher, Agent } = require('../..')
@@ -23,7 +24,7 @@ describe('WebSocketInit', () => {
       ws.send(Buffer.from('hello, world'))
     })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`, {
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`, {
       dispatcher: new WsDispatcher()
     })
 

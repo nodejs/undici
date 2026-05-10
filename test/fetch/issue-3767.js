@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -20,7 +21,7 @@ test('referrerPolicy unsafe-url is respected', async (t) => {
   t.after(server.close.bind(server))
   await once(server, 'listening')
 
-  await fetch(`http://localhost:${server.address().port}`, {
+  await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     referrer,
     referrerPolicy: 'unsafe-url'
   })

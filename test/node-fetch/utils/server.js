@@ -4,6 +4,7 @@ const http = require('node:http')
 const zlib = require('node:zlib')
 const { once } = require('node:events')
 const Busboy = require('@fastify/busboy')
+const { LOOPBACK_HOST } = require('../../utils/node-http')
 
 module.exports = class TestServer {
   constructor () {
@@ -20,7 +21,7 @@ module.exports = class TestServer {
   }
 
   async start () {
-    this.server.listen(0, 'localhost')
+    this.server.listen(0, LOOPBACK_HOST)
     return once(this.server, 'listening')
   }
 
@@ -37,7 +38,7 @@ module.exports = class TestServer {
   }
 
   get hostname () {
-    return 'localhost'
+    return LOOPBACK_HOST
   }
 
   mockState (responseHandler) {

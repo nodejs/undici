@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
@@ -24,7 +25,7 @@ test('Fragmented frame with a ping frame in the middle of it', (t) => {
     server.close()
   })
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   diagnosticsChannel.channel('undici:websocket:ping').subscribe(
     ({ payload }) => t.assert.deepStrictEqual(payload, Buffer.from('Hello'))

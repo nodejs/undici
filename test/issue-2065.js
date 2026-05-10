@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
@@ -20,7 +21,7 @@ test('undici.request with a FormData body should set content-length header', asy
   const body = new FormData()
   body.set('file', new File(['abc'], 'abc.txt'))
 
-  await request(`http://localhost:${server.address().port}`, {
+  await request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     method: 'POST',
     body
   })

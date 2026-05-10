@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
@@ -17,13 +18,13 @@ test('Should provide pseudo-headers in proper order', async t => {
     const sortedHeaders = [...rawHeaders].sort()
     t.deepStrictEqual(sortedHeaders, [
       '/',
+      `${LOOPBACK_HOST}:${server.address().port}`,
       ':authority',
       ':method',
       ':path',
       ':scheme',
       'GET',
-      'https',
-      `localhost:${server.address().port}`
+      'https'
     ])
 
     stream.respond({
@@ -36,7 +37,7 @@ test('Should provide pseudo-headers in proper order', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -71,7 +72,7 @@ test('The h2 pseudo-headers is not included in the headers', async t => {
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },

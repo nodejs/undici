@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const diagnosticsChannel = require('node:diagnostics_channel')
@@ -13,7 +14,7 @@ test('Receives ping and parses body', (t) => {
       ws.ping('Hello, world')
     })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
     ws.onerror = ws.onmessage = reject
 
     diagnosticsChannel.channel('undici:websocket:ping').subscribe(({ payload }) => {
@@ -33,7 +34,7 @@ test('Receives pong and parses body', (t) => {
       ws.pong('Pong')
     })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
     ws.onerror = ws.onmessage = reject
 
     diagnosticsChannel.channel('undici:websocket:pong').subscribe(({ payload }) => {

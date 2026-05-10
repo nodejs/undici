@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
@@ -13,7 +14,7 @@ test('Receiving a frame with a payload length > 2^31-1 bytes', (t) => {
     socket.write(Buffer.from([0x81, 0x7F, 0xCA, 0xE5, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00]))
   })
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   return new Promise((resolve, reject) => {
     ws.onmessage = reject
@@ -36,7 +37,7 @@ test('Receiving a 64-bit payload length with a non-zero upper word', (t) => {
     socket.write(Buffer.from([0x82, 0x7F, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01]))
   })
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   return new Promise((resolve, reject) => {
     ws.onmessage = reject
@@ -61,7 +62,7 @@ test('Receiving an ArrayBuffer', (t) => {
     })
   })
 
-  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+  const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
   ws.addEventListener('open', () => {
     ws.binaryType = 'what'

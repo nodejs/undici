@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test, after, describe } = require('node:test')
 const { createServer } = require('node:http')
 const { promisify } = require('node:util')
@@ -199,7 +200,7 @@ test('MockPool - should be able to set as globalDispatcher', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   after(() => mockAgent.close())
@@ -237,7 +238,7 @@ test('MockPool - should be able to use as a local dispatcher', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   after(() => mockAgent.close())
@@ -275,7 +276,7 @@ test('MockPool - basic intercept with MockPool.request', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   after(() => mockAgent.close())
@@ -383,7 +384,7 @@ test('MockPool - cleans mocks', async (t) => {
 
   await promisify(server.listen.bind(server))(0)
 
-  const baseUrl = `http://localhost:${server.address().port}`
+  const baseUrl = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   const mockAgent = new MockAgent()
   after(() => mockAgent.close())

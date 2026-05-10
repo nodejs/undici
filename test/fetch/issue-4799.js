@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { fetch } = require('../..')
 const { createServer } = require('node:http')
@@ -18,7 +19,7 @@ test('response clone + abort should return AbortError, not TypeError', async (t)
   await once(server, 'listening')
 
   const controller = new AbortController()
-  const response = await fetch(`http://localhost:${server.address().port}`, {
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     signal: controller.signal
   })
 
@@ -62,7 +63,7 @@ test('response without clone + abort should still return AbortError', async (t) 
   await once(server, 'listening')
 
   const controller = new AbortController()
-  const response = await fetch(`http://localhost:${server.address().port}`, {
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     signal: controller.signal
   })
 
@@ -90,7 +91,7 @@ test('response bodyUsed after clone and abort', async (t) => {
   await once(server, 'listening')
 
   const controller = new AbortController()
-  const response = await fetch(`http://localhost:${server.address().port}`, {
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     signal: controller.signal
   })
 

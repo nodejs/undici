@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -24,7 +25,7 @@ test('Redirecting with a body does not cancel the current request - #1776', asyn
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const resp = await fetch(`http://localhost:${server.address().port}/redirect`)
+  const resp = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/redirect`)
   t.assert.strictEqual(await resp.text(), '/redirect/')
   t.assert.ok(resp.redirected)
 })
@@ -45,7 +46,7 @@ test('Redirecting with an empty body does not throw an error - #2027', async (t)
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const resp = await fetch(`http://localhost:${server.address().port}/redirect`, { method: 'PUT', body: '' })
+  const resp = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/redirect`, { method: 'PUT', body: '' })
   t.assert.strictEqual(await resp.text(), '/redirect/')
   t.assert.ok(resp.redirected)
 })
@@ -68,7 +69,7 @@ test('Redirecting with a body does not fail to write body - #2543', async (t) =>
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const resp = await fetch(`http://localhost:${server.address().port}/redirect`, {
+  const resp = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/redirect`, {
     method: 'POST',
     body: 'body'
   })

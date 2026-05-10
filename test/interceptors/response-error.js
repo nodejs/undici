@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const assert = require('node:assert')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -20,7 +21,7 @@ test('should throw error for error response', async () => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(responseError())
 
   after(async () => {
@@ -61,7 +62,7 @@ test('should not throw error for ok response', async () => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(responseError())
 
   after(async () => {
@@ -96,7 +97,7 @@ test('should throw error for error response, parsing JSON', async () => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(responseError())
 
   after(async () => {
@@ -139,7 +140,7 @@ test('should throw error for error response, parsing JSON without charset', asyn
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(responseError())
 
   after(async () => {
@@ -207,7 +208,7 @@ test('should throw error for error response without content type', async () => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(responseError())
 
   after(async () => {

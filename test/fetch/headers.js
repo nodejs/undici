@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { Headers, fill, setHeadersGuard } = require('../../lib/web/fetch/headers')
 const { once } = require('node:events')
@@ -700,7 +701,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
     await once(server, 'listening')
     t.after(closeServerAsPromise(server))
 
-    const res = await fetch(`http://localhost:${server.address().port}`)
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const entries = Object.fromEntries(res.headers.entries())
 
     t.assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo'])
@@ -716,7 +717,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
     await once(server, 'listening')
     t.after(closeServerAsPromise(server))
 
-    const res = await fetch(`http://localhost:${server.address().port}`)
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const entries = Object.fromEntries(res.headers.entries())
 
     t.assert.deepStrictEqual(res.headers.getSetCookie(), ['test=onetwo', 'test=onetwothree'])

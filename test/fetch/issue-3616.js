@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { fetch } = require('../..')
@@ -32,7 +33,7 @@ describe('https://github.com/nodejs/undici/issues/3616', () => {
       server.listen(0)
 
       await once(server, 'listening')
-      const result = await fetch(`http://localhost:${server.address().port}/`)
+      const result = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/`)
 
       t.assert.ok(result.body.getReader())
 

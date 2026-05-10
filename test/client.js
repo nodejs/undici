@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { readFileSync, createReadStream } = require('node:fs')
 const { createServer } = require('node:http')
@@ -25,7 +26,7 @@ test('basic get', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     t.strictEqual(undefined, req.headers.foo)
     t.strictEqual('bar', req.headers.bar)
     t.strictEqual(undefined, req.headers['content-length'])
@@ -40,12 +41,12 @@ test('basic get', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
     after(() => client.close())
 
-    t.strictEqual(client[kUrl].origin, `http://localhost:${server.address().port}`)
+    t.strictEqual(client[kUrl].origin, `http://${LOOPBACK_HOST}:${server.address().port}`)
 
     const signal = new EE()
     client.request({
@@ -121,7 +122,7 @@ test('basic get with custom request.reset=true', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     t.strictEqual(req.headers.connection, 'close')
     t.strictEqual(undefined, req.headers.foo)
     t.strictEqual('bar', req.headers.bar)
@@ -137,10 +138,10 @@ test('basic get with custom request.reset=true', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {})
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {})
     after(() => client.close())
 
-    t.strictEqual(client[kUrl].origin, `http://localhost:${server.address().port}`)
+    t.strictEqual(client[kUrl].origin, `http://${LOOPBACK_HOST}:${server.address().port}`)
 
     const signal = new EE()
     client.request({
@@ -219,7 +220,7 @@ test('basic get with query params', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
     after(() => client.close())
@@ -256,7 +257,7 @@ test('basic get with query params fails if url includes hashmark', async (t) => 
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
     after(() => client.close())
@@ -290,7 +291,7 @@ test('basic get with empty query params', async (t) => {
   const query = {}
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
     after(() => client.close())
@@ -325,7 +326,7 @@ test('basic get with query params partially in path', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
     after(() => client.close())
@@ -354,7 +355,7 @@ test('using throwOnError should throw (request)', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
     after(() => client.close())
@@ -384,7 +385,7 @@ test('using throwOnError should throw (stream)', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       keepAliveTimeout: 300e3
     })
     after(() => client.close())
@@ -414,14 +415,14 @@ test('basic head', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/123', req.url)
     t.strictEqual('HEAD', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
   })
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/123', method: 'HEAD' }, (err, { statusCode, headers, body }) => {
@@ -505,7 +506,7 @@ test('get with host header', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'GET', headers: { host: 'example.com' } }, (err, { statusCode, headers, body }) => {
@@ -571,7 +572,7 @@ test('head with host header', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'HEAD', headers: { host: 'example.com' } }, (err, { statusCode, headers, body }) => {
@@ -616,7 +617,7 @@ test('basic POST with string', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'POST', body: expected }, (err, data) => {
@@ -643,7 +644,7 @@ test('basic POST with empty string', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'POST', body: '' }, (err, { statusCode, headers, body }) => {
@@ -671,7 +672,7 @@ test('basic POST with string and content-length', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -706,7 +707,7 @@ test('basic POST with Buffer', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'POST', body: expected }, (err, { statusCode, headers, body }) => {
@@ -734,7 +735,7 @@ test('basic POST with stream', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -770,7 +771,7 @@ test('basic POST with paused stream', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const stream = createReadStream(__filename)
@@ -810,7 +811,7 @@ test('basic POST with custom stream', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const body = new EE()
@@ -876,7 +877,7 @@ test('basic POST with iterator', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -913,7 +914,7 @@ test('basic POST with iterator with invalid data', async (t) => {
   }
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -938,7 +939,7 @@ test('basic POST with async iterator', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({
@@ -990,7 +991,7 @@ test('basic POST with transfer encoding: chunked', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     body = new Readable({
@@ -1028,7 +1029,7 @@ test('basic POST with empty stream', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const body = new Readable({
@@ -1073,7 +1074,7 @@ test('10 times GET', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     for (let i = 0; i < num; i++) {
@@ -1108,7 +1109,7 @@ test('10 times HEAD', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     for (let i = 0; i < num; i++) {
@@ -1142,7 +1143,7 @@ test('Set-Cookie', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'GET' }, (err, { statusCode, headers, body }) => {
@@ -1172,7 +1173,7 @@ test('ignore request header mutations', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const headers = { test: 'test' }
@@ -1287,7 +1288,7 @@ test('only one streaming req at a time', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 4
     })
     after(() => client.destroy())
@@ -1345,7 +1346,7 @@ test('only one async iterating req at a time', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 4
     })
     after(() => client.destroy())
@@ -1401,7 +1402,7 @@ test('300 requests succeed', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     for (let n = 0; n < 300; ++n) {
@@ -1461,7 +1462,7 @@ test('increase pipelining', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.destroy())
 
     client.request({
@@ -1509,7 +1510,7 @@ test('destroy in push', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'GET' }, (err, { body }) => {
@@ -1549,7 +1550,7 @@ test('non recoverable socket error fails pending request', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'GET' }, (err, data) => {
@@ -1575,7 +1576,7 @@ test('POST empty with error', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     const body = new Readable({
@@ -1606,7 +1607,7 @@ test('busy', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 1
     })
     after(() => client.close())
@@ -1636,7 +1637,7 @@ test('connected', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const url = new URL(`http://localhost:${server.address().port}`)
+    const url = new URL(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const client = new Client(url, {
       pipelining: 1
     })
@@ -1675,7 +1676,7 @@ test('emit disconnect after destroy', async t => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const url = new URL(`http://localhost:${server.address().port}`)
+    const url = new URL(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const client = new Client(url)
 
     t.strictEqual(client[kConnected], false)
@@ -1704,7 +1705,7 @@ test('end response before request', async t => {
   after(() => server.close())
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const readable = new Readable({
       read () {
         this.push('asd')
@@ -1749,7 +1750,7 @@ test('parser pause with no body timeout', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -1773,7 +1774,7 @@ test('TypedArray and DataView body', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -1807,7 +1808,7 @@ test('async iterator empty chunk continues', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -1837,7 +1838,7 @@ test('async iterator error from server destroys early', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -1877,7 +1878,7 @@ test('regular iterator error from server closes early', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -1917,7 +1918,7 @@ test('async iterator early return closes early', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -1957,7 +1958,7 @@ test('async iterator yield unsupported TypedArray', {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -1989,7 +1990,7 @@ test('async iterator yield object error', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       bodyTimeout: 0
     })
     after(() => client.close())
@@ -2029,7 +2030,7 @@ test('Successfully get a Response when neither a Transfer-Encoding or Content-Le
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({ path: '/', method: 'GET' }, (err, { body, headers }) => {
@@ -2197,14 +2198,14 @@ test('stats', async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
-    t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
+    t.strictEqual(`${LOOPBACK_HOST}:${server.address().port}`, req.headers.host)
     res.setHeader('Content-Type', 'text/plain')
     res.end('hello')
   })
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     after(() => client.close())
 
     client.request({

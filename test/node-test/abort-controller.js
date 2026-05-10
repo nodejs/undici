@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { AbortController: NPMAbortController } = require('abort-controller')
 const { Client, errors } = require('../..')
@@ -30,7 +31,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       const abortController = new AbortControllerImpl()
       t.after(client.destroy.bind(client))
 
@@ -58,7 +59,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       const abortController = new AbortControllerImpl()
       t.after(client.destroy.bind(client))
 
@@ -95,7 +96,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
@@ -119,7 +120,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
@@ -141,7 +142,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
       client.request({ path: '/', method: 'GET', signal: abortController.signal }, (err, response) => {
@@ -171,7 +172,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(closeServerAsPromise(server))
 
       server.listen(0, () => {
-        const client = new Client(`http://localhost:${server.address().port}`)
+        const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
@@ -201,7 +202,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(closeServerAsPromise(server))
 
       server.listen(0, () => {
-        const client = new Client(`http://localhost:${server.address().port}`)
+        const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {
@@ -229,7 +230,7 @@ for (const { AbortControllerImpl, controllerName } of controllers) {
       t.after(closeServerAsPromise(server))
 
       server.listen(0, () => {
-        const client = new Client(`http://localhost:${server.address().port}`)
+        const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
         t.after(client.destroy.bind(client))
 
         client.request({ path: '/', method: 'POST', body, signal: abortController.signal }, (err, response) => {

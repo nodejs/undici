@@ -2,6 +2,7 @@
 
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { fetch, Response, Request, FormData } = require('../..')
@@ -48,7 +49,7 @@ test('request json', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.assert.deepStrictEqual(obj, await body.json())
     done()
   })
@@ -64,7 +65,7 @@ test('request text', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.assert.strictEqual(JSON.stringify(obj), await body.text())
     done()
   })
@@ -80,7 +81,7 @@ test('request arrayBuffer', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.assert.deepStrictEqual(Buffer.from(JSON.stringify(obj)), Buffer.from(await body.arrayBuffer()))
     done()
   })
@@ -97,7 +98,7 @@ test('should set type of blob object to the value of the `Content-Type` header f
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const response = await fetch(`http://localhost:${server.address().port}`)
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.assert.strictEqual('application/json', (await response.blob()).type)
     done()
   })
@@ -113,7 +114,7 @@ test('pre aborted with readable request body', (t, done) => {
   server.listen(0, async () => {
     const ac = new AbortController()
     ac.abort()
-    await fetch(`http://localhost:${server.address().port}`, {
+    await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       signal: ac.signal,
       method: 'POST',
       body: new ReadableStream({
@@ -148,7 +149,7 @@ test('pre aborted with closed readable request body', (t, done) => {
       }
     })
     queueMicrotask(() => {
-      fetch(`http://localhost:${server.address().port}`, {
+      fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         signal: ac.signal,
         method: 'POST',
         body,
@@ -170,7 +171,7 @@ test('unsupported formData 1', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
+    fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .then(res => res.formData())
       .catch(err => {
         t.assert.strictEqual(err.name, 'TypeError')
@@ -202,7 +203,7 @@ test('multipart formdata not base64', async (t) => {
   const listen = promisify(server.listen.bind(server))
   await listen(0)
 
-  const res = await fetch(`http://localhost:${server.address().port}`)
+  const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
   const form = await res.formData()
   t.assert.strictEqual(form.get('field1'), 'value1')
 
@@ -237,7 +238,7 @@ test('multipart formdata base64', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
+    fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .then(res => res.formData())
       .then(form => form.get('file').arrayBuffer())
       .then(buffer => createHash('sha256').update(Buffer.from(buffer)).digest('base64'))
@@ -286,7 +287,7 @@ test('busboy emit error', async (t) => {
   const listen = promisify(server.listen.bind(server))
   await listen(0)
 
-  const res = await fetch(`http://localhost:${server.address().port}`)
+  const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
   await t.assert.rejects(res.formData(), 'Unexpected end of multipart data')
 })
 
@@ -312,7 +313,7 @@ test('urlencoded formData', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
+    fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .then(res => res.formData())
       .then(formData => {
         t.assert.strictEqual(formData.get('field1'), 'value1')
@@ -332,7 +333,7 @@ test('text with BOM', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
+    fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .then(res => res.text())
       .then(text => {
         t.assert.strictEqual(text, 'test=\uFEFF')
@@ -351,7 +352,7 @@ test('formData with BOM', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`)
+    fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
       .then(res => res.formData())
       .then(formData => {
         t.assert.strictEqual(formData.get('\uFEFFtest'), '\uFEFF')
@@ -369,7 +370,7 @@ test('locked blob body', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const res = await fetch(`http://localhost:${server.address().port}`)
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     const reader = res.body.getReader()
     res.blob().catch(err => {
       t.assert.strictEqual(err.message, 'Body is unusable: Body has already been read')
@@ -387,7 +388,7 @@ test('disturbed blob body', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const res = await fetch(`http://localhost:${server.address().port}`)
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`)
     await res.blob().then(() => {
       t.assert.ok(true)
     })
@@ -419,7 +420,7 @@ test('redirect with body', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const res = await fetch(`http://localhost:${server.address().port}`, {
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'PUT',
       body: 'asd'
     })
@@ -447,7 +448,7 @@ test('redirect with stream', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const res = await fetch(`http://localhost:${server.address().port}`, {
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       redirect: 'manual'
     })
     t.assert.strictEqual(res.status, 302)
@@ -501,7 +502,7 @@ test('post FormData with Blob', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const res = await fetch(`http://localhost:${server.address().port}`, {
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'PUT',
       body
     })
@@ -522,7 +523,7 @@ test('post FormData with File', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const res = await fetch(`http://localhost:${server.address().port}`, {
+    const res = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'PUT',
       body
     })
@@ -562,7 +563,7 @@ test('custom agent', (t, done) => {
       t.assert.ok(true)
       return oldDispatch.call(this, options, handler)
     }
-    const body = await fetch(`http://localhost:${server.address().port}`, {
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       dispatcher
     })
     t.assert.deepStrictEqual(obj, await body.json())
@@ -589,7 +590,7 @@ test('custom agent node fetch', (t, done) => {
       t.assert.ok(true)
       return oldDispatch.call(this, options, handler)
     }
-    const body = await nodeFetch.fetch(`http://localhost:${server.address().port}`, {
+    const body = await nodeFetch.fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       dispatcher
     })
     t.assert.deepStrictEqual(obj, await body.json())
@@ -605,7 +606,7 @@ test('error on redirect', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const errorCause = await fetch(`http://localhost:${server.address().port}`, {
+    const errorCause = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       redirect: 'error'
     }).catch((e) => e.cause)
 
@@ -625,7 +626,7 @@ test('fetching with Request object - issue #1527', async (t) => {
   await once(server, 'listening')
 
   const body = JSON.stringify({ foo: 'bar' })
-  const request = new Request(`http://localhost:${server.address().port}`, {
+  const request = new Request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     method: 'POST',
     body
   })
@@ -655,7 +656,7 @@ test('do not decode redirect body', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}/resource`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/resource`)
     t.assert.strictEqual(JSON.stringify(obj), await body.text())
     done()
   })
@@ -675,7 +676,7 @@ test('decode non-redirect body with location header', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const body = await fetch(`http://localhost:${server.address().port}/resource`)
+    const body = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}/resource`)
     t.assert.strictEqual(JSON.stringify(obj), await body.text())
     done()
   })
@@ -701,7 +702,7 @@ test('Receiving non-Latin1 headers', async (t) => {
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const url = `http://localhost:${server.address().port}`
+  const url = `http://${LOOPBACK_HOST}:${server.address().port}`
   const response = await fetch(url, { method: 'HEAD' })
   const cdHeaders = [...response.headers]
     .filter(([k]) => k.startsWith('content-disposition'))

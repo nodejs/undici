@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after, describe } = require('node:test')
 const { readFileSync } = require('node:fs')
@@ -36,7 +37,7 @@ describe('A client should disable session caching', () => {
         rejectUnauthorized: false,
         servername: 'agent1'
       }
-      const client = new Client(`https://localhost:${server.address().port}`, {
+      const client = new Client(`https://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 0,
         tls,
         maxCachedSessions: 0
@@ -110,7 +111,7 @@ describe('A pool should be able to reuse TLS sessions between clients', () => {
     const sessions = []
 
     server.listen(0, async () => {
-      const poolWithSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
+      const poolWithSessionReuse = new Pool(`https://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 0,
         connections: 100,
         maxCachedSessions: 1,
@@ -120,7 +121,7 @@ describe('A pool should be able to reuse TLS sessions between clients', () => {
           servername: 'agent1'
         }
       })
-      const poolWithoutSessionReuse = new Pool(`https://localhost:${server.address().port}`, {
+      const poolWithoutSessionReuse = new Pool(`https://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 0,
         connections: 100,
         maxCachedSessions: 0,
@@ -211,9 +212,9 @@ describe('A connector should enforce maxCachedSessions across hostnames', () => 
       ca,
       lookup (hostname, options, callback) {
         if (options?.all) {
-          callback(null, [{ address: '127.0.0.1', family: 4 }])
+          callback(null, [{ address: LOOPBACK_HOST, family: 4 }])
         } else {
-          callback(null, '127.0.0.1', 4)
+          callback(null, LOOPBACK_HOST, 4)
         }
       },
       maxCachedSessions: 1,

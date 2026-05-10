@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
 const { once } = require('node:events')
@@ -23,7 +24,7 @@ test('transferred buffers and extractBody works', { skip: !ArrayBuffer.prototype
   await once(server, 'listening')
 
   {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'POST',
       body: new TextEncoder().encode('test')
     })
@@ -32,7 +33,7 @@ test('transferred buffers and extractBody works', { skip: !ArrayBuffer.prototype
   }
 
   {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'POST',
       body: Buffer.from('test')
     })
@@ -44,7 +45,7 @@ test('transferred buffers and extractBody works', { skip: !ArrayBuffer.prototype
     const buffer = new TextEncoder().encode('test')
     buffer.buffer.transfer()
 
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'POST',
       body: buffer
     })

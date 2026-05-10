@@ -8,6 +8,7 @@ const { once } = require('node:events')
 const pem = require('@metcoder95/https-pem')
 
 const { Client } = require('..')
+const { LOOPBACK_HOST } = require('./utils/node-http')
 
 test('Should handle http2 trailers', async t => {
   t = tspl(t, { plan: 1 })
@@ -34,7 +35,7 @@ test('Should handle http2 trailers', async t => {
   })
 
   after(() => server.close())
-  await once(server.listen(0, '127.0.0.1'), 'listening')
+  await once(server.listen(0, LOOPBACK_HOST), 'listening')
 
   const client = new Client(`https://${server.address().address}:${server.address().port}`, {
     connect: {

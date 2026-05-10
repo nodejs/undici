@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { fetch } = require('../..')
@@ -33,9 +34,9 @@ test('after redirecting the url of the response is set to the target url', async
   const listenAsync = promisify(server.listen.bind(server))
   await listenAsync(0)
   const { port } = server.address()
-  const response = await fetch(`http://127.0.0.1:${port}/redirect-1`)
+  const response = await fetch(`http://${LOOPBACK_HOST}:${port}/redirect-1`)
 
-  t.assert.strictEqual(response.url, `http://127.0.0.1:${port}/target`)
+  t.assert.strictEqual(response.url, `http://${LOOPBACK_HOST}:${port}/target`)
 })
 
 test('location header with non-ASCII character redirects to a properly encoded url', async (t) => {
@@ -54,7 +55,7 @@ test('location header with non-ASCII character redirects to a properly encoded u
   const listenAsync = promisify(server.listen.bind(server))
   await listenAsync(0)
   const { port } = server.address()
-  const response = await fetch(`http://127.0.0.1:${port}/redirect`)
+  const response = await fetch(`http://${LOOPBACK_HOST}:${port}/redirect`)
 
-  t.assert.strictEqual(response.url, `http://127.0.0.1:${port}/${encodeURIComponent('안녕')}`)
+  t.assert.strictEqual(response.url, `http://${LOOPBACK_HOST}:${port}/${encodeURIComponent('안녕')}`)
 })

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test, after } = require('node:test')
 const { equal, notEqual } = require('node:assert')
 const { createServer } = require('node:http')
@@ -26,7 +27,7 @@ test('query parameters create separate cache entries', async () => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     .compose(interceptors.cache())
 
   after(async () => {
@@ -34,7 +35,7 @@ test('query parameters create separate cache entries', async () => {
     await client.close()
   })
 
-  const origin = `http://localhost:${server.address().port}`
+  const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   // First request with param=value1
   const response1 = await request(origin, {
@@ -81,7 +82,7 @@ test('complex query parameters are handled correctly', async () => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     .compose(interceptors.cache())
 
   after(async () => {
@@ -89,7 +90,7 @@ test('complex query parameters are handled correctly', async () => {
     await client.close()
   })
 
-  const origin = `http://localhost:${server.address().port}`
+  const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   // Complex query with arrays and multiple parameters
   const complexQuery = {
@@ -149,7 +150,7 @@ test('query parameters vs path equivalence', async () => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     .compose(interceptors.cache())
 
   after(async () => {
@@ -157,7 +158,7 @@ test('query parameters vs path equivalence', async () => {
     await client.close()
   })
 
-  const origin = `http://localhost:${server.address().port}`
+  const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   // Request using query object
   const response1 = await request(origin, {
@@ -194,7 +195,7 @@ test('empty and undefined query parameters', async () => {
   server.listen(0)
   await once(server, 'listening')
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     .compose(interceptors.cache())
 
   after(async () => {
@@ -202,7 +203,7 @@ test('empty and undefined query parameters', async () => {
     await client.close()
   })
 
-  const origin = `http://localhost:${server.address().port}`
+  const origin = `http://${LOOPBACK_HOST}:${server.address().port}`
 
   // Request with no query
   const response1 = await request(origin, { dispatcher: client })

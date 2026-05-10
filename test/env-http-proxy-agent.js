@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after, beforeEach } = require('node:test')
 const { EnvHttpProxyAgent, ProxyAgent, Agent, fetch, MockAgent } = require('..')
@@ -395,18 +396,18 @@ describe('no_proxy', () => {
 
   test('CIDR is NOT supported', async (t) => {
     t = tspl(t, { plan: 2 })
-    process.env.no_proxy = '127.0.0.1/32'
+    process.env.no_proxy = `${LOOPBACK_HOST}/32`
     const { dispatcher, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(2)
-    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://127.0.0.1'))
-    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://127.0.0.1/32'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, `http://${LOOPBACK_HOST}`))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, `http://${LOOPBACK_HOST}/32`))
     return dispatcher.close()
   })
 
-  test('127.0.0.1 does NOT match localhost', async (t) => {
+  test(`${LOOPBACK_HOST} does NOT match localhost`, async (t) => {
     t = tspl(t, { plan: 2 })
-    process.env.no_proxy = '127.0.0.1'
+    process.env.no_proxy = LOOPBACK_HOST
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(2)
-    t.ok(await doesNotProxy('http://127.0.0.1'))
+    t.ok(await doesNotProxy(`http://${LOOPBACK_HOST}`))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://localhost'))
     return dispatcher.close()
   })

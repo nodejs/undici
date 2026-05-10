@@ -26,6 +26,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Worker, isMainThread, parentPort } = require('node:worker_threads')
 const { Agent, interceptors } = require('..')
+const { LOOPBACK_HOST } = require('./utils/node-http')
 
 // ── Server (runs in worker thread) ──────────────────────────────────────────
 if (!isMainThread) {
@@ -51,7 +52,7 @@ if (!isMainThread) {
       }
     })
 
-    server.listen(0, '127.0.0.1', () => {
+    server.listen(0, LOOPBACK_HOST, () => {
       parentPort.postMessage({ port: server.address().port })
     })
   })
@@ -96,7 +97,7 @@ test('h2: no crash when data arrives after stream abort under high concurrency',
   const dispatcher = makeDispatcher(connections, maxConcurrentStreams)
   after(() => dispatcher.close())
 
-  const origin = `https://127.0.0.1:${port}`
+  const origin = `https://${LOOPBACK_HOST}:${port}`
   const count = 10_000
 
   const requests = Array.from({ length: count }, () =>

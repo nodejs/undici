@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 
 const { fetch, Agent } = require('../..')
@@ -32,7 +33,7 @@ test('Fetch very long request, timeout overridden so no error', (t, done) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    fetch(`http://localhost:${server.address().port}`, {
+    fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       path: '/',
       method: 'GET',
       dispatcher: new Agent({

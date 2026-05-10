@@ -5,6 +5,7 @@ const { test } = require('node:test')
 const net = require('node:net')
 const { Socks5Client, STATES, AUTH_METHODS, REPLY_CODES } = require('../lib/core/socks5-client')
 const { InvalidArgumentError, Socks5ProxyError } = require('../lib/core/errors')
+const { LOOPBACK_HOST } = require('./utils/node-http')
 
 test('Socks5Client - constructor validation', async (t) => {
   const p = tspl(t, { plan: 1 })
@@ -36,11 +37,11 @@ test('Socks5Client - handshake flow', async (t) => {
   })
 
   await new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', resolve)
+    server.listen(0, LOOPBACK_HOST, resolve)
   })
 
   const { port } = server.address()
-  const socket = net.connect(port, '127.0.0.1')
+  const socket = net.connect(port, LOOPBACK_HOST)
 
   await new Promise((resolve) => {
     socket.on('connect', resolve)
@@ -142,11 +143,11 @@ test('Socks5Client - username/password authentication', async (t) => {
   })
 
   await new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', resolve)
+    server.listen(0, LOOPBACK_HOST, resolve)
   })
 
   const { port } = server.address()
-  const socket = net.connect(port, '127.0.0.1')
+  const socket = net.connect(port, LOOPBACK_HOST)
 
   await new Promise((resolve) => {
     socket.on('connect', resolve)
@@ -218,11 +219,11 @@ test('Socks5Client - connect command', async (t) => {
   })
 
   await new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', resolve)
+    server.listen(0, LOOPBACK_HOST, resolve)
   })
 
   const { port } = server.address()
-  const socket = net.connect(port, '127.0.0.1')
+  const socket = net.connect(port, LOOPBACK_HOST)
 
   await new Promise((resolve) => {
     socket.on('connect', resolve)
@@ -235,7 +236,7 @@ test('Socks5Client - connect command', async (t) => {
   })
 
   client.on('connected', (info) => {
-    p.equal(info.address, '127.0.0.1', 'should return bound address')
+    p.equal(info.address, LOOPBACK_HOST, 'should return bound address')
     p.equal(info.port, 80, 'should return bound port')
     p.equal(client.buffer.length, 0, 'should clear SOCKS5 protocol buffer after connect')
     p.equal(socket.listenerCount('data'), 0, 'should stop parsing socket data after connect')
@@ -268,11 +269,11 @@ test('Socks5Client - authentication failure', async (t) => {
   })
 
   await new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', resolve)
+    server.listen(0, LOOPBACK_HOST, resolve)
   })
 
   const { port } = server.address()
-  const socket = net.connect(port, '127.0.0.1')
+  const socket = net.connect(port, LOOPBACK_HOST)
 
   await new Promise((resolve) => {
     socket.on('connect', resolve)
@@ -327,11 +328,11 @@ test('Socks5Client - connection refused', async (t) => {
   })
 
   await new Promise((resolve) => {
-    server.listen(0, '127.0.0.1', resolve)
+    server.listen(0, LOOPBACK_HOST, resolve)
   })
 
   const { port } = server.address()
-  const socket = net.connect(port, '127.0.0.1')
+  const socket = net.connect(port, LOOPBACK_HOST)
 
   await new Promise((resolve) => {
     socket.on('connect', resolve)

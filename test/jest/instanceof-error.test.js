@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 
@@ -29,7 +30,7 @@ it('Real use-case', async () => {
 
   await once(server, 'listening')
 
-  const promise = fetch(`https://localhost:${server.address().port}`, {
+  const promise = fetch(`https://${LOOPBACK_HOST}:${server.address().port}`, {
     signal: ac.signal
   })
 

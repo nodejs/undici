@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
@@ -18,7 +19,7 @@ test('crlf is appended to formdata body (issue #3624)', async (t) => {
   fd.set('a', 'b')
   fd.set('c', new File(['d'], 'd.txt.exe'), 'd.txt.exe')
 
-  const response = await fetch(`http://localhost:${server.address().port}`, {
+  const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     body: fd,
     method: 'POST'
   })

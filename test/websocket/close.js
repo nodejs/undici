@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, after } = require('node:test')
 const { WebSocketServer } = require('ws')
@@ -18,7 +19,7 @@ describe('Close', () => {
         })
       })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
       ws.addEventListener('open', () => ws.close(1000))
     })
   })
@@ -36,7 +37,7 @@ describe('Close', () => {
         })
       })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
       ws.addEventListener('open', () => ws.close(1000, 'Goodbye'))
     })
   })
@@ -44,7 +45,7 @@ describe('Close', () => {
   test('Close with invalid code', (t) => {
     const server = new WebSocketServer({ port: 0 })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     return new Promise((resolve) => {
       ws.addEventListener('open', () => {
@@ -74,7 +75,7 @@ describe('Close', () => {
   test('Close with invalid reason', (t) => {
     const server = new WebSocketServer({ port: 0 })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
 
     return new Promise((resolve) => {
       ws.addEventListener('open', () => {
@@ -106,7 +107,7 @@ describe('Close', () => {
         })
       })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
       ws.addEventListener('open', () => ws.close())
     })
   })
@@ -124,7 +125,7 @@ describe('Close', () => {
         })
       })
 
-      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
       ws.addEventListener('open', () => ws.close(3000))
     })
   })
@@ -142,7 +143,7 @@ describe('Close', () => {
       })
     })
 
-    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+    const ws = new WebSocket(`ws://${LOOPBACK_HOST}:${server.address().port}`)
     ws.addEventListener('open', () => {
       ws.close(1000)
       ws.close(1000)

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { Client, errors } = require('../..')
 const http = require('node:http')
@@ -29,7 +30,7 @@ test('basic connect', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const signal = new EE()
@@ -69,7 +70,7 @@ test('connect error', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     try {
@@ -135,7 +136,7 @@ test('connect wait for empty pipeline', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 3
     })
     t.after(() => { return client.close() })
@@ -193,7 +194,7 @@ test('connect aborted', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 3
     })
     t.after(() => {
@@ -243,7 +244,7 @@ test('basic connect error', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, async () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(() => { return client.close() })
 
     const _err = new Error()
@@ -273,7 +274,7 @@ test('connect invalid signal', async (t) => {
   t.after(closeServerAsPromise(server))
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
     t.after(client.destroy.bind(client))
 
     client.on('disconnect', () => {

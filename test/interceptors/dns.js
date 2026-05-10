@@ -13,6 +13,7 @@ const pem = require('@metcoder95/https-pem')
 
 const { interceptors, Agent, request } = require('../..')
 const { dns } = interceptors
+const { LOOPBACK_HOST } = require('../utils/node-http')
 
 // Helper to check if IPv6 is available for localhost
 // This is called synchronously at test definition time
@@ -96,7 +97,7 @@ test('Should automatically resolve IPs (dual stack)', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -113,7 +114,7 @@ test('Should automatically resolve IPs (dual stack)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -121,7 +122,7 @@ test('Should automatically resolve IPs (dual stack)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -142,7 +143,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
   }
 
   server.on('request', (req, res) => {
-    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.equal(req.headers.host, `${LOOPBACK_HOST}:${server.address().port}`)
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.end('hello world!')
   })
@@ -183,7 +184,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -200,7 +201,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `https://localhost:${server.address().port}`
+    origin: `https://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -208,7 +209,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `https://localhost:${server.address().port}`
+    origin: `https://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -272,7 +273,7 @@ test('Should recover on network errors (dual stack - 4)', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -289,7 +290,7 @@ test('Should recover on network errors (dual stack - 4)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -297,7 +298,7 @@ test('Should recover on network errors (dual stack - 4)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -322,7 +323,7 @@ test('Should recover on network errors (dual stack - 6)', async t => {
     res.end('hello world!')
   })
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
 
   await once(server, 'listening')
 
@@ -361,7 +362,7 @@ test('Should recover on network errors (dual stack - 6)', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -378,7 +379,7 @@ test('Should recover on network errors (dual stack - 6)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -386,7 +387,7 @@ test('Should recover on network errors (dual stack - 6)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -536,7 +537,7 @@ test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -544,7 +545,7 @@ test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -608,7 +609,7 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', { skip: !ipv6
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -616,7 +617,7 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', { skip: !ipv6
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -643,7 +644,7 @@ test('Should we handle TTL (4)', async t => {
     res.end('hello world!')
   })
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
 
   await once(server, 'listening')
 
@@ -697,7 +698,7 @@ test('Should we handle TTL (4)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -707,7 +708,7 @@ test('Should we handle TTL (4)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -717,7 +718,7 @@ test('Should we handle TTL (4)', async t => {
 
   const response3 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response3.statusCode, 200)
@@ -803,7 +804,7 @@ test('Should we handle TTL (6)', { skip: !ipv6Available }, async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -813,7 +814,7 @@ test('Should we handle TTL (6)', { skip: !ipv6Available }, async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -823,7 +824,7 @@ test('Should we handle TTL (6)', { skip: !ipv6Available }, async t => {
 
   const response3 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response3.statusCode, 200)
@@ -850,7 +851,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
     res.end('hello world!')
   })
 
-  server.listen(0, '127.0.0.1')
+  server.listen(0, LOOPBACK_HOST)
 
   await once(server, 'listening')
 
@@ -863,7 +864,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
         ++lookupCounter
         cb(null, [
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4,
             ttl: lookupCounter === 1 ? 50 : 500
           }
@@ -882,7 +883,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -893,7 +894,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   // 100ms: lookup since ttl = Math.min(50, maxTTL: 200)
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -904,7 +905,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   // 100ms: cached since ttl = Math.min(500, maxTTL: 200)
   const response3 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response3.statusCode, 200)
@@ -915,7 +916,7 @@ test('Should set lowest TTL between resolved and option maxTTL', async t => {
   // 250ms: lookup since ttl = Math.min(500, maxTTL: 200)
   const response4 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response4.statusCode, 200)
@@ -976,7 +977,7 @@ test('Should use all dns entries (dual stack)', async t => {
             t.fail('should not reach this point')
         }
 
-        url.hostname = '127.0.0.1'
+        url.hostname = LOOPBACK_HOST
         opts.origin = url.toString()
         return dispatch(opts, handler)
       }
@@ -1004,7 +1005,7 @@ test('Should use all dns entries (dual stack)', async t => {
   for (let i = 0; i < 5; i++) {
     const response = await client.request({
       ...requestOptions,
-      origin: `http://localhost:${server.address().port}`
+      origin: `http://${LOOPBACK_HOST}:${server.address().port}`
     })
 
     t.equal(response.statusCode, 200)
@@ -1059,7 +1060,7 @@ test('Should use all dns entries (dual stack disabled - 4)', async t => {
             t.fail('should not reach this point')
         }
 
-        url.hostname = '127.0.0.1'
+        url.hostname = LOOPBACK_HOST
         opts.origin = url.toString()
         return dispatch(opts, handler)
       }
@@ -1085,7 +1086,7 @@ test('Should use all dns entries (dual stack disabled - 4)', async t => {
 
   const response1 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response1.statusCode, 200)
@@ -1093,7 +1094,7 @@ test('Should use all dns entries (dual stack disabled - 4)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -1101,7 +1102,7 @@ test('Should use all dns entries (dual stack disabled - 4)', async t => {
 
   const response3 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response3.statusCode, 200)
@@ -1155,7 +1156,7 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
             t.fail('should not reach this point')
         }
 
-        url.hostname = '127.0.0.1'
+        url.hostname = LOOPBACK_HOST
         opts.origin = url.toString()
         return dispatch(opts, handler)
       }
@@ -1182,7 +1183,7 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
 
   const response1 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response1.statusCode, 200)
@@ -1190,7 +1191,7 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -1198,7 +1199,7 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
 
   const response3 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response3.statusCode, 200)
@@ -1258,7 +1259,7 @@ test('Should handle single family resolved (dual stack)', async t => {
         lookupCounter++
         if (lookupCounter === 1) {
           cb(null, [
-            { address: '127.0.0.1', family: 4, ttl: 50 }
+            { address: LOOPBACK_HOST, family: 4, ttl: 50 }
           ])
         } else {
           cb(null, [
@@ -1279,7 +1280,7 @@ test('Should handle single family resolved (dual stack)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -1289,7 +1290,7 @@ test('Should handle single family resolved (dual stack)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -1344,7 +1345,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
             t.fail('should not reach this point')
         }
 
-        url.hostname = '127.0.0.1'
+        url.hostname = LOOPBACK_HOST
         opts.origin = url.toString()
         return dispatch(opts, handler)
       }
@@ -1373,7 +1374,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -1383,7 +1384,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -1391,7 +1392,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
 
   const response3 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response3.statusCode, 200)
@@ -1446,7 +1447,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
             t.fail('should not reach this point')
         }
 
-        url.hostname = '127.0.0.1'
+        url.hostname = LOOPBACK_HOST
         opts.origin = url.toString()
         return dispatch(opts, handler)
       }
@@ -1475,7 +1476,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -1485,7 +1486,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -1493,7 +1494,7 @@ test('Should prefer affinity (dual stack - 6)', async t => {
 
   const response3 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response3.statusCode, 200)
@@ -1536,8 +1537,8 @@ test('Should use resolved ports (4)', async t => {
       lookup (origin, opts, cb) {
         lookupCounter++
         cb(null, [
-          { address: '127.0.0.1', family: 4, port: server1.address().port },
-          { address: '127.0.0.1', family: 4, port: server2.address().port }
+          { address: LOOPBACK_HOST, family: 4, port: server1.address().port },
+          { address: LOOPBACK_HOST, family: 4, port: server2.address().port }
         ])
       }
     })
@@ -1686,7 +1687,7 @@ test('Should handle max cached items', async t => {
           case 3:
             t.equal(url.hostname, 'developer.mozilla.org')
             // Rewrite origin to avoid reaching internet
-            opts.origin = `http://127.0.0.1:${server2.address().port}`
+            opts.origin = `http://${LOOPBACK_HOST}:${server2.address().port}`
             break
           default:
             t.fails('should not reach this point')
@@ -1704,7 +1705,7 @@ test('Should handle max cached items', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -1810,7 +1811,7 @@ test('Should support external storage', async t => {
           case 3:
             t.equal(url.hostname, 'developer.mozilla.org')
             // Rewrite origin to avoid reaching internet
-            opts.origin = `http://127.0.0.1:${server2.address().port}`
+            opts.origin = `http://${LOOPBACK_HOST}:${server2.address().port}`
             break
           default:
             t.fails('should not reach this point')
@@ -1828,7 +1829,7 @@ test('Should support external storage', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -1892,7 +1893,7 @@ test('retry once with dual-stack', async t => {
       lookup: (_origin, _opts, cb) => {
         cb(null, [
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             port: 3669,
             family: 4,
             ttl: 1000
@@ -1985,7 +1986,7 @@ test('#3937 - Handle host correctly', async t => {
   }
 
   server.on('request', (req, res) => {
-    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.equal(req.headers.host, `${LOOPBACK_HOST}:${server.address().port}`)
 
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.end('hello world!')
@@ -2022,7 +2023,7 @@ test('#3937 - Handle host correctly', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -2039,7 +2040,7 @@ test('#3937 - Handle host correctly', async t => {
 
   const response = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response.statusCode, 200)
@@ -2047,7 +2048,7 @@ test('#3937 - Handle host correctly', async t => {
 
   const response2 = await client.request({
     ...requestOptions,
-    origin: `http://localhost:${server.address().port}`
+    origin: `http://${LOOPBACK_HOST}:${server.address().port}`
   })
 
   t.equal(response2.statusCode, 200)
@@ -2060,7 +2061,7 @@ test('#4444 - Should preserve tuple-style headers', async t => {
   const server = createServer({ joinDuplicateHeaders: true })
 
   server.on('request', (req, res) => {
-    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.equal(req.headers.host, `${LOOPBACK_HOST}:${server.address().port}`)
     t.equal(req.headers.foo, 'bar')
     t.equal(req.headers['0'], undefined)
 
@@ -2081,7 +2082,7 @@ test('#4444 - Should preserve tuple-style headers', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -2096,7 +2097,7 @@ test('#4444 - Should preserve tuple-style headers', async t => {
     await once(server, 'close')
   })
 
-  const response = await request(`http://localhost:${server.address().port}`, {
+  const response = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     dispatcher: client,
     headers: [['foo', 'bar']]
   })
@@ -2111,7 +2112,7 @@ test('#4444 - Should preserve iterable headers', async t => {
   const server = createServer({ joinDuplicateHeaders: true })
 
   server.on('request', (req, res) => {
-    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    t.equal(req.headers.host, `${LOOPBACK_HOST}:${server.address().port}`)
     t.equal(req.headers.foo, 'bar')
     t.equal(req.headers['0'], undefined)
 
@@ -2132,7 +2133,7 @@ test('#4444 - Should preserve iterable headers', async t => {
             family: 6
           },
           {
-            address: '127.0.0.1',
+            address: LOOPBACK_HOST,
             family: 4
           }
         ])
@@ -2147,7 +2148,7 @@ test('#4444 - Should preserve iterable headers', async t => {
     await once(server, 'close')
   })
 
-  const response = await request(`http://localhost:${server.address().port}`, {
+  const response = await request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     dispatcher: client,
     headers: new Map([['foo', 'bar']])
   })

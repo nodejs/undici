@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -33,7 +34,7 @@ test('issue #2828, RequestInit dispatcher options overrides Request input dispat
     })
   })
 
-  const request = new Request(`http://localhost:${server.address().port}`, {
+  const request = new Request(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     dispatcher: new CustomAgentA()
   })
 

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
@@ -21,7 +22,7 @@ test('421 requests with a body work as expected', async (t) => {
     'hello',
     new Uint8Array(Buffer.from('helloworld', 'utf-8'))
   ]) {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       method: 'POST',
       body
     })

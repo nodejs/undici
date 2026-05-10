@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
@@ -36,7 +37,7 @@ test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t
   server.listen(0)
 
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(() => client.close())
 
   client.on('disconnect', () => {

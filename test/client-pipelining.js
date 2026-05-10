@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { Client } = require('..')
@@ -37,7 +38,7 @@ test('20 times GET with pipelining 10', async (t) => {
   })
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 10
     })
     after(() => client.close())
@@ -99,7 +100,7 @@ test('A client should enqueue as much as twice its pipelining factor', async (t)
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 2
     })
     after(() => client.close())
@@ -154,7 +155,7 @@ test('pipeline 1 is 1 active request', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 1
     })
     after(() => client.destroy())
@@ -212,7 +213,7 @@ test('pipelined chunked POST stream', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 2
     })
     after(() => client.close())
@@ -286,7 +287,7 @@ test('pipelined chunked POST iterator', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 2
     })
     after(() => client.close())
@@ -355,7 +356,7 @@ function errordInflightPost (bodyType) {
     after(() => server.close())
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 2
       })
       after(() => client.destroy())
@@ -414,7 +415,7 @@ test('pipelining non-idempotent', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 2
     })
     after(() => client.close())
@@ -465,7 +466,7 @@ function pipeliningNonIdempotentWithBody (bodyType) {
     after(() => server.close())
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 2
       })
       after(() => client.close())
@@ -531,7 +532,7 @@ function pipeliningHeadBusy (bodyType) {
     after(() => server.close())
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 10
       })
       after(() => client.close())
@@ -609,7 +610,7 @@ test('pipelining empty pipeline before reset', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 10
     })
     after(() => client.close())
@@ -666,7 +667,7 @@ function pipeliningIdempotentBusy (bodyType) {
     after(() => server.close())
 
     server.listen(0, () => {
-      const client = new Client(`http://localhost:${server.address().port}`, {
+      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
         pipelining: 10
       })
       after(() => client.close())
@@ -778,7 +779,7 @@ test('pipelining blocked', async (t) => {
   after(() => server.close())
 
   server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
+    const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       pipelining: 10
     })
     after(() => client.close())

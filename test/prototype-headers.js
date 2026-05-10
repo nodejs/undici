@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { promisify } = require('node:util')
@@ -32,7 +33,7 @@ test('request handles response headers that shadow Object.prototype', async (t) 
 
   await promisify(server.listen.bind(server))(0)
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   t.after(() => client.close())
 
   const { statusCode, headers, body } = await client.request({
@@ -69,7 +70,7 @@ test('request handles response trailers that shadow Object.prototype', async (t)
 
   await promisify(server.listen.bind(server))(0)
 
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   t.after(() => client.close())
 
   const { statusCode, trailers, body } = await client.request({

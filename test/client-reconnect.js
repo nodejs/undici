@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
@@ -28,7 +29,7 @@ test('multiple reconnect', async (t) => {
 
   server.listen(0)
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`)
+  const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`)
   after(client.destroy.bind(client))
 
   client.request({ path: '/', method: 'GET' }, (err, data) => {

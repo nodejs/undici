@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 
@@ -25,7 +26,7 @@ test('WebSocketStream aborts before handshake completes', async (t) => {
   })
 
   const ac = new AbortController()
-  const wss = new WebSocketStream(`ws://localhost:${server.address().port}`, {
+  const wss = new WebSocketStream(`ws://${LOOPBACK_HOST}:${server.address().port}`, {
     signal: ac.signal
   })
 

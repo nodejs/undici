@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -22,7 +23,7 @@ test('Content-Length is set when using a FormData body with fetch', async (t) =>
   fd.set('file', new Blob(['hello world 👋'], { type: 'text/plain' }), 'readme.md')
   fd.set('string', 'some string value')
 
-  await fetch(`http://localhost:${server.address().port}`, {
+  await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     method: 'POST',
     body: fd
   })
@@ -39,7 +40,7 @@ test('Content-Length is not duplicated when provided explicitly', async (t) => {
   await once(server, 'listening')
   t.after(closeServerAsPromise(server))
 
-  await fetch(`http://localhost:${server.address().port}`, {
+  await fetch(`http://${LOOPBACK_HOST}:${server.address().port}`, {
     method: 'POST',
     body,
     headers: {

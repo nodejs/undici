@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
@@ -172,7 +173,7 @@ test('connect/disconnect event(s)', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, () => {
-    const pool = new BalancedPool(`http://localhost:${server.address().port}`, {
+    const pool = new BalancedPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: clients,
       keepAliveTimeoutThreshold: 100
     })
@@ -213,7 +214,7 @@ test('busy', async (t) => {
   t.after(server.close.bind(server))
 
   server.listen(0, async () => {
-    const client = new BalancedPool(`http://localhost:${server.address().port}`, {
+    const client = new BalancedPool(`http://${LOOPBACK_HOST}:${server.address().port}`, {
       connections: 2,
       pipelining: 2
     })
@@ -269,9 +270,9 @@ test('factory option with basic get request', async (t) => {
 
   await promisify(server.listen).call(server, 0)
 
-  client.addUpstream(`http://localhost:${server.address().port}`)
+  client.addUpstream(`http://${LOOPBACK_HOST}:${server.address().port}`)
 
-  p.deepStrictEqual(client.upstreams, [`http://localhost:${server.address().port}`])
+  p.deepStrictEqual(client.upstreams, [`http://${LOOPBACK_HOST}:${server.address().port}`])
 
   t.after(client.destroy.bind(client))
 

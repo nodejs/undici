@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('../utils/node-http')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
@@ -59,7 +60,7 @@ test('Should retry status code', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry(retryOptions))
 
   after(async () => {
@@ -158,7 +159,7 @@ test('Should use retry-after header for retries', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {
@@ -216,7 +217,7 @@ test('Should use retry-after header for retries (date)', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {
@@ -271,7 +272,7 @@ test('Should retry with defaults', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {
@@ -306,7 +307,7 @@ test('Should pass context from other interceptors', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(redirect({ maxRedirections: 1 }), retry())
 
   after(async () => {
@@ -375,7 +376,7 @@ test('Should handle 206 partial content', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {
@@ -438,7 +439,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {
@@ -506,7 +507,7 @@ test('#4970 - Should reject resumed partial content when body exceeds Content-Ra
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {
@@ -575,7 +576,7 @@ test('retrying a request with a body', async t => {
 
   await once(server, 'listening')
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {
@@ -604,7 +605,7 @@ test('should not error if request is not meant to be retried', async t => {
   await once(server, 'listening')
 
   const client = new Client(
-    `http://localhost:${server.address().port}`
+    `http://${LOOPBACK_HOST}:${server.address().port}`
   ).compose(retry())
 
   after(async () => {

@@ -1,5 +1,6 @@
 'use strict'
 
+const { LOOPBACK_HOST } = require('./../utils/node-http')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { describe, test } = require('node:test')
@@ -87,13 +88,13 @@ describe('referrer-policy', () => {
                 t.assert.strictEqual(req.headers['referer'], undefined)
                 break
               case 'origin':
-                t.assert.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/`)
+                t.assert.strictEqual(req.headers['referer'], `http://${LOOPBACK_HOST}:${port}/`)
                 break
               case 'strict-origin-when-cross-origin':
-                t.assert.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
+                t.assert.strictEqual(req.headers['referer'], `http://${LOOPBACK_HOST}:${port}/index.html?test=1`)
                 break
               case 'unsafe-url':
-                t.assert.strictEqual(req.headers['referer'], `http://127.0.0.1:${port}/index.html?test=1`)
+                t.assert.strictEqual(req.headers['referer'], `http://${LOOPBACK_HOST}:${port}/index.html?test=1`)
                 break
             }
             res.writeHead(200, 'dummy', { 'Content-Type': 'text/plain' })
@@ -106,8 +107,8 @@ describe('referrer-policy', () => {
       await once(server, 'listening')
 
       const { port } = server.address()
-      await fetch(`http://127.0.0.1:${port}/redirect`, {
-        referrer: referrer || `http://127.0.0.1:${port}/index.html?test=1`
+      await fetch(`http://${LOOPBACK_HOST}:${port}/redirect`, {
+        referrer: referrer || `http://${LOOPBACK_HOST}:${port}/index.html?test=1`
       })
 
       server.closeAllConnections()
