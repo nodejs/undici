@@ -125,7 +125,13 @@ console.log(`PROTOCOL: ${styleText('gray', PROTOCOL)}`)
 console.log('')
 
 /**
- * @type {Array<Promise<[number, Array<Buffer>]>>}
+ * @type {Array<Promise<{
+ *  code: number | null,
+ *  signal: NodeJS.Signals | null,
+ *  stdout: Buffer[],
+ *  environment: TestEnvironment,
+ *  port: number
+ * }>>}
  */
 const results = []
 
@@ -158,8 +164,18 @@ for (let i = 0; i < testEnvironments.length; i++) {
       stdout.push(chunk)
     })
 
-    cacheTestsWorkerProcess.on('close', code => {
-      resolve([code, stdout])
+    cacheTestsWorkerProcess.on('error', err => {
+      stdout.push(Buffer.from(`${err.stack ?? err.message}\n`))
+    })
+
+    cacheTestsWorkerProcess.on('close', (code, signal) => {
+      resolve({
+        code,
+        signal,
+        stdout,
+        environment,
+        port
+      })
     })
   })
 
@@ -170,13 +186,17 @@ for (let i = 0; i < testEnvironments.length; i++) {
 let exitCode = 0
 
 // Print the results of all the results in the order that they exist
-for (const [code, stdout] of await Promise.all(results)) {
-  if (code !== 0) {
-    exitCode = code
+for (const result of await Promise.all(results)) {
+  if (result.code !== 0 || result.signal !== null) {
+    exitCode = result.code ?? 1
   }
 
-  for (const line of stdout) {
+  for (const line of result.stdout) {
     process.stdout.write(line)
+  }
+
+  if (result.code !== 0 || result.signal !== null) {
+    console.error(`cache-tests worker failed: port=${result.port} store=${result.environment.cacheStore ?? 'default'} type=${result.environment.opts.type ?? 'default'} code=${result.code ?? 'null'} signal=${result.signal ?? 'null'}`)
   }
 
   console.log('')
