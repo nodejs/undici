@@ -1,6 +1,5 @@
 'use strict'
 
-const { LOOPBACK_HOST } = require('./../../utils/node-http')
 const { test, after } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 const diagnosticsChannel = require('node:diagnostics_channel')
@@ -29,7 +28,7 @@ test('Diagnostics channel - get', (t) => {
   let _req
   diagnosticsChannel.channel('undici:request:create').subscribe(({ request }) => {
     _req = request
-    assert.equal(request.origin, `http://${LOOPBACK_HOST}:${server.address().port}`)
+    assert.equal(request.origin, `http://localhost:${server.address().port}`)
     assert.equal(request.completed, false)
     assert.equal(request.method, 'GET')
     assert.equal(request.path, '/')
@@ -47,7 +46,7 @@ test('Diagnostics channel - get', (t) => {
 
     const { host, hostname, protocol, port, servername } = connectParams
 
-    assert.equal(host, `${LOOPBACK_HOST}:${server.address().port}`)
+    assert.equal(host, `localhost:${server.address().port}`)
     assert.equal(hostname, 'localhost')
     assert.equal(port, String(server.address().port))
     assert.equal(protocol, 'http:')
@@ -63,7 +62,7 @@ test('Diagnostics channel - get', (t) => {
 
     const { host, hostname, protocol, port, servername } = connectParams
 
-    assert.equal(host, `${LOOPBACK_HOST}:${server.address().port}`)
+    assert.equal(host, `localhost:${server.address().port}`)
     assert.equal(hostname, 'localhost')
     assert.equal(port, String(server.address().port))
     assert.equal(protocol, 'http:')
@@ -76,7 +75,7 @@ test('Diagnostics channel - get', (t) => {
 
     const expectedHeaders = [
       'GET / HTTP/1.1',
-      `host: ${LOOPBACK_HOST}:${server.address().port}`,
+      `host: localhost:${server.address().port}`,
       'connection: keep-alive',
       'bar: bar',
       'hello: world'
@@ -139,7 +138,7 @@ test('Diagnostics channel - get', (t) => {
     })
 
     server.listen(0, () => {
-      const client = new Client(`http://${LOOPBACK_HOST}:${server.address().port}`, {
+      const client = new Client(`http://localhost:${server.address().port}`, {
         keepAliveTimeout: 300e3
       })
 
