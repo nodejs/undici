@@ -1,14 +1,50 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const net = require('node:net')
 const { Client, errors } = require('..')
 
+function createTrackedServer (onConnection) {
+  const sockets = new Set()
+  const server = net.createServer(socket => {
+    sockets.add(socket)
+    socket.on('close', () => {
+      sockets.delete(socket)
+    })
+    onConnection(socket)
+  })
+
+  return {
+    server,
+    close () {
+      for (const socket of sockets) {
+        socket.destroy()
+      }
+
+      return new Promise((resolve, reject) => {
+        server.close(err => {
+          if (err != null) {
+            reject(err)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+}
+
+function listen (server) {
+  return new Promise(resolve => server.listen(0, resolve))
+}
+
 test('https://github.com/mcollina/undici/issues/268', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer(socket => {
+  const { server, close } = createTrackedServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\n')
     socket.write('Transfer-Encoding: chunked\r\n\r\n')
     setTimeout(() => {
@@ -20,117 +56,128 @@ test('https://github.com/mcollina/undici/issues/268', async (t) => {
       }, 500)
     }, 500)
   })
-  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await listen(server)
 
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  ctx.after(async () => {
+    client.destroy()
+    await close()
+  })
 
-    client.request({
-      method: 'GET',
-      path: '/nxt/_changes?feed=continuous&heartbeat=5000',
-      headersTimeout: 1e3
-    }, (err, data) => {
-      t.ifError(err)
-      data.body
-        .resume()
-      setTimeout(() => {
-        t.ok(true, 'pass')
-        data.body.on('error', () => {})
-      }, 2e3)
-    })
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
+  client.request({
+    method: 'GET',
+    path: '/nxt/_changes?feed=continuous&heartbeat=5000',
+    headersTimeout: 1e3
+  }, (err, data) => {
+    t.ifError(err)
+    data.body.resume()
+    setTimeout(() => {
+      t.ok(true, 'pass')
+      data.body.on('error', () => {})
+    }, 2e3)
   })
 
   await t.completed
 })
 
 test('parser fail', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer(socket => {
-    socket.write('HTT/1.1 200 OK\r\n')
+  const { server, close } = createTrackedServer(socket => {
+    socket.end('HTT/1.1 200 OK\r\n')
   })
-  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await listen(server)
 
-    client.request({
-      method: 'GET',
-      path: '/'
-    }, (err, data) => {
-      t.ok(err)
-      t.ok(err instanceof errors.HTTPParserError)
-    })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  ctx.after(async () => {
+    client.destroy()
+    await close()
+  })
+
+  client.request({
+    method: 'GET',
+    path: '/'
+  }, (err, data) => {
+    t.ok(err)
+    t.ok(err instanceof errors.HTTPParserError)
   })
 
   await t.completed
 })
 
 test('split header field', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer(socket => {
+  const { server, close } = createTrackedServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\nA')
     setTimeout(() => {
-      socket.write('SD: asd,asd\r\n\r\n\r\n')
+      socket.end('SD: asd,asd\r\nContent-Length: 0\r\n\r\n')
     }, 100)
   })
-  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await listen(server)
 
-    client.request({
-      method: 'GET',
-      path: '/'
-    }, (err, data) => {
-      t.ifError(err)
-      t.equal(data.headers.asd, 'asd,asd')
-      data.body.destroy().on('error', () => {})
-    })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  ctx.after(async () => {
+    client.destroy()
+    await close()
+  })
+
+  client.request({
+    method: 'GET',
+    path: '/'
+  }, (err, data) => {
+    t.ifError(err)
+    t.equal(data.headers.asd, 'asd,asd')
+    data.body.resume()
   })
 
   await t.completed
 })
 
 test('split header value', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer(socket => {
+  const { server, close } = createTrackedServer(socket => {
     socket.write('HTTP/1.1 200 OK\r\nASD: asd')
     setTimeout(() => {
-      socket.write(',asd\r\n\r\n\r\n')
+      socket.end(',asd\r\nContent-Length: 0\r\n\r\n')
     }, 100)
   })
-  after(() => server.close())
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  await listen(server)
 
-    client.request({
-      method: 'GET',
-      path: '/'
-    }, (err, data) => {
-      t.ifError(err)
-      t.equal(data.headers.asd, 'asd,asd')
-      data.body.destroy().on('error', () => {})
-    })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  ctx.after(async () => {
+    client.destroy()
+    await close()
+  })
+
+  client.request({
+    method: 'GET',
+    path: '/'
+  }, (err, data) => {
+    t.ifError(err)
+    t.equal(data.headers.asd, 'asd,asd')
+    data.body.resume()
   })
 
   await t.completed
 })
 
 test('refreshes wasm input view after reallocating parser buffer', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 4 })
 
   const smallBody = Buffer.from('ok')
@@ -146,19 +193,21 @@ test('refreshes wasm input view after reallocating parser buffer', async (t) => 
     ])
   ]
 
-  const server = net.createServer(socket => {
+  const { server, close } = createTrackedServer(socket => {
     let responsesSent = 0
 
     socket.on('data', () => {
       socket.write(responses[responsesSent++])
     })
   })
-  after(() => server.close())
 
-  await new Promise(resolve => server.listen(0, resolve))
+  await listen(server)
 
   const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.destroy())
+  ctx.after(async () => {
+    client.destroy()
+    await close()
+  })
 
   function request () {
     return new Promise((resolve, reject) => {
