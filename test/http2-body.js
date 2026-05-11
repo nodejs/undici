@@ -71,6 +71,47 @@ test('Should handle h2 request without body', async t => {
   await t.completed
 })
 
+test('Should tolerate duplicated single-value request headers with h2', async t => {
+  const assert = tspl(t, { plan: 3 })
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    assert.strictEqual(headers['content-type'], 'application/json')
+
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(async () => {
+    server.close()
+    await client.close()
+  })
+
+  const response = await client.request({
+    path: '/',
+    method: 'POST',
+    body: '{}',
+    headers: {
+      'Content-Type': 'application/json',
+      'content-type': 'application/json'
+    }
+  })
+
+  assert.strictEqual(response.statusCode, 200)
+  assert.strictEqual(await response.body.text(), 'ok')
+
+  await assert.completed
+})
+
 test('Should send content-length: 0 for empty h2 requests with payload-expecting methods', async t => {
   const assert = tspl(t, { plan: 18 })
   const methods = ['PUT', 'POST', 'PATCH', 'QUERY', 'PROPFIND', 'PROPPATCH']
