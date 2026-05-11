@@ -1,7 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test } = require('node:test')
+const { test, after } = require('node:test')
 const net = require('node:net')
 const { Client, errors, fetch } = require('..')
 
