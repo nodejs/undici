@@ -40,3 +40,16 @@ test('FETCH-index: request errors and prints trimmed stack trace', async (t) => 
     t.assert.ok(stackLines.some(line => line.includes(__filename)))
   }
 })
+
+test('FETCH-index-mjs: request errors contain callsite', async (t) => {
+  const { fetch: fetchESM } = await import('../../index.js')
+
+  try {
+    await fetchESM('http://a.com')
+  } catch (error) {
+    const stackLines = error.stack.split('\n')
+    t.assert.ok(stackLines[0].includes('TypeError: fetch failed'))
+    t.assert.ok(stackLines.some(line => line.includes('client-error-stack-trace.js')))
+    t.assert.ok(stackLines.some(line => line.includes('index.js')))
+  }
+})

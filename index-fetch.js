@@ -3,25 +3,31 @@
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const EnvHttpProxyAgent = require('./lib/dispatcher/env-http-proxy-agent')
 const fetchImpl = require('./lib/web/fetch').fetch
+const noCurrentFilename = typeof __filename === 'undefined'
 
 // Capture __filename at module load time for stack trace augmentation.
 // This may be undefined when bundled in environments like Node.js internals.
 const currentFilename = typeof __filename !== 'undefined' ? __filename : undefined
 
-function appendFetchStackTrace (err, filename) {
+function appendFetchStackTrace (err, filename, stackTrace) {
   if (!err || typeof err !== 'object') {
     return
   }
 
   const stack = typeof err.stack === 'string' ? err.stack : ''
-  const normalizedFilename = filename.replace(/\\/g, '/')
+  const normalizedFilename = filename ? filename.replace(/\\/g, '/') : undefined
 
-  if (stack && (stack.includes(filename) || stack.includes(normalizedFilename))) {
+  if (stack && filename && (stack.includes(filename) || stack.includes(normalizedFilename))) {
     return
   }
 
   const capture = {}
-  Error.captureStackTrace(capture, appendFetchStackTrace)
+
+  if (stackTrace) {
+    capture.stack = stackTrace
+  } else {
+    Error.captureStackTrace(capture, noCurrentFilename ? module.exports.fetch : appendFetchStackTrace)
+  }
 
   if (!capture.stack) {
     return
@@ -33,11 +39,13 @@ function appendFetchStackTrace (err, filename) {
 }
 
 module.exports.fetch = function fetch (init, options = undefined) {
+  const stack = noCurrentFilename ? new Error().stack : undefined
+
   return fetchImpl(init, options).catch(err => {
     if (currentFilename) {
       appendFetchStackTrace(err, currentFilename)
     } else if (err && typeof err === 'object') {
-      Error.captureStackTrace(err, module.exports.fetch)
+      appendFetchStackTrace(err, undefined, stack)
     }
     throw err
   })
