@@ -11,7 +11,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { interceptors, Agent, request } = require('../..')
+const { interceptors, Agent, Client, request } = require('../..')
 const { dns } = interceptors
 
 // Helper to check if IPv6 is available for localhost
@@ -478,6 +478,39 @@ test('Should throw when on dual-stack disabled (6)', { skip: !ipv6Available }, a
   await t.rejects(promise, 'ECONNREFUSED')
 
   await t.completed
+})
+
+test('Should resolve client origin when request origin is omitted', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`).compose(dns({
+    lookup: (origin, _opts, cb) => {
+      t.equal(origin.hostname, 'localhost')
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
 })
 
 test('Should automatically resolve IPs (dual stack disabled - 4)', async t => {
