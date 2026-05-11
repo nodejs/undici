@@ -59,7 +59,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['22', '24', '26']
+        node-version: ['22', '24', '25', '26']
         runs-on: ['ubuntu-latest', 'windows-latest', 'macos-latest']
     uses: ./.github/workflows/nodejs.yml
     with:
@@ -74,7 +74,7 @@ jobs:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['22', '24', '26']
+        node-version: ['22', '24', '25', '26']
         runs-on: ['ubuntu-latest']
     uses: ./.github/workflows/nodejs.yml
     with:
