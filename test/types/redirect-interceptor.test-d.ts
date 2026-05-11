@@ -7,8 +7,12 @@ expectAssignable<Interceptors.RedirectInterceptorOpts>({ throwOnMaxRedirect: tru
 expectAssignable<Interceptors.RedirectInterceptorOpts>({ maxRedirections: 3, throwOnMaxRedirect: true })
 expectAssignable<Interceptors.RedirectInterceptorOpts>({ stripHeadersOnRedirect: ['x-custom'] })
 expectAssignable<Interceptors.RedirectInterceptorOpts>({ maxRedirections: 3, stripHeadersOnRedirect: ['x-custom'] })
+expectAssignable<Interceptors.RedirectInterceptorOpts>({ stripHeadersOnCrossOriginRedirect: ['x-custom'] })
+expectAssignable<Interceptors.RedirectInterceptorOpts>({ maxRedirections: 3, stripHeadersOnCrossOriginRedirect: ['x-custom'] })
 
 expectNotAssignable<Interceptors.RedirectInterceptorOpts>({ maxRedirections: 'INVALID' })
 expectNotAssignable<Interceptors.RedirectInterceptorOpts>({ throwOnMaxRedirect: 'INVALID' })
 expectNotAssignable<Interceptors.RedirectInterceptorOpts>({ stripHeadersOnRedirect: 'INVALID' })
 expectNotAssignable<Interceptors.RedirectInterceptorOpts>({ stripHeadersOnRedirect: [1] })
+expectNotAssignable<Interceptors.RedirectInterceptorOpts>({ stripHeadersOnCrossOriginRedirect: 'INVALID' })
+expectNotAssignable<Interceptors.RedirectInterceptorOpts>({ stripHeadersOnCrossOriginRedirect: [1] })

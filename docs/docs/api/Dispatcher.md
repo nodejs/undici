@@ -995,7 +995,8 @@ Options:
 
 - **maxRedirections** `number` - Maximum number of redirections allowed.
 - **throwOnMaxRedirect** `boolean` - Throw when the maximum number of redirections is reached.
-- **stripHeadersOnRedirect** `string[]` - Header names to remove from redirected requests.
+- **stripHeadersOnRedirect** `string[]` - Header names to remove from all redirected requests.
+- **stripHeadersOnCrossOriginRedirect** `string[]` - Header names to remove from cross-origin redirected requests.
 
 **Example - Basic Redirect Interceptor**
 
