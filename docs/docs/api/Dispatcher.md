@@ -991,6 +991,12 @@ The `redirect` interceptor allows you to customize the way your dispatcher handl
 
 It accepts the same arguments as the [`RedirectHandler` constructor](/docs/docs/api/RedirectHandler.md).
 
+Options:
+
+- **maxRedirections** `number` - Maximum number of redirections allowed.
+- **throwOnMaxRedirect** `boolean` - Throw when the maximum number of redirections is reached.
+- **stripHeadersOnRedirect** `string[]` - Header names to remove from redirected requests.
+
 **Example - Basic Redirect Interceptor**
 
 ```js
