@@ -122,7 +122,7 @@ test('GET errors and reconnect with pipelining 3', async (t) => {
   await p.completed
 })
 
-function installErrorAndReconnectServer (server, p, contentLength) {
+function installErrorAndReconnectServer (server, p, { contentLength, trackPostWithPlan }) {
   let sawPost = false
   let sawGet = false
 
@@ -150,9 +150,16 @@ function installErrorAndReconnectServer (server, p, contentLength) {
     }
 
     sawPost = true
-    p.strictEqual('/', req.url)
-    p.strictEqual('POST', req.method)
-    p.strictEqual(req.headers['content-length'], contentLength)
+
+    if (trackPostWithPlan) {
+      p.strictEqual('/', req.url)
+      p.strictEqual('POST', req.method)
+      p.strictEqual(req.headers['content-length'], contentLength)
+    } else {
+      assert.strictEqual('/', req.url)
+      assert.strictEqual('POST', req.method)
+      assert.strictEqual(req.headers['content-length'], contentLength)
+    }
 
     const bufs = []
     req.on('data', (buf) => {
@@ -162,17 +169,25 @@ function installErrorAndReconnectServer (server, p, contentLength) {
     req.on('aborted', () => {
       // we will abruptly close the connection here
       // but this will still end
-      p.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
+      if (trackPostWithPlan) {
+        p.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
+      } else {
+        assert.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
+      }
     })
   })
 }
 
 function errorAndPipelining (type) {
   test(`POST with a ${type} that errors and pipelining 1 should reconnect`, async (t) => {
-    const p = tspl(t, { plan: 12 })
+    const trackPostWithPlan = type !== consts.STREAM
+    const p = tspl(t, { plan: trackPostWithPlan ? 12 : 8 })
 
     const server = createServer({ joinDuplicateHeaders: true })
-    installErrorAndReconnectServer(server, p, '42')
+    installErrorAndReconnectServer(server, p, {
+      contentLength: '42',
+      trackPostWithPlan
+    })
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
@@ -222,10 +237,14 @@ errorAndPipelining(consts.ASYNC_ITERATOR)
 
 function errorAndChunkedEncodingPipelining (type) {
   test(`POST with chunked encoding, ${type} body that errors and pipelining 1 should reconnect`, async (t) => {
-    const p = tspl(t, { plan: 12 })
+    const trackPostWithPlan = type !== consts.STREAM
+    const p = tspl(t, { plan: trackPostWithPlan ? 12 : 8 })
 
     const server = createServer({ joinDuplicateHeaders: true })
-    installErrorAndReconnectServer(server, p, undefined)
+    installErrorAndReconnectServer(server, p, {
+      contentLength: undefined,
+      trackPostWithPlan
+    })
     t.after(closeServerAsPromise(server))
 
     server.listen(0, () => {
