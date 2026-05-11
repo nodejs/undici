@@ -313,6 +313,46 @@ test('post aborted signal cloned', (t) => {
   ac.abort('gwak')
 })
 
+test('post aborted signal cloned after GC', async (t) => {
+  if (typeof globalThis.gc !== 'function') {
+    t.skip('requires --expose-gc')
+    return
+  }
+
+  const ac = new AbortController()
+  const req = new Request('http://asd', { signal: ac.signal }).clone()
+
+  for (let i = 0; i < 10; i++) {
+    globalThis.gc()
+    await new Promise(resolve => setImmediate(resolve))
+  }
+
+  ac.abort('gwak')
+
+  t.assert.strictEqual(req.signal.aborted, true)
+  t.assert.strictEqual(req.signal.reason, 'gwak')
+})
+
+test('post aborted signal copied after GC', async (t) => {
+  if (typeof globalThis.gc !== 'function') {
+    t.skip('requires --expose-gc')
+    return
+  }
+
+  const ac = new AbortController()
+  const req = new Request(new Request('http://asd', { signal: ac.signal }))
+
+  for (let i = 0; i < 10; i++) {
+    globalThis.gc()
+    await new Promise(resolve => setImmediate(resolve))
+  }
+
+  ac.abort('gwak')
+
+  t.assert.strictEqual(req.signal.aborted, true)
+  t.assert.strictEqual(req.signal.reason, 'gwak')
+})
+
 test('Passing headers in init', async (t) => {
   // https://github.com/nodejs/undici/issues/1400
   await t.test('Headers instance', (t) => {
