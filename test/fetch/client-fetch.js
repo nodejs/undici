@@ -428,6 +428,45 @@ test('redirect with body', (t, done) => {
   })
 })
 
+test('redirect with FormData body updates content-type boundary', async (t) => {
+  t.plan(3)
+
+  let count = 0
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    let body = ''
+    for await (const chunk of req) {
+      body += chunk
+    }
+
+    if (count++ === 0) {
+      res.setHeader('location', '/target')
+      res.statusCode = 307
+      res.end()
+      return
+    }
+
+    const contentType = req.headers['content-type']
+    const boundary = /boundary=(.+)$/.exec(contentType)?.[1]
+
+    t.assert.ok(boundary)
+    t.assert.ok(body.includes(`--${boundary}`))
+    res.end('ok')
+  })
+  t.after(closeServerAsPromise(server))
+
+  await once(server.listen(0), 'listening')
+
+  const formData = new FormData()
+  formData.append('test', 'data')
+
+  const res = await fetch(`http://localhost:${server.address().port}/first`, {
+    method: 'POST',
+    body: formData
+  })
+
+  t.assert.strictEqual(await res.text(), 'ok')
+})
+
 test('redirect with stream', (t, done) => {
   t.plan(3)
 
