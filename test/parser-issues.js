@@ -14,6 +14,17 @@ const truncatedChunkedResponse = Buffer.from(
   'hel\r\n'
 )
 
+const chunkedResponseWithTrailingSpaceAfterChunkSize = Buffer.from(
+  'HTTP/1.1 200 OK\r\n' +
+  'Transfer-Encoding: chunked\r\n' +
+  'Connection: close\r\n' +
+  '\r\n' +
+  '7\r\n' +
+  'hello, \r\n' +
+  '0  \r\n' +
+  '\r\n'
+)
+
 function createTrackedServer (onConnection) {
   const sockets = new Set()
   const server = net.createServer(socket => {
@@ -255,17 +266,18 @@ test('refreshes wasm input view after reallocating parser buffer', async (t) => 
 })
 
 test('truncated chunked responses terminated by EOF error the response body', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 3 })
 
   const server = net.createServer((socket) => {
     socket.end(truncatedChunkedResponse)
   })
-  after(() => server.close())
+  ctx.after(() => server.close())
 
   await new Promise(resolve => server.listen(0, resolve))
 
   const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.destroy())
+  ctx.after(() => client.destroy())
 
   client.request({
     method: 'GET',
@@ -286,13 +298,54 @@ test('truncated chunked responses terminated by EOF error the response body', as
   await t.completed
 })
 
+test('accepts chunked response with spaces after chunk size', async (t) => {
+  const ctx = t
+  t = tspl(t, { plan: 2 })
+
+  const server = net.createServer((socket) => {
+    socket.end(chunkedResponseWithTrailingSpaceAfterChunkSize)
+  })
+  ctx.after(() => server.close())
+
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  ctx.after(() => client.destroy())
+
+  client.request({
+    method: 'GET',
+    path: '/'
+  }, (err, data) => {
+    t.ifError(err)
+    if (err) {
+      return
+    }
+
+    const chunks = []
+
+    data.body
+      .on('data', chunk => {
+        chunks.push(chunk)
+      })
+      .on('error', err => {
+        t.ifError(err)
+      })
+      .on('end', () => {
+        t.strictEqual(Buffer.concat(chunks).toString(), 'hello, ')
+      })
+  })
+
+  await t.completed
+})
+
 test('fetch rejects truncated chunked responses terminated by EOF', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 3 })
 
   const server = net.createServer((socket) => {
     socket.end(truncatedChunkedResponse)
   })
-  after(() => server.close())
+  ctx.after(() => server.close())
 
   await new Promise(resolve => server.listen(0, resolve))
 
