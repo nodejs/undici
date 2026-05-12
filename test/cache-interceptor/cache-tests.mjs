@@ -140,7 +140,8 @@ for (let i = 0; i < testEnvironments.length; i++) {
   const environment = testEnvironments[i]
   const port = PORT + i
 
-  const promise = new Promise((resolve) => {
+  const runWorker = () => {
+    const { promise, resolve } = Promise.withResolvers()
     const cacheTestsWorkerProcess = fork(join(import.meta.dirname, 'cache-tests-worker.mjs'), {
       stdio: 'pipe',
       env: {
@@ -177,7 +178,26 @@ for (let i = 0; i < testEnvironments.length; i++) {
         port
       })
     })
-  })
+
+    return promise
+  }
+
+  const promise = (async () => {
+    const result = await runWorker()
+    if (result.signal === null && (result.code === 0 || result.code === 1)) {
+      return result
+    }
+
+    const retryResult = await runWorker()
+    return {
+      ...retryResult,
+      stdout: [
+        ...result.stdout,
+        Buffer.from(`cache-tests worker crashed, retrying once: port=${port} store=${environment.cacheStore ?? 'default'} type=${environment.opts.type ?? 'default'} code=${result.code ?? 'null'} signal=${result.signal ?? 'null'}\n`),
+        ...retryResult.stdout
+      ]
+    }
+  })()
 
   results.push(promise)
 }
