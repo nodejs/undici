@@ -1,13 +1,12 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
 const { createServer } = require('node:http')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
 const examples = require('../docs/examples/request.js')
 
 test('request examples', async (t) => {
-  t = tspl(t, { plan: 7 })
+  t.plan(7)
 
   let lastReq
   const exampleServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -48,21 +47,19 @@ test('request examples', async (t) => {
   ])
 
   await examples.getRequest(exampleServer.address().port)
-  t.strictEqual(lastReq.method, 'GET')
+  t.assert.strictEqual(lastReq.method, 'GET')
 
   await examples.postJSONRequest(exampleServer.address().port)
-  t.strictEqual(lastReq.method, 'POST')
-  t.strictEqual(lastReq.headers['content-type'], 'application/json')
+  t.assert.strictEqual(lastReq.method, 'POST')
+  t.assert.strictEqual(lastReq.headers['content-type'], 'application/json')
 
   await examples.postFormRequest(exampleServer.address().port)
-  t.strictEqual(lastReq.method, 'POST')
-  t.strictEqual(lastReq.headers['content-type'], 'application/x-www-form-urlencoded')
+  t.assert.strictEqual(lastReq.method, 'POST')
+  t.assert.strictEqual(lastReq.headers['content-type'], 'application/x-www-form-urlencoded')
 
   await examples.deleteRequest(exampleServer.address().port)
-  t.strictEqual(lastReq.method, 'DELETE')
+  t.assert.strictEqual(lastReq.method, 'DELETE')
 
   await examples.deleteRequest(errorServer.address().port)
-  t.strictEqual(lastReq.method, 'DELETE')
-
-  await t.completed
+  t.assert.strictEqual(lastReq.method, 'DELETE')
 })
