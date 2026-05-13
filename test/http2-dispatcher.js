@@ -265,10 +265,11 @@ test('Dispatcher#Upgrade', async t => {
       t.fail(err)
     })
 
-    stream.respond({ ':status': 200 })
+    stream.respond({ ':status': 200 }, { endStream: false })
     stream.resume()
-
-    stream.end()
+    stream.once('end', () => {
+      stream.end()
+    })
   })
 
   await once(server.listen(0), 'listening')
@@ -281,6 +282,7 @@ test('Dispatcher#Upgrade', async t => {
   })
 
   const { socket } = await client.upgrade({ path: '/', protocol: 'websocket' })
+  socket.on('error', () => {})
 
   t.ok(socket.readable)
   t.ok(socket.writable)
@@ -288,7 +290,6 @@ test('Dispatcher#Upgrade', async t => {
 
   await t.completed
 
-  socket.on('error', () => {})
   socket.end()
   await once(socket, 'close')
   await client.close()
@@ -311,7 +312,11 @@ test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgr
     })
 
     if (headers[':method'] === 'CONNECT' && headers[':protocol'] === 'websocket') {
-      stream.respond({ ':status': 200 })
+      stream.respond({ ':status': 200 }, { endStream: false })
+      stream.resume()
+      stream.once('end', () => {
+        stream.end()
+      })
       return
     }
 
@@ -337,27 +342,22 @@ test('Dispatcher#Upgrade resumes queued requests after successful WebSocket upgr
   after(() => client.close())
   after(() => server.close())
 
-  let upgradeSocket
+  const upgrade = client.upgrade({ path: '/', protocol: 'websocket' })
+  const post = client.request({ method: 'POST', path: '/', body: 'hello' })
 
-  try {
-    const upgrade = client.upgrade({ path: '/', protocol: 'websocket' })
-    const post = client.request({ method: 'POST', path: '/', body: 'hello' })
+  const { socket } = await upgrade
+  socket.on('error', () => {})
+  t.strictEqual(socket.closed, false)
 
-    const { socket } = await upgrade
-    upgradeSocket = socket
-    t.strictEqual(socket.closed, false)
+  const response = await Promise.race([
+    post,
+    sleep(1_000).then(() => null)
+  ])
 
-    const response = await Promise.race([
-      post,
-      sleep(1_000).then(() => null)
-    ])
+  t.ok(postReachedServer)
+  t.strictEqual(response?.statusCode, 200)
 
-    t.ok(postReachedServer)
-    t.strictEqual(response?.statusCode, 200)
-  } finally {
-    upgradeSocket?.on('error', () => {})
-    upgradeSocket?.end()
-  }
+  socket.end()
 
   await t.completed
 })
