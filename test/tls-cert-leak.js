@@ -42,19 +42,22 @@ test('no memory leak with TLS certificate errors', { timeout: 20000 }, async (t)
   // Function to make a request that will trigger a certificate error
   async function makeRequest (i) {
     try {
-      // The request will fail with CERT_SIGNATURE_FAILURE or similar
+      // The request will fail with UNABLE_TO_VERIFY_LEAF_SIGNATURE or similar
       // because we're using a self-signed certificate and not telling
-      // Node.js to accept it
-      const res = await fetch(`${serverUrl}/request-${i}`, {
-        signal: AbortSignal.timeout(2000) // Short timeout to prevent hanging
-      })
+      // Node.js to accept it.
+      //
+      // Do not add an AbortSignal timeout here: the test timeout already
+      // protects against hangs, and per-request timeout signals retain enough
+      // short-lived objects to make this memory regression test flaky.
+      const res = await fetch(`${serverUrl}/request-${i}`)
       const text = await res.text()
       return { status: res.status, text }
     } catch (e) {
       // In real code, without the fix, this would leak memory
       if (e?.cause?.code === 'CERT_SIGNATURE_FAILURE' ||
           e?.cause?.code === 'DEPTH_ZERO_SELF_SIGNED_CERT' ||
-          e?.cause?.code === 'ERR_TLS_CERT_ALTNAME_INVALID') {
+          e?.cause?.code === 'ERR_TLS_CERT_ALTNAME_INVALID' ||
+          e?.cause?.code === 'UNABLE_TO_VERIFY_LEAF_SIGNATURE') {
         return { status: 524, text: 'Certificate Error' }
       }
       // Return for any other error to avoid test interruption
