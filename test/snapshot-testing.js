@@ -688,6 +688,41 @@ describe('SnapshotAgent - Advanced Features', () => {
     assert.strictEqual(snapshots[0].snapshot.request.url, `${origin}/autoflush-test`,
       'Auto-flushed snapshot should have correct URL')
   })
+
+  it('auto-flush honors configured flushInterval', async (t) => {
+    const server = createTestServer((req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' })
+      res.end('flush interval test')
+    })
+
+    const { port } = await setupServer(server)
+    const origin = `http://127.0.0.1:${port}`
+    const snapshotPath = createSnapshotPath('flush-interval')
+
+    setupCleanup(t, { server, snapshotPath })
+
+    const agent = new SnapshotAgent({
+      mode: 'record',
+      snapshotPath,
+      autoFlush: true,
+      flushInterval: 100
+    })
+
+    const originalDispatcher = getGlobalDispatcher()
+    setupCleanup(t, { agent, originalDispatcher })
+    setGlobalDispatcher(agent)
+
+    await request(`${origin}/flush-interval-test`)
+
+    // Wait long enough for a 100ms interval to fire, but well below the
+    // previously hardcoded 1000ms debounce - regression check.
+    await new Promise(resolve => setTimeout(resolve, 400))
+
+    const fileData = await readFile(snapshotPath, 'utf8')
+    const snapshots = JSON.parse(fileData)
+    assert.strictEqual(snapshots.length, 1,
+      'Snapshot should be auto-flushed within configured flushInterval')
+  })
 })
 
 describe('SnapshotAgent - Header Management', () => {
