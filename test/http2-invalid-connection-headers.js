@@ -91,3 +91,57 @@ test('should surface invalid HTTP/2 connection headers as a catchable error and 
 
   await t.completed
 })
+
+test('should surface HTTP/2 request header validation errors as a catchable error and resume queued requests', async (t) => {
+  t = tspl(t, { plan: 5 })
+
+  let streamCount = 0
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.on('stream', (stream) => {
+    streamCount++
+    stream.respond({
+      ':status': 200,
+      'content-type': 'text/plain; charset=utf-8'
+    })
+    stream.end('hello world')
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  after(() => client.close())
+
+  const firstRequest = client.request({
+    path: '/',
+    method: 'POST',
+    headers: {
+      'content-type': 'foo/bar',
+      'Content-Type': 'foo/bar'
+    },
+    body: 'foo-bar'
+  }).catch(err => err)
+
+  const secondRequest = client.request({
+    path: '/',
+    method: 'GET'
+  })
+
+  const err = await firstRequest
+  t.ok(err instanceof InformationalError)
+  t.strictEqual(err.code, 'UND_ERR_INFO')
+  t.strictEqual(err.cause.code, 'ERR_HTTP2_HEADER_SINGLE_VALUE')
+
+  const response = await secondRequest
+  t.strictEqual(streamCount, 1)
+  t.strictEqual(await response.body.text(), 'hello world')
+
+  await t.completed
+})
