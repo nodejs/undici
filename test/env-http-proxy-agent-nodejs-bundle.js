@@ -20,7 +20,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     process.env = { ...env }
   })
 
-  test('should work with undici fetch from index-fetch', async (t) => {
+  test('should work with undici fetch from index-fetch with tunneling enabled', async (t) => {
     const { strictEqual } = tspl(t, { plan: 3 })
 
     // Instead of using mocks, start a real server and a minimal proxy server
@@ -73,7 +73,7 @@ describe('EnvHttpProxyAgent and setGlobalDispatcher', () => {
     const proxyAddress = `http://localhost:${proxy.address().port}`
     const serverAddress = `http://localhost:${server.address().port}`
     process.env.http_proxy = proxyAddress
-    setGlobalDispatcher(new EnvHttpProxyAgent())
+    setGlobalDispatcher(new EnvHttpProxyAgent({ proxyTunnel: true }))
 
     const res = await undiciFetch(serverAddress)
     strictEqual(await res.text(), 'Hello world')

@@ -1,7 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const net = require('node:net')
 const { Client, errors, fetch } = require('..')
 
@@ -255,17 +255,20 @@ test('refreshes wasm input view after reallocating parser buffer', async (t) => 
 })
 
 test('truncated chunked responses terminated by EOF error the response body', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 3 })
 
-  const server = net.createServer((socket) => {
+  const { server, close } = createTrackedServer(socket => {
     socket.end(truncatedChunkedResponse)
   })
-  after(() => server.close())
 
-  await new Promise(resolve => server.listen(0, resolve))
+  await listen(server)
 
   const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.destroy())
+  ctx.after(async () => {
+    client.destroy()
+    await close()
+  })
 
   client.request({
     method: 'GET',
@@ -287,14 +290,16 @@ test('truncated chunked responses terminated by EOF error the response body', as
 })
 
 test('fetch rejects truncated chunked responses terminated by EOF', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 3 })
 
-  const server = net.createServer((socket) => {
+  const { server, close } = createTrackedServer(socket => {
     socket.end(truncatedChunkedResponse)
   })
-  after(() => server.close())
 
-  await new Promise(resolve => server.listen(0, resolve))
+  await listen(server)
+
+  ctx.after(close)
 
   const res = await fetch(`http://localhost:${server.address().port}`)
   t.strictEqual(res.status, 200)
