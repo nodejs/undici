@@ -1,5 +1,6 @@
 'use strict'
 
+const assert = require('node:assert')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { WebSocketServer } = require('ws')
@@ -16,7 +17,7 @@ test('Agent webSocketOptions.maxPayloadSize is read correctly', async (t) => {
   t.after(() => agent.close())
 
   // Verify the option is stored and retrievable
-  t.assert.strictEqual(agent.webSocketOptions.maxPayloadSize, customLimit)
+  assert.strictEqual(agent.webSocketOptions.maxPayloadSize, customLimit)
 })
 
 test('Agent with default webSocketOptions uses 128 MB limit', async (t) => {
@@ -25,7 +26,7 @@ test('Agent with default webSocketOptions uses 128 MB limit', async (t) => {
   t.after(() => agent.close())
 
   // Default should be 128 MB
-  t.assert.strictEqual(agent.webSocketOptions.maxPayloadSize, 128 * 1024 * 1024)
+  assert.strictEqual(agent.webSocketOptions.maxPayloadSize, 128 * 1024 * 1024)
 })
 
 test('Custom maxPayloadSize allows messages under limit', async (t) => {
@@ -55,7 +56,7 @@ test('Custom maxPayloadSize allows messages under limit', async (t) => {
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, dataSize, 'Message under limit should be received')
+  assert.strictEqual(event.data.size, dataSize, 'Message under limit should be received')
   client.close()
 })
 
@@ -84,7 +85,7 @@ test('Messages at exactly the limit succeed', async (t) => {
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, limit, 'Message at exactly the limit should succeed')
+  assert.strictEqual(event.data.size, limit, 'Message at exactly the limit should succeed')
   client.close()
 })
 
@@ -99,7 +100,7 @@ test('Client webSocketOptions.maxPayloadSize is read correctly', async (t) => {
   t.after(() => client.close())
 
   // Verify the option is stored and retrievable
-  t.assert.strictEqual(client.webSocketOptions.maxPayloadSize, customLimit)
+  assert.strictEqual(client.webSocketOptions.maxPayloadSize, customLimit)
 })
 
 test('Pool webSocketOptions.maxPayloadSize is read correctly', async (t) => {
@@ -113,5 +114,5 @@ test('Pool webSocketOptions.maxPayloadSize is read correctly', async (t) => {
   t.after(() => pool.close())
 
   // Verify the option is stored and retrievable
-  t.assert.strictEqual(pool.webSocketOptions.maxPayloadSize, customLimit)
+  assert.strictEqual(pool.webSocketOptions.maxPayloadSize, customLimit)
 })
