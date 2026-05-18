@@ -27,6 +27,14 @@ import { runtimeFeatures } from '../../lib/util/runtime-features.js'
  *  dependencyFailed: number,
  *  retried: number
  * }} TestStats
+ *
+ * @typedef {{
+ *  code: number | null,
+ *  signal: NodeJS.Signals | null,
+ *  stdout: Buffer[],
+ *  environment: TestEnvironment,
+ *  port: number
+ * }} WorkerResult
  */
 
 const CLI_OPTIONS = parseArgs({
@@ -120,20 +128,22 @@ const testEnvironments = filterEnvironments(
   buildTestEnvironments(0, [CACHE_TYPES, CACHE_STORES])
 )
 
+// Windows runners intermittently terminate cache-test workers with 0xC0000409
+// when all environments run at the same time. Keep environment workers serial
+// there; each worker still runs the upstream cache-tests concurrently.
+const WORKER_CONCURRENCY = Math.max(1, Number(process.env.CACHE_TEST_WORKER_CONCURRENCY) || (
+  process.platform === 'win32' ? 1 : testEnvironments.length
+))
+
 console.log(`Testing ${testEnvironments.length} environments\n`)
 console.log(`PROTOCOL: ${styleText('gray', PROTOCOL)}`)
+console.log(`WORKERS: ${styleText('gray', `${WORKER_CONCURRENCY}`)}`)
 console.log('')
 
 /**
- * @type {Array<Promise<{
- *  code: number | null,
- *  signal: NodeJS.Signals | null,
- *  stdout: Buffer[],
- *  environment: TestEnvironment,
- *  port: number
- * }>>}
+ * @type {Array<() => Promise<WorkerResult>>}
  */
-const results = []
+const jobs = []
 
 // Run all the tests in child processes because the test runner is a bit finicky
 for (let i = 0; i < testEnvironments.length; i++) {
@@ -182,7 +192,7 @@ for (let i = 0; i < testEnvironments.length; i++) {
     return promise
   }
 
-  const promise = (async () => {
+  jobs.push(async () => {
     const result = await runWorker()
     if (result.signal === null && (result.code === 0 || result.code === 1)) {
       return result
@@ -197,16 +207,14 @@ for (let i = 0; i < testEnvironments.length; i++) {
         ...retryResult.stdout
       ]
     }
-  })()
-
-  results.push(promise)
+  })
 }
 
 // Status code so we can fail CI jobs if we need
 let exitCode = 0
 
 // Print the results of all the results in the order that they exist
-for (const result of await Promise.all(results)) {
+for (const result of await runJobs(jobs, WORKER_CONCURRENCY)) {
   if (result.code !== 0 || result.signal !== null) {
     exitCode = result.code ?? 1
   }
@@ -259,6 +267,29 @@ function buildTestEnvironments (idx, testOptions) {
   }
 
   return environments
+}
+
+/**
+ * @param {Array<() => Promise<WorkerResult>>} jobs
+ * @param {number} concurrency
+ * @returns {Promise<WorkerResult[]>}
+ */
+async function runJobs (jobs, concurrency) {
+  const results = new Array(jobs.length)
+  let next = 0
+
+  async function worker () {
+    while (next < jobs.length) {
+      const idx = next++
+      results[idx] = await jobs[idx]()
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, jobs.length) }, worker)
+  )
+
+  return results
 }
 
 /**
