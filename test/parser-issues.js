@@ -255,17 +255,18 @@ test('refreshes wasm input view after reallocating parser buffer', async (t) => 
 })
 
 test('truncated chunked responses terminated by EOF error the response body', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 3 })
 
   const server = net.createServer((socket) => {
     socket.end(truncatedChunkedResponse)
   })
-  after(() => server.close())
+  ctx.after(() => server.close())
 
   await new Promise(resolve => server.listen(0, resolve))
 
   const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.destroy())
+  ctx.after(() => client.destroy())
 
   client.request({
     method: 'GET',
@@ -287,12 +288,13 @@ test('truncated chunked responses terminated by EOF error the response body', as
 })
 
 test('fetch rejects truncated chunked responses terminated by EOF', async (t) => {
+  const ctx = t
   t = tspl(t, { plan: 3 })
 
   const server = net.createServer((socket) => {
     socket.end(truncatedChunkedResponse)
   })
-  after(() => server.close())
+  ctx.after(() => server.close())
 
   await new Promise(resolve => server.listen(0, resolve))
 
