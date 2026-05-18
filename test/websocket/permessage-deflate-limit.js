@@ -1,5 +1,6 @@
 'use strict'
 
+const assert = require('node:assert')
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { randomFillSync } = require('node:crypto')
@@ -26,7 +27,7 @@ test('Compressed message under limit decompresses successfully', async (t) => {
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`)
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, 1024)
+  assert.strictEqual(event.data.size, 1024)
   client.close()
 })
 
@@ -41,7 +42,7 @@ test('Agent webSocketOptions.maxPayloadSize is read correctly', async (t) => {
   t.after(() => agent.close())
 
   // Verify the option is stored and retrievable
-  t.assert.strictEqual(agent.webSocketOptions.maxPayloadSize, customLimit)
+  assert.strictEqual(agent.webSocketOptions.maxPayloadSize, customLimit)
 })
 
 test('Agent with default webSocketOptions uses 128 MB limit', async (t) => {
@@ -50,7 +51,7 @@ test('Agent with default webSocketOptions uses 128 MB limit', async (t) => {
   t.after(() => agent.close())
 
   // Default should be 128 MB
-  t.assert.strictEqual(agent.webSocketOptions.maxPayloadSize, 128 * 1024 * 1024)
+  assert.strictEqual(agent.webSocketOptions.maxPayloadSize, 128 * 1024 * 1024)
 })
 
 test('Custom maxPayloadSize allows messages under limit', async (t) => {
@@ -80,7 +81,7 @@ test('Custom maxPayloadSize allows messages under limit', async (t) => {
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, dataSize, 'Message under limit should be received')
+  assert.strictEqual(event.data.size, dataSize, 'Message under limit should be received')
   client.close()
 })
 
@@ -109,7 +110,7 @@ test('Messages at exactly the limit succeed', async (t) => {
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
 
   const [event] = await once(client, 'message')
-  t.assert.strictEqual(event.data.size, limit, 'Message at exactly the limit should succeed')
+  assert.strictEqual(event.data.size, limit, 'Message at exactly the limit should succeed')
   client.close()
 })
 
@@ -132,7 +133,7 @@ test('Compressed frame payload over wire-size limit is rejected', async (t) => {
     }
   }
 
-  t.assert.ok(payload, 'Expected incompressible payload with compressed wire size over the limit')
+  assert.ok(payload, 'Expected incompressible payload with compressed wire size over the limit')
 
   let messageReceived = false
 
@@ -159,8 +160,8 @@ test('Compressed frame payload over wire-size limit is rejected', async (t) => {
 
   await Promise.race([closePromise, timeoutPromise])
 
-  t.assert.strictEqual(messageReceived, false, 'Compressed frame over wire-size limit should be rejected')
-  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+  assert.strictEqual(messageReceived, false, 'Compressed frame over wire-size limit should be rejected')
+  assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
 
 test('Messages over the limit are rejected', async (t) => {
@@ -206,9 +207,9 @@ test('Messages over the limit are rejected', async (t) => {
 
   await Promise.race([closePromise, timeoutPromise])
 
-  t.assert.strictEqual(messageReceived, false, 'Message over limit should be rejected')
-  t.assert.ok(closeEvent !== null, 'Close event should have been emitted')
-  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+  assert.strictEqual(messageReceived, false, 'Message over limit should be rejected')
+  assert.ok(closeEvent !== null, 'Close event should have been emitted')
+  assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
 
 test('Limit can be disabled by setting maxPayloadSize to 0', async (t) => {
@@ -220,7 +221,9 @@ test('Limit can be disabled by setting maxPayloadSize to 0', async (t) => {
   t.after(() => server.close())
   await once(server, 'listening')
 
-  const dataSize = 100 * 1024 * 1024 // 100 MB
+  // Keep this comfortably above the smaller limits used elsewhere in this file,
+  // while avoiding the 100 MB transfer that can be slow on CI.
+  const dataSize = 2 * 1024 * 1024 // 2 MB
 
   server.on('connection', (ws) => {
     ws.send(Buffer.alloc(dataSize, 0x41), { binary: true })
@@ -236,19 +239,16 @@ test('Limit can be disabled by setting maxPayloadSize to 0', async (t) => {
   t.after(() => agent.close())
 
   const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const timeout = Symbol('timeout')
 
-  // Use Promise.race with timeout since large message takes time
-  const messagePromise = once(client, 'message')
-  const timeoutPromise = sleep(10000)
+  const result = await Promise.race([
+    once(client, 'message'),
+    sleep(10000, timeout)
+  ])
 
-  const result = await Promise.race([messagePromise, timeoutPromise])
-
-  if (result) {
-    t.assert.strictEqual(result[0].data.size, dataSize, 'Large message should be received when limit is disabled')
-    client.close()
-  } else {
-    t.fail('Test timed out waiting for large message')
-  }
+  assert.notStrictEqual(result, timeout, 'Test timed out waiting for large message')
+  assert.strictEqual(result[0].data.size, dataSize, 'Large message should be received when limit is disabled')
+  client.close()
 })
 
 test('Fragmented compressed payload over total limit is rejected', async (t) => {
@@ -297,8 +297,8 @@ test('Fragmented compressed payload over total limit is rejected', async (t) => 
 
   await Promise.race([closePromise, timeoutPromise])
 
-  t.assert.strictEqual(messageReceived, false, 'Fragmented compressed message over total limit should be rejected')
-  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+  assert.strictEqual(messageReceived, false, 'Fragmented compressed message over total limit should be rejected')
+  assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
 
 test('Raw uncompressed payload over immediate limit is rejected', async (t) => {
@@ -337,8 +337,8 @@ test('Raw uncompressed payload over immediate limit is rejected', async (t) => {
 
   await Promise.race([closePromise, timeoutPromise])
 
-  t.assert.strictEqual(messageReceived, false, 'Raw uncompressed message over limit should be rejected')
-  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+  assert.strictEqual(messageReceived, false, 'Raw uncompressed message over limit should be rejected')
+  assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
 
 test('Raw uncompressed payload over 16-bit extended limit is rejected', async (t) => {
@@ -377,8 +377,8 @@ test('Raw uncompressed payload over 16-bit extended limit is rejected', async (t
 
   await Promise.race([closePromise, timeoutPromise])
 
-  t.assert.strictEqual(messageReceived, false, 'Raw uncompressed message over limit should be rejected')
-  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+  assert.strictEqual(messageReceived, false, 'Raw uncompressed message over limit should be rejected')
+  assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
 
 test('Raw uncompressed payload over 64-bit extended limit is rejected', async (t) => {
@@ -417,6 +417,6 @@ test('Raw uncompressed payload over 64-bit extended limit is rejected', async (t
 
   await Promise.race([closePromise, timeoutPromise])
 
-  t.assert.strictEqual(messageReceived, false, 'Raw uncompressed message over limit should be rejected')
-  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+  assert.strictEqual(messageReceived, false, 'Raw uncompressed message over limit should be rejected')
+  assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
