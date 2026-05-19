@@ -856,6 +856,106 @@ test('same-origin redirect preserves plain object headers with polluted Object.p
   }
 })
 
+test('same-origin redirects strip configured headers', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 5 })
+
+  const server = createServer((req, res) => {
+    if (req.url === '/redirect') {
+      strictEqual(req.headers['x-custom'], 'secret')
+      strictEqual(req.headers['x-keep'], 'present')
+
+      res.writeHead(302, {
+        Location: '/final'
+      })
+      res.end()
+      return
+    }
+
+    strictEqual(req.headers['x-custom'], undefined)
+    strictEqual(req.headers['x-keep'], 'present')
+    res.end('redirected')
+  }).listen(0)
+
+  after(() => server.close())
+
+  await once(server, 'listening')
+
+  const dispatcher = new undici.Agent({}).compose(redirect({
+    maxRedirections: 1,
+    stripHeadersOnRedirect: ['X-Custom']
+  }))
+  after(() => dispatcher.close())
+
+  const res = await undici.request(`http://localhost:${server.address().port}/redirect`, {
+    dispatcher,
+    headers: {
+      'X-Custom': 'secret',
+      'X-Keep': 'present'
+    }
+  })
+
+  const text = await res.body.text()
+  strictEqual(text, 'redirected')
+})
+
+test('cross-origin redirects strip configured headers only across origins', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 7 })
+
+  const server1 = createServer((req, res) => {
+    strictEqual(req.headers['x-custom'], undefined)
+    strictEqual(req.headers['x-keep'], 'present')
+    res.end('redirected')
+  }).listen(0)
+
+  const server2 = createServer((req, res) => {
+    if (req.url === '/redirect') {
+      strictEqual(req.headers['x-custom'], 'secret')
+      strictEqual(req.headers['x-keep'], 'present')
+
+      res.writeHead(302, {
+        Location: '/same-origin'
+      })
+      res.end()
+      return
+    }
+
+    strictEqual(req.headers['x-custom'], 'secret')
+    strictEqual(req.headers['x-keep'], 'present')
+
+    res.writeHead(302, {
+      Location: `http://localhost:${server1.address().port}`
+    })
+    res.end()
+  }).listen(0)
+
+  t.after(() => {
+    server1.close()
+    server2.close()
+  })
+
+  await Promise.all([
+    once(server1, 'listening'),
+    once(server2, 'listening')
+  ])
+
+  const dispatcher = new undici.Agent({}).compose(redirect({
+    maxRedirections: 2,
+    stripHeadersOnCrossOriginRedirect: ['X-Custom']
+  }))
+  after(() => dispatcher.close())
+
+  const res = await undici.request(`http://localhost:${server2.address().port}/redirect`, {
+    dispatcher,
+    headers: {
+      'X-Custom': 'secret',
+      'X-Keep': 'present'
+    }
+  })
+
+  const text = await res.body.text()
+  strictEqual(text, 'redirected')
+})
+
 test('Cross-origin redirects clear forbidden headers', async (t) => {
   const { strictEqual } = tspl(t, { plan: 6 })
 
