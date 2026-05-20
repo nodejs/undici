@@ -47,7 +47,7 @@ jobs:
           echo git: $(git --version)
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Print installed dependencies
         run: npm ls --all

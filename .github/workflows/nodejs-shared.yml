@@ -35,7 +35,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./undici
-        run: npm install
+        run: npm ci
 
       - name: Install wasi-libc
         run: sudo apt-get install -y wasi-libc binaryen
