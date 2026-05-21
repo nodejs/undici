@@ -74,7 +74,7 @@ jobs:
         id: install-globally-latest-npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
         id: install-dependencies
 
       - name: Publish undici on NPM
