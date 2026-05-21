@@ -48,7 +48,7 @@ jobs:
           node-version: 'latest'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint
         run: npm run lint
@@ -106,7 +106,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build undici
         run: npm run build:node
@@ -192,7 +192,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build undici
         run: npm run build:node
@@ -257,7 +257,7 @@ jobs:
           node-version: lts/*
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run fuzzing tests
         run: npm run test:fuzzing
@@ -294,7 +294,7 @@ jobs:
           node-version: lts/*
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run typings tests
         run: npm run test:typescript
