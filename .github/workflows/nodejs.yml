@@ -79,8 +79,18 @@ jobs:
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
       
       - name: Test node-test
+        if: inputs.node-version != '26'
         run: npm run test:node-test
         id: test-node-test
+        env:
+          CI: true
+          NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
+          UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+
+      - name: Test node-test (Node 26 diagnostic runner)
+        if: inputs.node-version == '26'
+        run: node scripts/run-node-test-ci.mjs
+        id: test-node-test-node26
         env:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
