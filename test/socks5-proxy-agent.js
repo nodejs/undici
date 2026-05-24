@@ -1,13 +1,52 @@
 'use strict'
 
 const net = require('node:net')
+const https = require('node:https')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { request } = require('..')
+const { request, ProxyAgent } = require('..')
 const { InvalidArgumentError } = require('../lib/core/errors')
 const Socks5ProxyAgent = require('../lib/dispatcher/socks5-proxy-agent')
 const { createServer } = require('node:http')
 const { TestSocks5Server } = require('./fixtures/socks5-test-server')
+
+const tlsCerts = (() => {
+  const forge = require('node-forge')
+  const createCert = (cn, issuer, keyLength = 2048) => {
+    const keys = forge.pki.rsa.generateKeyPair(keyLength)
+    const cert = forge.pki.createCertificate()
+    cert.publicKey = keys.publicKey
+    cert.serialNumber = '' + Date.now()
+    cert.validity.notBefore = new Date()
+    cert.validity.notAfter = new Date()
+    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 10)
+    const attrs = [{ name: 'commonName', value: cn }]
+    cert.setSubject(attrs)
+    const isCa = issuer === undefined
+    cert.setExtensions([
+      { name: 'basicConstraints', cA: isCa },
+      { name: 'subjectAltName', altNames: [{ type: 2, value: cn }] }
+    ])
+    const alg = forge.md.sha256.create()
+    if (issuer !== undefined) {
+      cert.setIssuer(issuer.certificate.subject.attributes)
+      cert.sign(issuer.privateKey, alg)
+    } else {
+      cert.setIssuer(attrs)
+      cert.sign(keys.privateKey, alg)
+    }
+    return { privateKey: keys.privateKey, publicKey: keys.publicKey, certificate: cert }
+  }
+  const root = createCert('socks5-test-ca')
+  const server = createCert('localhost', root)
+  return {
+    root: { crt: forge.pki.certificateToPem(root.certificate) },
+    server: {
+      key: forge.pki.privateKeyToPem(server.privateKey),
+      crt: forge.pki.certificateToPem(server.certificate)
+    }
+  }
+})()
 
 test('Socks5ProxyAgent - constructor validation', async (t) => {
   const p = tspl(t, { plan: 4 })
@@ -419,6 +458,90 @@ test('Socks5ProxyAgent - URL parsing edge cases', async (t) => {
     // eslint-disable-next-line no-new
     new Socks5ProxyAgent('socks5://localhost')
   }, 'should use default port 1080')
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - requestTls is honored for target HTTPS connection (GHSA-vmh5-mc38-953g)', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  // HTTPS server with a cert signed by tlsCerts.root, NOT in Node's default trust store
+  const server = https.createServer({
+    key: tlsCerts.server.key,
+    cert: tlsCerts.server.crt
+  }, (req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ ok: true }))
+  })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  const serverPort = server.address().port
+
+  // SOCKS5 server that forwards CONNECT to the local HTTPS server
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen()
+
+  // Use Socks5ProxyAgent directly with requestTls
+  const proxyAgent = new Socks5ProxyAgent(`socks5://127.0.0.1:${socksAddress.port}`, {
+    requestTls: {
+      ca: [tlsCerts.root.crt]
+    }
+  })
+
+  after(async () => {
+    await proxyAgent.close()
+    server.close()
+    await socksServer.close()
+  })
+
+  // The HTTPS request via SOCKS5 should succeed because requestTls.ca contains the root CA
+  // that signed the server cert. Without honoring requestTls, Node would default to Mozilla
+  // CA bundle and reject the cert.
+  const response = await request(`https://localhost:${serverPort}/`, {
+    dispatcher: proxyAgent
+  })
+  p.strictEqual(response.statusCode, 200, 'request should succeed when requestTls.ca is honored')
+  const body = await response.body.json()
+  p.deepStrictEqual(body, { ok: true })
+
+  await p.completed
+})
+
+test('ProxyAgent forwards requestTls to Socks5ProxyAgent (GHSA-vmh5-mc38-953g)', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  const server = https.createServer({
+    key: tlsCerts.server.key,
+    cert: tlsCerts.server.crt
+  }, (req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ ok: true }))
+  })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  const serverPort = server.address().port
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen()
+
+  // Use top-level ProxyAgent with socks5 URI + requestTls; the option must be forwarded.
+  const proxyAgent = new ProxyAgent({
+    uri: `socks5://127.0.0.1:${socksAddress.port}`,
+    requestTls: {
+      ca: [tlsCerts.root.crt]
+    }
+  })
+
+  after(async () => {
+    await proxyAgent.close()
+    server.close()
+    await socksServer.close()
+  })
+
+  const response = await request(`https://localhost:${serverPort}/`, {
+    dispatcher: proxyAgent
+  })
+  p.strictEqual(response.statusCode, 200, 'request should succeed when ProxyAgent forwards requestTls')
+  const body = await response.body.json()
+  p.deepStrictEqual(body, { ok: true })
 
   await p.completed
 })
