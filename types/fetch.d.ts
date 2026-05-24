@@ -36,7 +36,7 @@ export class BodyMixin {
   readonly bytes: () => Promise<Uint8Array>
   /**
    * @deprecated This method is not recommended for parsing multipart/form-data bodies in server environments.
-   * Calling body.formData() buffers and parses the entire body. Because multipart parsing has inherent security risks,
+   * Calling body.formData() buffers and parses the entire body. Since this is dictated by the spec,
    * this method must only be called on responses from trusted servers.
    * For responses from untrusted or user-controlled servers, use a dedicated streaming parser such as
    * [@fastify/busboy](https://www.npmjs.com/package/@fastify/busboy) and apply application-specific limits as follows:
