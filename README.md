@@ -341,7 +341,7 @@ The `body` mixins are the most common way to format the request/response body. M
 > The body returned from `undici.request` does not implement `.formData()`.
 
 > [!WARNING]
-> Calling `body.formData()` on a fetch response causes undici to buffer and parse the entire body. Because multipart parsing has inherent security risks, `body.formData()` must only be called on responses from trusted servers.
+> Calling `body.formData()` on a fetch response causes undici to buffer and parse the entire body. Since this is dictated by the spec, `body.formData()` must only be called on responses from trusted servers.
 
 Example usage:
 
