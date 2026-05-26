@@ -2,17 +2,15 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { createSecureServer } = require('node:http2')
+const { createServer } = require('node:http2')
 const { once } = require('node:events')
-
-const pem = require('@metcoder95/https-pem')
 
 const { Client, Agent, RetryAgent, errors, request } = require('..')
 
 test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects with BodyTimeoutError', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createServer()
   server.on('stream', (stream) => {
     stream.respond({ ':status': 200, 'content-type': 'text/plain' })
     setTimeout(() => {
@@ -25,9 +23,9 @@ test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects w
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
-    connect: { rejectUnauthorized: false },
+  const client = new Client(`http://localhost:${server.address().port}`, {
     allowH2: true,
+    useH2c: true,
     bodyTimeout: 50,
     headersTimeout: 50
   })
@@ -52,7 +50,7 @@ test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects w
 test('https://github.com/nodejs/undici/issues/5087 headersTimeout over h2 rejects with HeadersTimeoutError', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createServer()
   server.on('stream', (stream) => {
     setTimeout(() => {
       try {
@@ -64,9 +62,9 @@ test('https://github.com/nodejs/undici/issues/5087 headersTimeout over h2 reject
   after(() => server.close())
   await once(server.listen(0), 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
-    connect: { rejectUnauthorized: false },
+  const client = new Client(`http://localhost:${server.address().port}`, {
     allowH2: true,
+    useH2c: true,
     bodyTimeout: 60_000,
     headersTimeout: 50
   })
@@ -90,7 +88,7 @@ test('https://github.com/nodejs/undici/issues/5087 RetryAgent retries h2 body ti
   t = tspl(t, { plan: 2 })
 
   let hits = 0
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createServer()
   server.on('stream', (stream) => {
     hits += 1
 
@@ -113,7 +111,7 @@ test('https://github.com/nodejs/undici/issues/5087 RetryAgent retries h2 body ti
 
   const dispatcher = new RetryAgent(new Agent({
     allowH2: true,
-    connect: { rejectUnauthorized: false },
+    useH2c: true,
     bodyTimeout: 50,
     headersTimeout: 50
   }), {
@@ -123,7 +121,7 @@ test('https://github.com/nodejs/undici/issues/5087 RetryAgent retries h2 body ti
   })
   after(() => dispatcher.close())
 
-  const res = await request(`https://localhost:${server.address().port}/`, {
+  const res = await request(`http://localhost:${server.address().port}/`, {
     dispatcher,
     method: 'GET'
   })
