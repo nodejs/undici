@@ -127,6 +127,9 @@ function errorAndPipelining (type) {
     const p = tspl(t, { plan: 12 })
 
     const server = createServer({ joinDuplicateHeaders: true })
+    let body
+    let bodyErrorSent = false
+
     server.once('request', (req, res) => {
       p.strictEqual('/', req.url)
       p.strictEqual('POST', req.method)
@@ -135,6 +138,11 @@ function errorAndPipelining (type) {
       const bufs = []
       req.on('data', (buf) => {
         bufs.push(buf)
+
+        if (!bodyErrorSent) {
+          bodyErrorSent = true
+          setImmediate(() => body.destroy(new Error('kaboom')))
+        }
       })
 
       req.on('aborted', () => {
@@ -165,6 +173,16 @@ function errorAndPipelining (type) {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
+      body = new Readable({
+        read () {
+          if (this.sent) {
+            return
+          }
+          this.sent = true
+          this.push('a string')
+        }
+      })
+
       client.request({
         path: '/',
         method: 'POST',
@@ -173,16 +191,7 @@ function errorAndPipelining (type) {
           'content-length': 42
         },
         opaque: 'asd',
-        body: maybeWrapStream(new Readable({
-          read () {
-            if (this.sent) {
-              return
-            }
-            this.sent = true
-            this.push('a string')
-            setImmediate(() => this.destroy(new Error('kaboom')))
-          }
-        }), type)
+        body: maybeWrapStream(body, type)
       }, (err, data) => {
         p.strictEqual(err.message, 'kaboom')
         p.strictEqual(data.opaque, 'asd')
@@ -215,6 +224,9 @@ function errorAndChunkedEncodingPipelining (type) {
     const p = tspl(t, { plan: 12 })
 
     const server = createServer({ joinDuplicateHeaders: true })
+    let body
+    let bodyErrorSent = false
+
     server.once('request', (req, res) => {
       p.strictEqual('/', req.url)
       p.strictEqual('POST', req.method)
@@ -223,6 +235,11 @@ function errorAndChunkedEncodingPipelining (type) {
       const bufs = []
       req.on('data', (buf) => {
         bufs.push(buf)
+
+        if (!bodyErrorSent) {
+          bodyErrorSent = true
+          setImmediate(() => body.destroy(new Error('kaboom')))
+        }
       })
 
       req.on('aborted', () => {
@@ -253,20 +270,21 @@ function errorAndChunkedEncodingPipelining (type) {
       const client = new Client(`http://localhost:${server.address().port}`)
       t.after(client.destroy.bind(client))
 
+      body = new Readable({
+        read () {
+          if (this.sent) {
+            return
+          }
+          this.sent = true
+          this.push('a string')
+        }
+      })
+
       client.request({
         path: '/',
         method: 'POST',
         opaque: 'asd',
-        body: maybeWrapStream(new Readable({
-          read () {
-            if (this.sent) {
-              return
-            }
-            this.sent = true
-            this.push('a string')
-            setImmediate(() => this.destroy(new Error('kaboom')))
-          }
-        }), type)
+        body: maybeWrapStream(body, type)
       }, (err, data) => {
         p.strictEqual(err.message, 'kaboom')
         p.strictEqual(data.opaque, 'asd')
