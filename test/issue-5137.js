@@ -2,10 +2,8 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { createSecureServer } = require('node:http2')
+const { createServer } = require('node:http2')
 const { once } = require('node:events')
-
-const pem = require('@metcoder95/https-pem')
 
 const { RetryAgent, Client } = require('..')
 
@@ -19,7 +17,7 @@ const { RetryAgent, Client } = require('..')
 test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', async t => {
   t = tspl(t, { plan: 2 })
 
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createServer()
 
   let streamCount = 0
   let resolveStreamCount
@@ -39,10 +37,11 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
   await once(server.listen(0), 'listening')
 
   const client = new RetryAgent(
-    new Client(`https://localhost:${server.address().port}`, {
-      connect: { rejectUnauthorized: false },
+    new Client(`http://localhost:${server.address().port}`, {
       allowH2: true,
-      bodyTimeout: 50
+      useH2c: true,
+      bodyTimeout: 50,
+      headersTimeout: 50
     }),
     {
       maxRetries: 3,
@@ -61,8 +60,8 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
 
   // The request itself should reject after exhausting retries
   await t.rejects(client.request({ path: '/', method: 'GET' }), {
-    code: 'UND_ERR_INFO',
-    message: /stream timeout/
+    code: 'UND_ERR_HEADERS_TIMEOUT',
+    message: /headers timeout/
   })
 
   await streamCountReached
