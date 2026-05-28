@@ -1,5 +1,5 @@
 import { expectAssignable } from 'tsd'
-import { setGlobalDispatcher, Dispatcher, Dispatcher1Wrapper, getGlobalDispatcher } from '../..'
+import { setGlobalDispatcher, Dispatcher, getGlobalDispatcher } from '../..'
 
 {
   expectAssignable<void>(setGlobalDispatcher(new Dispatcher()))
@@ -8,4 +8,3 @@ import { setGlobalDispatcher, Dispatcher, Dispatcher1Wrapper, getGlobalDispatche
 }
 
 expectAssignable<Dispatcher>(getGlobalDispatcher())
-expectAssignable<Dispatcher>(new Dispatcher1Wrapper(new Dispatcher()))
