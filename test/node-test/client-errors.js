@@ -175,8 +175,12 @@ function errorAndPipelining (type) {
         opaque: 'asd',
         body: maybeWrapStream(new Readable({
           read () {
+            if (this.sent) {
+              return
+            }
+            this.sent = true
             this.push('a string')
-            this.destroy(new Error('kaboom'))
+            setImmediate(() => this.destroy(new Error('kaboom')))
           }
         }), type)
       }, (err, data) => {
@@ -255,8 +259,12 @@ function errorAndChunkedEncodingPipelining (type) {
         opaque: 'asd',
         body: maybeWrapStream(new Readable({
           read () {
+            if (this.sent) {
+              return
+            }
+            this.sent = true
             this.push('a string')
-            this.destroy(new Error('kaboom'))
+            setImmediate(() => this.destroy(new Error('kaboom')))
           }
         }), type)
       }, (err, data) => {
