@@ -29,6 +29,11 @@ import { errors } from 'undici'
 | `MessageSizeExceededError`           | `UND_ERR_WS_MESSAGE_SIZE_EXCEEDED`    | WebSocket decompressed message exceeded the maximum allowed size          |
 
 Be aware of the possible difference between the global dispatcher version and the actual undici version you might be using. We recommend to avoid the check `instanceof errors.UndiciError` and seek for the `error.code === '<error_code>'` instead to avoid inconsistencies.
+
+### `ConnectTimeoutError`
+
+When `autoSelectFamily` is enabled and every attempted address fails with a timeout, Node raises an `AggregateError`. Undici surfaces these multi-address timeouts as `ConnectTimeoutError` (so the error shape is the same regardless of whether Node's family-attempt timer or undici's `connectTimeout` wins the race); the original `AggregateError` is preserved on `error.cause`.
+
 ### `SocketError`
 
 The `SocketError` has a `.socket` property which holds socket metadata:
