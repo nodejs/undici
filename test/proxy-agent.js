@@ -1273,6 +1273,61 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
   proxyAgent.close()
 })
 
+test('Proxy via HTTPS to HTTP endpoint forwards without tunneling by default', async (t) => {
+  t = tspl(t, { plan: 4 })
+  const server = await buildServer()
+  const proxy = await buildSSLProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `https://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    proxyTls: {
+      ca: [
+        certs.root.crt
+      ],
+      servername: 'proxy'
+    }
+  })
+
+  server.on('request', function (req, res) {
+    t.ok(!req.connection.encrypted)
+    const headers = { host: req.headers.host, connection: req.headers.connection }
+    res.end(JSON.stringify(headers))
+  })
+
+  server.on('secureConnection', () => {
+    t.fail('server is http')
+  })
+
+  proxy.on('secureConnection', () => {
+    t.ok(true, 'TLS handshake to the proxy must still happen')
+  })
+
+  proxy.on('connect', () => {
+    t.fail('should not tunnel plain HTTP through an HTTPS proxy by default')
+  })
+
+  proxy.on('request', function (req) {
+    const bits = { method: req.method, url: req.url }
+    t.deepStrictEqual(bits, {
+      method: 'GET',
+      url: `${serverUrl}/`
+    })
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  const json = await data.body.json()
+  t.deepStrictEqual(json, {
+    host: `localhost:${server.address().port}`,
+    connection: 'keep-alive'
+  })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('Proxy via HTTPS to HTTP endpoint with tunneling enabled', async (t) => {
   t = tspl(t, { plan: 3 })
   const server = await buildServer()
