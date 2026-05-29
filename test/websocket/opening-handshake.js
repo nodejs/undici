@@ -16,6 +16,12 @@ const crypto = runtimeFeatures.has('crypto')
   ? require('node:crypto')
   : null
 
+function createSha1Base64Hash (value) {
+  return typeof crypto.hash === 'function'
+    ? crypto.hash('sha1', value, 'base64')
+    : crypto.createHash('sha1').update(value).digest('base64')
+}
+
 test('WebSocket connecting to server that isn\'t a Websocket server', (t) => {
   return new Promise((resolve, reject) => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -59,6 +65,40 @@ test('Open event is emitted', (t) => {
   })
 })
 
+test('Open event is emitted when crypto.hash is unavailable', { skip: crypto == null }, async (t) => {
+  const planner = tspl(t, { plan: 1 })
+  const hash = crypto.hash
+
+  crypto.hash = undefined
+
+  t.after(() => {
+    crypto.hash = hash
+  })
+
+  const server = new WebSocketServer({ port: 0 })
+
+  server.on('connection', (ws) => {
+    ws.close(1000)
+  })
+
+  t.after(() => {
+    server.close()
+  })
+
+  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+  t.after(() => {
+    ws.close()
+  })
+
+  ws.onerror = ({ error }) => planner.fail(error)
+  ws.addEventListener('open', () => {
+    planner.ok(true)
+  })
+
+  await planner.completed
+})
+
 test('WebSocket on H2', { skip: crypto == null }, async (t) => {
   const planner = tspl(t, { plan: 6 })
   const server = createSecureServer({ cert, key, allowHTTP1: true, settings: { enableConnectProtocol: true } })
@@ -72,7 +112,7 @@ test('WebSocket on H2', { skip: crypto == null }, async (t) => {
     stream.respond({
       ':status': 200,
       'sec-websocket-protocol': headers['sec-websocket-protocol'],
-      'sec-websocket-accept': crypto.hash('sha1', `${headers['sec-websocket-key']}${uid}`, 'base64')
+      'sec-websocket-accept': createSha1Base64Hash(`${headers['sec-websocket-key']}${uid}`)
     })
     const ws = new WSWebsocket(null, null, { autoPong: true })
     ws.setSocket(stream, Buffer.alloc(0), {
@@ -415,7 +455,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeat
       const key = req.headers['sec-websocket-key']
       t.assert.ok(key)
 
-      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
+      const accept = createSha1Base64Hash(key + uid)
 
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'upgrade')
@@ -446,7 +486,7 @@ test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeat
       const key = req.headers['sec-websocket-key']
       t.assert.ok(key)
 
-      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
+      const accept = createSha1Base64Hash(key + uid)
 
       res.setHeader('Upgrade', 'websocket')
       res.setHeader('Connection', 'upgrade')
