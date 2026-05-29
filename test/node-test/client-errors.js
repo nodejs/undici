@@ -151,16 +151,7 @@ function errorAndPipelining (type) {
         p.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
       })
 
-      server.on('request', function onRequest (req, res) {
-        if (req.method === 'POST') {
-          // Node.js 26 can surface a retried POST attempt before the queued GET.
-          // Tear it down immediately and keep waiting for the follow-up GET.
-          req.resume()
-          req.socket?.destroy()
-          return
-        }
-
-        server.removeListener('request', onRequest)
+      server.once('request', (req, res) => {
         p.strictEqual('/', req.url)
         p.strictEqual('GET', req.method)
         res.setHeader('content-type', 'text/plain')
@@ -248,16 +239,7 @@ function errorAndChunkedEncodingPipelining (type) {
         p.strictEqual('a string', Buffer.concat(bufs).toString('utf8'))
       })
 
-      server.on('request', function onRequest (req, res) {
-        if (req.method === 'POST') {
-          // Node.js 26 can surface a retried POST attempt before the queued GET.
-          // Tear it down immediately and keep waiting for the follow-up GET.
-          req.resume()
-          req.socket?.destroy()
-          return
-        }
-
-        server.removeListener('request', onRequest)
+      server.once('request', (req, res) => {
         p.strictEqual('/', req.url)
         p.strictEqual('GET', req.method)
         res.setHeader('content-type', 'text/plain')
