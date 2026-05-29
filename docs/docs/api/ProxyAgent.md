@@ -63,13 +63,16 @@ added: v4.8.2
     * `opts` {Object} The resolved options for the dispatcher.
     * Returns: {Dispatcher}
   * `proxyTunnel` {boolean} Forces tunneling through the proxy. By default,
-    Undici automatically detects when proxy tunneling is required. If either the
-    proxy or the target endpoint uses a secure protocol, Undici establishes a
-    tunnel via `CONNECT`. For plain HTTP proxy to plain HTTP endpoint
-    connections, Undici forwards requests directly to the proxy and prefixes the
-    request path with the target origin. Set `proxyTunnel` to `true` to force
-    tunneling for those unsecured HTTP-to-HTTP connections as well. Currently,
-    there is no way to facilitate HTTP/1.1 IP tunneling as described in
+    Undici detects tunneling based on the request protocol. If the target
+    endpoint uses HTTPS, Undici establishes a `CONNECT` tunnel through the proxy
+    (after the TLS handshake to the proxy itself when the proxy URL is HTTPS).
+    If the target endpoint uses plain HTTP, Undici forwards the request to the
+    proxy with the target origin prefixed in the request path (over TLS when the
+    proxy URL is HTTPS), as required by
+    [RFC 9112 §3.2.2](https://www.rfc-editor.org/rfc/rfc9112.html#name-absolute-form).
+    Set `proxyTunnel` to `true` to force tunneling for plain HTTP requests as
+    well. Currently, there is no way to facilitate HTTP/1.1 IP tunneling as
+    described in
     [RFC 9484](https://www.rfc-editor.org/rfc/rfc9484.html#name-http-11-request).
 
 Throws an {InvalidArgumentError} when no proxy URI is provided, when

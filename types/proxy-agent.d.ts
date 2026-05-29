@@ -25,9 +25,10 @@ declare namespace ProxyAgent {
     proxyTls?: buildConnector.BuildOptions;
     clientFactory?(origin: URL, opts: object): Dispatcher;
     /**
-     * Undici automatically tunnels when either the proxy or the target endpoint
-     * uses a secure protocol. Set to true to force tunneling for plain HTTP
-     * proxy to plain HTTP endpoint connections as well.
+     * Undici tunnels via CONNECT when the target endpoint uses HTTPS, and
+     * forwards (absolute-form request-target, per RFC 9112 §3.2.2) otherwise,
+     * regardless of whether the proxy URL is HTTP or HTTPS. Set to true to
+     * force tunneling for plain HTTP requests as well.
      */
     proxyTunnel?: boolean;
   }
