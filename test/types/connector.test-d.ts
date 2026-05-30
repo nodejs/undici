@@ -25,7 +25,9 @@ expectAssignable<buildConnector.BuildOptions>({
   checkServerIdentity: () => undefined, // Test if ConnectionOptions is assignable
   localPort: 1234, // Test if TcpNetConnectOpts is assignable
   keepAlive: true,
-  keepAliveInitialDelay: 12345
+  keepAliveInitialDelay: 12345,
+  allowH2: true,
+  preferH2: true
 })
 
 expectAssignable<buildConnector.Options>({
