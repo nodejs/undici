@@ -1,7 +1,7 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const assert = require('node:assert')
+const { test } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 
@@ -10,17 +10,19 @@ const pem = require('@metcoder95/https-pem')
 const { Client } = require('..')
 
 test('Should handle http2 trailers', async t => {
-  t = tspl(t, { plan: 1 })
+  const server = createSecureServer(pem)
+  let client = null
 
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  t.after(async () => {
+    await client?.close()
+    await new Promise(resolve => server.close(resolve))
+  })
 
-  server.on('stream', (stream, headers) => {
+  server.on('stream', (stream) => {
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
-      'x-custom-h2': headers['x-my-header'],
       ':status': 200
-    },
-    {
+    }, {
       waitForTrailers: true
     })
 
@@ -33,32 +35,23 @@ test('Should handle http2 trailers', async t => {
     stream.end('hello h2!')
   })
 
-  after(() => server.close())
   await once(server.listen(0, '127.0.0.1'), 'listening')
 
-  const client = new Client(`https://${server.address().address}:${server.address().port}`, {
+  client = new Client(`https://${server.address().address}:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
-  after(() => client.close())
 
-  client.dispatch({
+  const { statusCode, headers, body, trailers } = await client.request({
     path: '/',
     method: 'PUT',
     body: 'hello'
-  }, {
-    onRequestStart () {},
-    onResponseStart () {},
-    onResponseData () {},
-    onResponseEnd (_controller, trailers) {
-      t.strictEqual(trailers['x-trailer'], 'hello')
-    },
-    onResponseError (_controller, err) {
-      t.ifError(err)
-    }
   })
 
-  await t.completed
+  assert.strictEqual(statusCode, 200)
+  assert.strictEqual(headers['content-type'], 'text/plain; charset=utf-8')
+  assert.strictEqual(await body.text(), 'hello h2!')
+  assert.deepStrictEqual(trailers, { 'x-trailer': 'hello' })
 })
