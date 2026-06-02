@@ -26,9 +26,10 @@ declare namespace ProxyAgent {
     clientFactory?(origin: URL, opts: object): Dispatcher;
     /**
      * Undici tunnels via CONNECT when the target endpoint uses HTTPS, and
-     * forwards (absolute-form request-target, per RFC 9112 §3.2.2) otherwise,
-     * regardless of whether the proxy URL is HTTP or HTTPS. Set to true to
-     * force tunneling for plain HTTP requests as well.
+     * forwards (HTTP/1.1 absolute-form request-target, per RFC 9112 §3.2.2)
+     * otherwise, regardless of whether the proxy URL is HTTP or HTTPS. The
+     * non-tunneled forwarding path does not negotiate HTTP/2 with the proxy.
+     * Set to true to force tunneling for plain HTTP requests as well.
      */
     proxyTunnel?: boolean;
   }
