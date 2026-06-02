@@ -9,6 +9,7 @@ const ProxyAgent = require('../lib/dispatcher/proxy-agent')
 const Pool = require('../lib/dispatcher/pool')
 const { createServer } = require('node:http')
 const https = require('node:https')
+const http2 = require('node:http2')
 const net = require('node:net')
 const { Socket } = require('node:net')
 const { createProxy } = require('proxy')
@@ -1328,6 +1329,41 @@ test('Proxy via HTTPS to HTTP endpoint forwards without tunneling by default', a
   proxyAgent.close()
 })
 
+test('Proxy via HTTPS to HTTP endpoint uses HTTP/1.1 when proxy also supports HTTP/2', async (t) => {
+  t = tspl(t, { plan: 4 })
+  const proxy = await buildH2CapableSSLProxy()
+
+  const serverUrl = 'http://example.com/'
+  const proxyUrl = `https://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    proxyTls: {
+      ca: [
+        certs.root.crt
+      ],
+      servername: 'proxy'
+    }
+  })
+
+  proxy.on('stream', (stream) => {
+    t.fail('non-tunneled HTTP forwarding must not negotiate HTTP/2')
+    stream.close()
+  })
+
+  proxy.on('request', function (req, res) {
+    t.strictEqual(req.httpVersion, '1.1')
+    t.strictEqual(req.method, 'GET')
+    t.strictEqual(req.url, serverUrl)
+    res.end('ok')
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  t.strictEqual(await data.body.text(), 'ok')
+
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('Proxy via HTTPS to HTTP endpoint with tunneling enabled', async (t) => {
   t = tspl(t, { plan: 3 })
   const server = await buildServer()
@@ -1629,6 +1665,23 @@ function buildSSLProxy () {
 
   return new Promise((resolve) => {
     const server = createProxy(https.createServer(serverOptions))
+    server.listen(0, () => resolve(server))
+  })
+}
+
+function buildH2CapableSSLProxy () {
+  const serverOptions = {
+    ca: [
+      certs.root.crt
+    ],
+    key: certs.proxy.key,
+    cert: certs.proxy.crt,
+    allowHTTP1: true,
+    joinDuplicateHeaders: true
+  }
+
+  return new Promise((resolve) => {
+    const server = http2.createSecureServer(serverOptions)
     server.listen(0, () => resolve(server))
   })
 }
