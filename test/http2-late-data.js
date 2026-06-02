@@ -225,6 +225,10 @@ test('Should remove request-owned http2 stream listeners after completion', asyn
   stream.emit('response', { ':status': 200 })
   stream.emit('end')
 
+  // Listeners may be removed asynchronously via process.nextTick
+  // fallback in onEnd when trailers are not expected.
+  await new Promise((resolve) => process.nextTick(resolve))
+
   t.equal(stream.listenerCount('aborted'), 0)
   t.equal(stream.listenerCount('timeout'), 0)
   t.equal(stream.listenerCount('trailers'), 0)
