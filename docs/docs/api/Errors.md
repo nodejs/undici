@@ -27,6 +27,13 @@ import { errors } from 'undici'
 | `ResponseExceededMaxSizeError`       | `UND_ERR_RES_EXCEEDED_MAX_SIZE`       | response body exceed the max size allowed                                 |
 | `SecureProxyConnectionError`         | `UND_ERR_PRX_TLS`                     | tls connection to a proxy failed                                          |
 | `MessageSizeExceededError`           | `UND_ERR_WS_MESSAGE_SIZE_EXCEEDED`    | WebSocket decompressed message exceeded the maximum allowed size          |
+| `AbortError`                         | `UND_ERR_ABORT`                       | the operation was aborted (base class of `RequestAbortedError`).          |
+| `RequestRetryError`                  | `UND_ERR_REQ_RETRY`                   | request failed and could not be retried; carries `statusCode`, `headers` and `data`. |
+| `ResponseError`                      | `UND_ERR_RESPONSE`                    | response returned an error status code; carries `statusCode`, `headers` and `body`.  |
+| `MaxOriginsReachedError`             | `UND_ERR_MAX_ORIGINS_REACHED`         | the maximum number of allowed origins has been reached.                   |
+| `BalancedPoolMissingUpstreamError`   | `UND_ERR_BPL_MISSING_UPSTREAM`        | no upstream has been added to the `BalancedPool`.                         |
+| `Socks5ProxyError`                   | `UND_ERR_SOCKS5*`                     | an error occurred during SOCKS5 proxy negotiation.                        |
+| `HTTPParserError`                    | `HPE_*`                               | an error occurred while parsing the HTTP response (extends `Error`, not `UndiciError`). |
 
 Be aware of the possible difference between the global dispatcher version and the actual undici version you might be using. We recommend to avoid the check `instanceof errors.UndiciError` and seek for the `error.code === '<error_code>'` instead to avoid inconsistencies.
 
