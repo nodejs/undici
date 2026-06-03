@@ -2,12 +2,37 @@
 
 'use strict'
 
+const { setMaxListeners } = require('node:events')
 const { test } = require('node:test')
 const {
   Request,
   Headers,
   fetch
 } = require('../../')
+
+async function forceGarbageCollection (iterations = 50) {
+  for (let i = 0; i < iterations; ++i) {
+    const garbage = Array.from({ length: 1000 }, () => ({ value: Math.random() }))
+    if (garbage.length === 0) {
+      throw new Error('unreachable')
+    }
+    global.gc()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  }
+}
+
+function waitForAbort (signal, timeout = 1000) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      resolve(false)
+    }, timeout)
+
+    signal.addEventListener('abort', () => {
+      clearTimeout(timer)
+      resolve(true)
+    }, { once: true })
+  })
+}
 
 test('arg validation', async (t) => {
   // constructor
@@ -311,6 +336,82 @@ test('post aborted signal cloned', (t) => {
     t.assert.strictEqual(req.signal.reason, 'gwak')
   }, { once: true })
   ac.abort('gwak')
+})
+
+test('request signal stays connected after the request is garbage collected', async (t) => {
+  if (typeof global.gc !== 'function') {
+    t.skip('gc is not available. Run with --expose-gc.')
+    return
+  }
+
+  const ac = new AbortController()
+  let signal
+
+  {
+    const request = new Request('http://asd', { signal: ac.signal })
+    signal = request.signal
+  }
+
+  const aborted = waitForAbort(signal)
+
+  await forceGarbageCollection()
+
+  ac.abort('gwak')
+  t.assert.strictEqual(await aborted, true)
+  t.assert.strictEqual(signal.aborted, true)
+  t.assert.strictEqual(signal.reason, 'gwak')
+})
+
+test('cloned request signal stays connected after garbage collection', async (t) => {
+  if (typeof global.gc !== 'function') {
+    t.skip('gc is not available. Run with --expose-gc.')
+    return
+  }
+
+  const ac = new AbortController()
+  let request
+
+  {
+    const originalRequest = new Request('http://asd', { signal: ac.signal })
+    request = originalRequest.clone()
+  }
+
+  const aborted = waitForAbort(request.signal)
+
+  await forceGarbageCollection()
+
+  ac.abort('gwak')
+  t.assert.strictEqual(await aborted, true)
+  t.assert.strictEqual(request.signal.aborted, true)
+  t.assert.strictEqual(request.signal.reason, 'gwak')
+})
+
+test('reusing a controller across transient requests does not emit a warning', async (t) => {
+  if (typeof global.gc !== 'function') {
+    t.skip('gc is not available. Run with --expose-gc.')
+    return
+  }
+
+  let emittedWarning = ''
+  function onWarning (warning) {
+    emittedWarning = warning
+  }
+
+  process.on('warning', onWarning)
+  t.after(() => {
+    process.off('warning', onWarning)
+  })
+
+  const controller = new AbortController()
+  setMaxListeners(20, controller.signal)
+
+  for (let i = 0; i < 200; ++i) {
+    const request = new Request('http://asd', { signal: controller.signal })
+    request.signal.addEventListener('abort', () => {}, { once: true })
+    await forceGarbageCollection(1)
+  }
+
+  t.assert.strictEqual(emittedWarning, '')
 })
 
 test('Passing headers in init', async (t) => {
