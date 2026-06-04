@@ -27,7 +27,9 @@ Returns: `Client`
 * **webSocket** `WebSocketOptions` (optional) - WebSocket-specific configuration options.
   * **maxPayloadSize** `number` (optional) - Default: `134217728` (128 MB) - Maximum allowed payload size in bytes for WebSocket messages. Applied to uncompressed messages, compressed frame payloads, and decompressed (permessage-deflate) messages. Set to 0 to disable the limit.
 * **pipelining** `number | null` (optional) - Default: `1` - The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Carefully consider your workload and environment before enabling concurrent requests as pipelining may reduce performance if used incorrectly. Pipelining is sensitive to network stack settings as well as head of line blocking caused by e.g. long running requests. Set to `0` to disable keep-alive connections.
-* **connect** `ConnectOptions | Function | null` (optional) - Default: `null`.
+* **connect** `ConnectOptions | Function | null` (optional) - Default: `null` - Configures how undici establishes TCP/TLS connections. Accepts two forms:
+  * **Object (`ConnectOptions`)**: Options passed directly to the internal [`buildConnector()`](/docs/docs/api/Connector.md). This is the simplest way to customize TLS or socket behavior (e.g., setting `rejectUnauthorized`, `ca`, `socketPath`). See [`ConnectOptions`](#parameter-connectoptions) for available fields.
+  * **Function**: A custom connector with the signature `(options, callback)`, where `options` contains `{ hostname, host, protocol, port, servername, localAddress, httpSocket }` and `callback` follows `(error, socket)`. Useful when you need full control over socket creation, such as adding custom validation or proxy logic. When a function is provided, undici wraps it to automatically inject `socketPath` and `allowH2` into the `options` argument if those values are set on the client.
 * **strictContentLength** `Boolean` (optional) - Default: `true` - Whether to treat request content length mismatches as errors. If true, an error is thrown when the request content-length header doesn't match the length of the request body. **Security Warning:** Disabling this option can expose your application to HTTP Request Smuggling attacks, where mismatched content-length headers cause servers and proxies to interpret request boundaries differently. This can lead to cache poisoning, credential hijacking, and bypassing security controls. Only disable this in controlled environments where you fully trust the request source.
 * **autoSelectFamily**: `boolean` (optional) - Default: depends on local Node version, on Node 18.13.0 and above is `false`. Enables a family autodetection algorithm that loosely implements section 5 of [RFC 8305](https://tools.ietf.org/html/rfc8305#section-5). See [here](https://nodejs.org/api/net.html#socketconnectoptions-connectlistener) for more details. This option is ignored if not supported by the current Node version.
 * **autoSelectFamilyAttemptTimeout**: `number` - Default: depends on local Node version, on Node 18.13.0 and above is `250`. The amount of time in milliseconds to wait for a connection attempt to finish before trying the next address when using the `autoSelectFamily` option. See [here](https://nodejs.org/api/net.html#socketconnectoptions-connectlistener) for more details.
@@ -72,9 +74,43 @@ import { Client } from 'undici'
 const client = new Client('http://localhost:3000')
 ```
 
-### Example - Custom connector
+### Example - Connect with TLS options (object form)
 
-This will allow you to perform some additional check on the socket that will be used for the next request.
+Pass a `ConnectOptions` object to customize the TLS connection. The options are forwarded to the internal `buildConnector()`.
+
+```js
+'use strict'
+import { Client } from 'undici'
+import fs from 'node:fs'
+
+const client = new Client('https://localhost:3000', {
+  connect: {
+    rejectUnauthorized: false,
+    ca: fs.readFileSync('./ca-cert.pem')
+  }
+})
+```
+
+### Example - Connect via Unix domain socket
+
+Use the `socketPath` option to connect through an IPC endpoint instead of a TCP connection.
+
+```js
+'use strict'
+import { Client } from 'undici'
+
+const client = new Client('http://localhost:3000', {
+  connect: {
+    socketPath: '/var/run/docker.sock'
+  }
+})
+```
+
+### Example - Custom connector (function form)
+
+Pass a function for full control over socket creation. This allows you to perform additional checks on the socket, use a proxy, or implement custom connection logic.
+
+> **Note:** When a function is provided, undici wraps it to automatically inject `socketPath` and `allowH2` into the first argument (`options`) when those values are set on the client.
 
 ```js
 'use strict'
@@ -96,6 +132,8 @@ const client = new Client('https://localhost:3000', {
   }
 })
 ```
+
+For more details on building custom connectors, see [Connector](/docs/docs/api/Connector.md).
 
 ## Instance Methods
 
