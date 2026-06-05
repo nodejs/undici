@@ -16,6 +16,9 @@ test('#2364 - Concurrent aborts', async t => {
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
     setTimeout(() => {
+      // The peer may have reset the stream from an AbortSignal before we
+      // respond; guard against ERR_HTTP2_INVALID_STREAM.
+      if (stream.destroyed || stream.closed) return
       stream.respond({
         'content-type': 'text/plain; charset=utf-8',
         'x-custom-h2': 'hello',
