@@ -154,6 +154,9 @@ test('Should ignore late http2 data after request completion', async (t) => {
 
   stream.emit('end')
 
+  // Completion is deferred to onRequestStreamClose (fires on 'close')
+  stream.emit('close')
+
   t.strictEqual(onCompleteCalls, 1)
   t.strictEqual(onDataCalls, 0)
   t.ok(resumeCalls >= 1)
