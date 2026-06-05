@@ -1560,6 +1560,55 @@ describe('SnapshotAgent - Close Method', () => {
     }, 'Should not throw when closing agent without snapshot path')
   })
 
+  it('close() does not rewrite the snapshot file in playback mode', async (t) => {
+    const snapshotPath = createSnapshotPath('close-playback-no-rewrite')
+    setupCleanup(t, { snapshotPath })
+
+    const server = createTestServer(createDefaultHandler())
+    const { origin } = await setupServer(server)
+    setupCleanup(t, { server })
+
+    const originalDispatcher = getGlobalDispatcher()
+    setupCleanup(t, { originalDispatcher })
+
+    // Record a snapshot so there is a file on disk to play back.
+    const recordingAgent = new SnapshotAgent({
+      mode: 'record',
+      snapshotPath,
+      autoFlush: false
+    })
+    setGlobalDispatcher(recordingAgent)
+    await request(`${origin}/test`)
+    await recordingAgent.close()
+
+    // Capture the exact bytes written by the recording session.
+    const recordedContent = await readFile(snapshotPath, 'utf8')
+
+    // Play the snapshot back. Each matched request increments the snapshot's
+    // callCount in memory, so a save on close would change the file on disk.
+    const playbackAgent = new SnapshotAgent({
+      mode: 'playback',
+      snapshotPath,
+      autoFlush: false
+    })
+    setGlobalDispatcher(playbackAgent)
+
+    await request(`${origin}/test`)
+    await request(`${origin}/test`)
+    await request(`${origin}/test`)
+
+    await playbackAgent.close()
+
+    // The file must be byte-for-byte identical: playback is a read-only path
+    // and must never rewrite the fixture (and thus never churn its callCount).
+    const contentAfterPlayback = await readFile(snapshotPath, 'utf8')
+    assert.strictEqual(
+      contentAfterPlayback,
+      recordedContent,
+      'Playback close() should not modify the snapshot file on disk'
+    )
+  })
+
   it('recorder close() method works independently', async (t) => {
     const { SnapshotRecorder } = require('../lib/mock/snapshot-recorder')
     const snapshotPath = createSnapshotPath('recorder-close')
