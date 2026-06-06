@@ -94,6 +94,75 @@ test('setGlobalDispatcher mirrors the dispatcher under the v1 symbol that Node.j
   assert.strictEqual(payload.mirroredV2, true)
 })
 
+test('undici fetch always uses the v1 global dispatcher', () => {
+  const script = `
+    const assert = require('node:assert')
+    const { createServer } = require('node:http')
+    const { once } = require('node:events')
+    const Agent = require('./lib/dispatcher/agent')
+
+    ;(async () => {
+      const dispatcherV1Symbol = Symbol.for('undici.globalDispatcher.1')
+      const dispatcherV2Symbol = Symbol.for('undici.globalDispatcher.2')
+      const agent = new Agent()
+      let v1Dispatches = 0
+      let v2Dispatches = 0
+
+      const v2Dispatcher = {
+        dispatch () {
+          v2Dispatches++
+          throw new Error('v2 global dispatcher should not be used')
+        }
+      }
+
+      const v1Dispatcher = {
+        dispatch (opts, handler) {
+          v1Dispatches++
+          return agent.dispatch(opts, handler)
+        },
+        close: (...args) => agent.close(...args),
+        destroy: (...args) => agent.destroy(...args)
+      }
+
+      Object.defineProperty(globalThis, dispatcherV2Symbol, {
+        value: v2Dispatcher,
+        writable: true,
+        enumerable: false,
+        configurable: false
+      })
+      Object.defineProperty(globalThis, dispatcherV1Symbol, {
+        value: v1Dispatcher,
+        writable: true,
+        enumerable: false,
+        configurable: false
+      })
+
+      const { fetch, getGlobalDispatcher } = require('./index.js')
+      const server = createServer((_request, response) => response.end('ok'))
+      server.listen(0, '127.0.0.1')
+      await once(server, 'listening')
+
+      const response = await fetch('http://127.0.0.1:' + server.address().port)
+      const body = await response.text()
+
+      assert.strictEqual(body, 'ok')
+      assert.strictEqual(getGlobalDispatcher(), v1Dispatcher)
+      assert.strictEqual(v1Dispatches, 1)
+      assert.strictEqual(v2Dispatches, 0)
+
+      server.close()
+      await once(server, 'close')
+      await agent.close()
+    })().catch((err) => {
+      console.error(err?.cause?.stack || err?.stack || err)
+      process.exit(1)
+    })
+  `
+
+  const result = runNode(script)
+  assert.strictEqual(result.status, 0, result.stderr)
+})
+
 test('Node.js global fetch preserves headers and decoding with an undici Agent dispatcher', () => {
   const script = `
     const assert = require('node:assert')
