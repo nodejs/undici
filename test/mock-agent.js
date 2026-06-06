@@ -363,6 +363,57 @@ describe('MockAgent - dispatch', () => {
     t.assert.deepStrictEqual(events, ['start', 'sent'])
   })
 
+  test('should report async iterable request body errors', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const expected = new Error('fail')
+    const events = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    async function * body () {
+      yield Buffer.from('he')
+      throw expected
+    }
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: body()
+      }, {
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          reject(new Error('request should not be marked sent'))
+        },
+        onResponseStart () {
+          reject(new Error('response should not start'))
+        },
+        onResponseData () {},
+        onResponseEnd () {},
+        onResponseError (_controller, error) {
+          try {
+            t.assert.strictEqual(error, expected)
+            resolve()
+          } catch (assertionError) {
+            reject(assertionError)
+          }
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['body:he'])
+  })
+
   test('should replay async iterable request bodies to reply callbacks after lifecycle hooks', async (t) => {
     const baseUrl = 'http://localhost:9999'
     const events = []
