@@ -1,0 +1,351 @@
+# Getting Started
+
+## Installation
+
+```bash
+npm install undici
+```
+
+## Fetch
+
+The quickest way to get started is with `fetch`, which follows the
+[Fetch Standard](https://fetch.spec.whatwg.org/) and works the same way as
+the browser API:
+
+```js
+import { fetch } from 'undici'
+
+const res = await fetch('https://example.com')
+const data = await res.json()
+console.log(data)
+```
+
+### POST with JSON
+
+```js
+import { fetch } from 'undici'
+
+const res = await fetch('https://example.com/api', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ hello: 'world' })
+})
+console.log(res.status)
+```
+
+### Streaming the response
+
+`res.body` is a web `ReadableStream`. Convert it to a Node stream with
+`Readable.fromWeb()`:
+
+```js
+import { fetch } from 'undici'
+import { Readable } from 'node:stream'
+import { createWriteStream } from 'node:fs'
+
+const res = await fetch('https://example.com/large-file.zip')
+Readable.fromWeb(res.body).pipe(createWriteStream('./file.zip'))
+```
+
+> Always consume or cancel the response body. In Node.js, garbage collection
+> is not aggressive enough to release connections promptly, so leaving a body
+> unread can cause connection leaks and stalled requests. See
+> [Specification Compliance - Garbage Collection](/docs/#garbage-collection)
+> for details.
+
+For more on `fetch`, see [API Reference: Fetch](/docs/docs/api/Fetch.md).
+
+## Which API should I use?
+
+undici exposes several request methods. Here's how to pick the right one:
+
+| Method | Best for |
+|---|---|
+| `fetch` | Quick requests, standard API compatibility, JSON/form bodies |
+| `request` | Maximum throughput, reading response headers, fine-grained control |
+| `stream` | Piping responses directly to a writable stream |
+| `pipeline` | Streaming request bodies combined with streaming responses |
+
+All four methods support the same options for timeouts, abort signals, headers,
+and connection configuration.
+
+### `request`
+
+`request` is the fastest way to make an HTTP call in undici. It returns the
+response as a Node `Readable` stream with body mixin methods attached:
+
+```js
+import { request } from 'undici'
+
+const { statusCode, headers, body } = await request('https://example.com')
+console.log(statusCode)
+const data = await body.json()
+```
+
+If you only need the headers and want to discard the body:
+
+```js
+const { statusCode, body } = await request('https://example.com')
+await body.dump()
+```
+
+### `stream`
+
+`stream` skips the intermediate `Readable` and writes the response directly
+to a writable you provide. Use it when you want to pipe the response somewhere
+without buffering:
+
+```js
+import { Client, stream } from 'undici'
+import { createWriteStream } from 'node:fs'
+
+const client = new Client('https://example.com')
+
+await client.stream({
+  path: '/download',
+  method: 'GET'
+}, ({ body }) => createWriteStream('./output'))
+
+client.close()
+```
+
+### `pipeline`
+
+`pipeline` returns a `Duplex` stream that you write the request into and read
+the response from. It is designed for use with `stream.pipeline()`:
+
+```js
+import { Client, pipeline } from 'undici'
+import { pipeline as pump, Readable, Writable } from 'stream'
+
+const client = new Client('https://example.com')
+
+pump(
+  Readable.from(['hello', 'world']),
+  client.pipeline({ path: '/echo', method: 'POST' }, ({ body }) => body),
+  new Writable({ write (chunk, _, cb) { console.log(chunk.toString()); cb() } }),
+  (err) => { if (err) console.error(err); client.close() }
+)
+```
+
+For full details on each method, see
+[API Reference: Dispatcher](/docs/docs/api/Dispatcher.md).
+
+## Dispatchers: Connection reuse and pooling
+
+By default, `fetch`, `request`, `stream`, and `pipeline` create a new connection
+for each call. For applications that make many requests to the same origin,
+this is wasteful. undici provides **dispatchers** that manage connections
+internally.
+
+### `Agent` — for requests to multiple origins
+
+`Agent` is the most general-purpose dispatcher. It pools connections per-origin
+and is the recommended default for most applications. Use it with
+`setGlobalDispatcher` to affect all undici calls globally:
+
+```js
+import { Agent, setGlobalDispatcher, fetch } from 'undici'
+
+const agent = new Agent({
+  keepAliveTimeout: 30_000,
+  keepAliveMaxTimeout: 600_000
+})
+setGlobalDispatcher(agent)
+
+// All subsequent fetch/request/stream/pipeline calls reuse connections
+const res = await fetch('https://api.example.com/data')
+```
+
+You can also pass a dispatcher per-request:
+
+```js
+await fetch('https://api.example.com/data', { dispatcher: agent })
+```
+
+### `Pool` — for requests to a single origin
+
+`Pool` manages a fixed set of connections to one origin. It gives you explicit
+control over concurrency:
+
+```js
+import { Pool, request } from 'undici'
+
+const pool = new Pool('https://api.example.com', { connections: 10 })
+
+const { body } = await request('https://api.example.com/data', {
+  dispatcher: pool
+})
+const data = await body.json()
+
+pool.close()
+```
+
+### `Client` — for a single connection
+
+`Client` maps to a single TCP connection. It supports pipelining (sending
+multiple requests before responses arrive):
+
+```js
+import { Client } from 'undici'
+
+const client = new Client('https://api.example.com', {
+  pipelining: 5
+})
+
+const { body } = await client.request({ path: '/', method: 'GET' })
+await body.dump()
+
+client.close()
+```
+
+For more on dispatcher options and lifecycle, see:
+- [API Reference: Agent](/docs/docs/api/Agent.md)
+- [API Reference: Pool](/docs/docs/api/Pool.md)
+- [API Reference: Client](/docs/docs/api/Client.md)
+
+## Timeouts
+
+undici applies timeouts at two levels:
+
+- **`headersTimeout`** — time to wait for response headers (default: 300s).
+- **`bodyTimeout`** — time between consecutive body chunks (default: 300s).
+
+Set these on the dispatcher or per-request:
+
+```js
+import { Agent, setGlobalDispatcher } from 'undici'
+
+const agent = new Agent({
+  headersTimeout: 5_000,
+  bodyTimeout: 30_000
+})
+
+setGlobalDispatcher(agent)
+```
+
+Timeout errors are thrown as `HeadersTimeoutError` and `BodyTimeoutError`.
+See [API Reference: Errors](/docs/docs/api/Errors.md) for the full list.
+
+## Error handling
+
+undici exposes structured errors via `error.code`:
+
+```js
+import { request, errors } from 'undici'
+
+try {
+  const { body } = await request('https://example.com')
+  await body.json()
+} catch (err) {
+  switch (err.code) {
+    case errors.ConnectTimeoutError.code:
+      console.error('Connection timed out')
+      break
+    case errors.HeadersTimeoutError.code:
+      console.error('Headers timed out')
+      break
+    case errors.BodyTimeoutError.code:
+      console.error('Body timed out')
+      break
+    case errors.RequestAbortedError.code:
+      console.error('Request was aborted')
+      break
+    default:
+      console.error(err)
+  }
+}
+```
+
+### Aborting requests
+
+```js
+import { request } from 'undici'
+
+const ac = new AbortController()
+
+setTimeout(() => ac.abort(), 1000)
+
+try {
+  const { body } = await request('https://example.com', {
+    signal: ac.signal
+  })
+  await body.dump()
+} catch (err) {
+  console.error(err.code) // UND_ERR_ABORTED
+}
+```
+
+## Common patterns
+
+### Proxies
+
+Use `ProxyAgent` for HTTP(S) proxies, or `EnvHttpProxyAgent` to pick up
+proxy settings from environment variables:
+
+```js
+import { ProxyAgent, setGlobalDispatcher } from 'undici'
+
+const proxy = new ProxyAgent('http://proxy.internal:8080')
+setGlobalDispatcher(proxy)
+```
+
+See [Best Practices: Proxy](/docs/docs/best-practices/proxy.md) and
+[API Reference: ProxyAgent](/docs/docs/api/ProxyAgent.md).
+
+### Mocking in tests
+
+```js
+import { MockAgent, setGlobalDispatcher, request } from 'undici'
+
+const mockAgent = new MockAgent()
+setGlobalDispatcher(mockAgent)
+
+const mockPool = mockAgent.get('https://api.example.com')
+mockPool.intercept({ path: '/users' }).reply(200, [{ id: 1 }])
+
+const { body } = await request('https://api.example.com/users')
+console.log(await body.json())
+```
+
+See [Best Practices: Mocking Request](/docs/docs/best-practices/mocking-request.md)
+and [API Reference: MockAgent](/docs/docs/api/MockAgent.md).
+
+### Testing with undici
+
+For test suites, set short keep-alive timeouts to avoid slow teardowns:
+
+```js
+import { Agent, setGlobalDispatcher } from 'undici'
+
+const agent = new Agent({
+  keepAliveTimeout: 10,
+  keepAliveMaxTimeout: 10
+})
+setGlobalDispatcher(agent)
+```
+
+See [Best Practices: Writing Tests](/docs/docs/best-practices/writing-tests.md).
+
+### Customizing the global fetch
+
+You can override Node.js's built-in globals with `install()`:
+
+```js
+import { install } from 'undici'
+
+install()
+
+// Global fetch, Headers, Response, Request, and FormData
+// now come from undici, not the Node.js bundle
+const res = await fetch('https://example.com')
+```
+
+See [API Reference: Global Installation](/docs/docs/api/GlobalInstallation.md).
+
+## Further reading
+
+- [Undici vs. Built-in Fetch](/docs/docs/best-practices/undici-vs-builtin-fetch.md) —
+  when to install undici vs using Node.js built-in fetch
+- [API Reference](/docs/docs/api/Dispatcher.md) — full dispatcher API documentation
+- [Examples](/docs/examples/) — runnable code examples
