@@ -11,7 +11,7 @@ const { Client } = require('..')
 test('h2 client multiplexes concurrent requests by default (#4143)', async t => {
   const N = 5
   const DELAY = 200
-  t = tspl(t, { plan: N + 2 })
+  t = tspl(t, { plan: N + 1 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
@@ -50,12 +50,39 @@ test('h2 client multiplexes concurrent requests by default (#4143)', async t => 
     t.strictEqual(status, 200)
   }
 
-  // Without the fix, peakInFlight === 1 (serialized on a single h2 stream slot)
-  // With the fix, peakInFlight === N (multiplexed)
+  // Without the fix, peakInFlight === 1 (the h1 pipelining gate of 1 was being
+  // applied to the h2 dispatch path). With the fix, the h2 dispatch ceiling
+  // is maxConcurrentStreams (default 100), so all N stream concurrently.
   t.strictEqual(peakInFlight, N, `expected ${N} concurrent streams, got ${peakInFlight}`)
-  // The server-advertised maxConcurrentStreams should be the effective ceiling,
-  // not the H1 default of 1.
-  t.ok(client.pipelining >= N, `expected pipelining >= ${N}, got ${client.pipelining}`)
+
+  await t.completed
+})
+
+test('Client#pipelining keeps its h1 (RFC7230) semantic on an h2 client', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.on('stream', stream => {
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+  await once(server.listen(0), 'listening')
+  after(() => server.close())
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true
+  })
+  after(() => client.close())
+
+  // Even after negotiating h2, client.pipelining reflects only the user-set
+  // h1 pipelining factor — the h2 dispatch limit is maxConcurrentStreams.
+  const r = await client.request({ path: '/', method: 'GET' })
+  await r.body.text()
+  t.strictEqual(client.pipelining, 1)
+
+  client.pipelining = 4
+  t.strictEqual(client.pipelining, 4)
 
   await t.completed
 })
