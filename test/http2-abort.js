@@ -49,7 +49,7 @@ test('#2364 - Concurrent aborts', async t => {
     allowH2: true
   })
 
-  after(() => client.close())
+  after(() => client.close().catch(() => {}))
   const signal = AbortSignal.timeout(100)
 
   client.request(
@@ -119,6 +119,11 @@ test('#2364 - Concurrent aborts', async t => {
   )
 
   await t.completed
+  // Close the client inside the test body so the resulting session/socket
+  // teardown (and any ECONNRESET it generates) lands while the test is still
+  // running — otherwise node:test flags it as "async activity after the test
+  // ended" on macOS/Windows.
+  await client.close()
 })
 
 test('#2364 - Concurrent aborts (2nd variant)', async t => {
@@ -177,7 +182,7 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
     },
     allowH2: true
   })
-  after(() => client.close())
+  after(() => client.close().catch(() => {}))
 
   const signal = AbortSignal.timeout(300)
 
@@ -248,4 +253,9 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
   )
 
   await t.completed
+  // See first variant — close inside the test body to keep teardown noise
+  // inside the test lifetime. Also wait for the server's 400ms timer to
+  // fire (it will no-op on a destroyed stream) before letting the test end.
+  await client.close()
+  await new Promise(resolve => setTimeout(resolve, 500))
 })
