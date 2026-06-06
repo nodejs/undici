@@ -321,6 +321,48 @@ describe('MockAgent - dispatch', () => {
     t.assert.deepStrictEqual(events, ['start', 'body:he', 'body:llo', 'sent'])
   })
 
+  test('should call request sent hook for requests without a body', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'GET'
+    }).reply(200, 'hello')
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'GET'
+      }, {
+        onRequestStart () {
+          events.push('start')
+        },
+        onBodySent () {
+          events.push('body')
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData () {},
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          reject(error)
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['start', 'sent'])
+  })
+
   test('should replay async iterable request bodies to reply callbacks after lifecycle hooks', async (t) => {
     const baseUrl = 'http://localhost:9999'
     const events = []
@@ -400,6 +442,55 @@ describe('MockAgent - dispatch', () => {
       }, {
         onBodySent () {
           throw expected
+        },
+        onRequestSent () {
+          reject(new Error('request should not be marked sent'))
+        },
+        onResponseStart () {
+          reject(new Error('response should not start'))
+        },
+        onResponseData () {},
+        onResponseEnd () {},
+        onResponseError (_controller, error) {
+          try {
+            t.assert.strictEqual(error, expected)
+            resolve()
+          } catch (assertionError) {
+            reject(assertionError)
+          }
+        }
+      })
+    })
+  })
+
+  test('should not send request body lifecycle hooks after request start aborts', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const expected = new Error('fail')
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: 'hello'
+      }, {
+        onRequestStart (controller) {
+          controller.abort(expected)
+        },
+        onBodySent () {
+          reject(new Error('body should not be sent'))
+        },
+        onRequestSent () {
+          reject(new Error('request should not be sent'))
         },
         onResponseStart () {
           reject(new Error('response should not start'))
