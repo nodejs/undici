@@ -15,8 +15,15 @@ test('#2364 - Concurrent aborts', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   // Concurrent aborts can cause the client to RST_STREAM / close the session
   // while server-side timers are still pending; swallow the resulting
-  // ECONNRESET that fires after the test body resolves.
-  server.on('session', session => session.on('error', () => {}))
+  // ECONNRESET that fires on the session, the socket, or the server itself
+  // after the test body resolves (macOS/Windows surface this more often than
+  // Linux).
+  server.on('error', () => {})
+  server.on('session', session => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
+  server.on('secureConnection', socket => socket.on('error', () => {}))
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
     setTimeout(() => {
@@ -120,8 +127,15 @@ test('#2364 - Concurrent aborts (2nd variant)', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   // Concurrent aborts can cause the client to RST_STREAM / close the session
   // while server-side timers are still pending; swallow the resulting
-  // ECONNRESET that fires after the test body resolves.
-  server.on('session', session => session.on('error', () => {}))
+  // ECONNRESET that fires on the session, the socket, or the server itself
+  // after the test body resolves (macOS/Windows surface this more often than
+  // Linux).
+  server.on('error', () => {})
+  server.on('session', session => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
+  server.on('secureConnection', socket => socket.on('error', () => {}))
   let counter = 0
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
