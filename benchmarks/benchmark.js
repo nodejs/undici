@@ -136,21 +136,25 @@ class SimpleRequest {
     }).on('finish', resolve)
   }
 
-  onConnect (abort) { }
-
-  onHeaders (statusCode, headers, resume) {
-    this.dst.on('drain', resume)
+  onRequestStart (controller) {
+    this.controller = controller
   }
 
-  onData (chunk) {
-    return this.dst.write(chunk)
+  onResponseStart (controller, statusCode, headers, statusText) {
+    this.dst.on('drain', () => controller.resume())
   }
 
-  onComplete () {
+  onResponseData (controller, chunk) {
+    if (this.dst.write(chunk) === false) {
+      controller.pause()
+    }
+  }
+
+  onResponseEnd (controller, trailers) {
     this.dst.end()
   }
 
-  onError (err) {
+  onResponseError (controller, err) {
     throw err
   }
 }
