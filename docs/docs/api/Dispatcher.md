@@ -1016,7 +1016,7 @@ The `retry` interceptor allows you to customize the way your dispatcher handles 
 
 It accepts the same arguments as the [`RetryHandler` constructor](/docs/docs/api/RetryHandler.md).
 
-**Example - Basic Redirect Interceptor**
+**Example - Basic Retry Interceptor**
 
 ```js
 const { Client, interceptors } = require("undici");
@@ -1112,7 +1112,7 @@ It represents a storage object for resolved DNS records.
 **Example - Basic DNS Interceptor**
 
 ```js
-const { Client, interceptors } = require("undici");
+const { Agent, interceptors } = require("undici");
 const { dns } = interceptors;
 
 const client = new Agent().compose([
@@ -1128,7 +1128,7 @@ const response = await client.request({
 **Example - DNS Interceptor and LRU cache as a storage**
 
 ```js
-const { Client, interceptors } = require("undici");
+const { Agent, interceptors } = require("undici");
 const QuickLRU = require("quick-lru");
 const { dns } = interceptors;
 

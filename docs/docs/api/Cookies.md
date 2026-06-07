@@ -10,7 +10,7 @@
 * **path** `string` (optional)
 * **secure** `boolean` (optional)
 * **httpOnly** `boolean` (optional)
-* **sameSite** `'String'|'Lax'|'None'` (optional)
+* **sameSite** `'Strict'|'Lax'|'None'` (optional)
 * **unparsed** `string[]` (optional) Left over attributes that weren't parsed.
 
 ## `deleteCookie(headers, name[, attributes])`

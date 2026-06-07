@@ -26,7 +26,7 @@ This API is implemented as per the standard, you can find documentation on [MDN]
 
 This API is implemented as per the standard, you can find documentation on [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Request)
 
-## Header
+## Headers
 
 This API is implemented as per the standard, you can find documentation on [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Headers)
 
