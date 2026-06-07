@@ -154,6 +154,9 @@ test('Should ignore late http2 data after request completion', async (t) => {
 
   stream.emit('end')
 
+  // Completion is deferred to onRequestStreamClose (fires on 'close')
+  stream.emit('close')
+
   t.strictEqual(onCompleteCalls, 1)
   t.strictEqual(onDataCalls, 0)
   t.ok(resumeCalls >= 1)
@@ -224,6 +227,10 @@ test('Should remove request-owned http2 stream listeners after completion', asyn
 
   stream.emit('response', { ':status': 200 })
   stream.emit('end')
+
+  // When trailers are not expected, completion is deferred to
+  // onRequestStreamClose, which fires on the 'close' event.
+  stream.emit('close')
 
   t.equal(stream.listenerCount('aborted'), 0)
   t.equal(stream.listenerCount('timeout'), 0)
