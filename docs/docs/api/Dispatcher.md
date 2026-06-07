@@ -211,6 +211,7 @@ Returns: `Boolean` - `false` if dispatcher is busy and further dispatch calls wo
 * **onResponseData** `(controller: DispatchController, chunk: Buffer) => void` - Invoked when response payload data is received. Not required for `upgrade` requests.
 * **onResponseEnd** `(controller: DispatchController, trailers: Record<string, string | string[]>) => void` - Invoked when response payload and trailers have been received and the request has completed. Not required for `upgrade` requests.
 * **onResponseError** `(controller: DispatchController, error: Error) => void` - Invoked when an error has occurred. May not throw.
+* **onBodySent** `(chunk: Buffer) => void` (optional) - Invoked when a chunk of the request body is sent.
 
 #### Migration from legacy handler API
 
@@ -688,7 +689,7 @@ return null
 
 A faster version of `Dispatcher.request`. This method expects the second argument `factory` to return a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream which the response will be written to. This improves performance by avoiding creating an intermediate [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams) stream when the user expects to directly pipe the response body to a [`stream.Writable`](https://nodejs.org/api/stream.html#stream_class_stream_writable) stream.
 
-As demonstrated in [Example 1 - Basic GET stream request](/docs/docs/api/Dispatcher.md#example-1-basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](/docs/docs/api/Dispatch.md#example-2-stream-to-fastify-response) for more details.
+As demonstrated in [Example 1 - Basic GET stream request](/docs/docs/api/Dispatcher.md#example-1-basic-get-stream-request), it is recommended to use the `option.opaque` property to avoid creating a closure for the `factory` method. This pattern works well with Node.js Web Frameworks such as [Fastify](https://fastify.io). See [Example 2 - Stream to Fastify Response](/docs/docs/api/Dispatcher.md#example-2-stream-to-fastify-response) for more details.
 
 Arguments:
 
