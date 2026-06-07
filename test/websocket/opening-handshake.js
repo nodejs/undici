@@ -33,7 +33,8 @@ test('WebSocket connecting to server that isn\'t a Websocket server', (t) => {
       ws.onmessage = ws.onopen = reject
 
       ws.addEventListener('error', ({ error }) => {
-        t.assert.ok(error)
+        t.assert.ok(error instanceof TypeError)
+        t.assert.strictEqual(error.message, 'Received network error or non-101 status code.')
         server.close()
         resolve()
       })
