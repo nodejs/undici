@@ -20,31 +20,34 @@ const data = await res.json()
 console.log(data)
 ```
 
-### POST with JSON
+### Using the Request object
+
+undici also exports a `Request` class that follows the Fetch Standard:
 
 ```js
-import { fetch } from 'undici'
+import { fetch, Request } from 'undici'
 
-const res = await fetch('https://example.com/api', {
+const req = new Request('https://example.com', {
   method: 'POST',
   headers: { 'content-type': 'application/json' },
   body: JSON.stringify({ hello: 'world' })
 })
+const res = await fetch(req)
 console.log(res.status)
 ```
 
 ### Streaming the response
 
-`res.body` is a web `ReadableStream`. Convert it to a Node stream with
-`Readable.fromWeb()`:
+`res.body` is a web `ReadableStream`. Use `pipeline` from
+`node:stream/promises` to stream it to a file:
 
 ```js
 import { fetch } from 'undici'
-import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import { createWriteStream } from 'node:fs'
 
 const res = await fetch('https://example.com/large-file.zip')
-Readable.fromWeb(res.body).pipe(createWriteStream('./file.zip'))
+await pipeline(res.body, createWriteStream('./file.zip'))
 ```
 
 > Always consume or cancel the response body. In Node.js, garbage collection
@@ -54,82 +57,6 @@ Readable.fromWeb(res.body).pipe(createWriteStream('./file.zip'))
 > for details.
 
 For more on `fetch`, see [API Reference: Fetch](/docs/docs/api/Fetch.md).
-
-## Which API should I use?
-
-undici exposes several request methods. Here's how to pick the right one:
-
-| Method | Best for |
-|---|---|
-| `fetch` | Quick requests, standard API compatibility, JSON/form bodies |
-| `request` | Maximum throughput, reading response headers, fine-grained control |
-| `stream` | Piping responses directly to a writable stream |
-| `pipeline` | Streaming request bodies combined with streaming responses |
-
-All four methods support the same options for timeouts, abort signals, headers,
-and connection configuration.
-
-### `request`
-
-`request` is the fastest way to make an HTTP call in undici. It returns the
-response as a Node `Readable` stream with body mixin methods attached:
-
-```js
-import { request } from 'undici'
-
-const { statusCode, headers, body } = await request('https://example.com')
-console.log(statusCode)
-const data = await body.json()
-```
-
-If you only need the headers and want to discard the body:
-
-```js
-const { statusCode, body } = await request('https://example.com')
-await body.dump()
-```
-
-### `stream`
-
-`stream` skips the intermediate `Readable` and writes the response directly
-to a writable you provide. Use it when you want to pipe the response somewhere
-without buffering:
-
-```js
-import { Client, stream } from 'undici'
-import { createWriteStream } from 'node:fs'
-
-const client = new Client('https://example.com')
-
-await client.stream({
-  path: '/download',
-  method: 'GET'
-}, ({ body }) => createWriteStream('./output'))
-
-client.close()
-```
-
-### `pipeline`
-
-`pipeline` returns a `Duplex` stream that you write the request into and read
-the response from. It is designed for use with `stream.pipeline()`:
-
-```js
-import { Client, pipeline } from 'undici'
-import { pipeline as pump, Readable, Writable } from 'stream'
-
-const client = new Client('https://example.com')
-
-pump(
-  Readable.from(['hello', 'world']),
-  client.pipeline({ path: '/echo', method: 'POST' }, ({ body }) => body),
-  new Writable({ write (chunk, _, cb) { console.log(chunk.toString()); cb() } }),
-  (err) => { if (err) console.error(err); client.close() }
-)
-```
-
-For full details on each method, see
-[API Reference: Dispatcher](/docs/docs/api/Dispatcher.md).
 
 ## Dispatchers: Connection reuse and pooling
 
