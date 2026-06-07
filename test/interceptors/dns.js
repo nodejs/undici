@@ -11,7 +11,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { interceptors, Agent, request } = require('../..')
+const { interceptors, Agent, Client, Pool, request } = require('../..')
 const { dns } = interceptors
 
 // Helper to check if IPv6 is available for localhost
@@ -2179,4 +2179,76 @@ test('#3951 - Should handle lookup errors correctly', async t => {
     ...requestOptions,
     origin: 'http://localhost'
   }), new Error('lookup error'))
+})
+
+test('#4234 - Should pass Client requests without origin through', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+  server.on('request', (req, res) => {
+    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  let lookupCount = 0
+  const client = new Client(`http://localhost:${server.address().port}`).compose(dns({
+    lookup: (_origin, _opts, cb) => {
+      lookupCount++
+      cb(new Error('lookup should not run'))
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+  t.equal(lookupCount, 0)
+})
+
+test('#4234 - Should pass Pool requests without origin through', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+  server.on('request', (req, res) => {
+    t.equal(req.headers.host, `localhost:${server.address().port}`)
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  let lookupCount = 0
+  const pool = new Pool(`http://localhost:${server.address().port}`).compose(dns({
+    lookup: (_origin, _opts, cb) => {
+      lookupCount++
+      cb(new Error('lookup should not run'))
+    }
+  }))
+
+  after(async () => {
+    await pool.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await pool.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+  t.equal(lookupCount, 0)
 })
