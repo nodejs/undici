@@ -309,3 +309,57 @@ test('fetch rejects truncated chunked responses terminated by EOF', async (t) =>
     t.strictEqual(err.cause?.message, 'Response does not match the HTTP/1.1 protocol (Invalid EOF state)')
   }
 })
+
+// https://github.com/nodejs/undici/issues/5360
+// When the HTTP/1 parser is paused under backpressure (body not consumed)
+// and the socket ends (FIN), parser.finish() must not assert(!this.paused).
+// That assert throws an uncatchable AssertionError from the socket 'end' handler.
+// The process should survive with a catchable error instead.
+test('no crash when parser paused and socket ends (issue 5360)', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const { spawnSync } = require('node:child_process')
+  const { join } = require('node:path')
+
+  const code = `
+  const { createServer } = require('node:net')
+  const { fetch } = require('./index')
+
+  const BODY = Buffer.alloc(64 * 1024, 0x61)
+
+  const server = createServer((sock) => {
+    sock.once('data', () => {
+      sock.write(
+        'HTTP/1.1 200 OK\\r\\n' +
+        'Content-Length: ' + BODY.length + '\\r\\n' +
+        'Connection: close\\r\\n\\r\\n'
+      )
+      sock.write(BODY)
+      sock.end()
+    })
+  })
+
+  server.listen(0, '127.0.0.1', async () => {
+    const { port } = server.address()
+    const res = await fetch('http://127.0.0.1:' + port + '/')
+    // Never read the body -> parser pauses under backpressure
+    await new Promise((r) => setTimeout(r, 1000))
+    console.log('no crash')
+    server.close()
+  })
+  `
+
+  const res = spawnSync(process.execPath, ['-e', code], {
+    cwd: join(__dirname, '..'),
+    timeout: 5000,
+    stdio: 'pipe'
+  })
+
+  const stderr = res.stderr.toString()
+  const stdout = res.stdout.toString()
+
+  // Must not contain AssertionError in stderr
+  t.ok(!stderr.includes('AssertionError'), 'stderr must not contain AssertionError')
+  // Must print 'no crash'
+  t.equal(stdout.trim(), 'no crash', 'must print no crash')
+})
