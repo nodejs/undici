@@ -9,7 +9,7 @@ const { Readable } = require('node:stream')
 const { test } = require('node:test')
 const pem = require('@metcoder95/https-pem')
 
-const { Client, fetch, Headers } = require('../..')
+const { Agent, Client, fetch, Headers } = require('../..')
 
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
@@ -121,6 +121,68 @@ test('[Fetch] Simple GET with h2', async (t) => {
 
   // See https://fetch.spec.whatwg.org/#concept-response-status-message
   t.assert.strictEqual(response.statusText, '')
+})
+
+test('[Fetch] retries h2 fetch after idle session socket closes', async (t) => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const requestBodies = []
+  const sockets = []
+  let streams = 0
+
+  server.on('secureConnection', (socket) => {
+    socket.on('error', () => {})
+    sockets.push(socket)
+  })
+  server.on('sessionError', () => {})
+  server.on('tlsClientError', () => {})
+  server.on('stream', async (stream) => {
+    streams++
+    const chunks = []
+
+    for await (const chunk of stream) {
+      chunks.push(chunk)
+    }
+
+    requestBodies.push(Buffer.concat(chunks).toString())
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  t.plan(4)
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const dispatcher = new Agent({
+    connections: 1,
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(async () => {
+    for (const socket of sockets) {
+      socket.destroy()
+    }
+
+    await dispatcher.close()
+    server.close()
+  })
+
+  const first = await fetch(`https://localhost:${server.address().port}/`, { dispatcher })
+  t.assert.strictEqual(await first.text(), 'ok')
+
+  sockets[0].destroy()
+
+  const second = await fetch(`https://localhost:${server.address().port}/`, {
+    dispatcher,
+    method: 'POST',
+    body: 'replayed body'
+  })
+  t.assert.strictEqual(await second.text(), 'ok')
+  t.assert.strictEqual(streams, 2)
+  t.assert.strictEqual(requestBodies[1], 'replayed body')
 })
 
 test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) => {
