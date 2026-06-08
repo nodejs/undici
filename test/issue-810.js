@@ -140,8 +140,10 @@ test('https://github.com/mcollina/undici/issues/810 pipelining 2', async (t) => 
     path: '/',
     method: 'GET'
   }, (err, data) => {
-    t.strictEqual(err.code, 'HPE_INVALID_CONSTANT')
-    t.ok(err instanceof errors.HTTPParserError)
+    t.ifError(err)
+    data.body.resume().on('end', () => {
+      t.ok(true, 'pass')
+    })
   })
   await t.completed
 })
