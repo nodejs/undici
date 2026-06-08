@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
+const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { after, test } = require('node:test')
 const { Client } = require('..')
@@ -37,6 +38,8 @@ test('should not reuse an idle socket with buffered unsolicited response bytes',
   const response1 = await client.request({ path: '/request1', method: 'GET' })
   assert.strictEqual(await readBody(response1.body), '/request1')
 
+  const disconnected = once(client, 'disconnect')
+
   evilServerSocket.write(
     'HTTP/1.1 200 OK\r\n' +
     'Poison-Free-Socket: true\r\n' +
@@ -45,6 +48,8 @@ test('should not reuse an idle socket with buffered unsolicited response bytes',
     'Content-Length: 0\r\n' +
     '\r\n'
   )
+
+  await disconnected
 
   const response2 = await client.request({ path: '/request2', method: 'GET' })
   assert.strictEqual(response2.headers['poison-free-socket'], undefined)
