@@ -87,21 +87,21 @@ declare class MockCallHistory {
   /** return all MockCallHistoryLog matching any of criteria given. if an object is used with multiple properties, you can change the operator to apply during filtering on options */
   filterCalls (criteria: MockCallHistory.FilterCallsFunctionCriteria | MockCallHistory.FilterCallsObjectCriteria | RegExp, options?: MockCallHistory.FilterCallsOptions): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given protocol. if a string is given, it is matched with includes */
-  filterCallsByProtocol (protocol: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByProtocol (protocol: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given host. if a string is given, it is matched with includes */
-  filterCallsByHost (host: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByHost (host: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given port. if a string is given, it is matched with includes */
-  filterCallsByPort (port: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByPort (port: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given origin. if a string is given, it is matched with includes */
-  filterCallsByOrigin (origin: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByOrigin (origin: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given path. if a string is given, it is matched with includes */
-  filterCallsByPath (path: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByPath (path: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given hash. if a string is given, it is matched with includes */
-  filterCallsByHash (hash: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByHash (hash: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given fullUrl. if a string is given, it is matched with includes */
-  filterCallsByFullUrl (fullUrl: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByFullUrl (fullUrl: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** return all MockCallHistoryLog matching the given method. if a string is given, it is matched with includes */
-  filterCallsByMethod (method: MockCallHistory.FilterCallsParameter): Array<MockCallHistoryLog>
+  filterCallsByMethod (method: MockCallHistory.FilterCallsParameter, logs?: Array<MockCallHistoryLog>): Array<MockCallHistoryLog>
   /** clear all MockCallHistoryLog on this MockCallHistory. */
   clear (): void
   /** use it with for..of loop or spread operator */
