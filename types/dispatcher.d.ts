@@ -119,6 +119,8 @@ declare namespace Dispatcher {
     headersTimeout?: number | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use 0 to disable it entirely. Defaults to 300 seconds. */
     bodyTimeout?: number | null;
+    /** A socket-read inactivity timeout for the response body, in milliseconds. Unlike `bodyTimeout`, it is refreshed only when bytes are read from the socket and fires even while the consumer is applying backpressure, detecting a stalled/half-open upstream. Use 0 to disable it entirely. Default: 0 (disabled). */
+    bodyIdleTimeout?: number | null;
     /** Whether the request should stablish a keep-alive or not. Default `false` */
     reset?: boolean;
     /** For H2, it appends the expect: 100-continue header, and halts the request body until a 100-continue is received from the remote server */

@@ -43,6 +43,8 @@ export declare namespace Client {
     connectTimeout?: number;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `300e3` milliseconds (300s). */
     bodyTimeout?: number;
+    /** A socket-read inactivity timeout for the response body, in milliseconds. Unlike `bodyTimeout`, it is refreshed only when bytes are read from the socket and fires even while the response body consumer is applying backpressure — use it to detect a stalled/half-open upstream during a slowly-consumed download. Use `0` to disable it entirely. Default: `0` (disabled). */
+    bodyIdleTimeout?: number;
     /** @deprecated unsupported idleTimeout, use keepAliveTimeout instead */
     idleTimeout?: never;
     /** @deprecated unsupported keepAlive, use pipelining=0 instead */
