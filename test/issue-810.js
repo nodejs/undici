@@ -1,12 +1,13 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { once } = require('node:events')
 const { Client, errors } = require('..')
 const net = require('node:net')
 
 test('https://github.com/mcollina/undici/issues/810', async (t) => {
+  const context = t
   t = tspl(t, { plan: 3 })
 
   let x = 0
@@ -21,13 +22,13 @@ test('https://github.com/mcollina/undici/issues/810', async (t) => {
       socket.write('\r\n')
     }
   })
-  after(() => server.close())
+  context.after(() => server.close())
 
   server.listen(0)
 
   await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
-  after(() => client.close())
+  context.after(() => client.close())
 
   client.request({
     path: '/',
@@ -51,6 +52,7 @@ test('https://github.com/mcollina/undici/issues/810', async (t) => {
 })
 
 test('https://github.com/mcollina/undici/issues/810 no pipelining', async (t) => {
+  const context = t
   t = tspl(t, { plan: 2 })
 
   const server = net.createServer(socket => {
@@ -58,12 +60,13 @@ test('https://github.com/mcollina/undici/issues/810 no pipelining', async (t) =>
     socket.write('Content-Length: 1\r\n\r\n')
     socket.write('11111\r\n')
   })
-  after(() => server.close())
+  context.after(() => server.close())
 
   server.listen(0)
 
   await once(server, 'listening')
   const client = new Client(`http://localhost:${server.address().port}`)
+  context.after(() => client.close())
 
   client.request({
     path: '/',
@@ -79,6 +82,7 @@ test('https://github.com/mcollina/undici/issues/810 no pipelining', async (t) =>
 })
 
 test('https://github.com/mcollina/undici/issues/810 pipelining', async (t) => {
+  const context = t
   t = tspl(t, { plan: 2 })
 
   const server = net.createServer(socket => {
@@ -86,14 +90,14 @@ test('https://github.com/mcollina/undici/issues/810 pipelining', async (t) => {
     socket.write('Content-Length: 1\r\n\r\n')
     socket.write('11111\r\n')
   })
-  after(() => server.close())
+  context.after(() => server.close())
 
   server.listen(0)
 
   await once(server, 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`, { pipelining: true })
-  after(() => client.close())
+  context.after(() => client.close())
 
   client.request({
     path: '/',
@@ -109,6 +113,7 @@ test('https://github.com/mcollina/undici/issues/810 pipelining', async (t) => {
 })
 
 test('https://github.com/mcollina/undici/issues/810 pipelining 2', async (t) => {
+  const context = t
   t = tspl(t, { plan: 4 })
 
   const server = net.createServer(socket => {
@@ -116,14 +121,14 @@ test('https://github.com/mcollina/undici/issues/810 pipelining 2', async (t) => 
     socket.write('Content-Length: 1\r\n\r\n')
     socket.write('11111\r\n')
   })
-  after(() => server.close())
+  context.after(() => server.close())
 
   server.listen(0)
 
   await once(server, 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`, { pipelining: true })
-  after(() => client.close())
+  context.after(() => client.close())
 
   client.request({
     path: '/',
