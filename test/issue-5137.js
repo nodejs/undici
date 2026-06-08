@@ -18,6 +18,14 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
   t = tspl(t, { plan: 2 })
 
   const server = createServer()
+  // The client intentionally times out and resets h2c streams in this test.
+  // Swallow the expected teardown errors so node:test does not report them
+  // as asynchronous activity after the assertions complete.
+  server.on('error', () => {})
+  server.on('session', session => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
 
   let streamCount = 0
   let resolveStreamCount
@@ -26,6 +34,9 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
   })
 
   server.on('stream', (stream) => {
+    // Client-side stream timeouts reset these h2c streams. On some
+    // platforms the expected reset can surface after the assertions finish.
+    stream.on('error', () => {})
     streamCount++
     if (streamCount === 3) {
       resolveStreamCount()
@@ -33,7 +44,7 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
     // Never respond — simulates a perpetual stream timeout
   })
 
-  after(() => server.close())
+  after(() => new Promise(resolve => server.close(resolve)))
   await once(server.listen(0), 'listening')
 
   const client = new RetryAgent(
@@ -56,7 +67,7 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
       }
     }
   )
-  after(() => client.close())
+  after(() => client.close().catch(() => {}))
 
   // The request itself should reject after exhausting retries
   await t.rejects(client.request({ path: '/', method: 'GET' }), {
@@ -70,4 +81,5 @@ test('RetryAgent rejects after exhausting retries on HTTP/2 stream timeout', asy
   t.equal(streamCount, 3, 'server should have received all 3 request attempts')
 
   await t.completed
+  await client.close()
 })
