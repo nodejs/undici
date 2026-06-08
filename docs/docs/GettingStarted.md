@@ -166,16 +166,16 @@ try {
   await body.json()
 } catch (err) {
   switch (err.code) {
-    case errors.ConnectTimeoutError.code:
+    case 'UND_ERR_CONNECT_TIMEOUT':
       console.error('Connection timed out')
       break
-    case errors.HeadersTimeoutError.code:
+    case 'UND_ERR_HEADERS_TIMEOUT':
       console.error('Headers timed out')
       break
-    case errors.BodyTimeoutError.code:
+    case 'UND_ERR_BODY_TIMEOUT':
       console.error('Body timed out')
       break
-    case errors.RequestAbortedError.code:
+    case 'UND_ERR_ABORTED':
       console.error('Request was aborted')
       break
     default:

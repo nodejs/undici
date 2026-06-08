@@ -4,12 +4,12 @@ Extends: `undici.DispatcherHandlers`
 
 A handler class that implements the retry logic for a request.
 
-## `new RetryHandler(dispatchOptions, retryHandlers, [retryOptions])`
+## `new RetryHandler(opts, { dispatch, handler })`
 
 Arguments:
 
-- **options** `Dispatch.DispatchOptions & RetryOptions` (required) - It is an intersection of `Dispatcher.DispatchOptions` and `RetryOptions`.
-- **retryHandlers** `RetryHandlers` (required) - Object containing the `dispatch` to be used on every retry, and `handler` for handling the `dispatch` lifecycle.
+- **opts** `Dispatch.DispatchOptions & { retryOptions?: RetryOptions }` (required) - An intersection of `Dispatcher.DispatchOptions` and an optional `RetryOptions` object.
+- **{ dispatch, handler }** `RetryHandlers` (required) - Object containing the `dispatch` to be used on every retry, and `handler` for handling the `dispatch` lifecycle.
 
 Returns: `retryHandler`
 
@@ -26,9 +26,9 @@ Extends: [`Dispatch.DispatchOptions`](/docs/docs/api/Dispatcher.md#parameter-dis
 - **minTimeout** `number` (optional) - Minimum number of milliseconds to wait before retrying. Default: `500` (half a second)
 - **timeoutFactor** `number` (optional) - Factor to multiply the timeout by for each retry attempt. Default: `2`
 - **retryAfter** `boolean` (optional) - It enables automatic retry after the `Retry-After` header is received. Default: `true`
-- **methods** `string[]` (optional) - Array of HTTP methods to retry. Default: `['GET', 'PUT', 'HEAD', 'OPTIONS', 'DELETE']`
+- **methods** `string[]` (optional) - Array of HTTP methods to retry. Default: `['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE']`
 - **statusCodes** `number[]` (optional) - Array of HTTP status codes to retry. Default: `[429, 500, 502, 503, 504]`
-- **errorCodes** `string[]` (optional) - Array of Error codes to retry. Default: `['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ENETDOWN','ENETUNREACH', 'EHOSTDOWN', 'UND_ERR_SOCKET']`
+- **errorCodes** `string[]` (optional) - Array of Error codes to retry. Default: `['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ENETDOWN', 'ENETUNREACH', 'EHOSTDOWN', 'EHOSTUNREACH', 'EPIPE', 'UND_ERR_SOCKET']`
 
 **`RetryContext`**
 
