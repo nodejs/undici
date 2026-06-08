@@ -419,3 +419,49 @@ test('Raw uncompressed payload over 64-bit extended limit is rejected', async (t
   t.assert.strictEqual(messageReceived, false, 'Raw uncompressed message over limit should be rejected')
   t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
+
+test('cumulative payload size', (t, done) => {
+  t.plan(1)
+
+  const LIMIT = 100
+  const FRAGMENT_SIZE = 60
+  const NUM_FRAGMENTS = 10
+
+  const server = new WebSocketServer({ port: 0 })
+
+  server.on('connection', (ws) => {
+    const socket = ws._socket
+    const payload = Buffer.alloc(FRAGMENT_SIZE, 0x41)
+
+    for (let i = 0; i < NUM_FRAGMENTS; i++) {
+      const fin = i === NUM_FRAGMENTS - 1 ? 0x80 : 0x00
+      const opcode = i === 0 ? 0x02 : 0x00
+      const header = Buffer.alloc(2)
+      header[0] = fin | opcode
+      header[1] = FRAGMENT_SIZE
+      socket.write(header)
+      socket.write(payload)
+    }
+  })
+
+  const agent = new Agent({
+    webSocket: {
+      maxPayloadSize: LIMIT
+    }
+  })
+
+  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+
+  t.after(async () => {
+    client.close()
+    server.close()
+    await agent.close()
+  })
+
+  client.onmessage = t.assert.fail
+
+  client.addEventListener('error', (event) => {
+    t.assert.ok(event)
+    done()
+  })
+})
