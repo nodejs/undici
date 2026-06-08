@@ -15,7 +15,7 @@ same implementation. Use the built-in global `FormData` with the built-in
 global `fetch()`, and use `undici`'s `FormData` with `undici.fetch()`.
 
 If you want the installed `undici` package to provide the globals, call
-[`install()`](/docs/api/GlobalInstallation.md) so `fetch`, `Headers`,
+[`install()`](/docs/docs/api/GlobalInstallation.md) so `fetch`, `Headers`,
 `Response`, `Request`, and `FormData` are installed together as a matching set.
 
 ## Response
