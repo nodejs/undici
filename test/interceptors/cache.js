@@ -172,7 +172,7 @@ describe('Cache Interceptor', () => {
 
   test('expires caching', async () => {
     const clock = FakeTimers.install({
-      shouldClearNativeTimers: true
+      toFake: ['Date']
     })
 
     let requestsToOrigin = 0
@@ -249,7 +249,7 @@ describe('Cache Interceptor', () => {
 
   test('expires caching with Etag', async () => {
     const clock = FakeTimers.install({
-      shouldClearNativeTimers: true
+      toFake: ['Date']
     })
 
     let requestsToOrigin = 0
@@ -327,7 +327,7 @@ describe('Cache Interceptor', () => {
 
   test('max-age caching', async () => {
     const clock = FakeTimers.install({
-      shouldClearNativeTimers: true
+      toFake: ['Date']
     })
 
     let requestsToOrigin = 0
@@ -391,7 +391,7 @@ describe('Cache Interceptor', () => {
 
   test('vary headers are present in revalidation request', async () => {
     const clock = FakeTimers.install({
-      shouldClearNativeTimers: true
+      toFake: ['Date']
     })
 
     let requestsToOrigin = 0
@@ -670,7 +670,7 @@ describe('Cache Interceptor', () => {
 
   test('stale-if-error (response)', async () => {
     const clock = FakeTimers.install({
-      shouldClearNativeTimers: true
+      toFake: ['Date']
     })
 
     let requestsToOrigin = 0
@@ -752,7 +752,7 @@ describe('Cache Interceptor', () => {
   describe('Client-side directives', () => {
     test('max-age', async () => {
       const clock = FakeTimers.install({
-        shouldClearNativeTimers: true
+        toFake: ['Date']
       })
 
       let requestsToOrigin = 0
@@ -813,7 +813,7 @@ describe('Cache Interceptor', () => {
 
     test('max-stale', async () => {
       const clock = FakeTimers.install({
-        shouldClearNativeTimers: true
+        toFake: ['Date']
       })
 
       let requestsToOrigin = 0
@@ -886,7 +886,7 @@ describe('Cache Interceptor', () => {
 
     test('min-fresh', async () => {
       const clock = FakeTimers.install({
-        shouldClearNativeTimers: true
+        toFake: ['Date']
       })
 
       let requestsToOrigin = 0
@@ -1104,7 +1104,7 @@ describe('Cache Interceptor', () => {
 
     test('stale-if-error', async () => {
       const clock = FakeTimers.install({
-        shouldClearNativeTimers: true
+        toFake: ['Date']
       })
 
       let requestsToOrigin = 0
@@ -1989,7 +1989,7 @@ describe('Cache Interceptor', () => {
 
   describe('determineDeleteAt', () => {
     test('max-age response has deleteAt proportional to freshness lifetime, not 1 year', async () => {
-      const clock = FakeTimers.install({ now: 1000 })
+      const clock = FakeTimers.install({ now: 1000, toFake: ['Date'] })
       after(() => clock.uninstall())
 
       const store = new MemoryCacheStore()
@@ -2025,7 +2025,7 @@ describe('Cache Interceptor', () => {
     })
 
     test('sqlite store keeps short-lived entries past Date header precision loss so they can revalidate', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
-      const clock = FakeTimers.install({ now: 1000, shouldClearNativeTimers: true })
+      const clock = FakeTimers.install({ now: 1000, toFake: ['Date'] })
       const store = new SqliteCacheStore()
       let requestsToOrigin = 0
       let revalidationHeaders
@@ -2101,7 +2101,7 @@ describe('Cache Interceptor', () => {
     })
 
     test('immutable response has deleteAt of ~1 year', async () => {
-      const clock = FakeTimers.install({ now: 1000 })
+      const clock = FakeTimers.install({ now: 1000, toFake: ['Date'] })
       after(() => clock.uninstall())
 
       const store = new MemoryCacheStore()
@@ -2137,7 +2137,7 @@ describe('Cache Interceptor', () => {
     })
 
     test('stale-while-revalidate extends deleteAt beyond staleAt', async () => {
-      const clock = FakeTimers.install({ now: 1000 })
+      const clock = FakeTimers.install({ now: 1000, toFake: ['Date'] })
       after(() => clock.uninstall())
 
       const store = new MemoryCacheStore()
