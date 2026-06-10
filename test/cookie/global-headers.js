@@ -1,7 +1,6 @@
 'use strict'
 
 const { describe, test } = require('node:test')
-const assert = require('node:assert')
 const {
   deleteCookie,
   getCookies,
@@ -9,24 +8,24 @@ const {
   setCookie
 } = require('../..')
 
-describe('Using global Headers', async () => {
-  test('deleteCookies', { skip: !globalThis.Headers }, () => {
+describe('Using global Headers', () => {
+  test('deleteCookies', { skip: !globalThis.Headers }, (t) => {
     const headers = new globalThis.Headers()
 
-    assert.equal(headers.get('set-cookie'), null)
+    t.assert.strictEqual(headers.get('set-cookie'), null)
     deleteCookie(headers, 'undici')
-    assert.equal(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
+    t.assert.strictEqual(headers.get('set-cookie'), 'undici=; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
   })
 
-  test('getCookies', { skip: !globalThis.Headers }, () => {
+  test('getCookies', { skip: !globalThis.Headers }, (t) => {
     const headers = new globalThis.Headers({
       cookie: 'get=cookies; and=attributes'
     })
 
-    assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
+    t.assert.deepEqual(getCookies(headers), { get: 'cookies', and: 'attributes' })
   })
 
-  test('getSetCookies', { skip: !globalThis.Headers }, () => {
+  test('getSetCookies', { skip: !globalThis.Headers }, (t) => {
     const headers = new globalThis.Headers({
       'set-cookie': 'undici=getSetCookies; Secure'
     })
@@ -34,9 +33,9 @@ describe('Using global Headers', async () => {
     const supportsCookies = headers.getSetCookie()
 
     if (!supportsCookies) {
-      assert.deepEqual(getSetCookies(headers), [])
+      t.assert.deepEqual(getSetCookies(headers), [])
     } else {
-      assert.deepEqual(getSetCookies(headers), [
+      t.assert.deepEqual(getSetCookies(headers), [
         {
           name: 'undici',
           value: 'getSetCookies',
@@ -46,23 +45,23 @@ describe('Using global Headers', async () => {
     }
   })
 
-  test('setCookie', { skip: !globalThis.Headers }, () => {
+  test('setCookie', { skip: !globalThis.Headers }, (t) => {
     const headers = new globalThis.Headers()
 
     setCookie(headers, { name: 'undici', value: 'setCookie' })
-    assert.equal(headers.get('Set-Cookie'), 'undici=setCookie')
-  })
-})
-
-describe('Headers check is not too lax', { skip: !globalThis.Headers }, () => {
-  class Headers { }
-  Object.defineProperty(globalThis.Headers.prototype, Symbol.toStringTag, {
-    value: 'Headers',
-    configurable: true
+    t.assert.strictEqual(headers.get('Set-Cookie'), 'undici=setCookie')
   })
 
-  assert.throws(() => getCookies(new Headers()), { code: 'ERR_INVALID_THIS' })
-  assert.throws(() => getSetCookies(new Headers()), { code: 'ERR_INVALID_THIS' })
-  assert.throws(() => setCookie(new Headers(), { name: 'a', value: 'b' }), { code: 'ERR_INVALID_THIS' })
-  assert.throws(() => deleteCookie(new Headers(), 'name'), { code: 'ERR_INVALID_THIS' })
+  test('Headers check is not too lax', { skip: !globalThis.Headers }, (t) => {
+    class Headers { }
+    Object.defineProperty(globalThis.Headers.prototype, Symbol.toStringTag, {
+      value: 'Headers',
+      configurable: true
+    })
+
+    t.assert.throws(() => getCookies(new Headers()), { code: 'ERR_INVALID_THIS' })
+    t.assert.throws(() => getSetCookies(new Headers()), { code: 'ERR_INVALID_THIS' })
+    t.assert.throws(() => setCookie(new Headers(), { name: 'a', value: 'b' }), { code: 'ERR_INVALID_THIS' })
+    t.assert.throws(() => deleteCookie(new Headers(), 'name'), { code: 'ERR_INVALID_THIS' })
+  })
 })
