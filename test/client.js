@@ -115,6 +115,50 @@ test('passes socketPath to custom connect function', async (t) => {
   await t.completed
 })
 
+test('passes lookup from connect options to built connector', async (t) => {
+  t = tspl(t, { plan: 5 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    t.strictEqual(req.headers.host, `undici.test:${server.address().port}`)
+    res.end('lookup ok')
+  })
+  after(() => server.close())
+
+  server.listen(0, '127.0.0.1', () => {
+    const client = new Client(`http://undici.test:${server.address().port}`, {
+      connect: {
+        lookup (hostname, options, callback) {
+          t.strictEqual(hostname, 'undici.test')
+          if (options.all === true) {
+            callback(null, [{ address: '127.0.0.1', family: 4 }])
+          } else {
+            callback(null, '127.0.0.1', 4)
+          }
+        }
+      }
+    })
+    after(() => client.close())
+
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, { statusCode, body }) => {
+      t.ifError(err)
+      t.strictEqual(statusCode, 200)
+
+      const chunks = []
+      body.on('data', (chunk) => {
+        chunks.push(chunk)
+      })
+      body.on('end', () => {
+        t.strictEqual(Buffer.concat(chunks).toString(), 'lookup ok')
+      })
+    })
+  })
+
+  await t.completed
+})
+
 test('basic get with custom request.reset=true', async (t) => {
   t = tspl(t, { plan: 26 })
 

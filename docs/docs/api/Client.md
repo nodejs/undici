@@ -106,6 +106,24 @@ const client = new Client('http://localhost:3000', {
 })
 ```
 
+### Example - Custom DNS lookup
+
+Pass a `lookup` function in the object form when you need to control name resolution while still using Undici's built-in connector.
+
+```js
+'use strict'
+import { Client } from 'undici'
+import dns from 'node:dns'
+
+const client = new Client('https://example.com', {
+  connect: {
+    lookup (hostname, options, callback) {
+      dns.lookup(hostname, { ...options, family: 4 }, callback)
+    }
+  }
+})
+```
+
 ### Example - Custom connector (function form)
 
 Pass a function for full control over socket creation. This allows you to perform additional checks on the socket, use a proxy, or implement custom connection logic.
