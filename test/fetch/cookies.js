@@ -15,17 +15,18 @@ test('Can receive set-cookie headers from a server using fetch - issue #1262', a
   const server = createServer((req, res) => {
     res.setHeader('set-cookie', 'name=value; Domain=example.com')
     res.end()
-  }).listen(0)
+  }).listen(0, '127.0.0.1')
 
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const response = await fetch(`http://localhost:${server.address().port}`)
+  const response = await fetch(`http://127.0.0.1:${server.address().port}`, { keepalive: false })
 
   assert.strictEqual(response.headers.get('set-cookie'), 'name=value; Domain=example.com')
 
-  const response2 = await fetch(`http://localhost:${server.address().port}`, {
-    credentials: 'include'
+  const response2 = await fetch(`http://127.0.0.1:${server.address().port}`, {
+    credentials: 'include',
+    keepalive: false
   })
 
   assert.strictEqual(response2.headers.get('set-cookie'), 'name=value; Domain=example.com')
@@ -35,7 +36,7 @@ test('Can send cookies to a server with fetch - issue #1463', async (t) => {
   const server = createServer((req, res) => {
     assert.strictEqual(req.headers.cookie, 'value')
     res.end()
-  }).listen(0)
+  }).listen(0, '127.0.0.1')
 
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
@@ -47,7 +48,7 @@ test('Can send cookies to a server with fetch - issue #1463', async (t) => {
   ]
 
   for (const headers of headersInit) {
-    await fetch(`http://localhost:${server.address().port}`, { headers })
+    await fetch(`http://127.0.0.1:${server.address().port}`, { headers, keepalive: false })
   }
 })
 
@@ -57,12 +58,13 @@ test('Cookie header is delimited with a semicolon rather than a comma - issue #1
   const server = createServer((req, res) => {
     strictEqual(req.headers.cookie, 'FOO=lorem-ipsum-dolor-sit-amet; BAR=the-quick-brown-fox')
     res.end()
-  }).listen(0)
+  }).listen(0, '127.0.0.1')
 
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  await fetch(`http://localhost:${server.address().port}`, {
+  await fetch(`http://127.0.0.1:${server.address().port}`, {
+    keepalive: false,
     headers: [
       ['cookie', 'FOO=lorem-ipsum-dolor-sit-amet'],
       ['cookie', 'BAR=the-quick-brown-fox']
