@@ -85,10 +85,10 @@ test('Can receive set-cookie headers from a http2 server using fetch - issue #28
     stream.end('test')
   })
 
-  server.listen()
+  server.listen(0, '127.0.0.1')
   await once(server, 'listening')
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  const client = new Client(`https://127.0.0.1:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
@@ -96,7 +96,7 @@ test('Can receive set-cookie headers from a http2 server using fetch - issue #28
   })
 
   const response = await fetch(
-    `https://localhost:${server.address().port}/`,
+    `https://127.0.0.1:${server.address().port}/`,
     // Needs to be passed to disable the reject unauthorized
     {
       method: 'GET',
