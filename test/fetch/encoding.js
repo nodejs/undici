@@ -78,7 +78,7 @@ describe('content-encoding chain limit', () => {
       })
       res.end('test')
     })
-    await once(server.listen(0), 'listening')
+    await once(server.listen(0, '127.0.0.1'), 'listening')
   })
 
   after(() => {
@@ -86,7 +86,7 @@ describe('content-encoding chain limit', () => {
   })
 
   test(`should allow exactly ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
-    const response = await fetch(`http://localhost:${server.address().port}`, {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}`, {
       keepalive: false,
       headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS) }
     })
@@ -98,7 +98,7 @@ describe('content-encoding chain limit', () => {
 
   test(`should reject more than ${MAX_CONTENT_ENCODINGS} content-encodings`, async (t) => {
     await assert.rejects(
-      fetch(`http://localhost:${server.address().port}`, {
+      fetch(`http://127.0.0.1:${server.address().port}`, {
         keepalive: false,
         headers: { 'x-encoding-count': String(MAX_CONTENT_ENCODINGS + 1) }
       }),
@@ -111,7 +111,7 @@ describe('content-encoding chain limit', () => {
 
   test('should reject excessive content-encoding chains', async (t) => {
     await assert.rejects(
-      fetch(`http://localhost:${server.address().port}`, {
+      fetch(`http://127.0.0.1:${server.address().port}`, {
         keepalive: false,
         headers: { 'x-encoding-count': '100' }
       }),
