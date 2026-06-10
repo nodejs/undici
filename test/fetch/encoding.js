@@ -23,12 +23,12 @@ test('content-encoding header is case-iNsENsITIve', async (t) => {
 
     gzip.write(text)
     gzip.end()
-  }).listen(0)
+  }).listen(0, '127.0.0.1')
 
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const response = await fetch(`http://localhost:${server.address().port}`)
+  const response = await fetch(`http://127.0.0.1:${server.address().port}`, { keepalive: false })
 
   assert.strictEqual(await response.text(), text)
   assert.strictEqual(response.headers.get('content-encoding'), contentCodings)
@@ -49,12 +49,12 @@ test('response decompression according to content-encoding should be handled in 
 
     deflate.write(text)
     deflate.end()
-  }).listen(0)
+  }).listen(0, '127.0.0.1')
 
   t.after(closeServerAsPromise(server))
   await once(server, 'listening')
 
-  const response = await fetch(`http://localhost:${server.address().port}`)
+  const response = await fetch(`http://127.0.0.1:${server.address().port}`, { keepalive: false })
 
   assert.strictEqual(await response.text(), text)
 })
