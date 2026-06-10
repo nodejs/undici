@@ -1,31 +1,46 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
-const { Client } = require('..')
+const assert = require('node:assert')
+const { test } = require('node:test')
+const { once } = require('node:events')
+const { Client, errors } = require('..')
 const net = require('node:net')
 
-// TODO: move to test/node-test/client-connect.js
-test('parser error', async (t) => {
-  t = tspl(t, { plan: 2 })
-
-  const server = net.createServer()
-  server.once('connection', (socket) => {
-    socket.write('asd\n\r213123')
+function closeServer (server) {
+  return new Promise((resolve, reject) => {
+    server.close((err) => err ? reject(err) : resolve())
   })
-  after(() => server.close())
+}
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
-
+function request (client) {
+  return new Promise((resolve, reject) => {
     client.request({ path: '/', method: 'GET' }, (err) => {
-      t.ok(err)
-      client.close((err) => {
-        t.ifError(err)
-      })
+      if (err) {
+        reject(err)
+      } else {
+        resolve()
+      }
+    })
+  })
+}
+
+// TODO: move to test/node-test/client-connect.js
+test('parser error', async () => {
+  const server = net.createServer((socket) => {
+    socket.once('data', () => {
+      socket.end('asd\n\r213123')
     })
   })
 
-  await t.completed
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+
+  try {
+    await assert.rejects(request(client), errors.HTTPParserError)
+  } finally {
+    await client.destroy()
+    await closeServer(server)
+  }
 })
