@@ -43,9 +43,20 @@ module.exports.fetch = function fetch (init, options = undefined) {
   })
 }
 module.exports.FormData = require('./lib/web/fetch/formdata').FormData
-module.exports.Headers = require('./lib/web/fetch/headers').Headers
-module.exports.Response = require('./lib/web/fetch/response').Response
-module.exports.Request = require('./lib/web/fetch/request').Request
+const { Headers, HeadersList } = require('./lib/web/fetch/headers')
+module.exports.Headers = Headers
+module.exports.HeadersList = HeadersList
+const { Response, getResponseState } = require('./lib/web/fetch/response')
+module.exports.Response = Response
+module.exports.getResponseState = getResponseState
+const {
+  Request,
+  makeRequest,
+  fromInnerRequest
+} = require('./lib/web/fetch/request')
+module.exports.Request = Request
+module.exports.makeRequest = makeRequest
+module.exports.fromInnerRequest = fromInnerRequest
 
 const { CloseEvent, ErrorEvent, MessageEvent, createFastMessageEvent } = require('./lib/web/websocket/events')
 module.exports.WebSocket = require('./lib/web/websocket/websocket').WebSocket
