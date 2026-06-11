@@ -47,7 +47,7 @@ It represents the retry state for a given request.
 - **handler** Extends [`Dispatch.DispatchHandler`](/docs/docs/api/Dispatcher.md#dispatcherdispatchoptions-handler) (required) - Handler function to be called after the request is successful or the retries are exhausted.
 
 >__Note__: The `RetryHandler` does not retry over stateful bodies (e.g. streams, AsyncIterable) as those, once consumed, are left in a state that cannot be reutilized. For these situations the `RetryHandler` will identify
->the body as stateful and will not retry the request rejecting with the error `UND_ERR_REQ_RETRY`.
+>the body as stateful and will not retry the request rejecting with the error `UND_ERR_REQ_RETRY`. If you need to retry with a stateful body, pass a factory function that creates a new body for each retry: `body: () => fs.createReadStream('file.txt')`.
 
 Examples:
 

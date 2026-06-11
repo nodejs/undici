@@ -102,7 +102,7 @@ declare namespace Dispatcher {
     path: string;
     method: HttpMethod;
     /** Default: `null` */
-    body?: string | Buffer | Uint8Array | Readable | null | FormData;
+    body?: string | Buffer | Uint8Array | Readable | null | FormData | (() => string | Buffer | Uint8Array | Readable | null | FormData);
     /** Default: `null` */
     headers?: UndiciHeaders;
     /** Query string params to be embedded in the request URL. Default: `null` */
