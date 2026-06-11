@@ -51,13 +51,16 @@ describe('parseCookie(str)', function () {
     assert.deepStrictEqual(parseCookie('f=;b='), { name: 'f', value: '', unparsed: ['b='] })
   })
 
-  it('should URL-decode values', function () {
+  it('should preserve encoded values', function () {
     assert.deepStrictEqual(parseCookie('foo="bar=123456789&name=Magic+Mouse"'), {
       name: 'foo',
       value: '"bar=123456789&name=Magic+Mouse"'
     })
 
-    assert.deepStrictEqual(parseCookie('email=%20%22%2c%3b%2f'), { name: 'email', value: ' ",;/' })
+    assert.deepStrictEqual(parseCookie('email=%20%22%2c%3b%2f'), {
+      name: 'email',
+      value: '%20%22%2c%3b%2f'
+    })
   })
 
   it('should trim whitespace around key and value', function () {
