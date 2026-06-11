@@ -142,6 +142,8 @@ type RequestDestination =
   | 'worker'
   | 'xslt'
 
+export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH' | (string & {})
+
 export interface RequestInit {
   body?: BodyInit | null
   cache?: RequestCache
@@ -151,7 +153,7 @@ export interface RequestInit {
   headers?: HeadersInit
   integrity?: string
   keepalive?: boolean
-  method?: string
+  method?: HttpMethod;
   mode?: RequestMode
   redirect?: RequestRedirect
   referrer?: string
