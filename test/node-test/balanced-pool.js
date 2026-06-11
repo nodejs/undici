@@ -568,6 +568,30 @@ const cases = [
 
 ]
 
+function errorMatchesPort (err, port) {
+  if (err?.port === port || err?.socket?.remotePort === port) {
+    return true
+  }
+
+  if (Array.isArray(err?.errors)) {
+    return err.errors.some(err => errorMatchesPort(err, port))
+  }
+
+  return false
+}
+
+function getRequestErrorCode (err) {
+  if (err?.code === 'ECONNREFUSED' || err?.code === 'UND_ERR_SOCKET') {
+    return err.code
+  }
+
+  if (Array.isArray(err?.errors)) {
+    return err.errors.map(getRequestErrorCode).find(code => code === 'ECONNREFUSED' || code === 'UND_ERR_SOCKET')
+  }
+
+  return err?.code
+}
+
 describe('weighted round robin', () => {
   for (const [index, { config, expected, expectedRatios, iterations = 9, expectedConnectionRefusedErrors = 0, expectedSocketErrors = 0, maxWeightPerServer, errorPenalty = 10, skip = false }] of cases.entries()) {
     test(`case ${index}`, { skip }, async (t) => {
@@ -604,23 +628,17 @@ describe('weighted round robin', () => {
         try {
           await client.request({ path: '/', method: 'GET' })
         } catch (e) {
-          const serverWithError =
-          servers.find(server => server.port === e.port) ||
-          servers.find(server => {
-            if (typeof AggregateError === 'function' && e instanceof AggregateError) {
-              return e.errors.some(e => server.port === (e.socket?.remotePort ?? e.port))
-            }
-
-            return server.port === e.socket.remotePort
-          })
+          const serverWithError = servers.find(server => errorMatchesPort(e, server.port))
+          assert.ok(serverWithError, `expected request error to match one of the test servers, got ${e.code}`)
 
           serverWithError.requestsCount++
 
-          if (e.code === 'ECONNREFUSED') {
+          const errorCode = getRequestErrorCode(e)
+          if (errorCode === 'ECONNREFUSED') {
             requestLog.push(`${serverWithError.name}/connectionRefused`)
             connectionRefusedErrors++
           }
-          if (e.code === 'UND_ERR_SOCKET') {
+          if (errorCode === 'UND_ERR_SOCKET') {
             requestLog.push(`${serverWithError.name}/socketError`)
 
             socketErrors++
