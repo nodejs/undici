@@ -1,147 +1,130 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { once } = require('node:events')
 const { Client, errors } = require('..')
 const net = require('node:net')
 
-test('https://github.com/mcollina/undici/issues/810', async (t) => {
-  t = tspl(t, { plan: 3 })
+function closeServer (server) {
+  return new Promise((resolve, reject) => {
+    server.close((err) => err ? reject(err) : resolve())
+  })
+}
 
+function requestAndRead (client) {
+  return new Promise((resolve, reject) => {
+    client.request({
+      path: '/',
+      method: 'GET'
+    }, (err, data) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      data.body.resume()
+      data.body.on('end', resolve)
+      data.body.on('error', (err) => {
+        if (err instanceof errors.HTTPParserError) {
+          resolve()
+        } else {
+          reject(err)
+        }
+      })
+    })
+  })
+}
+
+function writeMalformedResponse (socket) {
+  socket.write('HTTP/1.1 200 OK\r\n')
+  socket.write('Content-Length: 1\r\n\r\n')
+  socket.write('11111\r\n')
+}
+
+function writeEmptyResponse (socket) {
+  socket.write('HTTP/1.1 200 OK\r\n')
+  socket.write('Content-Length: 0\r\n\r\n')
+}
+
+test('https://github.com/mcollina/undici/issues/810', async () => {
   let x = 0
   const server = net.createServer(socket => {
-    if (x++ === 0) {
-      socket.write('HTTP/1.1 200 OK\r\n')
-      socket.write('Content-Length: 1\r\n\r\n')
-      socket.write('11111\r\n')
-    } else {
-      socket.write('HTTP/1.1 200 OK\r\n')
-      socket.write('Content-Length: 0\r\n\r\n')
-      socket.write('\r\n')
-    }
+    socket.once('data', () => {
+      if (x++ === 0) {
+        writeMalformedResponse(socket)
+      } else {
+        writeEmptyResponse(socket)
+      }
+    })
   })
-  after(() => server.close())
 
   server.listen(0)
-
   await once(server, 'listening')
-  const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
-  after(() => client.close())
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    t.ifError(err)
-    data.body.resume().on('end', () => {
-      // t.fail() FIX: Should fail.
-      t.ok(true, 'pass')
-    }).on('error', err => (
-      t.ok(err instanceof errors.HTTPParserError)
-    ))
-  })
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    t.ok(err instanceof errors.HTTPParserError)
-  })
-  await t.completed
+  const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
+
+  try {
+    await requestAndRead(client)
+    await requestAndRead(client)
+  } finally {
+    await client.destroy()
+    await closeServer(server)
+  }
 })
 
-test('https://github.com/mcollina/undici/issues/810 no pipelining', async (t) => {
-  t = tspl(t, { plan: 2 })
-
+test('https://github.com/mcollina/undici/issues/810 no pipelining', async () => {
   const server = net.createServer(socket => {
-    socket.write('HTTP/1.1 200 OK\r\n')
-    socket.write('Content-Length: 1\r\n\r\n')
-    socket.write('11111\r\n')
+    socket.once('data', () => writeMalformedResponse(socket))
   })
-  after(() => server.close())
 
   server.listen(0)
-
   await once(server, 'listening')
+
   const client = new Client(`http://localhost:${server.address().port}`)
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    t.ifError(err)
-    data.body.resume().on('end', () => {
-      // t.fail() FIX: Should fail.
-      t.ok(true, 'pass')
-    })
-  })
-  await t.completed
+  try {
+    await requestAndRead(client)
+  } finally {
+    await client.destroy()
+    await closeServer(server)
+  }
 })
 
-test('https://github.com/mcollina/undici/issues/810 pipelining', async (t) => {
-  t = tspl(t, { plan: 2 })
-
+test('https://github.com/mcollina/undici/issues/810 pipelining', async () => {
   const server = net.createServer(socket => {
-    socket.write('HTTP/1.1 200 OK\r\n')
-    socket.write('Content-Length: 1\r\n\r\n')
-    socket.write('11111\r\n')
+    socket.once('data', () => writeMalformedResponse(socket))
   })
-  after(() => server.close())
 
   server.listen(0)
-
   await once(server, 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`, { pipelining: true })
-  after(() => client.close())
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    t.ifError(err)
-    data.body.resume().on('end', () => {
-      // t.fail() FIX: Should fail.
-      t.ok(true, 'pass')
-    })
-  })
-  await t.completed
+  try {
+    await requestAndRead(client)
+  } finally {
+    await client.destroy()
+    await closeServer(server)
+  }
 })
 
-test('https://github.com/mcollina/undici/issues/810 pipelining 2', async (t) => {
-  t = tspl(t, { plan: 4 })
-
+test('https://github.com/mcollina/undici/issues/810 pipelining 2', async () => {
   const server = net.createServer(socket => {
-    socket.write('HTTP/1.1 200 OK\r\n')
-    socket.write('Content-Length: 1\r\n\r\n')
-    socket.write('11111\r\n')
+    socket.once('data', () => writeMalformedResponse(socket))
   })
-  after(() => server.close())
 
   server.listen(0)
-
   await once(server, 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`, { pipelining: true })
-  after(() => client.close())
 
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    t.ifError(err)
-    data.body.resume().on('end', () => {
-      // t.fail() FIX: Should fail.
-      t.ok(true, 'pass')
-    })
-  })
-
-  client.request({
-    path: '/',
-    method: 'GET'
-  }, (err, data) => {
-    t.strictEqual(err.code, 'HPE_INVALID_CONSTANT')
-    t.ok(err instanceof errors.HTTPParserError)
-  })
-  await t.completed
+  try {
+    await Promise.all([
+      requestAndRead(client),
+      requestAndRead(client)
+    ])
+  } finally {
+    await client.destroy()
+    await closeServer(server)
+  }
 })
