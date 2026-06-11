@@ -95,6 +95,37 @@ describe('parseCacheControlHeader', () => {
     })
   })
 
+  test('trims qualified no-cache and private field names', () => {
+    let directives = parseCacheControlHeader('private=" authorization"')
+    deepStrictEqual(directives, {
+      private: [
+        'authorization'
+      ]
+    })
+
+    directives = parseCacheControlHeader('no-cache="\tauthorization"')
+    deepStrictEqual(directives, {
+      'no-cache': [
+        'authorization'
+      ]
+    })
+
+    directives = parseCacheControlHeader('no-cache=authorization\t')
+    deepStrictEqual(directives, {
+      'no-cache': [
+        'authorization'
+      ]
+    })
+
+    directives = parseCacheControlHeader('private=" authorization, x-user\t"')
+    deepStrictEqual(directives, {
+      private: [
+        'authorization',
+        'x-user'
+      ]
+    })
+  })
+
   test('private with headers', () => {
     let directives = parseCacheControlHeader('max-age=10, private=some-header, only-if-cached')
     deepStrictEqual(directives, {
