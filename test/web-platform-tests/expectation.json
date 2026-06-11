@@ -6762,6 +6762,67 @@
               "success": true
             }
           ]
+        },
+        "textstream.any.html": {
+          "success": true,
+          "cases": [
+            {
+              "name": "textStream method existence",
+              "success": true
+            },
+            {
+              "name": "Response.textStream() on consumed body throws TypeError",
+              "success": true
+            },
+            {
+              "name": "Request.textStream() on consumed body throws TypeError",
+              "success": true
+            },
+            {
+              "name": "Response.textStream() on locked body throws TypeError",
+              "success": true
+            },
+            {
+              "name": "Request.textStream() on locked body throws TypeError",
+              "success": true
+            },
+            {
+              "name": "Response.textStream() basic functionality",
+              "success": true
+            },
+            {
+              "name": "Request.textStream() basic functionality",
+              "success": true
+            },
+            {
+              "name": "textStream() handles chunked byte stream input",
+              "success": true
+            },
+            {
+              "name": "Response.textStream() with null body",
+              "success": true
+            },
+            {
+              "name": "Request.textStream() with null body",
+              "success": true
+            },
+            {
+              "name": "Response.textStream() with empty body",
+              "success": true
+            },
+            {
+              "name": "Response.textStream() ignores Content-Type charset (UTF-16LE)",
+              "success": true
+            },
+            {
+              "name": "Request.textStream() ignores Content-Type charset (UTF-16LE)",
+              "success": true
+            },
+            {
+              "name": "Response.textStream() ignores invalid Content-Type charset (invalid-charset)",
+              "success": true
+            }
+          ]
         }
       },
       "cors": {
