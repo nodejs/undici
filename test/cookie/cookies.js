@@ -28,6 +28,7 @@ const {
   deleteCookie,
   getCookies,
   getSetCookies,
+  parseCookie,
   setCookie,
   Headers
 } = require('../..')
@@ -598,6 +599,41 @@ test('Set-Cookie parser', () => {
 
   headers = new Headers()
   assert.deepEqual(getSetCookies(headers), [])
+})
+
+test('Set-Cookie parser does not percent-decode cookie values', () => {
+  assert.deepEqual(
+    parseCookie(
+      'token=legit%0d%0aSet-Cookie:%20evil=injected%3B%20Path%3D/'
+    ),
+    {
+      name: 'token',
+      value: 'legit%0d%0aSet-Cookie:%20evil=injected%3B%20Path%3D/'
+    }
+  )
+
+  assert.deepEqual(parseCookie('data=prefix%00suffix'), {
+    name: 'data',
+    value: 'prefix%00suffix'
+  })
+})
+
+test('Set-Cookie parser only accepts exact SameSite values', () => {
+  assert.deepEqual(parseCookie('a=b; SameSite=none'), {
+    name: 'a',
+    value: 'b',
+    sameSite: 'None'
+  })
+
+  assert.deepEqual(parseCookie('a=b; SameSite=StrictLax'), {
+    name: 'a',
+    value: 'b'
+  })
+
+  assert.deepEqual(parseCookie('a=b; SameSite=NoneOfYourBusiness'), {
+    name: 'a',
+    value: 'b'
+  })
 })
 
 test('Cookie setCookie throws if headers is not of type Headers', () => {
