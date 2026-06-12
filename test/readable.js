@@ -124,6 +124,24 @@ describe('Readable', () => {
     t.deepStrictEqual(obj, { hello: 'world' })
   })
 
+  test('.json() ignores late chunks after close', async function (t) {
+    t = tspl(t, { plan: 2 })
+
+    function resume () {
+    }
+    function abort () {
+    }
+    const r = new Readable({ resume, abort })
+    const jsonPromise = r.json()
+
+    await new Promise(resolve => queueMicrotask(resolve))
+
+    r.emit('close')
+    t.strictEqual(r.push(Buffer.from('late chunk')), true)
+
+    await t.rejects(jsonPromise, { name: 'AbortError' })
+  })
+
   test('.text()', async function (t) {
     t = tspl(t, { plan: 1 })
 
