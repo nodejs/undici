@@ -3,6 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { readFileSync, createReadStream } = require('node:fs')
 const { createServer } = require('node:http')
+const { createServer: createNetServer } = require('node:net')
 const { Readable, PassThrough } = require('node:stream')
 const { test, after } = require('node:test')
 const { Client, errors } = require('..')
@@ -1185,6 +1186,52 @@ test('ignore request header mutations', async (t) => {
       body.resume()
     })
     headers.test = 'asd'
+  })
+
+  await t.completed
+})
+
+test('socket end completes response when body is paused by backpressure', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const payload = Buffer.from('aa')
+  const server = createNetServer((socket) => {
+    socket.once('data', () => {
+      socket.write(
+        'HTTP/1.1 200 OK\r\n' +
+        `Content-Length: ${payload.length}\r\n` +
+        'Connection: close\r\n\r\n'
+      )
+      socket.write(payload)
+      socket.end()
+    })
+  })
+  after(() => server.close())
+
+  server.listen(0, '127.0.0.1', () => {
+    const client = new Client(`http://127.0.0.1:${server.address().port}`)
+    after(() => client.close())
+
+    client.request({
+      path: '/',
+      method: 'GET',
+      highWaterMark: 1
+    }, (err, data) => {
+      t.ifError(err)
+
+      let body = ''
+      data.body.setEncoding('utf8')
+      data.body.on('end', () => {
+        t.strictEqual(body, payload.toString())
+      })
+
+      setTimeout(() => {
+        data.body.on('data', (chunk) => {
+          body += chunk
+        })
+        data.body.resume()
+      }, 50)
+    })
   })
 
   await t.completed
