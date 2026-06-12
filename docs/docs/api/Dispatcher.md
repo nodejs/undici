@@ -1376,14 +1376,23 @@ When using the array header format (`string[]`), Undici processes only indexed e
 
 Response headers will derive a `host` from the `url` of the [Client](/docs/docs/api/Client.md#class-client) instance if no `host` header was previously specified.
 
+### Request header validation
+
+Request headers that are managed by the HTTP connection are handled differently from ordinary headers:
+
+* `transfer-encoding`, `keep-alive`, and `upgrade` cannot be set through `options.headers`; Undici throws an `InvalidArgumentError`.
+* `expect` is not supported; Undici throws a `NotSupportedError`.
+* `connection` must be a string containing comma-separated valid HTTP tokens. Undici rejects malformed tokens with `InvalidArgumentError: invalid connection header` and uses the `close` token to request connection reset behavior.
+* `host` and `content-length` are tracked separately from the raw header list. Duplicate `host` or `content-length` values are rejected, and `content-length` must contain only decimal digits.
+
 ### Example 1 - Object
 
 ```js
 {
   'content-length': '123',
   'content-type': 'text/plain',
-  connection: 'keep-alive',
   host: 'mysite.com',
+  'accept-language': 'en',
   accept: '*/*'
 }
 ```
