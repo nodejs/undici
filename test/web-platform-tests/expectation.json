@@ -43499,11 +43499,11 @@
           "success": true
         },
         {
-          "name": "EventSource: lastEventId persists",
+          "name": "EventSource: lastEventId resets (id without colon)",
           "success": true
         },
         {
-          "name": "EventSource: lastEventId resets (id without colon)",
+          "name": "EventSource: lastEventId persists",
           "success": true
         }
       ]
