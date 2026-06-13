@@ -9,6 +9,7 @@ const ProxyAgent = require('../lib/dispatcher/proxy-agent')
 const Pool = require('../lib/dispatcher/pool')
 const { createServer } = require('node:http')
 const https = require('node:https')
+const http2 = require('node:http2')
 const net = require('node:net')
 const { Socket } = require('node:net')
 const { createProxy } = require('proxy')
@@ -901,7 +902,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   const parsedOrigin = new URL(serverUrl)
   setGlobalDispatcher(proxyAgent)
 
@@ -985,7 +986,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   setGlobalDispatcher(proxyAgent)
 
   after(() => setGlobalDispatcher(defaultDispatcher))
@@ -1095,7 +1096,7 @@ test('should throw when proxy does not return 200', async (t) => {
     return false
   }
 
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
     t.fail()
@@ -1269,6 +1270,96 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
   })
 
   server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('Proxy via HTTPS to HTTP endpoint forwards without tunneling by default', async (t) => {
+  t = tspl(t, { plan: 4 })
+  const server = await buildServer()
+  const proxy = await buildSSLProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `https://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    proxyTls: {
+      ca: [
+        certs.root.crt
+      ],
+      servername: 'proxy'
+    }
+  })
+
+  server.on('request', function (req, res) {
+    t.ok(!req.connection.encrypted)
+    const headers = { host: req.headers.host, connection: req.headers.connection }
+    res.end(JSON.stringify(headers))
+  })
+
+  server.on('secureConnection', () => {
+    t.fail('server is http')
+  })
+
+  proxy.on('secureConnection', () => {
+    t.ok(true, 'TLS handshake to the proxy must still happen')
+  })
+
+  proxy.on('connect', () => {
+    t.fail('should not tunnel plain HTTP through an HTTPS proxy by default')
+  })
+
+  proxy.on('request', function (req) {
+    const bits = { method: req.method, url: req.url }
+    t.deepStrictEqual(bits, {
+      method: 'GET',
+      url: `${serverUrl}/`
+    })
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  const json = await data.body.json()
+  t.deepStrictEqual(json, {
+    host: `localhost:${server.address().port}`,
+    connection: 'keep-alive'
+  })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('Proxy via HTTPS to HTTP endpoint uses HTTP/1.1 when proxy also supports HTTP/2', async (t) => {
+  t = tspl(t, { plan: 4 })
+  const proxy = await buildH2CapableSSLProxy()
+
+  const serverUrl = 'http://example.com/'
+  const proxyUrl = `https://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    proxyTls: {
+      ca: [
+        certs.root.crt
+      ],
+      servername: 'proxy'
+    }
+  })
+
+  proxy.on('stream', (stream) => {
+    t.fail('non-tunneled HTTP forwarding must not negotiate HTTP/2')
+    stream.close()
+  })
+
+  proxy.on('request', function (req, res) {
+    t.strictEqual(req.httpVersion, '1.1')
+    t.strictEqual(req.method, 'GET')
+    t.strictEqual(req.url, serverUrl)
+    res.end('ok')
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  t.strictEqual(await data.body.text(), 'ok')
+
   proxy.close()
   proxyAgent.close()
 })
@@ -1574,6 +1665,23 @@ function buildSSLProxy () {
 
   return new Promise((resolve) => {
     const server = createProxy(https.createServer(serverOptions))
+    server.listen(0, () => resolve(server))
+  })
+}
+
+function buildH2CapableSSLProxy () {
+  const serverOptions = {
+    ca: [
+      certs.root.crt
+    ],
+    key: certs.proxy.key,
+    cert: certs.proxy.crt,
+    allowHTTP1: true,
+    joinDuplicateHeaders: true
+  }
+
+  return new Promise((resolve) => {
+    const server = http2.createSecureServer(serverOptions)
     server.listen(0, () => resolve(server))
   })
 }
