@@ -43,6 +43,15 @@ test('Fragmented frame with a ping frame in the middle of it', (t) => {
 test('Too many fragments (uncompressed)', (t, done) => {
   t.plan(4)
 
+  function maybeDone () {
+    if (++maybeDone.callCount === 2) {
+      agent.close()
+      server.close(done)
+    }
+  }
+
+  maybeDone.callCount = 0
+
   const agent = new Agent({
     webSocket: {
       maxFragments: 3
@@ -61,6 +70,7 @@ test('Too many fragments (uncompressed)', (t, done) => {
 
     client.addEventListener('close', (event) => {
       t.assert.deepStrictEqual(event.code, 1006)
+      maybeDone()
     })
   })
 
@@ -68,8 +78,7 @@ test('Too many fragments (uncompressed)', (t, done) => {
     ws.on('close', (code, reason) => {
       t.assert.deepStrictEqual(code, 1008)
       t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
-      agent.close()
-      server.close(done)
+      maybeDone()
     })
 
     const fragment = Buffer.from('a')
@@ -84,6 +93,15 @@ test('Too many fragments (uncompressed)', (t, done) => {
 
 test('Too many fragments (compressed)', (t, done) => {
   t.plan(4)
+
+  function maybeDone () {
+    if (++maybeDone.callCount === 2) {
+      agent.close()
+      server.close(done)
+    }
+  }
+
+  maybeDone.callCount = 0
 
   const agent = new Agent({
     webSocket: {
@@ -106,6 +124,7 @@ test('Too many fragments (compressed)', (t, done) => {
 
     client.addEventListener('close', (event) => {
       t.assert.deepStrictEqual(event.code, 1006)
+      maybeDone()
     })
   })
 
@@ -113,8 +132,7 @@ test('Too many fragments (compressed)', (t, done) => {
     ws.on('close', (code, reason) => {
       t.assert.deepStrictEqual(code, 1008)
       t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
-      agent.close()
-      server.close(done)
+      maybeDone()
     })
 
     const fragment = Buffer.from('a')
@@ -124,5 +142,89 @@ test('Too many fragments (compressed)', (t, done) => {
     ws.send(fragment, options)
     ws.send(fragment, options)
     ws.send(fragment, options)
+  })
+})
+
+test('Empty first fragment followed by non-empty continuation delivers the message', (t) => {
+  // RFC 6455 §5.4 allows zero-byte fragments. A conforming server that opens
+  // a fragmented message with an empty frame must be honored: the parser must
+  // recognize the in-progress fragmented message when the continuation arrives.
+  const server = new WebSocketServer({ port: 0 })
+
+  server.on('connection', (ws) => {
+    ws.send('', { fin: false })  // Text frame fin=0, len=0
+    ws.send('hello', { fin: true }) // Continuation fin=1, "hello"
+  })
+
+  after(() => {
+    for (const client of server.clients) {
+      client.close()
+    }
+
+    server.close()
+  })
+
+  const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+  return new Promise((resolve) => {
+    ws.addEventListener('message', ({ data }) => {
+      t.assert.strictEqual(data, 'hello')
+
+      ws.close()
+      resolve()
+    })
+  })
+})
+
+test('Too many empty fragments triggers close 1008', (t, done) => {
+  // Empty fragments must still count toward maxFragments; otherwise a
+  // peer can flood zero-byte continuation frames forever.
+  t.plan(4)
+
+  function maybeDone () {
+    if (++maybeDone.callCount === 2) {
+      agent.close()
+      server.close(done)
+    }
+  }
+
+  maybeDone.callCount = 0
+
+  const agent = new Agent({
+    webSocket: {
+      maxFragments: 3
+    }
+  })
+
+  const server = new WebSocketServer({ port: 0 }, () => {
+    const { port } = server.address()
+    const client = new WebSocket(`ws://127.0.0.1:${port}`, {
+      dispatcher: agent
+    })
+
+    client.addEventListener('error', (event) => {
+      t.assert.ok(true)
+    })
+
+    client.addEventListener('close', (event) => {
+      t.assert.deepStrictEqual(event.code, 1006)
+      maybeDone()
+    })
+  })
+
+  server.on('connection', (ws) => {
+    ws.on('close', (code, reason) => {
+      t.assert.deepStrictEqual(code, 1008)
+      t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
+      maybeDone()
+    })
+
+    const fragment = ''
+    const options = { fin: false }
+
+    ws.send(fragment, options) // Text frame fin=0, len=0
+    ws.send(fragment, options) // Continuation fin=0, len=0
+    ws.send(fragment, options) // Continuation fin=0, len=0
+    ws.send(fragment, options) // Continuation fin=0, len=0
   })
 })
