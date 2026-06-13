@@ -5,6 +5,53 @@ const { WebSocketServer } = require('ws')
 const { Agent, WebSocket } = require('../..')
 const diagnosticsChannel = require('node:diagnostics_channel')
 
+function testTooManyFragments (t, done, { serverOptions = {}, send }) {
+  t.plan(4)
+
+  const agent = new Agent({
+    webSocket: {
+      maxFragments: 3
+    }
+  })
+
+  let pendingCloseEvents = 2
+  function finish () {
+    if (--pendingCloseEvents === 0) {
+      agent.close()
+      server.close(done)
+    }
+  }
+
+  const server = new WebSocketServer({
+    ...serverOptions,
+    port: 0
+  }, () => {
+    const { port } = server.address()
+    const client = new WebSocket(`ws://127.0.0.1:${port}`, {
+      dispatcher: agent
+    })
+
+    client.addEventListener('error', () => {
+      t.assert.ok(true)
+    })
+
+    client.addEventListener('close', (event) => {
+      t.assert.deepStrictEqual(event.code, 1006)
+      finish()
+    })
+  })
+
+  server.on('connection', (ws) => {
+    ws.on('close', (code, reason) => {
+      t.assert.deepStrictEqual(code, 1008)
+      t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
+      finish()
+    })
+
+    send(ws)
+  })
+}
+
 test('Fragmented frame with a ping frame in the middle of it', (t) => {
   const server = new WebSocketServer({ port: 0 })
 
@@ -40,89 +87,69 @@ test('Fragmented frame with a ping frame in the middle of it', (t) => {
   })
 })
 
-test('Too many fragments (uncompressed)', (t, done) => {
-  t.plan(4)
-
-  const agent = new Agent({
-    webSocket: {
-      maxFragments: 3
-    }
-  })
+test('Fragmented frame with empty fragments', (t, done) => {
+  t.plan(1)
 
   const server = new WebSocketServer({ port: 0 }, () => {
     const { port } = server.address()
-    const client = new WebSocket(`ws://127.0.0.1:${port}`, {
-      dispatcher: agent
-    })
+    const client = new WebSocket(`ws://127.0.0.1:${port}`)
 
-    client.addEventListener('error', (event) => {
-      t.assert.ok(true)
-    })
-
-    client.addEventListener('close', (event) => {
-      t.assert.deepStrictEqual(event.code, 1006)
+    client.addEventListener('message', ({ data }) => {
+      t.assert.strictEqual(data, '')
+      client.close()
+      server.close(done)
     })
   })
 
   server.on('connection', (ws) => {
-    ws.on('close', (code, reason) => {
-      t.assert.deepStrictEqual(code, 1008)
-      t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
-      agent.close()
-      server.close(done)
-    })
+    const socket = ws._socket
 
-    const fragment = Buffer.from('a')
-    const options = { fin: false }
+    socket.write(Buffer.from([0x01, 0x00])) // Text frame with empty payload
+    socket.write(Buffer.from([0x00, 0x00])) // Continuation frame with empty payload
+    socket.write(Buffer.from([0x80, 0x00])) // Final continuation frame with empty payload
+  })
+})
 
-    ws.send(fragment, options)
-    ws.send(fragment, options)
-    ws.send(fragment, options)
-    ws.send(fragment, options)
+test('Too many empty fragments', (t, done) => {
+  testTooManyFragments(t, done, {
+    send (ws) {
+      const socket = ws._socket
+
+      socket.write(Buffer.from([0x01, 0x00])) // Text frame with empty payload
+      socket.write(Buffer.from([0x00, 0x00])) // Continuation frame with empty payload
+      socket.write(Buffer.from([0x00, 0x00])) // Continuation frame with empty payload
+      socket.write(Buffer.from([0x80, 0x00])) // Final continuation frame with empty payload
+    }
+  })
+})
+
+test('Too many fragments (uncompressed)', (t, done) => {
+  testTooManyFragments(t, done, {
+    send (ws) {
+      const fragment = Buffer.from('a')
+      const options = { fin: false }
+
+      ws.send(fragment, options)
+      ws.send(fragment, options)
+      ws.send(fragment, options)
+      ws.send(fragment, options)
+    }
   })
 })
 
 test('Too many fragments (compressed)', (t, done) => {
-  t.plan(4)
+  testTooManyFragments(t, done, {
+    serverOptions: {
+      perMessageDeflate: { threshold: 0 }
+    },
+    send (ws) {
+      const fragment = Buffer.from('a')
+      const options = { fin: false }
 
-  const agent = new Agent({
-    webSocket: {
-      maxFragments: 3
+      ws.send(fragment, options)
+      ws.send(fragment, options)
+      ws.send(fragment, options)
+      ws.send(fragment, options)
     }
-  })
-
-  const server = new WebSocketServer({
-    perMessageDeflate: { threshold: 0 },
-    port: 0
-  }, () => {
-    const { port } = server.address()
-    const client = new WebSocket(`ws://127.0.0.1:${port}`, {
-      dispatcher: agent
-    })
-
-    client.addEventListener('error', (event) => {
-      t.assert.ok(true)
-    })
-
-    client.addEventListener('close', (event) => {
-      t.assert.deepStrictEqual(event.code, 1006)
-    })
-  })
-
-  server.on('connection', (ws) => {
-    ws.on('close', (code, reason) => {
-      t.assert.deepStrictEqual(code, 1008)
-      t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
-      agent.close()
-      server.close(done)
-    })
-
-    const fragment = Buffer.from('a')
-    const options = { fin: false }
-
-    ws.send(fragment, options)
-    ws.send(fragment, options)
-    ws.send(fragment, options)
-    ws.send(fragment, options)
   })
 })
