@@ -43,6 +43,15 @@ test('Fragmented frame with a ping frame in the middle of it', (t) => {
 test('Too many fragments (uncompressed)', (t, done) => {
   t.plan(4)
 
+  function maybeDone () {
+    if (++maybeDone.callCount === 2) {
+      agent.close()
+      server.close(done)
+    }
+  }
+
+  maybeDone.callCount = 0
+
   const agent = new Agent({
     webSocket: {
       maxFragments: 3
@@ -61,6 +70,7 @@ test('Too many fragments (uncompressed)', (t, done) => {
 
     client.addEventListener('close', (event) => {
       t.assert.deepStrictEqual(event.code, 1006)
+      maybeDone()
     })
   })
 
@@ -68,8 +78,7 @@ test('Too many fragments (uncompressed)', (t, done) => {
     ws.on('close', (code, reason) => {
       t.assert.deepStrictEqual(code, 1008)
       t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
-      agent.close()
-      server.close(done)
+      maybeDone()
     })
 
     const fragment = Buffer.from('a')
@@ -84,6 +93,15 @@ test('Too many fragments (uncompressed)', (t, done) => {
 
 test('Too many fragments (compressed)', (t, done) => {
   t.plan(4)
+
+  function maybeDone () {
+    if (++maybeDone.callCount === 2) {
+      agent.close()
+      server.close(done)
+    }
+  }
+
+  maybeDone.callCount = 0
 
   const agent = new Agent({
     webSocket: {
@@ -106,6 +124,7 @@ test('Too many fragments (compressed)', (t, done) => {
 
     client.addEventListener('close', (event) => {
       t.assert.deepStrictEqual(event.code, 1006)
+      maybeDone()
     })
   })
 
@@ -113,8 +132,7 @@ test('Too many fragments (compressed)', (t, done) => {
     ws.on('close', (code, reason) => {
       t.assert.deepStrictEqual(code, 1008)
       t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
-      agent.close()
-      server.close(done)
+      maybeDone()
     })
 
     const fragment = Buffer.from('a')
@@ -163,6 +181,15 @@ test('Too many empty fragments triggers close 1008', (t, done) => {
   // peer can flood zero-byte continuation frames forever.
   t.plan(4)
 
+  function maybeDone () {
+    if (++maybeDone.callCount === 2) {
+      agent.close()
+      server.close(done)
+    }
+  }
+
+  maybeDone.callCount = 0
+
   const agent = new Agent({
     webSocket: {
       maxFragments: 3
@@ -181,6 +208,7 @@ test('Too many empty fragments triggers close 1008', (t, done) => {
 
     client.addEventListener('close', (event) => {
       t.assert.deepStrictEqual(event.code, 1006)
+      maybeDone()
     })
   })
 
@@ -188,8 +216,7 @@ test('Too many empty fragments triggers close 1008', (t, done) => {
     ws.on('close', (code, reason) => {
       t.assert.deepStrictEqual(code, 1008)
       t.assert.deepStrictEqual(reason.toString(), 'Too many message fragments')
-      agent.close()
-      server.close(done)
+      maybeDone()
     })
 
     const fragment = ''
