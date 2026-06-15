@@ -104,9 +104,9 @@ test('Fragmented frame with empty fragments', (t, done) => {
   server.on('connection', (ws) => {
     const socket = ws._socket
 
-    socket.write(Buffer.from([0x01, 0x00])) // Text frame with empty payload
-    socket.write(Buffer.from([0x00, 0x00])) // Continuation frame with empty payload
-    socket.write(Buffer.from([0x80, 0x00])) // Final continuation frame with empty payload
+    ws.send('', { fin: false }) // Text frame with empty payload
+    ws.send('', { fin: false }) // Continuation frame with empty payload
+    ws.send('', { fin: true }) // Final continuation frame with empty payload
   })
 })
 
