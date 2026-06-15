@@ -19,6 +19,9 @@ const CA_CERT_PATH = join(import.meta.dirname, 'runner/certs/cacert.pem')
 
 const log = debuglog('UNDICI_WPT')
 const WPT_SERVER_URL = 'http://web-platform.test:8000'
+const PYTHON_CANDIDATES = ['python3', 'python']
+
+let pythonInfoPromise
 
 const SERVER_READY_CHECKS = [
   ['http-default', (line) => line.includes('http on port 8000') && line.includes('Starting http server')],
@@ -92,6 +95,88 @@ async function terminateProcess (proc, exitPromise) {
   await exitPromise
 }
 
+function parsePythonVersion (output) {
+  const versionRegex = /^Python (?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/m.exec(output.trim())
+
+  if (versionRegex === null) {
+    return null
+  }
+
+  const { major, minor, patch } = versionRegex.groups
+  return { major: Number(major), minor: Number(minor), patch: Number(patch) }
+}
+
+async function getPythonInfo () {
+  pythonInfoPromise ??= (async () => {
+    const failures = []
+
+    for (const command of PYTHON_CANDIDATES) {
+      const result = await new Promise((resolve) => {
+        const proc = spawn(command, ['--version'], {
+          stdio: ['ignore', 'pipe', 'pipe']
+        })
+
+        let output = ''
+        let settled = false
+        const onData = (chunk) => {
+          output += chunk.toString()
+        }
+
+        proc.stdout.on('data', onData)
+        proc.stderr.on('data', onData)
+
+        const timeout = setTimeout(() => {
+          if (!settled) {
+            settled = true
+            proc.kill()
+            resolve({ command, reason: 'timed out while checking version' })
+          }
+        }, 10_000)
+
+        proc.once('error', (err) => {
+          if (settled) {
+            return
+          }
+
+          settled = true
+          clearTimeout(timeout)
+          resolve({ command, reason: err.message })
+        })
+
+        proc.once('exit', (code) => {
+          if (settled) {
+            return
+          }
+
+          settled = true
+          clearTimeout(timeout)
+
+          const version = parsePythonVersion(output)
+          if (code === 0 && version !== null && version.major === 3) {
+            resolve({ command, version })
+            return
+          }
+
+          const reason = version !== null
+            ? `found unsupported Python ${version.major}.${version.minor}.${version.patch}`
+            : output.trim() || `exited with code ${code}`
+          resolve({ command, reason })
+        })
+      })
+
+      if ('version' in result) {
+        return result
+      }
+
+      failures.push(`${command}: ${result.reason}`)
+    }
+
+    throw new Error(`Python 3 is required. Checked: ${failures.join('; ')}`)
+  })()
+
+  return pythonInfoPromise
+}
+
 async function ensureWPTCheckout () {
   if (existsSync(WPT_SCRIPT_PATH)) {
     return
@@ -122,6 +207,7 @@ async function ensureWPTCheckout () {
 }
 
 async function startWPTServer () {
+  const { command: pythonCommand } = await getPythonInfo()
   const { promise, resolve, reject } = Promise.withResolvers()
   const { promise: readyPromise, resolve: resolveReady, reject: rejectReady } = Promise.withResolvers()
   const readyChecks = new Set()
@@ -144,7 +230,7 @@ async function startWPTServer () {
     }
   }
 
-  const proc = spawn('python3', [WPT_SCRIPT_PATH, 'serve', '--config', '../runner/config.json'], {
+  const proc = spawn(pythonCommand, [WPT_SCRIPT_PATH, 'serve', '--config', '../runner/config.json'], {
     cwd: WPT_DIR,
     stdio: ['ignore', 'pipe', 'pipe']
   })
@@ -503,32 +589,14 @@ async function setup () {
 
   await ensureWPTCheckout()
 
-  // Check Python
-  const pythonCheck = spawn('python3', ['--version'], { stdio: 'pipe' })
-  pythonCheck.stdout.setEncoding('ascii')
-  const pythonVersion = await new Promise((resolve, reject) => {
-    pythonCheck.stdout.on('data', (c) => {
-      const versionRegex = /^Python (?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/.exec(c.trim())
-
-      if (versionRegex !== null) {
-        const { major, minor, patch } = versionRegex.groups
-        resolve({ major: Number(major), minor: Number(minor), patch: Number(patch) })
-        clearTimeout(timeout)
-      }
-    })
-
-    const timeout = setTimeout(reject, 30_000, 'Took too long to determine Python version')
-  })
-
-  if (pythonVersion.major !== 3) {
-    throw new Error('Python 3 is required')
-  }
+  const { command: pythonCommand, version: pythonVersion } = await getPythonInfo()
+  console.log(`Using Python command: ${pythonCommand} (${pythonVersion.major}.${pythonVersion.minor}.${pythonVersion.patch})`)
 
   // Check if manifest exists
   const manifestPath = join(WPT_DIR, 'MANIFEST.json')
   if (!existsSync(manifestPath)) {
     console.log('Updating WPT manifest...')
-    const manifestProc = spawn('python3', [WPT_SCRIPT_PATH, 'manifest'], {
+    const manifestProc = spawn(pythonCommand, [WPT_SCRIPT_PATH, 'manifest'], {
       cwd: WPT_DIR,
       stdio: 'inherit'
     })
@@ -553,7 +621,7 @@ async function setup () {
   const etcHostsConfigured = hostsContent.includes('web-platform.test')
 
   async function setupHostsFile () {
-    const makeHostsProc = spawn('python3', [WPT_SCRIPT_PATH, 'make-hosts-file'], {
+    const makeHostsProc = spawn(pythonCommand, [WPT_SCRIPT_PATH, 'make-hosts-file'], {
       cwd: WPT_DIR,
       stdio: ['ignore', 'pipe', 'pipe']
     })
@@ -609,9 +677,9 @@ async function setup () {
       console.log('Please configure hosts file manually:')
       console.log(`cd ${WPT_DIR}`)
       if (process.platform === 'win32') {
-        console.log('python wpt make-hosts-file | Out-File $env:SystemRoot\\System32\\drivers\\etc\\hosts -Encoding ascii -Append')
+        console.log(`${pythonCommand} wpt make-hosts-file | Out-File $env:SystemRoot\\System32\\drivers\\etc\\hosts -Encoding ascii -Append`)
       } else {
-        console.log('python3 wpt make-hosts-file | sudo tee -a /etc/hosts')
+        console.log(`${pythonCommand} wpt make-hosts-file | sudo tee -a /etc/hosts`)
       }
 
       console.log('❌ \x1B[31mSetup incomplete.\x1B[0m')
