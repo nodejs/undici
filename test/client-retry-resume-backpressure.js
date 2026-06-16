@@ -25,7 +25,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 // never resolves and the test is failed by the runner timeout (the npm scripts
 // run borp with --timeout). Note: `node --test --test-timeout=0` disables that
 // timeout, so run this under the npm test scripts.
-test('RetryAgent resumes a backpressured body after a mid-stream connection drop', { timeout: 30000 }, async (t) => {
+test('RetryAgent resumes a backpressured body after a mid-stream connection drop', async (t) => {
   t = tspl(t, { plan: 3 })
 
   let requests = 0
