@@ -55,7 +55,7 @@ export class BodyMixin {
    * ```
    */
   readonly formData: () => Promise<FormData>
-  readonly json: () => Promise<unknown>
+  readonly json: <T = unknown>() => Promise<T>
   readonly text: () => Promise<string>
   readonly textStream: () => ReadableStream<string>
 }
