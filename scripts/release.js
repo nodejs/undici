@@ -68,6 +68,16 @@ const release = async ({ github, context, versionTag, commitHash }) => {
     generate_release_notes: false
   })
 
+  await github.rest.actions.createWorkflowDispatch({
+    owner: 'nodejs',
+    repo: 'undici-website',
+    workflow_id: 'release.yml',
+    ref: 'main',
+    inputs: {
+      tag: versionTag
+    }
+  })
+
   try {
     await github.rest.git.deleteRef({
       owner,
