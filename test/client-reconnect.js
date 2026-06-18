@@ -48,6 +48,8 @@ test('multiple reconnect', async (t) => {
   client.on('disconnect', () => {
     if (++n === 1) {
       t.ok(true, 'pass')
+    } else if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
     }
     process.nextTick(() => {
       clock.tick(1000)
