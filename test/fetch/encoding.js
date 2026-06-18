@@ -2,7 +2,9 @@
 
 const { once } = require('node:events')
 const { createServer } = require('node:http')
+const { createServer: createSecureServer } = require('node:https')
 const { test, before, after, describe } = require('node:test')
+const pem = require('@metcoder95/https-pem')
 const { fetch, Client } = require('../..')
 
 describe('content-encoding handling', () => {
@@ -164,5 +166,51 @@ describe('content-encoding chain limit', () => {
         return true
       }
     )
+  })
+})
+
+describe('default accept-encoding request header', () => {
+  test('http request accept-encoding', async (t) => {
+    t.plan(1)
+
+    const server = createServer({ noDelay: true }, (req, res) => {
+      t.assert.deepStrictEqual(req.headers['accept-encoding'], 'gzip, deflate')
+
+      res.end()
+    }).listen(0, '127.0.0.1')
+
+    t.after(() => {
+      server.closeAllConnections()
+      server.close()
+    })
+
+    await once(server, 'listening')
+
+    const response = await fetch(`http://127.0.0.1:${server.address().port}`)
+    await response.arrayBuffer()
+  })
+
+  test('https request accept-encoding', async (t) => {
+    t.plan(1)
+
+    const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }), (req, res) => {
+      t.assert.deepStrictEqual(req.headers['accept-encoding'], 'br, gzip, deflate, zstd')
+
+      res.end()
+    }).listen(0, '127.0.0.1')
+
+    t.after(() => {
+      server.closeAllConnections()
+      server.close()
+    })
+    await once(server, 'listening')
+
+    const url = `https://127.0.0.1:${server.address().port}`
+
+    const client = new Client(url, { connect: { rejectUnauthorized: false } })
+    t.after(() => client.close())
+
+    const response = await fetch(url, { dispatcher: client })
+    await response.arrayBuffer()
   })
 })
