@@ -117,17 +117,10 @@ export declare namespace Client {
   }
   export interface WebSocketOptions {
     /**
-     * Maximum number of fragments in a message. Set to 0 to disable the limit.
-     * @default 131072
+     * Whether the WebSocket client should negotiate [permessage-deflate](https://datatracker.ietf.org/doc/html/rfc7692) support.
+     * Set to `false` to disable permessage-deflate.
      */
-    maxFragments?: number;
-    /**
-     * Maximum allowed payload size in bytes for WebSocket messages.
-     * Applied to uncompressed messages, compressed frame payloads, and decompressed (permessage-deflate) messages.
-     * Set to 0 to disable the limit.
-     * @default 134217728 (128 MB)
-     */
-    maxPayloadSize?: number;
+    perMessageDeflate?: boolean
   }
 }
 

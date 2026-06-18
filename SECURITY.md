@@ -74,7 +74,6 @@ meet the following criteria:
   * HTTP response headers and status lines.
   * HTTP response bodies when processed by undici (e.g., chunked transfer
     decoding, content-encoding).
-  * WebSocket frames received from a server.
   * Server-Sent Events (EventSource) data received from a server.
 * TLS certificate validation performed by undici on behalf of the application.
 
@@ -152,6 +151,16 @@ lead to a loss of confidentiality, integrity, or availability.
   application-specific limits. Resource exhaustion or parser exposure caused by
   calling `body.formData()` on untrusted responses is considered an application
   responsibility, not a vulnerability in undici.
+
+#### Connecting to untrusted WebSocket endpoints
+
+* The `WebSocket` client trusts the endpoint it is connected to. Frames received
+  from the server are parsed and buffered, and features such as
+  `permessage-deflate` can amplify the resources consumed by a malicious or
+  compromised server. Applications must only connect to trusted WebSocket
+  endpoints. Resource exhaustion or parser exposure caused by connecting to an
+  untrusted endpoint is considered an application responsibility, not a
+  vulnerability in undici.
 
 #### Application Misconfiguration
 
