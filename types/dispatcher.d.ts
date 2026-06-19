@@ -20,8 +20,8 @@ declare class Dispatcher extends EventEmitter {
   connect<TOpaque = null>(options: Dispatcher.ConnectOptions<TOpaque>, callback: (err: Error | null, data: Dispatcher.ConnectData<TOpaque>) => void): void
   connect<TOpaque = null>(options: Dispatcher.ConnectOptions<TOpaque>): Promise<Dispatcher.ConnectData<TOpaque>>
   /** Compose a chain of dispatchers */
-  compose (dispatchers: Dispatcher.DispatcherComposeInterceptor[]): Dispatcher.ComposedDispatcher
-  compose (...dispatchers: Dispatcher.DispatcherComposeInterceptor[]): Dispatcher.ComposedDispatcher
+  compose (dispatchers: (null | undefined | Dispatcher.DispatcherComposeInterceptor)[]): Dispatcher.ComposedDispatcher
+  compose (...dispatchers: (null | undefined | Dispatcher.DispatcherComposeInterceptor)[]): Dispatcher.ComposedDispatcher
   /** Performs an HTTP request. */
   request<TOpaque = null>(options: Dispatcher.RequestOptions<TOpaque>, callback: (err: Error | null, data: Dispatcher.ResponseData<TOpaque>) => void): void
   request<TOpaque = null>(options: Dispatcher.RequestOptions<TOpaque>): Promise<Dispatcher.ResponseData<TOpaque>>
