@@ -26,6 +26,7 @@ import { errors } from 'undici'
 | `InformationalError`                 | `UND_ERR_INFO`                        | expected error with reason                                                |
 | `ResponseExceededMaxSizeError`       | `UND_ERR_RES_EXCEEDED_MAX_SIZE`       | response body exceed the max size allowed                                 |
 | `SecureProxyConnectionError`         | `UND_ERR_PRX_TLS`                     | tls connection to a proxy failed                                          |
+| `ProxyConnectionError`               | `UND_ERR_PRX_CONN`                    | establishing the proxy `CONNECT` tunnel failed                            |
 | `MessageSizeExceededError`           | `UND_ERR_WS_MESSAGE_SIZE_EXCEEDED`    | WebSocket decompressed message exceeded the maximum allowed size          |
 | `AbortError`                         | `UND_ERR_ABORT`                       | the operation was aborted (base class of `RequestAbortedError`).          |
 | `RequestRetryError`                  | `UND_ERR_REQ_RETRY`                   | request failed and could not be retried; carries `statusCode`, `headers` and `data`. |
