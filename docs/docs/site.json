@@ -63,6 +63,12 @@
           ]
         },
         {
+          "label": "Interceptors",
+          "items": [
+            { "link": "/api/Interceptors", "label": "Interceptors" }
+          ]
+        },
+        {
           "label": "Handlers",
           "items": [
             { "link": "/api/RedirectHandler", "label": "RedirectHandler" },
