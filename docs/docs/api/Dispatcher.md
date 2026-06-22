@@ -728,6 +728,8 @@ const client = new Client('http://localhost:3000')
 await client.request({ path: '/', method: 'GET' })
 ```
 
+For the full list of built-in interceptors provided by undici, see [Interceptors](Interceptors.md).
+
 ### Event: `'connect'`
 
 <!-- YAML
@@ -783,288 +785,14 @@ can make progress.
 
 ## Pre-built interceptors
 
-undici ships a set of pre-built interceptors under the top-level `interceptors`
-namespace. Each is a factory that returns an interceptor suitable for
-[`dispatcher.compose()`][].
-
-```mjs
-import { interceptors } from 'undici'
-
-const { redirect, retry, dump, dns, responseError, decompress, cache, deduplicate } = interceptors
-```
-
-### `interceptors.redirect(options)`
-
-<!-- YAML
-added: v4.0.0
--->
-
-* `options` {Object}
-  * `maxRedirections` {number} The maximum number of redirections allowed.
-  * `throwOnMaxRedirect` {boolean} Whether to throw when the maximum number of
-    redirections is reached.
-  * `stripHeadersOnRedirect` {string[]} Header names to remove from all
-    redirected requests.
-  * `stripHeadersOnCrossOriginRedirect` {string[]} Header names to remove from
-    cross-origin redirected requests.
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Customizes how the dispatcher handles redirects. The options match the
-[`RedirectHandler`][] constructor.
-
-```mjs
-import { Client, interceptors } from 'undici'
-
-const client = new Client('http://service.example').compose(
-  interceptors.redirect({ maxRedirections: 3, throwOnMaxRedirect: true })
-)
-
-await client.request({ path: '/' })
-```
-
-### `interceptors.retry(options)`
-
-<!-- YAML
-added: v4.0.0
--->
-
-* `options` {Object} Retry options. The options match the [`RetryHandler`][]
-  constructor.
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Customizes how the dispatcher handles retries. The options match the
-[`RetryHandler`][] constructor and are also configurable per request through
-`options.retryOptions`.
-
-```mjs
-import { Client, interceptors } from 'undici'
-
-const client = new Client('http://service.example').compose(
-  interceptors.retry({
-    maxRetries: 3,
-    minTimeout: 1000,
-    maxTimeout: 10000,
-    timeoutFactor: 2,
-    retryAfter: true
-  })
-)
-```
-
-### `interceptors.dump(options)`
-
-<!-- YAML
-added: v4.0.0
--->
-
-* `options` {Object}
-  * `maxSize` {number} The maximum size, in bytes, of a response body to dump. If
-    the response body exceeds this value, the connection is closed.
-    **Default:** `1048576`.
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Dumps the response body of a request up to a given limit. The per-request option
-`dumpMaxSize` can be passed to [`dispatcher.dispatch()`][] to configure the
-interceptor on a per-request basis.
-
-```mjs
-import { Client, interceptors } from 'undici'
-
-const client = new Client('http://service.example').compose(
-  interceptors.dump({ maxSize: 1024 })
-)
-```
-
-### `interceptors.dns(options)`
-
-<!-- YAML
-added: v4.0.0
--->
-
-* `options` {Object}
-  * `maxTTL` {number} The maximum time-to-live, in milliseconds, of the DNS
-    cache. Must be a positive integer. Set to `0` to disable TTL.
-    **Default:** `10000`.
-  * `maxItems` {number} The maximum number of items to cache. Must be a positive
-    integer. **Default:** `Infinity`.
-  * `dualStack` {boolean} Whether to resolve both IPv4 and IPv6 addresses. When
-    enabled, a happy-eyeballs-like approach is used to connect to available
-    addresses on connection failure. **Default:** `true`.
-  * `affinity` {number} Whether to use IPv4 (`4`) or IPv6 (`6`) addresses. Only
-    takes effect when `dualStack` is `false`. **Default:** `4`.
-  * `lookup` {Function} A custom lookup function. **Default:** [`dns.lookup()`][].
-  * `pick` {Function} A custom function that returns a single record from the
-    resolved records. **Default:** a simplified round-robin.
-  * `storage` {Object} A custom storage for resolved DNS records.
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Caches DNS lookups for a given duration, per origin. It is well suited to
-scenarios where the same domain is resolved many times.
-
-The per-request options `dns.affinity`, `dns.dualStack`, `dns.lookup`, and
-`dns.pick` can be passed to [`dispatcher.dispatch()`][] to configure the
-interceptor on a per-request basis.
-
-A custom `storage` object must implement `size` (getter), `get(origin)`,
-`set(origin, records, { ttl })`, `delete(origin)`, and `full()`. When `full()`
-returns `true`, DNS lookups are skipped and new records are not stored.
-
-```mjs
-import { Agent, interceptors } from 'undici'
-
-const client = new Agent().compose(
-  interceptors.dns({ maxTTL: 10000, maxItems: 100 })
-)
-
-const response = await client.request({ origin: 'http://localhost:3030', path: '/', method: 'GET' })
-```
-
-### `interceptors.responseError()`
-
-<!-- YAML
-added: v4.0.0
--->
-
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Throws a [`ResponseError`][] for responses with a status code of `400` or
-greater.
-
-```mjs
-import { Client, interceptors } from 'undici'
-
-const client = new Client('http://service.example').compose(
-  interceptors.responseError()
-)
-
-// Throws a ResponseError for status codes >= 400.
-await client.request({ method: 'GET', path: '/' })
-```
-
-### `interceptors.decompress(options)`
-
-<!-- YAML
-added: v4.0.0
--->
-
-> Stability: 1 - Experimental
-
-* `options` {Object}
-  * `skipErrorResponses` {boolean} Whether to skip decompression for error
-    responses (status codes `>= 400`). **Default:** `true`.
-  * `skipStatusCodes` {number[]} Status codes for which decompression is skipped.
-    **Default:** `[204, 304]`.
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Automatically decompresses response bodies compressed with gzip, deflate,
-Brotli, or Zstandard. It removes the `content-encoding` and `content-length`
-headers from decompressed responses and supports RFC 9110-compliant multiple
-encodings. The supported encodings are `gzip`/`x-gzip`, `deflate`/`x-compress`,
-`br`, and `zstd`; unsupported encodings are passed through unchanged. Encoding
-names are matched case-insensitively, and decompression is streamed without
-buffering.
-
-```mjs
-import { Client, interceptors } from 'undici'
-
-const client = new Client('http://service.example').compose(
-  interceptors.decompress()
-)
-
-// Automatically decompresses gzip/deflate/brotli/zstd responses.
-const response = await client.request({ method: 'GET', path: '/' })
-```
-
-### `interceptors.cache(options)`
-
-<!-- YAML
-added: v4.0.0
--->
-
-* `options` {Object}
-  * `store` {CacheStore} The store used to retrieve and persist responses.
-    **Default:** a new [`MemoryCacheStore`][].
-  * `methods` {string[]} The [safe HTTP methods][] whose responses are cached.
-    **Default:** `['GET']`.
-  * `cacheByDefault` {number} The default expiration time, in seconds, for
-    responses without an explicit expiration that cannot have a heuristic expiry
-    computed. When omitted, such responses are not cached. **Default:**
-    `undefined`.
-  * `type` {string} The [type of cache][] to act as, either `'shared'` or
-    `'private'`. **Default:** `'shared'`.
-  * `origins` {Array} An array of strings or `RegExp` instances restricting which
-    origins are cached. **Default:** `undefined`.
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Implements client-side response caching as described in [RFC 9111][].
-
-```mjs
-import { Agent, cacheStores, interceptors, setGlobalDispatcher } from 'undici'
-
-const client = new Agent().compose(interceptors.cache({
-  store: new cacheStores.MemoryCacheStore({
-    maxSize: 100 * 1024 * 1024, // 100 MB
-    maxCount: 1000,
-    maxEntrySize: 5 * 1024 * 1024 // 5 MB
-  })
-}))
-
-setGlobalDispatcher(client)
-
-// The first request goes to the network and is cached when cache headers allow it.
-const first = await fetch('https://example.com/data')
-
-// The second request can be served from the cache per RFC 9111 rules.
-const second = await fetch('https://example.com/data')
-```
-
-### `interceptors.deduplicate(options)`
-
-<!-- YAML
-added: v4.0.0
--->
-
-* `options` {Object}
-  * `methods` {string[]} The [safe HTTP methods][] to deduplicate.
-    **Default:** `['GET']`.
-  * `skipHeaderNames` {string[]} Header names that, when present in a request,
-    cause that request to skip deduplication entirely. Matching is
-    case-insensitive. **Default:** `[]`.
-  * `excludeHeaderNames` {string[]} Header names excluded from the deduplication
-    key, so requests that differ only in these headers are still deduplicated
-    together. Matching is case-insensitive. **Default:** `[]`.
-  * `maxBufferSize` {number} The maximum number of bytes buffered per paused
-    waiting handler. A waiting handler that exceeds this threshold is failed with
-    an abort error to prevent unbounded memory growth. **Default:** `5242880`.
-* Returns: {Function} An interceptor for [`dispatcher.compose()`][].
-
-Deduplicates concurrent identical requests. When multiple identical requests are
-made while one is already in-flight, only one request is sent to the origin and
-all waiting handlers receive the same response. Requests are considered identical
-when they share the same origin, HTTP method, path, and request headers
-(excluding any headers in `excludeHeaderNames`).
-
-Deduplication events are published to the `undici:request:pending-requests`
-[diagnostics channel][].
-
-```mjs
-import { Client, interceptors } from 'undici'
-
-const client = new Client('http://service.example').compose(
-  interceptors.deduplicate()
-)
-
-// Deduplicate together with caching.
-const clientWithCache = new Client('http://service.example').compose(
-  interceptors.deduplicate(),
-  interceptors.cache()
-)
-```
+For the full reference of built-in interceptors (`dump`, `retry`, `redirect`,
+`decompress`, `responseError`, `dns`, `cache`, `deduplicate`) and their options,
+see [Interceptors](Interceptors.md).
 
 [Fastify]: https://fastify.dev
 [GOAWAY frame]: https://webconcepts.info/concepts/http2-frame-type/0x7
 [HTTP `CONNECT`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT
 [MDN: Protocol upgrade mechanism]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism
-[RFC 9111]: https://www.rfc-editor.org/rfc/rfc9111.html
 [`.arrayBuffer()`]: https://fetch.spec.whatwg.org/#dom-body-arraybuffer
 [`.blob()`]: https://fetch.spec.whatwg.org/#dom-body-blob
 [`.bytes()`]: https://fetch.spec.whatwg.org/#dom-body-bytes
@@ -1075,12 +803,8 @@ const clientWithCache = new Client('http://service.example').compose(
 [`BalancedPool`]: BalancedPool.md#class-balancedpool
 [`Client`]: Client.md#class-client
 [`EventEmitter`]: https://nodejs.org/api/events.html#class-eventemitter
-[`MemoryCacheStore`]: CacheStore.md#class-memorycachestore
 [`Pool`]: Pool.md#class-pool
 [`Readable`]: https://nodejs.org/api/stream.html#class-streamreadable
-[`RedirectHandler`]: RedirectHandler.md
-[`ResponseError`]: Errors.md#class-responseerror
-[`RetryHandler`]: RetryHandler.md
 [`Writable`]: https://nodejs.org/api/stream.html#class-streamwritable
 [`close()`]: #dispatcherclosecallback
 [`connect()`]: #dispatcherconnectoptions-callback
@@ -1089,13 +813,9 @@ const clientWithCache = new Client('http://service.example').compose(
 [`dispatcher.compose()`]: #dispatchercomposeinterceptors-interceptor
 [`dispatcher.dispatch()`]: #dispatcherdispatchoptions-handler
 [`dispatcher.request()`]: #dispatcherrequestoptions-callback
-[`dns.lookup()`]: https://nodejs.org/api/dns.html#dnslookuphostname-options-callback
 [`pipeline()`]: #dispatcherpipelineoptions-handler
 [`request()`]: #dispatcherrequestoptions-callback
 [`stream()`]: #dispatcherstreamoptions-factory-callback
 [`stream.pipeline()`]: https://nodejs.org/api/stream.html#streampipelinesource-transforms-destination-options
 [`upgrade()`]: #dispatcherupgradeoptions-callback
 [body mixin]: https://fetch.spec.whatwg.org/#body-mixin
-[diagnostics channel]: DiagnosticsChannel.md#undicirequestpending-requests
-[safe HTTP methods]: https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1
-[type of cache]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching#types_of_caches
