@@ -22,7 +22,7 @@ test('dispatcher implementation', (t) => {
 })
 
 test('dispatcher.compose', (t) => {
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 8 })
 
   const dispatcher = new Dispatcher()
   const interceptor = () => (opts, handler) => {}
@@ -36,4 +36,5 @@ test('dispatcher.compose', (t) => {
   t.equal(typeof composed.dispatch, 'function', 'returns an object with a dispatch method')
   t.equal(typeof composed.close, 'function', 'returns an object with a close method')
   t.equal(typeof composed.destroy, 'function', 'returns an object with a destroy method')
+  t.equal(dispatcher.compose(), dispatcher, 'returns the same dispatcher if no interceptors are provided')
 })
