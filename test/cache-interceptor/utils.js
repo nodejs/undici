@@ -126,6 +126,29 @@ describe('parseCacheControlHeader', () => {
     })
   })
 
+  test('normalizes empty qualified no-cache and private as unqualified', () => {
+    for (const directive of ['private', 'no-cache']) {
+      for (const value of ['""', '","', '"   "']) {
+        const directives = parseCacheControlHeader(`${directive}=${value}`)
+        deepStrictEqual(directives, {
+          [directive]: true
+        })
+      }
+    }
+  })
+
+  test('keeps unqualified no-cache and private when repeated with qualified field names', () => {
+    let directives = parseCacheControlHeader('private, private="some-header"')
+    deepStrictEqual(directives, {
+      private: true
+    })
+
+    directives = parseCacheControlHeader('no-cache, no-cache="some-header"')
+    deepStrictEqual(directives, {
+      'no-cache': true
+    })
+  })
+
   test('private with headers', () => {
     let directives = parseCacheControlHeader('max-age=10, private=some-header, only-if-cached')
     deepStrictEqual(directives, {
