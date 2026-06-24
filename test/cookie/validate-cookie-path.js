@@ -48,11 +48,12 @@ describe('validateCookiePath', () => {
     throws(() => validateCookiePath(';'))
   })
 
-  test('should throw for non-ascii octets', () => {
+  test('should throw for non-ascii characters', () => {
     throws(() => validateCookiePath('/a\xE9')) // é, 0xE9
     throws(() => validateCookiePath('/\x80')) // first C1 control
     throws(() => validateCookiePath('/\x9F')) // last C1 control
     throws(() => validateCookiePath('/\xFF')) // 0xFF
+    throws(() => validateCookiePath('\u{1F600}'))
   })
 
   test('should pass for a printable character', t => {

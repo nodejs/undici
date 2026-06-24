@@ -174,6 +174,22 @@ test('Cookie Domain Validation', () => {
   })
 })
 
+test('Cookie Unparsed Validation', () => {
+  const parts = [
+    'X-Custom=val; HttpOnly',
+    'Purpose=tracking; SameSite=None; Secure',
+    'HttpOnly; X-Custom=val'
+  ]
+
+  for (const part of parts) {
+    assert.throws(() => setCookie(new Headers(), {
+      name: 'Space',
+      value: 'Cat',
+      unparsed: [part]
+    }))
+  }
+})
+
 test('Cookie Delete', () => {
   let headers = new Headers()
   deleteCookie(headers, 'deno')
