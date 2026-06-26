@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { constants, createSecureServer } = require('node:http2')
-const { once } = require('node:events')
+const { once, EventEmitter } = require('node:events')
 
 const pem = require('@metcoder95/https-pem')
 
@@ -287,6 +287,75 @@ test('#5089 - Handle GOAWAY Gracefully', async (t) => {
   t.deepStrictEqual([...sessionCounts.values()], [2, 4])
   t.deepStrictEqual(results.map((result) => result.statusCode), Array(6).fill(200))
   t.deepStrictEqual(results.map((result) => result.body), Array(6).fill('hello world'))
+
+  await t.completed
+})
+
+test('#5453 - request onto a GOAWAY-rejected session is requeued on a fresh session', async (t) => {
+  t = tspl(t, { plan: 5 })
+
+  const http2 = require('node:http2')
+  const originalConnect = http2.connect
+
+  // A session that has received GOAWAY rejects new streams synchronously.
+  class FakeSession extends EventEmitter {
+    constructor () {
+      super()
+      this.closed = false
+      this.destroyed = false
+    }
+
+    request () {
+      const err = new Error('New streams cannot be created after receiving a GOAWAY')
+      err.code = 'ERR_HTTP2_GOAWAY_SESSION'
+      throw err
+    }
+
+    destroy () {
+      if (this.destroyed) return
+      this.destroyed = true
+      this.emit('close')
+    }
+
+    ref () {}
+    unref () {}
+  }
+
+  const session = new FakeSession()
+  let connectCalls = 0
+  let streams = 0
+
+  http2.connect = function connectStub (...args) {
+    connectCalls++
+    return connectCalls === 1 ? session : originalConnect.apply(this, args)
+  }
+  after(() => { http2.connect = originalConnect })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.on('stream', (stream) => {
+    streams++
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connect: { rejectUnauthorized: false }
+  })
+  after(() => client.close())
+
+  const response = await client.request({ path: '/', method: 'GET' })
+  const chunks = []
+  response.body.on('data', chunk => chunks.push(chunk))
+  await once(response.body, 'end')
+
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(Buffer.concat(chunks).toString(), 'ok')
+  t.strictEqual(streams, 1)
+  t.strictEqual(connectCalls, 2)
+  t.strictEqual(session.destroyed, true)
 
   await t.completed
 })
