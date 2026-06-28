@@ -51,11 +51,11 @@ async function assertConnectTimeout (dispatcher, t) {
         tt.ok(err instanceof errors.ConnectTimeoutError)
         tt.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
         tt.strictEqual(err.message, 'Connect Timeout Error (attempted address: localhost:9000, timeout: 1000ms)')
-        clearTimeout(timeout)
         resolve()
       } catch (error) {
-        clearTimeout(timeout)
         reject(error)
+      } finally {
+        clearTimeout(timeout)
       }
     })
   })
