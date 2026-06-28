@@ -113,7 +113,8 @@ pool.close()
 ### `Client` — for a single connection
 
 `Client` maps to a single TCP connection. It supports pipelining (sending
-multiple requests before responses arrive):
+multiple requests before responses arrive), which should only be enabled for
+trusted remote servers:
 
 ```js
 import { Client } from 'undici'
