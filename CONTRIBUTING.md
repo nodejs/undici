@@ -219,16 +219,15 @@ Use `createServer` from `node:http` (or `node:https` for TLS-related bugs) to ru
 ```javascript
 'use strict'
 
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { Client, errors } = require('undici')
+const { Client } = require('undici')
 
 // https://github.com/nodejs/undici/issues/XXXX
 
 test('short description of the bug', { timeout: 60000 }, async (t) => {
-  const { tspl } = require('@matteo.collina/tspl')
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   // 1. Start a local HTTP server that reproduces the scenario
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -237,25 +236,24 @@ test('short description of the bug', { timeout: 60000 }, async (t) => {
     res.setHeader('content-length', 100)
     res.end('hello'.repeat(20))
   })
-  after(() => { server.closeAllConnections?.(); server.close() })
+  t.after(() => { server.closeAllConnections?.(); server.close() })
 
   server.listen(0)
   await once(server, 'listening')
 
   // 2. Create the undici client pointing to the local server
   const client = new Client(`http://localhost:${server.address().port}`)
-  after(() => client.close())
+  t.after(() => client.close())
 
   // 3. Perform the request that triggers the bug
-  client.request({ path: '/', method: 'GET' }, (err, data) => {
-    t.ifError(err)
+  const { body } = await client.request({ path: '/', method: 'GET' })
 
-    let body = ''
-    data.body.on('data', (chunk) => { body += chunk })
-    data.body.on('end', () => {
-      t.strictEqual(body, 'hello'.repeat(20))
-    })
-  })
+  let responseBody = ''
+  for await (const chunk of body) {
+    responseBody += chunk
+  }
+
+  t.assert.strictEqual(responseBody, 'hello'.repeat(20))
 })
 ```
 
@@ -272,35 +270,36 @@ For bugs involving `fetch`, use the same standalone server pattern:
 ```javascript
 'use strict'
 
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { fetch, Agent, setGlobalDispatcher } = require('undici')
+const { fetch, Agent } = require('undici')
 
 // https://github.com/nodejs/undici/issues/XXXX
 
 test('short description of the fetch bug', { timeout: 60000 }, async (t) => {
-  const { tspl } = require('@matteo.collina/tspl')
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     res.statusCode = 200
     res.setHeader('content-type', 'application/json')
     res.end(JSON.stringify({ ok: true }))
   })
-  after(() => server.close())
+  t.after(() => server.close())
 
   server.listen(0)
   await once(server, 'listening')
 
   const agent = new Agent({ keepAliveTimeout: 1 })
-  after(() => agent.close())
+  t.after(() => agent.close())
 
   const response = await fetch(`http://localhost:${server.address().port}/`, {
     dispatcher: agent
   })
 
-  t.strictEqual(response.status, 200)
+  await response.body.cancel()
+
+  t.assert.strictEqual(response.status, 200)
 })
 ```
 
@@ -311,7 +310,7 @@ For bugs involving connection pooling or agent behavior:
 ```javascript
 'use strict'
 
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { Pool } = require('undici')
@@ -319,22 +318,23 @@ const { Pool } = require('undici')
 // https://github.com/nodejs/undici/issues/XXXX
 
 test('Pool bug reproduction', { timeout: 60000 }, async (t) => {
-  const { tspl } = require('@matteo.collina/tspl')
-  t = tspl(t, { plan: 1 })
+  t.plan(1)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   })
-  after(() => server.close())
+  t.after(() => server.close())
 
   server.listen(0)
   await once(server, 'listening')
 
   const pool = new Pool(`http://localhost:${server.address().port}`)
-  after(() => pool.close())
+  t.after(() => pool.close())
 
   const data = await pool.request({ path: '/', method: 'GET' })
-  t.strictEqual(data.statusCode, 200)
+  await data.body.dump()
+
+  t.assert.strictEqual(data.statusCode, 200)
 })
 ```
 

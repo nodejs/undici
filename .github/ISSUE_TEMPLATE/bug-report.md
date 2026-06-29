@@ -34,16 +34,16 @@ Guidelines:
 // Paste your standalone reproduction script here.
 // Example structure:
 //
-// const { test, after } = require('node:test')
+// const { test } = require('node:test')
 // const { createServer } = require('node:http')
 // const { once } = require('node:events')
 // const { Client } = require('undici')
 //
 // test('bug reproduction', { timeout: 60000 }, async (t) => {
-//   const { tspl } = require('@matteo.collina/tspl')
-//   t = tspl(t, { plan: 1 })
+//   t.plan(1)
 //
 //   const server = createServer(...)
+//   t.after(() => server.close())
 //   ...
 // })
 ```
