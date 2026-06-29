@@ -33,7 +33,9 @@ describe('parseHttpDate', () => {
       'Wed, 06 Dec 2024 23:aa:07 GMT': undefined, // NaN min
       'Wed, 06 Dec 2024 23:01:a7 GMT': undefined, // NaN sec
       'Wed, 06 Dec 2024 23:01:+7 GMT': undefined, // NaN sec
-      'Wed, 06 Dec 2024 23:01:aa GMT': undefined // NaN sec
+      'Wed, 06 Dec 2024 23:01:aa GMT': undefined, // NaN sec
+      'Wed, 32 Dec 2024 00:00:00 GMT': undefined, // Invalid day overflow
+      'Sat, 29 Feb 2025 00:00:00 GMT': undefined // Invalid leap day overflow
     }
 
     for (const date of Object.keys(values)) {
@@ -69,7 +71,8 @@ describe('parseHttpDate', () => {
       'Wednesday, 06-Dec-24 aa:01:07 GMT': undefined, // NaN hour
       'Wednesday, 06-Dec-24 23:aa:07 GMT': undefined, // NaN min
       'Wednesday, 06-Dec-24 23:01:+7 GMT': undefined, // NaN min
-      'Wednesday, 06-Dec-24 23:01:aa GMT': undefined // NaN sec
+      'Wednesday, 06-Dec-24 23:01:aa GMT': undefined, // NaN sec
+      'Wednesday, 32-Dec-24 00:00:00 GMT': undefined // Invalid day overflow
     }
 
     for (const date of Object.keys(values)) {
@@ -260,7 +263,8 @@ describe('parseHttpDate', () => {
       'Wed 06 Dec 23:01:07 aaaa': undefined, // NaN year
       'Wed Dec 06 aa:01:07 2024': undefined, // NaN hour
       'Wed Dec 06 23:aa:07 2024': undefined, // NaN min
-      'Wed Dec 06 23:01:aa 2024': undefined // NaN sec
+      'Wed Dec 06 23:01:aa 2024': undefined, // NaN sec
+      'Wed Dec 32 00:00:00 2024': undefined // Invalid day overflow
     }
 
     for (const date of Object.keys(values)) {
