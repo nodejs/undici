@@ -2308,6 +2308,33 @@ describe('Cache Interceptor', () => {
       }
     })
 
+    test('does not crash on mixed unqualified and qualified private directives', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'public, max-age=60, private, private="hdr"')
+        res.end(`response ${requestsToOrigin}`)
+      }).listen(0)
+
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      try {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        })
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'response 1')
+      } finally {
+        await client.close()
+        await new Promise(resolve => server.close(resolve))
+      }
+    })
+
     test('does not cache response when request has Authorization and response only has max-age', async () => {
       let requestsToOrigin = 0
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
