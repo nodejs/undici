@@ -74,7 +74,8 @@ added: v1.0.0
   * `localAddress` {string|null} The local IP address the socket should connect
     from. **Default:** `null`.
   * `pipelining` {number|null} The number of concurrent requests sent over the
-    single connection, per [RFC 7230, section 6.3.2][]. Set to `0` to disable
+    single connection, per [RFC 7230, section 6.3.2][]. Only enable values
+    greater than `1` when the remote server is trusted. Set to `0` to disable
     keep-alive connections. Has no effect once HTTP/2 is negotiated; see
     `maxConcurrentStreams` for the HTTP/2 dispatch ceiling. **Default:** `1`.
   * `connect` {Object|Function|null} Configures how connections are established.
@@ -346,7 +347,8 @@ added: v1.0.0
 * Type: {number}
 
 The pipelining factor. This property can be read and written to adjust the
-number of concurrent requests sent over the connection.
+number of concurrent requests sent over the connection. Only enable pipelining
+with trusted remote servers.
 
 ### `client.stats`
 
