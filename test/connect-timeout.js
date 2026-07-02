@@ -82,6 +82,7 @@ test('connect-timeout (Pool)', { skip }, async t => {
 })
 
 test('autoSelectFamily AggregateError with ETIMEDOUT is normalized to ConnectTimeoutError', { skip }, async t => {
+  const _t = t
   t = tspl(t, { plan: 5 })
 
   const aggregate = new AggregateError([
@@ -102,7 +103,7 @@ test('autoSelectFamily AggregateError with ETIMEDOUT is normalized to ConnectTim
   const client = new Client('http://localhost:9000', {
     connectTimeout: 1e3
   })
-  after(() => client.close())
+  _t.after(() => client.close().catch(() => {}))
 
   client.request({
     path: '/',
