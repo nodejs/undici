@@ -2,12 +2,12 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { createSecureServer } = require('node:http2')
+const { constants, createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 
 const pem = require('@metcoder95/https-pem')
 
-const { Client } = require('..')
+const { Client, Pool } = require('..')
 
 test('#3046 - GOAWAY Frame', async t => {
   t = tspl(t, { plan: 8 })
@@ -141,6 +141,65 @@ test('#3753 - Handle GOAWAY Gracefully', async (t) => {
       }
     })
   }
+
+  await t.completed
+})
+
+test('#5468 - requeue multiplexed requests after mid-burst GOAWAY', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let firstStream = false
+  let streams = 0
+
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+    streams++
+
+    if (!firstStream) {
+      firstStream = true
+      stream.session?.goaway(constants.NGHTTP2_INTERNAL_ERROR, 0)
+      return
+    }
+
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const pool = new Pool(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connections: 10,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  after(async () => pool.close())
+
+  const requests = 40
+  const codes = {}
+  let ok = 0
+
+  await Promise.all(Array.from({ length: requests }, async () => {
+    try {
+      const response = await pool.request({ path: '/', method: 'GET' })
+      await response.body.dump()
+
+      if (response.statusCode === 200) {
+        ok++
+      }
+    } catch (err) {
+      const code = err?.code || err?.cause?.code || err?.name || 'unknown'
+      codes[code] = (codes[code] || 0) + 1
+    }
+  }))
+
+  t.strictEqual(codes.UND_ERR_INFO, undefined)
+  t.ok((codes.ERR_HTTP2_SESSION_ERROR || 0) <= 2)
+  t.ok(ok >= requests - 2)
+  t.ok(streams >= requests - 1)
 
   await t.completed
 })
