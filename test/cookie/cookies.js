@@ -745,3 +745,11 @@ test('Cookie getCookie does not throw if headers is an instance of the global He
   const headers = new globalThis.Headers()
   deleteCookie(headers, 'deno')
 })
+
+test('Set-Cookie parser ignores an unparseable Expires', () => {
+  const headers = new Headers({ 'set-cookie': 'id=a3fWa; Expires=not-a-date' })
+  assert.deepEqual(getSetCookies(headers), [{
+    name: 'id',
+    value: 'a3fWa'
+  }])
+})
