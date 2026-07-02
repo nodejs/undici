@@ -351,6 +351,10 @@ test('getUpstream returns undefined for closed/destroyed upstream', (t) => {
   p.strictEqual(result, undefined)
 })
 
+function getErrorPort (err) {
+  return err?.socket?.remotePort ?? err?.port
+}
+
 class TestServer {
   constructor ({ config: { server, socketHangup, downOnRequests, socketHangupOnRequests }, onRequest }) {
     this.config = {
@@ -604,15 +608,21 @@ describe('weighted round robin', () => {
         try {
           await client.request({ path: '/', method: 'GET' })
         } catch (e) {
-          const serverWithError =
-          servers.find(server => server.port === e.port) ||
-          servers.find(server => {
-            if (typeof AggregateError === 'function' && e instanceof AggregateError) {
-              return e.errors.some(e => server.port === (e.socket?.remotePort ?? e.port))
+          const serverWithError = servers.find(server => {
+            if (server.port === getErrorPort(e)) {
+              return true
             }
 
-            return server.port === e.socket.remotePort
+            if (typeof AggregateError === 'function' && e instanceof AggregateError) {
+              return e.errors.some(err => server.port === getErrorPort(err))
+            }
+
+            return false
           })
+
+          if (serverWithError === undefined) {
+            throw e
+          }
 
           serverWithError.requestsCount++
 
