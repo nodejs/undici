@@ -1,6 +1,6 @@
 import { IncomingHttpHeaders, OutgoingHttpHeaders } from 'node:http'
 import { Duplex, Readable, Writable } from 'node:stream'
-import { expectAssignable, expectType } from 'tsd'
+import { expectAssignable, expectNotAssignable, expectType } from 'tsd'
 import { Dispatcher, Headers } from '../..'
 import { URL } from 'node:url'
 import { Blob } from 'node:buffer'
@@ -52,6 +52,11 @@ expectAssignable<Dispatcher>(new Dispatcher())
   expectAssignable<boolean>(dispatcher.dispatch({ origin: '', path: '', method: 'GET', headers: iteratorHeaders, reset: true }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ origin: new URL('http://localhost'), path: '', method: 'GET' }, {}))
   expectAssignable<boolean>(dispatcher.dispatch({ path: '', method: 'CUSTOM' }, {}))
+
+  // upgrade must be string or null, not boolean
+  expectNotAssignable<Dispatcher.DispatchOptions>({ path: '/', method: 'GET', upgrade: true })
+  expectAssignable<Dispatcher.DispatchOptions>({ path: '/', method: 'GET', upgrade: 'websocket' })
+  expectAssignable<Dispatcher.DispatchOptions>({ path: '/', method: 'GET', upgrade: null })
 
   // connect
   expectAssignable<Promise<Dispatcher.ConnectData>>(dispatcher.connect({ origin: '', path: '' }))
