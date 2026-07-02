@@ -1064,6 +1064,11 @@ The `dns` interceptor enables you to cache DNS lookups for a given duration, per
 
 >It is well suited for scenarios where you want to cache DNS lookups to avoid the overhead of resolving the same domain multiple times
 
+Hostnames are resolved lazily during request dispatch. When a hostname resolves
+to multiple DNS records, the interceptor rotates requests across the resolved
+addresses by default while preserving the original hostname for `Host` headers
+and TLS `servername`.
+
 **Options**
 - `maxTTL` - The maximum time-to-live (in milliseconds) of the DNS cache. It should be a positive integer. Default: `10000`.
   - Set `0` to disable TTL.
@@ -1105,7 +1110,7 @@ It represents a storage object for resolved DNS records.
 **Example - Basic DNS Interceptor**
 
 ```js
-const { Client, interceptors } = require("undici");
+const { Agent, interceptors } = require("undici");
 const { dns } = interceptors;
 
 const client = new Agent().compose([
@@ -1116,6 +1121,23 @@ const response = await client.request({
   origin: `http://localhost:3030`,
   ...requestOpts
 })
+```
+
+**Example - DNS Interceptor with a hostname origin**
+
+```js
+const { Agent, interceptors } = require("undici");
+const { dns } = interceptors;
+
+const client = new Agent().compose([
+  dns()
+]);
+
+const response = await client.request({
+  origin: "https://service.example",
+  path: "/",
+  method: "GET"
+});
 ```
 
 **Example - DNS Interceptor and LRU cache as a storage**
