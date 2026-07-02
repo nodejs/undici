@@ -262,21 +262,24 @@ jobs:
       - name: Run fuzzing tests
         run: npm run test:fuzzing
 
-  test-shared-builtin:
-    name: Test with Node.js ${{ matrix.node-version }} compiled --shared-builtin-undici/undici-path
-    uses: ./.github/workflows/nodejs-shared.yml
-    strategy:
-      fail-fast: false
-      max-parallel: 0
-      matrix:
-        # Node.js 20 and 22 are intentionally excluded here because
-        # --shared-builtin-undici/undici-path still hits upstream Node.js issues there.
-        # Keep validating supported/current majors, and start exercising 26
-        # automatically once a release is available.
-        node-version: ['24', '26']
-        runs-on: ['ubuntu-latest']
-    with:
-      node-version: ${{ matrix.node-version }}
+  # Disabled while the absolute-form proxy forwarding fix from
+  # https://github.com/nodejs/undici/pull/5116 lives only in undici main:
+  # nodejs/node still embeds the previous behavior, so the shared-builtin
+  # build picks up undici from this checkout but runs the bundled Node.js
+  # tests, which expect the old semantics. Re-add Node.js 26 to the matrix
+  # once a Node.js 26 release embeds an undici that includes #5116.
+  # Node.js 24 stays off this job because the change is not being backported.
+  # test-shared-builtin:
+  #   name: Test with Node.js ${{ matrix.node-version }} compiled --shared-builtin-undici/undici-path
+  #   uses: ./.github/workflows/nodejs-shared.yml
+  #   strategy:
+  #     fail-fast: false
+  #     max-parallel: 0
+  #     matrix:
+  #       node-version: ['26']
+  #       runs-on: ['ubuntu-latest']
+  #   with:
+  #     node-version: ${{ matrix.node-version }}
 
   test-types:
     name: Test TypeScript types

@@ -33,7 +33,7 @@ test('a proxy that drops the CONNECT tunnel fails the request instead of looping
   await once(proxy, 'listening')
 
   const proxyUrl = `http://127.0.0.1:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent(proxyUrl)
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: true })
 
   after(async () => {
     await proxyAgent.close()
