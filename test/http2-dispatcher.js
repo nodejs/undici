@@ -772,6 +772,80 @@ test('Should clear h2 request stream references after abort before response', as
   await t.completed
 })
 
+test('Should destroy the h2 stream synchronously on abort', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  // Never respond, so the stream stays in-flight when we abort it.
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true
+  })
+  after(() => client.close())
+
+  const abortReason = new Error('abort after h2 stream assigned')
+  let abortRequest = null
+
+  const waitFor = async (fn) => {
+    for (let i = 0; i < 100; i++) {
+      const value = fn()
+      if (value != null) return value
+      await sleep(10)
+    }
+    throw new Error('timed out waiting for h2 request stream')
+  }
+
+  const responseError = new Promise(resolve => {
+    client.dispatch({ path: '/', method: 'GET' }, {
+      onRequestStart (controller) {
+        abortRequest = controller.abort.bind(controller)
+      },
+      onResponseStart () {
+        t.fail('unexpected response')
+      },
+      onResponseData () {
+        return true
+      },
+      onResponseEnd () {
+        t.fail('unexpected response end')
+      },
+      onResponseError (_controller, err) {
+        resolve(err)
+      }
+    })
+  })
+
+  const requestStreamSymbol = await waitFor(() => {
+    const request = client[kQueue][client[kRunningIdx]]
+    if (request == null) return null
+    return Object.getOwnPropertySymbols(request).find(
+      (s) => s.description === 'request stream'
+    )
+  })
+  const stream = await waitFor(
+    () => client[kQueue][client[kRunningIdx]]?.[requestStreamSymbol]
+  )
+
+  abortRequest = await waitFor(() => abortRequest)
+  abortRequest(abortReason)
+
+  // The abort path must destroy the stream, not just close() it: relying on the
+  // async 'close' event leaks the native Http2Stream when that event never
+  // fires on a busy, long-lived multiplexed session.
+  t.strictEqual(stream.destroyed, true)
+  t.strictEqual(await responseError, abortReason)
+
+  await t.completed
+})
+
 test('Should only accept valid ping interval values', async t => {
   const planner = tspl(t, { plan: 3 })
 
