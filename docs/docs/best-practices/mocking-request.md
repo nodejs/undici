@@ -102,7 +102,7 @@ setGlobalDispatcher(mockAgent)
 // this call is made (not intercepted)
 await fetch(`http://localhost:3000/endpoint?query='hello'`, {
   method: 'POST',
-  headers: { 'content-type': 'application/json' }
+  headers: { 'content-type': 'application/json' },
   body: JSON.stringify({ data: '' })
 })
 
