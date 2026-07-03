@@ -58,7 +58,7 @@ npm i
 > This requires [docker](https://www.docker.com/) installed on your machine.
 
 ```bash
-npm run build-wasm
+npm run build:wasm
 ```
 
 #### Copy the sources to `undici`
