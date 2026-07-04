@@ -6,9 +6,6 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { Agent, Dispatcher1Wrapper } = require('..')
 
-// Legacy consumers such as Node's bundled fetch (undici v6/v7) can hand the
-// dispatcher an identical comma-repeated content-length (e.g. "13, 13").
-// The wrapper must collapse it; conflicting values must still be rejected.
 // See https://github.com/nodejs/undici/issues/5500
 
 function legacyDispatch (wrapper, opts) {

@@ -99,8 +99,6 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
 })
 
 test('requiring undici does not break Node.js global fetch with a request-set Content-Length', () => {
-  // Node's bundled fetch (undici v6/v7) appends its computed content-length
-  // even when the request already carries one, producing "13, 13".
   // See https://github.com/nodejs/undici/issues/5500
   const result = spawnSync(
     process.execPath,

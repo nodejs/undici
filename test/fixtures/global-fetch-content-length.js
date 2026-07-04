@@ -1,14 +1,9 @@
 'use strict'
 
-// This fixture must use Node's *global* fetch and Headers — exercising the
-// bundled fetch against the installed undici's dispatcher bridge is the point.
+// Exercising Node's *global* fetch/Headers against the dispatcher bridge
+// is the point. See https://github.com/nodejs/undici/issues/5500
 /* eslint-disable no-restricted-globals */
 
-// Regression fixture for https://github.com/nodejs/undici/issues/5500.
-// Requiring undici installs the legacy global-dispatcher bridge; Node's
-// bundled fetch (undici v6/v7) then dispatches through it and produces an
-// identical comma-repeated content-length (e.g. "13, 13") when the request
-// sets its own Content-Length header.
 require('../..')
 
 const http = require('node:http')
