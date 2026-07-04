@@ -531,6 +531,83 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('unsafe methods invalidate the URIs in Location and Content-Location response headers', async () => {
+    const requestsToOrigin = {
+      '/target': 0,
+      '/content-target': 0,
+      '/cross-origin-target': 0
+    }
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.method === 'GET') {
+        requestsToOrigin[req.url]++
+        res.setHeader('cache-control', 'public, s-maxage=100')
+        res.end('asd')
+        return
+      }
+
+      res.statusCode = 204
+      if (req.url === '/same-origin') {
+        // Absolute same-origin Location, relative Content-Location
+        res.setHeader('location', `http://localhost:${server.address().port}/target`)
+        res.setHeader('content-location', '/content-target')
+      } else if (req.url === '/cross-origin') {
+        // Same path as a cached entry but a different origin, must not be
+        //  invalidated
+        res.setHeader('location', 'http://other-origin.example/cross-origin-target')
+      }
+      res.end()
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const origin = `http://localhost:${server.address().port}`
+
+    // Prime the cache and make sure the responses are served from it
+    for (const path of Object.keys(requestsToOrigin)) {
+      for (let i = 0; i < 2; i++) {
+        const res = await client.request({ origin, method: 'GET', path })
+        strictEqual(await res.body.text(), 'asd')
+        equal(requestsToOrigin[path], 1, path)
+      }
+    }
+
+    // Successful unsafe request whose response points at /target and
+    //  /content-target, both must be invalidated
+    //  https://www.rfc-editor.org/rfc/rfc9111.html#section-4.4
+    {
+      const res = await client.request({ origin, method: 'POST', path: '/same-origin' })
+      await res.body.text()
+    }
+
+    for (const path of ['/target', '/content-target']) {
+      const res = await client.request({ origin, method: 'GET', path })
+      strictEqual(await res.body.text(), 'asd')
+      equal(requestsToOrigin[path], 2, path)
+    }
+
+    // Successful unsafe request whose response Location shares a path with a
+    //  cached entry but sits on another origin, the cached entry must survive
+    {
+      const res = await client.request({ origin, method: 'POST', path: '/cross-origin' })
+      await res.body.text()
+    }
+
+    {
+      const res = await client.request({ origin, method: 'GET', path: '/cross-origin-target' })
+      strictEqual(await res.body.text(), 'asd')
+      equal(requestsToOrigin['/cross-origin-target'], 1)
+    }
+  })
+
   test('unsafe methods aren\'t cached', async () => {
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       res.setHeader('cache-control', 'public, s-maxage=1')
