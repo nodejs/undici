@@ -3,7 +3,7 @@
 const { createServer } = require('node:http')
 const { describe, test, after } = require('node:test')
 const { once } = require('node:events')
-const { equal, strictEqual, notEqual, fail } = require('node:assert')
+const { equal, strictEqual, notEqual, fail, rejects } = require('node:assert')
 const { setTimeout: sleep } = require('node:timers/promises')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { Client, interceptors, cacheStores: { MemoryCacheStore, SqliteCacheStore } } = require('../../index')
@@ -810,6 +810,76 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('stale-if-error (response) on connection error', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      requestsToOrigin++
+      res.setHeader('date', 0)
+      res.setHeader('cache-control', 'public, s-maxage=10, stale-if-error=20')
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      clock.uninstall()
+      if (server.listening) {
+        server.close()
+      }
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    strictEqual(requestsToOrigin, 0)
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send first request. This will hit the origin and succeed
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      equal(response.statusCode, 200)
+      equal(await response.body.text(), 'asd')
+    }
+
+    // Take the origin down so revalidation attempts hit a connection error
+    server.close()
+    server.closeAllConnections()
+    await once(server, 'close')
+
+    clock.tick(15000)
+
+    // Send second request. The response is stale and the origin is
+    //  unreachable, but we're within the stale-if-error threshold so the
+    //  stale response should still be served.
+    //  https://datatracker.ietf.org/doc/html/rfc5861#section-4
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      equal(response.statusCode, 200)
+      equal(await response.body.text(), 'asd')
+    }
+
+    clock.tick(25000)
+
+    // Send third request. We're now outside the stale-if-error threshold so
+    //  the connection error should be propagated.
+    await rejects(client.request(request))
+  })
+
   describe('Client-side directives', () => {
     test('max-age', async () => {
       const clock = FakeTimers.install({
@@ -1442,6 +1512,79 @@ describe('Cache Interceptor', () => {
         equal(requestsToOrigin, 4)
         equal(response.statusCode, 500)
       }
+    })
+
+    test('stale-if-error on connection error', async () => {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('date', 0)
+        res.setHeader('cache-control', 'public, s-maxage=10')
+        res.end('asd')
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        clock.uninstall()
+        if (server.listening) {
+          server.close()
+        }
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      strictEqual(requestsToOrigin, 0)
+
+      // Send first request. This will hit the origin and succeed
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET'
+        })
+        equal(requestsToOrigin, 1)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      // Take the origin down so revalidation attempts hit a connection error
+      server.close()
+      server.closeAllConnections()
+      await once(server, 'close')
+
+      clock.tick(15000)
+
+      // Send second request. The response is stale and the origin is
+      //  unreachable, but the request allows stale-if-error so the stale
+      //  response should still be served.
+      {
+        const response = await client.request({
+          origin: 'localhost',
+          path: '/',
+          method: 'GET',
+          headers: {
+            'cache-control': 'stale-if-error=20'
+          }
+        })
+        equal(requestsToOrigin, 1)
+        equal(response.statusCode, 200)
+        equal(await response.body.text(), 'asd')
+      }
+
+      // Send third request without stale-if-error. The connection error
+      //  should be propagated.
+      await rejects(client.request({
+        origin: 'localhost',
+        path: '/',
+        method: 'GET'
+      }))
     })
   })
 
