@@ -862,10 +862,7 @@ describe('Cache Interceptor', () => {
 
     clock.tick(15000)
 
-    // Send second request. The response is stale and the origin is
-    //  unreachable, but we're within the stale-if-error threshold so the
-    //  stale response should still be served.
-    //  https://datatracker.ietf.org/doc/html/rfc5861#section-4
+    // Stale response, origin unreachable, but within stale-if-error: still served.
     {
       const response = await client.request(request)
       equal(requestsToOrigin, 1)
@@ -1561,9 +1558,7 @@ describe('Cache Interceptor', () => {
 
       clock.tick(15000)
 
-      // Send second request. The response is stale and the origin is
-      //  unreachable, but the request allows stale-if-error so the stale
-      //  response should still be served.
+      // Stale response, origin unreachable, but request allows stale-if-error: still served.
       {
         const response = await client.request({
           origin: 'localhost',
