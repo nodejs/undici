@@ -73,12 +73,10 @@ const BASE_TEST_ENVIRONMENT = {
     'cc-resp-no-cache',
     'cc-resp-no-cache-case-insensitive',
 
-    // We're not caching 304s currently
+    // Needs an entry-retention floor: the entry (max-age=1) is deleted at
+    //  ~2x its freshness lifetime, before the test's 3s pause elapses, so
+    //  there is nothing left to revalidate (see nodejs/undici#4624)
     '304-etag-update-response-Cache-Control',
-    '304-etag-update-response-Content-Foo',
-    '304-etag-update-response-Test-Header',
-    '304-etag-update-response-X-Content-Foo',
-    '304-etag-update-response-X-Test-Header',
 
     // We just trim whatever's in the decimal place off (i.e. 7200.0 -> 7200)
     'age-parse-float',
