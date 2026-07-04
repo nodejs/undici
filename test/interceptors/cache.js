@@ -872,6 +872,188 @@ describe('Cache Interceptor', () => {
       equal(requestsToOrigin, 2)
     })
 
+    test('max-age=0 revalidates the response (RFC 9111 §5.2.1.1)', async () => {
+      let requestsToOrigin = 0
+      let revalidationRequests = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        if (req.headers['if-none-match']) {
+          revalidationRequests++
+          res.statusCode = 304
+          res.end()
+        } else {
+          requestsToOrigin++
+          res.setHeader('cache-control', 'public, s-maxage=100')
+          res.setHeader('etag', '"asd"')
+          res.end('asd')
+        }
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      strictEqual(requestsToOrigin, 0)
+
+      /**
+       * @type {import('../../types/dispatcher').default.RequestOptions}
+       */
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // Send initial request to fill the cache
+      {
+        const response = await client.request(request)
+        strictEqual(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 0)
+        strictEqual(await response.body.text(), 'asd')
+      }
+
+      // Send second request with max-age=0, a validation request should be
+      //  sent and the cached response served on the 304
+      {
+        const response = await client.request({
+          ...request,
+          headers: {
+            'cache-control': 'max-age=0'
+          }
+        })
+        strictEqual(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 1)
+        strictEqual(response.statusCode, 200)
+        strictEqual(await response.body.text(), 'asd')
+      }
+
+      // Send third request w/o max-age, this should be handled by the cache
+      {
+        const response = await client.request(request)
+        strictEqual(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 1)
+        strictEqual(await response.body.text(), 'asd')
+      }
+    })
+
+    test('response fetched due to max-age exceedance updates the cache', async () => {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'public, s-maxage=100')
+        res.end(`response ${requestsToOrigin}`)
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        clock.uninstall()
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      strictEqual(requestsToOrigin, 0)
+
+      /**
+       * @type {import('../../types/dispatcher').default.RequestOptions}
+       */
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // Send first request to cache the response
+      {
+        const response = await client.request(request)
+        strictEqual(requestsToOrigin, 1)
+        strictEqual(await response.body.text(), 'response 1')
+      }
+
+      clock.tick(6000)
+
+      // Send second request with the response's age exceeding the request's
+      //  max-age, the origin's fresh response should be served and stored
+      {
+        const response = await client.request({
+          ...request,
+          headers: {
+            'cache-control': 'max-age=5'
+          }
+        })
+        strictEqual(requestsToOrigin, 2)
+        strictEqual(await response.body.text(), 'response 2')
+      }
+
+      // Send third request w/o max-age, the fresh response stored by the
+      //  previous request should be served from the cache
+      {
+        const response = await client.request(request)
+        strictEqual(requestsToOrigin, 2)
+        strictEqual(await response.body.text(), 'response 2')
+      }
+    })
+
+    test('fetch with cache: no-cache revalidates through a composed cache dispatcher', async () => {
+      const { fetch, Agent } = require('../..')
+
+      let requestsToOrigin = 0
+      let revalidationRequests = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        if (req.headers['if-none-match']) {
+          revalidationRequests++
+          res.statusCode = 304
+          res.end()
+        } else {
+          requestsToOrigin++
+          res.setHeader('cache-control', 'public, max-age=100')
+          res.setHeader('etag', '"asd"')
+          res.end('asd')
+        }
+      }).listen(0)
+
+      const dispatcher = new Agent().compose(interceptors.cache())
+
+      after(async () => {
+        server.close()
+        await dispatcher.close()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+
+      // Send initial request to fill the cache
+      {
+        const response = await fetch(origin, { dispatcher })
+        strictEqual(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 0)
+        strictEqual(await response.text(), 'asd')
+      }
+
+      // The no-cache fetch cache mode appends cache-control: max-age=0, which
+      //  must trigger a validation request
+      {
+        const response = await fetch(origin, { dispatcher, cache: 'no-cache' })
+        strictEqual(requestsToOrigin, 1)
+        strictEqual(revalidationRequests, 1)
+        strictEqual(response.status, 200)
+        strictEqual(await response.text(), 'asd')
+      }
+    })
+
     test('max-stale', async () => {
       const clock = FakeTimers.install({
         toFake: ['Date']
