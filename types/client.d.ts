@@ -144,21 +144,21 @@ export declare namespace Client {
   }
 
   export interface H2Options extends Omit<SessionOptions, keyof buildConnector.BuildOptions> {
-  /**
-   * @description Sets the HTTP/2 connection-level flow-control window size (ClientHttp2Session.setLocalWindowSize).
-   * @default 524288
-   */
-  connectionWindowSize?: number;
-  /**
-   * @description Time interval between PING frames dispatch
-   * @default 60000
-   */
-  pingInterval?: number;
-  /**
-   * @description SETTINGS frame object. Default to 'node:http2' defaults
-   */
-  settings?: Omit<SessionOptions['settings'], 'enablePush' | 'maxConcurrentStreams' | 'enableConnectProtocol'>
-}
+    /**
+     * @description Sets the HTTP/2 connection-level flow-control window size (ClientHttp2Session.setLocalWindowSize).
+     * @default 524288
+     */
+    connectionWindowSize?: number;
+    /**
+     * @description Time interval between PING frames dispatch
+     * @default 60000
+     */
+    pingInterval?: number;
+    /**
+     * @description SETTINGS frame object. Default to 'node:http2' defaults
+     */
+    settings?: Omit<SessionOptions['settings'], 'enablePush' | 'maxConcurrentStreams' | 'enableConnectProtocol'>
+  }
 }
 
 export default Client
