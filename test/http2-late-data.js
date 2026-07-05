@@ -20,7 +20,8 @@ const {
   kOnError,
   kResume,
   kRunning,
-  kPingInterval
+  kPingInterval,
+  kHTTP2Options
 } = require('../lib/core/symbols')
 
 class FakeSocket extends EventEmitter {
@@ -116,6 +117,14 @@ test('Should ignore late http2 data after request completion', async (t) => {
     [kResume] () {
       resumeCalls++
     },
+    [kHTTP2Options]: {
+      pingInterval: 60e3,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100,
+      sessionOptions: {
+        initialWindowSize: 262144
+      }
+    },
     emit () {},
     destroyed: false
   }
@@ -196,6 +205,14 @@ test('Should remove request-owned http2 stream listeners after completion', asyn
     [kPingInterval]: 0,
     [kOnError] (err) {
       t.ifError(err)
+    },
+    [kHTTP2Options]: {
+      pingInterval: 60e3,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100,
+      sessionOptions: {
+        initialWindowSize: 262144
+      }
     },
     [kResume] () {},
     emit () {},

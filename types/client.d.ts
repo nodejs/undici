@@ -116,7 +116,7 @@ export declare namespace Client {
     /**
      * @description HTTP/2 configuration options
      */
-    h2Options: Client.H2Options;
+    h2Options?: Client.H2Options;
   }
   export interface SocketInfo {
     localAddress?: string
@@ -154,6 +154,11 @@ export declare namespace Client {
      * @default 60000
      */
     pingInterval?: number;
+    /**
+     * @description Dictates the maximum number of concurrent streams for a single H2 session. It can be overridden by a SETTINGS remote frame.
+     * @default 100
+    */
+    maxConcurrentStreams?: number;
     /**
      * @description SETTINGS frame object. Default to 'node:http2' defaults
      */
