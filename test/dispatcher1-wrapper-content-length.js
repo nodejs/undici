@@ -1,6 +1,6 @@
 'use strict'
 
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -31,7 +31,7 @@ function legacyDispatch (wrapper, opts) {
   })
 }
 
-async function startServer (t) {
+async function startServer () {
   const server = createServer((req, res) => {
     let length = 0
     req.on('data', (chunk) => { length += chunk.length })
@@ -45,10 +45,10 @@ async function startServer (t) {
 }
 
 test('collapses identical repeated content-length from a legacy consumer', async (t) => {
-  const server = await startServer(t)
+  const server = await startServer()
   const agent = new Agent()
   const wrapper = new Dispatcher1Wrapper(agent)
-  after(() => { server.close(); return agent.close() })
+  t.after(() => { server.close(); return agent.close() })
 
   const { statusCode, body } = await legacyDispatch(wrapper, {
     origin: `http://127.0.0.1:${server.address().port}`,
@@ -63,10 +63,10 @@ test('collapses identical repeated content-length from a legacy consumer', async
 })
 
 test('collapses identical repeated content-length in flat array headers', async (t) => {
-  const server = await startServer(t)
+  const server = await startServer()
   const agent = new Agent()
   const wrapper = new Dispatcher1Wrapper(agent)
-  after(() => { server.close(); return agent.close() })
+  t.after(() => { server.close(); return agent.close() })
 
   const { statusCode, body } = await legacyDispatch(wrapper, {
     origin: `http://127.0.0.1:${server.address().port}`,
@@ -80,29 +80,49 @@ test('collapses identical repeated content-length in flat array headers', async 
   assert.strictEqual(body, '13:13')
 })
 
-test('still rejects conflicting repeated content-length', async (t) => {
-  const server = await startServer(t)
+test('leaves a single content-length untouched', async (t) => {
+  const server = await startServer()
   const agent = new Agent()
   const wrapper = new Dispatcher1Wrapper(agent)
-  after(() => { server.close(); return agent.close() })
+  t.after(() => { server.close(); return agent.close() })
 
-  await assert.rejects(
-    legacyDispatch(wrapper, {
-      origin: `http://127.0.0.1:${server.address().port}`,
-      path: '/',
-      method: 'POST',
-      headers: { 'content-length': '10, 13' },
-      body: 'update=INSERT'
-    }),
-    { code: 'UND_ERR_INVALID_ARG', message: 'invalid content-length header' }
-  )
+  const { statusCode, body } = await legacyDispatch(wrapper, {
+    origin: `http://127.0.0.1:${server.address().port}`,
+    path: '/',
+    method: 'POST',
+    headers: { 'content-length': '13' },
+    body: 'update=INSERT'
+  })
+
+  assert.strictEqual(statusCode, 200)
+  assert.strictEqual(body, '13:13')
+})
+
+test('still rejects conflicting or malformed repeated content-length', async (t) => {
+  const server = await startServer()
+  const agent = new Agent()
+  const wrapper = new Dispatcher1Wrapper(agent)
+  t.after(() => { server.close(); return agent.close() })
+
+  for (const value of ['10, 13', ', 13']) {
+    await assert.rejects(
+      legacyDispatch(wrapper, {
+        origin: `http://127.0.0.1:${server.address().port}`,
+        path: '/',
+        method: 'POST',
+        headers: { 'content-length': value },
+        body: 'update=INSERT'
+      }),
+      { code: 'UND_ERR_INVALID_ARG', message: 'invalid content-length header' }
+    )
+  }
 })
 
 test('does not mutate the caller-provided headers object', async (t) => {
-  const server = await startServer(t)
+  const server = await startServer()
   const agent = new Agent()
   const wrapper = new Dispatcher1Wrapper(agent)
-  after(() => { server.close(); return agent.close() })
+  t.after(() => { server.close(); return agent.close() })
 
   const headers = { 'content-length': '13, 13' }
   await legacyDispatch(wrapper, {
