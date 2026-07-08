@@ -299,19 +299,16 @@ if (process.env.PORT) {
   }
 
   const gotOptions = {
-    url: dest.url,
     method: 'POST',
     headers,
     agent: {
       http: gotAgent
     },
-    // avoid body processing
-    isStream: true,
     body: data
   }
   experiments.got = () => {
     return makeParallelRequests(resolve => {
-      got(gotOptions).pipe(new Writable({
+      got.stream(dest.url, gotOptions).pipe(new Writable({
         write (chunk, encoding, callback) {
           callback()
         }
