@@ -5,7 +5,9 @@ const { MockInterceptor, MockScope } = require('../lib/mock/mock-interceptor')
 const MockAgent = require('../lib/mock/mock-agent')
 const { kDispatchKey } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
+const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const { fetch } = require('../lib/web/fetch/index')
+const { request } = require('../index')
 
 describe('MockInterceptor - path', () => {
   test('should remove hash fragment from paths', t => {
@@ -229,6 +231,132 @@ describe('MockInterceptor - reply options callback', () => {
       onResponseEnd: () => {},
       onResponseError: () => {}
     }), new InvalidArgumentError('statusCode must be defined'))
+  })
+})
+
+describe('MockInterceptor - asynchronous reply options callback', () => {
+  test('should resolve the reply from an asynchronous callback', async t => {
+    t.plan(3)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async (options) => {
+      t.assert.strictEqual(options.path, '/test')
+      await new Promise((resolve) => setImmediate(resolve))
+      return { statusCode: 201, data: 'hello' }
+    })
+
+    const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+    t.assert.strictEqual(statusCode, 201)
+    t.assert.strictEqual(await body.text(), 'hello')
+  })
+
+  test('should apply default headers and content length after resolution', async t => {
+    t.plan(4)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).defaultReplyHeaders({ foo: 'bar' }).replyContentLength().reply(async () => ({
+      statusCode: 200,
+      data: 'hello'
+    }))
+
+    const { statusCode, headers, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(headers.foo, 'bar')
+    t.assert.strictEqual(headers['content-length'], '5')
+    t.assert.strictEqual(await body.text(), 'hello')
+  })
+
+  test('should support times() with an asynchronous callback', async t => {
+    t.plan(3)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async () => ({ statusCode: 200, data: 'hello' })).times(2)
+
+    for (let i = 0; i < 2; i++) {
+      const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+      t.assert.strictEqual(statusCode, 200)
+      await body.text()
+    }
+
+    await t.assert.rejects(request(`${baseUrl}/test`, { dispatcher: mockAgent }), MockNotMatchedError)
+  })
+
+  test('should reject if an asynchronous callback resolves to an invalid format', async t => {
+    t.plan(2)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test-resolve-null',
+      method: 'GET'
+    }).reply(async () => null)
+
+    mockPool.intercept({
+      path: '/test-no-status-code',
+      method: 'GET'
+    }).reply(async () => ({ data: 'hello' }))
+
+    await t.assert.rejects(
+      request(`${baseUrl}/test-resolve-null`, { dispatcher: mockAgent }),
+      new InvalidArgumentError('reply options callback must return an object')
+    )
+
+    await t.assert.rejects(
+      request(`${baseUrl}/test-no-status-code`, { dispatcher: mockAgent }),
+      new InvalidArgumentError('statusCode must be defined')
+    )
+  })
+
+  test('should reject with the reason of a rejected asynchronous callback', async t => {
+    t.plan(1)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async () => {
+      throw new Error('kaboom')
+    })
+
+    await t.assert.rejects(request(`${baseUrl}/test`, { dispatcher: mockAgent }), new Error('kaboom'))
   })
 })
 
