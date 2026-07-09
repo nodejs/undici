@@ -36,6 +36,12 @@ test('h2 client multiplexes concurrent requests by default (#4143)', async t => 
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const results = await Promise.all(
     Array.from({ length: N }, () =>
       client.request({ path: '/', method: 'GET' })
@@ -96,6 +102,12 @@ test('Pool with connections=1 multiplexes h2 streams on the single session (#414
   })
   after(() => pool.close())
 
+  pool.on('disconnect', () => {
+    if (!pool.closed && !pool.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const results = await Promise.all(
     Array.from({ length: N }, () =>
       pool.request({ path: '/', method: 'GET' })
@@ -129,6 +141,12 @@ test('Client#pipelining keeps its h1 (RFC7230) semantic on an h2 client', async 
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   // Even after negotiating h2, client.pipelining reflects only the user-set
   // h1 pipelining factor — the h2 dispatch limit is maxConcurrentStreams.
