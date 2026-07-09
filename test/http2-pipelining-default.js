@@ -182,6 +182,68 @@ test('fetch POST multiplexes while an SSE stream is open on the same h2 session 
   await t.completed
 })
 
+test('fetch POST bodies dispatch concurrently on the same h2 session instead of serializing (#5494)', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer()
+  const sessions = new Set()
+  const streams = []
+  let resolveSecondArrived
+  const secondArrived = new Promise(resolve => {
+    resolveSecondArrived = resolve
+  })
+
+  server.on('session', session => {
+    sessions.add(session)
+  })
+
+  server.on('stream', stream => {
+    // Hold every stream open instead of responding immediately, so a
+    // serialized client would never let the second request's headers
+    // reach the server until the first one's stream is released.
+    streams.push(stream)
+    if (streams.length === 2) {
+      resolveSecondArrived()
+    }
+  })
+
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+  after(() => server.close())
+
+  const dispatcher = new Agent({ useH2c: true })
+  after(async () => {
+    await dispatcher.close()
+  })
+
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  const first = fetch(origin, { method: 'POST', body: '{"first":1}', dispatcher })
+  // Wait for the first request's stream to actually open before dispatching
+  // the second -- this reproduces the exact ordering #5494 reported
+  // (one bodied request already in flight when the next one is dispatched).
+  while (streams.length < 1) {
+    await new Promise(resolve => setImmediate(resolve))
+  }
+
+  const second = fetch(origin, { method: 'POST', body: '{"second":1}', dispatcher, signal: AbortSignal.timeout(5000) })
+
+  // If the second request is stuck behind the first (the bug), its stream
+  // never opens and this hangs until the timeout signal aborts it.
+  await secondArrived
+
+  for (const stream of streams) {
+    stream.respond({ ':status': 200 })
+    stream.end('{"ok":true}')
+  }
+
+  const [firstRes, secondRes] = await Promise.all([first, second])
+  t.strictEqual(firstRes.status, 200)
+  t.strictEqual(secondRes.status, 200)
+  t.strictEqual(sessions.size, 1)
+
+  await t.completed
+})
+
 test('Client#pipelining keeps its h1 (RFC7230) semantic on an h2 client', async t => {
   t = tspl(t, { plan: 2 })
 
