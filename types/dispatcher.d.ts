@@ -114,7 +114,7 @@ declare namespace Dispatcher {
     /** The IP Type of Service (ToS) value for the request socket. Must be an integer between 0 and 255. Default: `0` */
     typeOfService?: number | null;
     /** Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`. Default: `method === 'CONNECT' || null`. */
-    upgrade?: boolean | string | null;
+    upgrade?: string | null;
     /** The amount of time, in milliseconds, the parser will wait to receive the complete HTTP headers. Defaults to 300 seconds. */
     headersTimeout?: number | null;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use 0 to disable it entirely. Defaults to 300 seconds. */
