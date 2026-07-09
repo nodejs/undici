@@ -1,12 +1,12 @@
 'use strict'
 
 const { test, after } = require('node:test')
-const { createSecureServer } = require('node:http2')
+const { createSecureServer, createServer } = require('node:http2')
 const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { Client, Pool } = require('..')
+const { Agent, Client, Pool, fetch } = require('..')
 
 test('h2 client multiplexes concurrent requests by default (#4143)', async t => {
   const N = 5
@@ -109,6 +109,75 @@ test('Pool with connections=1 multiplexes h2 streams on the single session (#414
 
   t.strictEqual(sessions.size, 1, `expected 1 h2 session, got ${sessions.size}`)
   t.strictEqual(sockets.size, 1, `expected 1 TCP socket, got ${sockets.size}`)
+
+  await t.completed
+})
+
+test('fetch POST multiplexes while an SSE stream is open on the same h2 session (#5524)', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer()
+  const paths = []
+  const sessions = new Set()
+  let eventsOpened
+  const eventsOpenedPromise = new Promise(resolve => {
+    eventsOpened = resolve
+  })
+
+  server.on('session', session => {
+    sessions.add(session)
+  })
+
+  server.on('stream', (stream, headers) => {
+    paths.push(headers[':path'])
+
+    if (headers[':path'] === '/events') {
+      stream.respond({ ':status': 200, 'content-type': 'text/event-stream' })
+      stream.write(': ping\n\n')
+      eventsOpened()
+      return
+    }
+
+    stream.respond({ ':status': 200, 'content-type': 'application/json' })
+    stream.end('{"ok":true}')
+  })
+
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+  after(() => server.close())
+
+  const dispatcher = new Agent({ useH2c: true })
+  const sse = new AbortController()
+  after(async () => {
+    sse.abort()
+    await dispatcher.close()
+  })
+
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  const warmup = await fetch(`${origin}/warmup`, {
+    method: 'POST',
+    body: '{"warmup":true}',
+    dispatcher
+  })
+  await warmup.text()
+
+  fetch(`${origin}/events`, {
+    dispatcher,
+    signal: sse.signal
+  }).catch(() => {})
+  await eventsOpenedPromise
+
+  const response = await fetch(`${origin}/rpc`, {
+    method: 'POST',
+    body: '{"ok":true}',
+    dispatcher,
+    signal: AbortSignal.timeout(5000)
+  })
+
+  t.strictEqual(response.status, 200)
+  t.strictEqual(await response.text(), '{"ok":true}')
+  t.deepStrictEqual(paths, ['/warmup', '/events', '/rpc'])
+  t.strictEqual(sessions.size, 1)
 
   await t.completed
 })
