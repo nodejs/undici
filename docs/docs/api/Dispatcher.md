@@ -786,8 +786,8 @@ can make progress.
 ## Pre-built interceptors
 
 For the full reference of built-in interceptors (`dump`, `retry`, `redirect`,
-`decompress`, `responseError`, `dns`, `cache`, `deduplicate`) and their options,
-see [Interceptors](Interceptors.md).
+`decompress`, `responseError`, `dns`, `cache`, `deduplicate`, `signal`) and
+their options, see [Interceptors](Interceptors.md).
 
 [Fastify]: https://fastify.dev
 [GOAWAY frame]: https://webconcepts.info/concepts/http2-frame-type/0x7
