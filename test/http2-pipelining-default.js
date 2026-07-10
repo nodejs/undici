@@ -120,6 +120,7 @@ test('fetch POST multiplexes while an SSE stream is open on the same h2 session 
   const paths = []
   const sessions = new Set()
   let eventsOpened
+  let eventsStream
   const eventsOpenedPromise = new Promise(resolve => {
     eventsOpened = resolve
   })
@@ -132,6 +133,7 @@ test('fetch POST multiplexes while an SSE stream is open on the same h2 session 
     paths.push(headers[':path'])
 
     if (headers[':path'] === '/events') {
+      eventsStream = stream
       stream.respond({ ':status': 200, 'content-type': 'text/event-stream' })
       stream.write(': ping\n\n')
       eventsOpened()
@@ -150,13 +152,14 @@ test('fetch POST multiplexes while an SSE stream is open on the same h2 session 
 
   // Track the SSE fetch and its response so teardown can wait for the abort
   // to actually settle -- and explicitly cancel the never-read response
-  // body -- before closing the dispatcher. Without this, an abort that's
-  // still propagating when the dispatcher closes can surface a late,
-  // listener-less socket error (e.g. ECONNRESET) as an uncaughtException
-  // after the test has already completed.
+  // body -- before closing the dispatcher. Ending the still-open SSE stream
+  // from the server side first lets the client see a normal stream close
+  // instead of an abrupt reset, avoiding a trailing ECONNRESET on the
+  // socket once the dispatcher is closed.
   let sseResponse
   let ssePromise = Promise.resolve()
   after(async () => {
+    eventsStream?.end()
     sse.abort()
     await ssePromise
     await sseResponse?.body?.cancel().catch(() => {})
