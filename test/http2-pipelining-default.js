@@ -147,8 +147,19 @@ test('fetch POST multiplexes while an SSE stream is open on the same h2 session 
 
   const dispatcher = new Agent({ useH2c: true })
   const sse = new AbortController()
+
+  // Track the SSE fetch and its response so teardown can wait for the abort
+  // to actually settle -- and explicitly cancel the never-read response
+  // body -- before closing the dispatcher. Without this, an abort that's
+  // still propagating when the dispatcher closes can surface a late,
+  // listener-less socket error (e.g. ECONNRESET) as an uncaughtException
+  // after the test has already completed.
+  let sseResponse
+  let ssePromise = Promise.resolve()
   after(async () => {
     sse.abort()
+    await ssePromise
+    await sseResponse?.body?.cancel().catch(() => {})
     await dispatcher.close()
   })
 
@@ -161,9 +172,11 @@ test('fetch POST multiplexes while an SSE stream is open on the same h2 session 
   })
   await warmup.text()
 
-  fetch(`${origin}/events`, {
+  ssePromise = fetch(`${origin}/events`, {
     dispatcher,
     signal: sse.signal
+  }).then(res => {
+    sseResponse = res
   }).catch(() => {})
   await eventsOpenedPromise
 
