@@ -733,6 +733,8 @@ await client.request({ path: '/', method: 'GET' })
 ```
 
 For the full list of built-in interceptors provided by undici, see [Interceptors](Interceptors.md).
+For an example of a custom interceptor that wraps handler callbacks, see
+[Custom interceptors](Interceptors.md#custom-interceptors).
 
 ### Event: `'connect'`
 
