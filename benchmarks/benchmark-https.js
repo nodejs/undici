@@ -9,6 +9,8 @@ const { isMainThread } = require('node:worker_threads')
 
 const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
+const { cronometro } = require('cronometro')
+
 const ca = readFileSync(path.join(__dirname, '..', 'test', 'fixtures', 'ca.pem'), 'utf8')
 const servername = 'agent1'
 
@@ -267,9 +269,7 @@ if (process.env.PORT) {
   }
 }
 
-async function main () {
-  const { cronometro } = await import('cronometro')
-
+function main () {
   cronometro(
     experiments,
     {

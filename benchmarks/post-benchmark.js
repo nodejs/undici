@@ -10,10 +10,11 @@ const { Pool, Client, fetch, Agent, setGlobalDispatcher } = require('..')
 
 const { makeParallelRequests, printResults } = require('./_util')
 
-let nodeFetch
+const { cronometro } = require('cronometro')
+const { default: nodeFetch } = require('node-fetch')
 const axios = require('axios')
-let superagent
-let got
+const _superagent = require('superagent')
+const { default: got } = require('got')
 
 const { promisify } = require('node:util')
 const request = promisify(require('request'))
@@ -94,6 +95,9 @@ const superagentAgent = new http.Agent({
   keepAlive: true,
   maxSockets: connections
 })
+
+// https://github.com/ladjs/superagent/issues/1540#issue-561464561
+const superagent = _superagent.agent().use((req) => req.agent(superagentAgent))
 
 /** @type {import("..").Dispatcher.DispatchOptions} */
 const undiciOptions = {
@@ -350,16 +354,7 @@ if (process.env.PORT) {
   }
 }
 
-async function main () {
-  const { cronometro } = await import('cronometro')
-  const _nodeFetch = await import('node-fetch')
-  nodeFetch = _nodeFetch.default
-  const _got = await import('got')
-  got = _got.default
-  const _superagent = await import('superagent')
-  // https://github.com/ladjs/superagent/issues/1540#issue-561464561
-  superagent = _superagent.agent().use((req) => req.agent(superagentAgent))
-
+function main () {
   cronometro(
     experiments,
     {
