@@ -1091,3 +1091,73 @@ test('Should not send http2 PING frames after connection is closed', async t => 
 
   await t.completed
 })
+
+test('Should not emit uncaughtException when socket closes after abort', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  // Never respond, keeping the stream in-flight.
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+  })
+
+  after(() => {
+    server.close()
+  })
+  await once(server.listen(0), 'listening')
+
+  // Capture any uncaughtException that fires during the test
+  let uncaughtErr = null
+  const originalHandler = process.listeners('uncaughtException').length > 0
+    ? process.listeners('uncaughtException')[0]
+    : null
+  process.removeAllListeners('uncaughtException')
+  const uncaughtHandler = (err) => {
+    uncaughtErr = err
+  }
+  process.on('uncaughtException', uncaughtHandler)
+  after(() => {
+    process.removeListener('uncaughtException', uncaughtHandler)
+    if (originalHandler) {
+      process.on('uncaughtException', originalHandler)
+    }
+  })
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true
+  })
+  after(() => client.close())
+
+  const controller = new AbortController()
+
+  const requestPromise = client.request({
+    path: '/',
+    method: 'GET',
+    signal: controller.signal
+  })
+
+  // Abort the request to trigger the abort path
+  controller.abort()
+
+  // Wait for the request to reject
+  try {
+    await requestPromise
+    t.fail('request should have rejected')
+  } catch (err) {
+    t.ok(err, 'request rejected')
+  }
+
+  // Now close the server to trigger socket 'end' event,
+  // simulating the CDN closing the connection after abort.
+  // This used to trigger an uncaughtException via onHttp2SocketError.
+  server.close()
+
+  // Wait for any pending async error handling
+  await sleep(500)
+
+  t.equal(uncaughtErr, null, 'No uncaughtException should have been emitted')
+
+  await t.completed
+})
