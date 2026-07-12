@@ -1093,7 +1093,7 @@ test('Should not send http2 PING frames after connection is closed', async t => 
 })
 
 test('Should not emit uncaughtException when socket closes after abort', async t => {
-  t = tspl(t, { plan: 2 })
+  const assert = tspl(t, { plan: 2 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
@@ -1102,7 +1102,7 @@ test('Should not emit uncaughtException when socket closes after abort', async t
     stream.on('error', () => {})
   })
 
-  after(() => {
+  t.after(() => {
     server.close()
   })
   await once(server.listen(0), 'listening')
@@ -1117,7 +1117,7 @@ test('Should not emit uncaughtException when socket closes after abort', async t
     uncaughtErr = err
   }
   process.on('uncaughtException', uncaughtHandler)
-  after(() => {
+  t.after(() => {
     process.removeListener('uncaughtException', uncaughtHandler)
     if (originalHandler) {
       process.on('uncaughtException', originalHandler)
@@ -1128,7 +1128,7 @@ test('Should not emit uncaughtException when socket closes after abort', async t
     connect: { rejectUnauthorized: false },
     allowH2: true
   })
-  after(() => client.close())
+  t.after(() => client.close())
 
   const controller = new AbortController()
 
@@ -1144,9 +1144,9 @@ test('Should not emit uncaughtException when socket closes after abort', async t
   // Wait for the request to reject
   try {
     await requestPromise
-    t.fail('request should have rejected')
+    assert.fail('request should have rejected')
   } catch (err) {
-    t.ok(err, 'request rejected')
+    assert.ok(err, 'request rejected')
   }
 
   // Now close the server to trigger socket 'end' event,
@@ -1157,7 +1157,7 @@ test('Should not emit uncaughtException when socket closes after abort', async t
   // Wait for any pending async error handling
   await sleep(500)
 
-  t.equal(uncaughtErr, null, 'No uncaughtException should have been emitted')
+  assert.equal(uncaughtErr, null, 'No uncaughtException should have been emitted')
 
-  await t.completed
+  await assert.completed
 })
