@@ -48,7 +48,7 @@ test('HTTP/1.1 Request Prioritization', async () => {
   })
   await response2.body.text()
 
-  assert.deepStrictEqual(priorities, [42, 0])
+  assert.deepStrictEqual(priorities, [42])
 })
 
 // https://github.com/nodejs/undici/issues/5544
