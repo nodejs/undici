@@ -145,6 +145,28 @@ for (const factory of [
     t.strictEqual(body, `PUT /5 :: host@${server} connection@keep-alive content-length@7 :: REQUEST`)
   })
 
+  test('should remove request body headers when HTTP 302 changes POST to GET', async t => {
+    t = tspl(t, { plan: 3 })
+    const server = await startRedirectingServer()
+
+    const { statusCode, headers, body: bodyStream } = await request(t, server, undefined, `http://${server}/302`, {
+      method: 'POST',
+      body: 'REQUEST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Language': 'en',
+        'X-Test': 'ok'
+      },
+      maxRedirections: 10
+    })
+
+    const body = await bodyStream.text()
+
+    t.strictEqual(statusCode, 200)
+    t.ok(!headers.location)
+    t.strictEqual(body, `GET /5 :: host@${server} connection@keep-alive x-test@ok`)
+  })
+
   test('should follow redirection after a HTTP 303 changing method to GET', async t => {
     t = tspl(t, { plan: 3 })
 
