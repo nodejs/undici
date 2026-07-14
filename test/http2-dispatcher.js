@@ -837,11 +837,10 @@ test('Should destroy the h2 stream on abort', async t => {
   abortRequest = await waitFor(() => abortRequest)
   abortRequest(abortReason)
 
-  // The abort path must destroy the stream, not just close() it: relying on the
-  // async 'close' event leaks the native Http2Stream when that event never
-  // fires on a busy, long-lived multiplexed session. The destroy is deferred by
-  // a setImmediate so the RST_STREAM frame from close() can be written first.
-  await waitFor(() => stream.destroyed || null)
+  // The abort path must destroy the stream synchronously, not just close() it
+  // or defer the destroy: relying on the async 'close' event (or a setImmediate
+  // that never runs while the event loop is stalled) leaks the native
+  // Http2Stream on a busy, long-lived multiplexed session (#5558).
   t.strictEqual(stream.destroyed, true)
   t.strictEqual(await responseError, abortReason)
 
