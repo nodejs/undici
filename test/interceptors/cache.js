@@ -170,6 +170,167 @@ describe('Cache Interceptor', () => {
     strictEqual(requestCount, 2)
   })
 
+  test('stores response with no-cache directive and etag, revalidates it on reuse', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'no-cache')
+        res.setHeader('etag', '"asd123"')
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    // Send second request. The response was stored, so this should be a
+    //  revalidation request answered with a 304 and served from the cache
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
+  })
+
+  test('stores response with max-age=0 and etag, revalidates it on reuse', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'max-age=0')
+        res.setHeader('etag', '"asd123"')
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    // Send second request. The response was stored but is already stale, so
+    //  this should be a revalidation request answered with a 304 and served
+    //  from the cache
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
+  })
+
+  test('stores response with no-cache directive, etag and last-modified, revalidates it on reuse', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'no-cache')
+        res.setHeader('etag', '"asd123"')
+        res.setHeader('last-modified', new Date(Date.now() - 60000).toUTCString())
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    // Send second request. The response was stored, so this should be a
+    //  revalidation request answered with a 304 and served from the cache
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
+  })
+
   test('expires caching', async () => {
     const clock = FakeTimers.install({
       toFake: ['Date']
