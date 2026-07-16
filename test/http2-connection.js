@@ -44,6 +44,12 @@ test('Should support H2 connection', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     path: '/',
     method: 'GET',
@@ -97,6 +103,12 @@ test('Should support H2 connection(multiple requests)', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   for (let i = 0; i < 3; i++) {
     const sendBody = `seq ${i}`
@@ -156,6 +168,12 @@ test('Should support H2 connection (headers as array)', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     path: '/',
     method: 'GET',
@@ -214,6 +232,12 @@ test('Should support multiple header values with semicolon separator', async t =
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const response = await client.request({
     path: '/',
@@ -297,6 +321,12 @@ test('Should support H2 connection(POST Buffer)', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const sendBody = 'hello!'
   const body = []
