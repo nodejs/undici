@@ -749,6 +749,67 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('must-revalidate excludes the response from stale-if-error', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      res.setHeader('date', 0)
+
+      requestsToOrigin++
+      if (requestsToOrigin === 1) {
+        // First request
+        res.setHeader('cache-control', 'public, s-maxage=10, stale-if-error=20, must-revalidate')
+        res.end('asd')
+      } else {
+        res.statusCode = 500
+        res.end('')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      clock.uninstall()
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send first request. This will hit the origin and succeed
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 1)
+      equal(response.statusCode, 200)
+      equal(await response.body.text(), 'asd')
+    }
+
+    clock.tick(15000)
+
+    // Send second request. The response is stale and revalidation fails.
+    //  Despite being within the stale-if-error threshold, must-revalidate
+    //  forbids serving it without successful validation (RFC 5861 §4,
+    //  RFC 9111 §5.2.2.2), so we should see the error.
+    {
+      const response = await client.request(request)
+      equal(requestsToOrigin, 2)
+      equal(response.statusCode, 500)
+    }
+  })
+
   describe('Client-side directives', () => {
     test('max-age', async () => {
       const clock = FakeTimers.install({
@@ -882,6 +943,174 @@ describe('Cache Interceptor', () => {
       // Wait for background revalidation to complete
       await sleep(100)
       equal(revalidationRequests, 1)
+    })
+
+    test('max-stale doesn\'t allow serving a stale response with must-revalidate', async () => {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      let requestsToOrigin = 0
+      let revalidationRequests = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        res.setHeader('date', 0)
+
+        if (req.headers['if-none-match']) {
+          revalidationRequests++
+          if (req.headers['if-none-match'] !== '"asd123"') {
+            res.statusCode = 500
+            res.end('received incorrect etag')
+            return
+          }
+
+          res.statusCode = 304
+          res.end()
+        } else {
+          requestsToOrigin++
+          res.setHeader('cache-control', 'public, s-maxage=1, must-revalidate')
+          res.setHeader('etag', '"asd123"')
+          res.end('asd')
+        }
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        server.close()
+        await client.close()
+        clock.uninstall()
+      })
+
+      await once(server, 'listening')
+
+      /**
+       * @type {import('../../types/dispatcher').default.RequestOptions}
+       */
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // Prime the cache
+      {
+        const response = await client.request(request)
+        strictEqual(await response.body.text(), 'asd')
+        equal(requestsToOrigin, 1)
+        equal(revalidationRequests, 0)
+      }
+
+      clock.tick(1500)
+
+      // The response is now stale. max-stale would normally allow serving it
+      //  as-is, but must-revalidate forbids using a stale response without
+      //  successful validation (RFC 9111 §5.2.2.2)
+      {
+        const response = await client.request({
+          ...request,
+          headers: {
+            'cache-control': 'max-stale=600'
+          }
+        })
+        strictEqual(response.statusCode, 200)
+        strictEqual(await response.body.text(), 'asd')
+        equal(requestsToOrigin, 1)
+        equal(revalidationRequests, 1)
+      }
+    })
+
+    test('max-stale doesn\'t allow a shared cache to serve a stale response with proxy-revalidate', async () => {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      let revalidationRequests = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        res.setHeader('date', 0)
+
+        if (req.headers['if-none-match']) {
+          revalidationRequests++
+          if (req.headers['if-none-match'] !== '"asd123"') {
+            res.statusCode = 500
+            res.end('received incorrect etag')
+            return
+          }
+
+          res.statusCode = 304
+          res.end()
+        } else {
+          res.setHeader('cache-control', 'public, max-age=1, proxy-revalidate')
+          res.setHeader('etag', '"asd123"')
+          res.end('asd')
+        }
+      }).listen(0)
+
+      const origin = `http://localhost:${server.address().port}`
+      const sharedClient = new Client(origin)
+        .compose(interceptors.cache({ type: 'shared' }))
+      const privateClient = new Client(origin)
+        .compose(interceptors.cache({ type: 'private' }))
+
+      after(async () => {
+        server.close()
+        await sharedClient.close()
+        await privateClient.close()
+        clock.uninstall()
+      })
+
+      await once(server, 'listening')
+
+      /**
+       * @type {import('../../types/dispatcher').default.RequestOptions}
+       */
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      // Prime both caches
+      {
+        const response = await sharedClient.request(request)
+        strictEqual(await response.body.text(), 'asd')
+      }
+      {
+        const response = await privateClient.request(request)
+        strictEqual(await response.body.text(), 'asd')
+      }
+      equal(revalidationRequests, 0)
+
+      clock.tick(1500)
+
+      // proxy-revalidate has the same semantics as must-revalidate for shared
+      //  caches (RFC 9111 §5.2.2.8), so the shared cache needs to revalidate
+      //  despite the request's max-stale
+      {
+        const response = await sharedClient.request({
+          ...request,
+          headers: {
+            'cache-control': 'max-stale=600'
+          }
+        })
+        strictEqual(response.statusCode, 200)
+        strictEqual(await response.body.text(), 'asd')
+        equal(revalidationRequests, 1)
+      }
+
+      // proxy-revalidate doesn't apply to private caches, so max-stale allows
+      //  serving the stale response without validation
+      {
+        const response = await privateClient.request({
+          ...request,
+          headers: {
+            'cache-control': 'max-stale=600'
+          }
+        })
+        strictEqual(response.statusCode, 200)
+        strictEqual(await response.body.text(), 'asd')
+        equal(revalidationRequests, 1)
+      }
     })
 
     test('min-fresh', async () => {
