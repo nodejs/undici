@@ -3,10 +3,10 @@
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { createGzip, createDeflate, createBrotliCompress, createZstdCompress } = require('node:zlib')
+const { createGzip, createDeflate, createBrotliCompress, createZstdCompress, gzipSync } = require('node:zlib')
 const { tspl } = require('@matteo.collina/tspl')
 
-const { Client, getGlobalDispatcher, setGlobalDispatcher, request } = require('../..')
+const { Client, getGlobalDispatcher, setGlobalDispatcher, request, interceptors } = require('../..')
 const createDecompressInterceptor = require('../../lib/interceptor/decompress')
 
 test('should decompress gzip response', async t => {
@@ -47,6 +47,46 @@ test('should decompress gzip response', async t => {
   t.equal(response.statusCode, 200)
   t.equal(response.headers['content-encoding'], undefined)
   t.equal(body, data)
+
+  await t.completed
+})
+
+test('should preserve representation headers and empty body for HEAD responses', async t => {
+  const compressedRepresentation = gzipSync('HEAD response representation')
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressedRepresentation.length
+    })
+    res.end()
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  t = tspl(t, { plan: 4 })
+
+  const response = await client.request({
+    method: 'HEAD',
+    path: '/'
+  })
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], 'gzip')
+  t.equal(response.headers['content-length'], `${compressedRepresentation.length}`)
+  t.equal(body, '')
 
   await t.completed
 })
