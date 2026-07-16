@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 const { RetryHandler, Client } = require('..')
 const { RequestHandler } = require('../lib/api/api-request')
@@ -344,6 +345,40 @@ test('Should use retry-after header for retries', async t => {
   })
 
   await t.completed
+})
+
+test('Should retry immediately when retry-after is zero', async t => {
+  const clock = FakeTimers.install()
+  t.after(() => clock.uninstall())
+
+  let retries = 0
+  const handler = new RetryHandler(
+    {
+      method: 'GET',
+      retryOptions: {
+        maxRetries: 1,
+        minTimeout: 500
+      }
+    },
+    {
+      dispatch () {
+        retries++
+      },
+      handler: {}
+    }
+  )
+
+  handler.onResponseError(null, {
+    statusCode: 429,
+    code: 'UND_ERR_REQ_RETRY',
+    headers: {
+      'retry-after': '0'
+    }
+  })
+
+  await clock.tickAsync(0)
+
+  t.assert.strictEqual(retries, 1)
 })
 
 test('Should use retry-after header for retries (date)', async t => {
