@@ -327,6 +327,103 @@ test('Should complete only once when both end and a late close fire', async (t) 
   await t.completed
 })
 
+test('Should error an unfinished response when the stream closes', async (t) => {
+  t = tspl(t, { plan: 17 })
+
+  const http2 = require('node:http2')
+  const originalConnect = http2.connect
+
+  const stream = new FakeStream()
+  const session = new FakeSession(stream)
+
+  http2.connect = function connectStub () {
+    return session
+  }
+
+  after(() => {
+    http2.connect = originalConnect
+  })
+
+  let resumeCalls = 0
+  let responseEndCalls = 0
+  const responseErrors = []
+  const clientErrors = []
+
+  const client = {
+    [kUrl]: new URL('https://localhost'),
+    [kSocket]: null,
+    [kMaxConcurrentStreams]: 100,
+    [kHTTP2InitialWindowSize]: null,
+    [kHTTP2ConnectionWindowSize]: null,
+    [kBodyTimeout]: 30_000,
+    [kStrictContentLength]: true,
+    [kQueue]: [],
+    [kRunningIdx]: 0,
+    [kPendingIdx]: 0,
+    [kRunning]: 1,
+    [kPingInterval]: 0,
+    [kOnError] (err) {
+      clientErrors.push(err)
+    },
+    [kResume] () {
+      resumeCalls++
+    },
+    emit () {},
+    destroyed: false
+  }
+
+  const context = connectH2(client, new FakeSocket())
+
+  const request = new Request('https://localhost', {
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }, {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd () {
+      responseEndCalls++
+    },
+    onResponseError (_controller, err) {
+      responseErrors.push(err)
+    }
+  })
+
+  client[kQueue].push(request)
+
+  t.ok(context.write(request))
+
+  stream.emit('response', { ':status': 200 })
+  stream.emit('data', Buffer.from('partial body'))
+  const resumeCallsBeforeClose = resumeCalls
+  stream.closed = true
+  stream.emit('close')
+
+  t.strictEqual(responseErrors.length, 1)
+  t.strictEqual(responseErrors[0]?.code, 'UND_ERR_INFO')
+  t.strictEqual(responseErrors[0]?.message, 'HTTP/2: stream closed before end')
+  t.strictEqual(responseEndCalls, 0)
+  t.strictEqual(request.aborted, true)
+  t.strictEqual(clientErrors[0], responseErrors[0])
+  t.strictEqual(stream.listenerCount('close'), 0)
+  t.strictEqual(stream.listenerCount('end'), 0)
+  t.strictEqual(stream.listenerCount('error'), 0)
+  t.strictEqual(stream.listenerCount('aborted'), 0)
+  t.strictEqual(stream.listenerCount('timeout'), 0)
+  t.strictEqual(stream.listenerCount('trailers'), 0)
+  t.strictEqual(stream.listenerCount('data'), 0)
+
+  stream.emit('end')
+  stream.emit('close')
+
+  t.strictEqual(responseErrors.length, 1)
+  t.strictEqual(responseEndCalls, 0)
+  t.strictEqual(resumeCalls, resumeCallsBeforeClose + 1)
+
+  await t.completed
+})
+
 test('Should remove request-owned http2 stream listeners after completion', async (t) => {
   t = tspl(t, { plan: 7 })
 
