@@ -401,3 +401,74 @@ test('Should remove request-owned http2 stream listeners after completion', asyn
 
   await t.completed
 })
+
+test('Should finalize an already-aborted request when its stream closes', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const http2 = require('node:http2')
+  const originalConnect = http2.connect
+
+  const stream = new FakeStream()
+  const session = new FakeSession(stream)
+
+  http2.connect = function connectStub () {
+    return session
+  }
+
+  after(() => {
+    http2.connect = originalConnect
+  })
+
+  const client = {
+    [kUrl]: new URL('https://localhost'),
+    [kSocket]: null,
+    [kMaxConcurrentStreams]: 100,
+    [kHTTP2InitialWindowSize]: null,
+    [kHTTP2ConnectionWindowSize]: null,
+    [kBodyTimeout]: 30_000,
+    [kStrictContentLength]: true,
+    [kQueue]: [],
+    [kRunningIdx]: 0,
+    [kPendingIdx]: 0,
+    [kRunning]: 1,
+    [kPingInterval]: 0,
+    [kOnError] (err) {
+      t.ifError(err)
+    },
+    [kResume] () {},
+    emit () {},
+    destroyed: false
+  }
+
+  const context = connectH2(client, new FakeSocket())
+  const expectedError = new Error('aborted')
+  let onCompleteCalls = 0
+
+  const request = new Request('https://localhost', {
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }, {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {},
+    onResponseEnd () {
+      onCompleteCalls++
+    },
+    onResponseError (_controller, err) {
+      t.strictEqual(err, expectedError)
+    }
+  })
+
+  client[kQueue].push(request)
+  client[kPendingIdx] = 1
+
+  t.ok(context.write(request))
+  request.onResponseError(expectedError)
+  stream.emit('close')
+
+  t.strictEqual(onCompleteCalls, 0)
+  t.strictEqual(client[kQueue][0], null)
+
+  await t.completed
+})
