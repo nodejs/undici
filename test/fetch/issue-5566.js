@@ -11,10 +11,7 @@ const { Client, fetch } = require('../..')
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/5566
-test('an aborted fetch is released while its HTTP/2 session remains open', { timeout: 30000 }, async (t) => {
-  if (typeof global.gc === 'undefined') {
-    throw new Error('gc is not available. Run with \'--expose-gc\'.')
-  }
+test('an aborted fetch is released while its HTTP/2 session remains open', { timeout: 30000 }, { skip: global.gc == null, async (t) => {
 
   let sessionCount = 0
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
