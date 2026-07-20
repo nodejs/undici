@@ -51,6 +51,46 @@ test('should decompress gzip response', async t => {
   await t.completed
 })
 
+test('should preserve trailers when decompressing response', async t => {
+  const data = 'Response with trailers'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      Trailer: 'X-Checksum'
+    })
+    res.addTrailers({ 'X-Checksum': 'verified' })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  t = tspl(t, { plan: 2 })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    headers: { TE: 'trailers' }
+  })
+  const body = await response.body.text()
+
+  t.equal(body, data)
+  t.deepEqual(response.trailers, { 'x-checksum': 'verified' })
+
+  await t.completed
+})
+
 test('should preserve representation headers and empty body for HEAD responses', async t => {
   const compressedRepresentation = gzipSync('HEAD response representation')
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -614,7 +654,7 @@ test('should allow custom skipStatusCodes', async t => {
 })
 
 test('should decompress multiple encodings in correct order', async t => {
-  t = tspl(t, { plan: 3 })
+  t = tspl(t, { plan: 4 })
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     // First compress with gzip, then with deflate (gzip, deflate)
@@ -623,7 +663,8 @@ test('should decompress multiple encodings in correct order', async t => {
 
     res.writeHead(200, {
       'Content-Type': 'text/plain',
-      'Content-Encoding': 'gzip, deflate' // Applied in this order
+      'Content-Encoding': 'gzip, deflate', // Applied in this order
+      Trailer: 'X-Checksum'
     })
 
     const data = 'Multiple encoding test message'
@@ -631,6 +672,7 @@ test('should decompress multiple encodings in correct order', async t => {
     // Pipe: data → gzip → deflate → response
     gzip.pipe(deflate)
     deflate.pipe(res)
+    res.addTrailers({ 'X-Checksum': 'verified' })
     gzip.end(data)
   })
 
@@ -649,7 +691,8 @@ test('should decompress multiple encodings in correct order', async t => {
 
   const response = await client.request({
     method: 'GET',
-    path: '/'
+    path: '/',
+    headers: { TE: 'trailers' }
   })
 
   const body = await response.body.text()
@@ -657,6 +700,7 @@ test('should decompress multiple encodings in correct order', async t => {
   t.equal(response.statusCode, 200)
   t.equal(response.headers['content-encoding'], undefined) // Should be removed
   t.equal(body, 'Multiple encoding test message') // Should be fully decompressed
+  t.deepEqual(response.trailers, { 'x-checksum': 'verified' })
 
   await t.completed
 })
