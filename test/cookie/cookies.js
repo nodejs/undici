@@ -449,8 +449,21 @@ test('Set-Cookie parser', () => {
     name: 'Space',
     value: 'Cat',
     secure: true,
-    httpOnly: true
+    httpOnly: true,
+    maxAge: -1
   }])
+
+  for (const maxAge of ['-', '--1', '-1a', '+1', '']) {
+    headers = new Headers({
+      'set-cookie': `Space=Cat; Secure; HttpOnly; Max-Age=${maxAge}`
+    })
+    assert.deepEqual(getSetCookies(headers), [{
+      name: 'Space',
+      value: 'Cat',
+      secure: true,
+      httpOnly: true
+    }])
+  }
 
   headers = new Headers({
     'set-cookie': 'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land'
