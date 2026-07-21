@@ -2,12 +2,12 @@
 
 const FakeTimers = require('@sinonjs/fake-timers')
 const { test, after } = require('node:test')
-const { isIP } = require('node:net')
+const net = require('node:net')
+const { isIP } = net
 const { lookup } = require('node:dns')
 const { createServer } = require('node:http')
 const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
-const diagnosticsChannel = require('node:diagnostics_channel')
 
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
@@ -238,18 +238,17 @@ test('#5573 - Should preserve DNS origin hostname on HTTP sockets', async contex
     await new Promise(resolve => server.close(resolve))
   })
 
-  const socketChannel = diagnosticsChannel.channel('net.client.socket')
-  const socketDetails = new Promise(resolve => {
-    const onSocket = ({ socket }) => {
-      socket.once('connect', () => {
-        if (socket.remotePort === server.address().port) {
-          resolve({ host: socket._host, remoteAddress: socket.remoteAddress })
-        }
-      })
-    }
+  const originalConnect = net.connect
+  let socket
+  let connectOptions
 
-    socketChannel.subscribe(onSocket)
-    context.after(() => socketChannel.unsubscribe(onSocket))
+  net.connect = function (...args) {
+    connectOptions = args[0]
+    socket = originalConnect.apply(this, args)
+    return socket
+  }
+  context.after(() => {
+    net.connect = originalConnect
   })
 
   const response = await client.request({
@@ -260,10 +259,8 @@ test('#5573 - Should preserve DNS origin hostname on HTTP sockets', async contex
 
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
-
-  const { host, remoteAddress } = await socketDetails
-  t.equal(host, 'localhost')
-  t.equal(remoteAddress, '127.0.0.1')
+  t.equal(connectOptions.host, 'localhost')
+  t.equal(socket.remoteAddress, '127.0.0.1')
 })
 
 test('Should recover on network errors (dual stack - 4)', async t => {
