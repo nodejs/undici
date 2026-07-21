@@ -7,6 +7,7 @@ const { lookup } = require('node:dns')
 const { createServer } = require('node:http')
 const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
+const diagnosticsChannel = require('node:diagnostics_channel')
 
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
@@ -213,6 +214,56 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
 
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
+})
+
+test('#5573 - Should preserve DNS origin hostname on HTTP sockets', async context => {
+  const t = tspl(context, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end('hello world!')
+  })
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const client = new Agent().compose(dns({
+    dualStack: false,
+    lookup (_origin, _opts, cb) {
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
+    }
+  }))
+
+  context.after(async () => {
+    await client.close()
+    await new Promise(resolve => server.close(resolve))
+  })
+
+  const socketChannel = diagnosticsChannel.channel('net.client.socket')
+  const socketDetails = new Promise(resolve => {
+    const onSocket = ({ socket }) => {
+      socket.once('connect', () => {
+        if (socket.remotePort === server.address().port) {
+          resolve({ host: socket._host, remoteAddress: socket.remoteAddress })
+        }
+      })
+    }
+
+    socketChannel.subscribe(onSocket)
+    context.after(() => socketChannel.unsubscribe(onSocket))
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+
+  const { host, remoteAddress } = await socketDetails
+  t.equal(host, 'localhost')
+  t.equal(remoteAddress, '127.0.0.1')
 })
 
 test('Should recover on network errors (dual stack - 4)', async t => {
