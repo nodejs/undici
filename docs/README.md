@@ -8,8 +8,8 @@ Most of the directory is plain Markdown (`index.md`, `getting-started.md`,
 `api/*.md`, `best-practices/*.md`). Two JSON files control how that Markdown is
 turned into a navigable, cross-linked site:
 
-- [`site.json`](./site.json) — the sidebar / navigation structure.
-- [`type-map.json`](./type-map.json) — resolves `{Type}` annotations into links.
+- [`site.json`](./docs/site.json) — the sidebar / navigation structure.
+- [`type-map.json`](./docs/type-map.json) — resolves `{Type}` annotations into links.
 
 ## `site.json`
 
