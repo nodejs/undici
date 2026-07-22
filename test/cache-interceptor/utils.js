@@ -274,9 +274,27 @@ describe('parseVaryHeader', () => {
     })
   })
 
+  test('splits array entries on commas', () => {
+    const result = parseVaryHeader(['Accept-Encoding, X-User-Id', 'Accept-Language'], {
+      'accept-encoding': 'gzip',
+      'x-user-id': 'alice'
+    })
+    deepStrictEqual(result, {
+      'accept-encoding': 'gzip',
+      'x-user-id': 'alice',
+      'accept-language': null
+    })
+  })
+
   test('preserves existing * behavior', () => {
     const headers = { accept: 'text/html' }
     const result = parseVaryHeader('*', headers)
+    deepStrictEqual(result, headers)
+  })
+
+  test('handles * in an array entry', () => {
+    const headers = { accept: 'text/html' }
+    const result = parseVaryHeader(['Accept-Encoding, *', 'Accept-Language'], headers)
     deepStrictEqual(result, headers)
   })
 })

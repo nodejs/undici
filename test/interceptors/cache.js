@@ -131,6 +131,78 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('vary directives spread over repeated headers are all honored', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 's-maxage=10')
+      res.setHeader('vary', ['accept-encoding, a', 'accept-language'])
+      res.end(req.headers.a)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    {
+      const res = await client.request({ origin: 'localhost', method: 'GET', path: '/', headers: { a: 'asd123' } })
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'asd123')
+    }
+
+    {
+      const res = await client.request({ origin: 'localhost', method: 'GET', path: '/', headers: { a: 'dsa321' } })
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'dsa321')
+    }
+
+    {
+      const res = await client.request({ origin: 'localhost', method: 'GET', path: '/', headers: { a: 'asd123' } })
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd123')
+    }
+  })
+
+  test('does not cache a response whose repeated vary header contains *', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 's-maxage=10')
+      res.setHeader('vary', ['accept-encoding, *', 'accept-language'])
+      res.end('asd')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = { origin: 'localhost', method: 'GET', path: '/' }
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'asd')
+    }
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'asd')
+    }
+  })
+
   test('revalidates reponses with no-cache directive, regardless of cacheByDefault', async () => {
     let requestCount = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
