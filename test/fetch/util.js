@@ -310,3 +310,50 @@ describe('isOriginIPPotentiallyTrustworthy()', () => {
     })
   })
 })
+
+describe('determineRequestsReferrer', () => {
+  const referrer = new URL('https://example.com/page?secret=1#frag')
+  const sameOriginURL = new URL('https://example.com/target')
+  const crossOriginURL = new URL('https://other.example/target')
+
+  function makeRequest (referrerPolicy, currentURL) {
+    return {
+      referrerPolicy,
+      referrer,
+      urlList: [currentURL],
+      origin: currentURL.origin
+    }
+  }
+
+  test('same-origin returns the referrer URL for a same-origin request', (t) => {
+    t.plan(1)
+
+    const result = util.determineRequestsReferrer(makeRequest('same-origin', sameOriginURL))
+
+    t.assert.strictEqual(result.toString(), 'https://example.com/page?secret=1')
+  })
+
+  test('same-origin returns no referrer for a cross-origin request', (t) => {
+    t.plan(1)
+
+    const result = util.determineRequestsReferrer(makeRequest('same-origin', crossOriginURL))
+
+    t.assert.strictEqual(result, 'no-referrer')
+  })
+
+  test('origin-when-cross-origin returns the referrer URL for a same-origin request', (t) => {
+    t.plan(1)
+
+    const result = util.determineRequestsReferrer(makeRequest('origin-when-cross-origin', sameOriginURL))
+
+    t.assert.strictEqual(result.toString(), 'https://example.com/page?secret=1')
+  })
+
+  test('origin-when-cross-origin returns the referrer origin for a cross-origin request', (t) => {
+    t.plan(1)
+
+    const result = util.determineRequestsReferrer(makeRequest('origin-when-cross-origin', crossOriginURL))
+
+    t.assert.strictEqual(result.toString(), 'https://example.com/')
+  })
+})
