@@ -11,7 +11,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { interceptors, Agent, Client, Pool, request } = require('../..')
+const { interceptors, Agent, Client, Pool, request, fetch } = require('../..')
 const { dns } = interceptors
 
 // Helper to check if IPv6 is available for localhost
@@ -2251,4 +2251,65 @@ test('#4234 - Should pass Pool requests without origin through', async t => {
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
   t.equal(lookupCount, 0)
+})
+
+test('Should preserve original hostname on HTTP socket when using DNS interceptor', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  let hostFromSocket = null
+  const RESOLVED_ADDRESS = '127.0.0.1'
+  const diagnosticsChannel = require('node:diagnostics_channel')
+  const netClientSocketChannel = diagnosticsChannel.channel('net.client.socket')
+
+  after(async () => {
+    await dispatcher.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  // Subscribe to the net.client.socket channel BEFORE creating the socket
+  const connectPromise = new Promise((resolve) => {
+    netClientSocketChannel.subscribe(({ socket }) => {
+      socket.once('connect', () => {
+        hostFromSocket = socket._host
+        resolve()
+      })
+    })
+  })
+
+  const dispatcher = new Agent().compose(
+    dns({
+      maxTTL: 60_000,
+      lookup (_origin, _opts, cb) {
+        cb(null, [
+          {
+            address: RESOLVED_ADDRESS,
+            family: 4,
+            ttl: 60_000
+          }
+        ])
+      }
+    })
+  )
+
+  const url = `http://localhost:${server.address().port}`
+
+  // Perform a request with the DNS interceptor
+  const response = await fetch(url, { dispatcher })
+  t.equal(response.status, 200)
+
+  // Wait for the connect event to fire
+  await connectPromise
+
+  // The socket._host should be the original hostname, not the resolved IP
+  t.equal(hostFromSocket, 'localhost')
 })
