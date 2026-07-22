@@ -217,7 +217,7 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
 })
 
 test('#5573 - Should preserve DNS origin hostname on HTTP sockets', async context => {
-  const t = tspl(context, { plan: 4 })
+  const t = tspl(context, { plan: 5 })
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('hello world!')
@@ -239,13 +239,11 @@ test('#5573 - Should preserve DNS origin hostname on HTTP sockets', async contex
   })
 
   const originalConnect = net.connect
-  let socket
   let connectOptions
 
   net.connect = function (...args) {
     connectOptions = args[0]
-    socket = originalConnect.apply(this, args)
-    return socket
+    return originalConnect.apply(this, args)
   }
   context.after(() => {
     net.connect = originalConnect
@@ -260,7 +258,19 @@ test('#5573 - Should preserve DNS origin hostname on HTTP sockets', async contex
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
   t.equal(connectOptions.host, 'localhost')
-  t.equal(socket.remoteAddress, '127.0.0.1')
+
+  await new Promise((resolve, reject) => {
+    connectOptions.lookup(connectOptions.host, {}, (err, address, family) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      t.equal(address, '127.0.0.1')
+      t.equal(family, 4)
+      resolve()
+    })
+  })
 })
 
 test('Should recover on network errors (dual stack - 4)', async t => {
