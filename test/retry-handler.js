@@ -531,7 +531,7 @@ test('Should handle 206 partial content', async t => {
       }, 1e2)
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')
@@ -627,7 +627,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
       }, 1e2)
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'erwsd')
       res.statusCode = 206
       res.end('def')
@@ -1072,7 +1072,7 @@ test('Issue#2986 - Handle custom 206', async t => {
       }, 1e2)
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')
@@ -1172,7 +1172,7 @@ test('Issue#3128 - Support if-match', async t => {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       t.deepStrictEqual(req.headers['if-match'], 'asd')
 
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')
@@ -1272,7 +1272,7 @@ test('Issue#3128 - Should ignore weak etags', async t => {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       t.equal(req.headers['if-match'], undefined)
 
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'W/asd')
       res.statusCode = 206
       res.end('def')
@@ -1372,7 +1372,7 @@ test('Weak etags are ignored on range-requests', async t => {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       t.equal(req.headers['if-match'], undefined)
 
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'W/efg')
       res.statusCode = 206
       res.end('def')
