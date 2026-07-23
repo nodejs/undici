@@ -639,7 +639,7 @@
               "message": "assert_equals: Opaque filter: status is 0 expected 0 but got 200"
             },
             {
-              "name": "Fetch http://web-platform.test:60029/fetch/api/resources/top.txt with no-cors mode",
+              "name": "Fetch http://web-platform.test:53157/fetch/api/resources/top.txt with no-cors mode",
               "success": false,
               "message": "assert_equals: Opaque filter: status is 0 expected 0 but got 200"
             }
@@ -1939,8 +1939,62 @@
           ]
         },
         "request-upload.h2.any.html": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "Synchronous feature detect",
+              "success": true
+            },
+            {
+              "name": "Fetch with POST with empty ReadableStream",
+              "success": false,
+              "message": "assert_equals: expected \"\" but got \"{\\\"error\\\": {\\\"code\\\": 500, \\\"message\\\": \\\"Internal server error loading http://web-platform.test:8000/fetch/api/resources/echo-content.h2.py:\\\\n  Traceback (most recent call last):\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/server.py\\\\\\\", line 373, in finish_handling\\\\n    handler(request, response)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 334, in __call__\\\\n    self._load_file(request, response, func)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 320, in _load_file\\\\n    return func(request, response, environ, path)\\\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 332, in func\\\\n    raise HTTPException(500, \\\\\\\"No main function in script %s\\\\\\\" % path)\\\\n  HTTPException: (500, 'No main function in script /home/matteo/repositories/undici/test/web-platform-tests/wpt/fetch/api/resources/echo-content.h2.py')\\\\n\\\"}}\""
+            },
+            {
+              "name": "Fetch with POST with ReadableStream",
+              "success": false,
+              "message": "assert_equals: expected \"Test\" but got \"{\\\"error\\\": {\\\"code\\\": 500, \\\"message\\\": \\\"Internal server error loading http://web-platform.test:8000/fetch/api/resources/echo-content.h2.py:\\\\n  Traceback (most recent call last):\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/server.py\\\\\\\", line 373, in finish_handling\\\\n    handler(request, response)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 334, in __call__\\\\n    self._load_file(request, response, func)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 320, in _load_file\\\\n    return func(request, response, environ, path)\\\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 332, in func\\\\n    raise HTTPException(500, \\\\\\\"No main function in script %s\\\\\\\" % path)\\\\n  HTTPException: (500, 'No main function in script /home/matteo/repositories/undici/test/web-platform-tests/wpt/fetch/api/resources/echo-content.h2.py')\\\\n\\\"}}\""
+            },
+            {
+              "name": "Fetch with POST with ReadableStream on 421 response should return the response and not retry.",
+              "success": true
+            },
+            {
+              "name": "Feature detect for POST with ReadableStream",
+              "success": true
+            },
+            {
+              "name": "Feature detect for POST with ReadableStream, using request object",
+              "success": true
+            },
+            {
+              "name": "Synchronous feature detect fails if feature unsupported",
+              "success": false,
+              "message": "assert_equals: expected \"Test\" but got \"{\\\"error\\\": {\\\"code\\\": 500, \\\"message\\\": \\\"Internal server error loading http://web-platform.test:8000/fetch/api/resources/echo-content.h2.py:\\\\n  Traceback (most recent call last):\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/server.py\\\\\\\", line 373, in finish_handling\\\\n    handler(request, response)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 334, in __call__\\\\n    self._load_file(request, response, func)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 320, in _load_file\\\\n    return func(request, response, environ, path)\\\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 332, in func\\\\n    raise HTTPException(500, \\\\\\\"No main function in script %s\\\\\\\" % path)\\\\n  HTTPException: (500, 'No main function in script /home/matteo/repositories/undici/test/web-platform-tests/wpt/fetch/api/resources/echo-content.h2.py')\\\\n\\\"}}\""
+            },
+            {
+              "name": "Streaming upload with body containing a String",
+              "success": false,
+              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+            },
+            {
+              "name": "Streaming upload with body containing null",
+              "success": true
+            },
+            {
+              "name": "Streaming upload with body containing a number",
+              "success": true
+            },
+            {
+              "name": "Streaming upload should fail on a 401 response",
+              "success": false,
+              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+            },
+            {
+              "name": "ReadbleStream should be closed on signal.abort",
+              "success": true
+            }
+          ]
         }
       },
       "request": {
@@ -2607,6 +2661,11 @@
               },
               {
                 "name": "Import declaration with `type: \"json\"` fetches with a \"json\" Request.destination",
+                "success": false,
+                "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cannot read properties of undefined (reading 'contentWindow')\""
+              },
+              {
+                "name": "Import declaration with `type: \"text\"` fetches with a \"text\" Request.destination",
                 "success": false,
                 "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cannot read properties of undefined (reading 'contentWindow')\""
               },
@@ -4866,7 +4925,7 @@
             {
               "name": "Consume response's body: from FormData to blob",
               "success": false,
-              "message": "assert_equals: Blob body type should be computed from the response Content-Type expected \"multipart/form-data; boundary=----formdata-undici-062475584128\" but got \"multipart/form-data;boundary=----formdata-undici-062475584128\""
+              "message": "assert_equals: Blob body type should be computed from the response Content-Type expected \"multipart/form-data; boundary=----formdata-undici-073652552945\" but got \"multipart/form-data;boundary=----formdata-undici-073652552945\""
             },
             {
               "name": "Consume response's body: from FormData to text",
@@ -7545,7 +7604,12 @@
           "success": true,
           "cases": [
             {
-              "name": "cors-preflight-cache",
+              "name": "CORS preflight cache reuses explicit header entries",
+              "success": false,
+              "message": "assert_equals: Preflight request has been made expected \"1\" but got \"0\""
+            },
+            {
+              "name": "CORS preflight cache does not reuse wildcard header entries for Authorization",
               "success": false,
               "message": "assert_equals: Preflight request has been made expected \"1\" but got \"0\""
             }
@@ -8845,665 +8909,8 @@
         }
       },
       "idlharness.any.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "idl_test validation",
-            "success": true
-          },
-          {
-            "name": "Partial interface mixin WindowOrWorkerGlobalScope: original interface mixin defined",
-            "success": true
-          },
-          {
-            "name": "Partial interface mixin WindowOrWorkerGlobalScope: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Partial interface Window: original interface defined",
-            "success": true
-          },
-          {
-            "name": "Partial interface Window: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Partial interface Window[2]: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Request includes Body: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Response includes Body: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Window includes GlobalEventHandlers: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Window includes WindowEventHandlers: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Window includes WindowOrWorkerGlobalScope: member names are unique",
-            "success": true
-          },
-          {
-            "name": "WorkerGlobalScope includes WindowOrWorkerGlobalScope: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Window includes AnimationFrameProvider: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Window includes WindowSessionStorage: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Window includes WindowLocalStorage: member names are unique",
-            "success": true
-          },
-          {
-            "name": "Headers interface: existence and properties of interface object",
-            "success": true
-          },
-          {
-            "name": "Headers interface object length",
-            "success": true
-          },
-          {
-            "name": "Headers interface object name",
-            "success": true
-          },
-          {
-            "name": "Headers interface: existence and properties of interface prototype object",
-            "success": true
-          },
-          {
-            "name": "Headers interface: existence and properties of interface prototype object's \"constructor\" property",
-            "success": true
-          },
-          {
-            "name": "Headers interface: existence and properties of interface prototype object's @@unscopables property",
-            "success": true
-          },
-          {
-            "name": "Headers interface: operation append(ByteString, ByteString)",
-            "success": true
-          },
-          {
-            "name": "Headers interface: operation delete(ByteString)",
-            "success": true
-          },
-          {
-            "name": "Headers interface: operation get(ByteString)",
-            "success": true
-          },
-          {
-            "name": "Headers interface: operation getSetCookie()",
-            "success": true
-          },
-          {
-            "name": "Headers interface: operation has(ByteString)",
-            "success": true
-          },
-          {
-            "name": "Headers interface: operation set(ByteString, ByteString)",
-            "success": true
-          },
-          {
-            "name": "Headers interface: iterable<ByteString, ByteString>",
-            "success": true
-          },
-          {
-            "name": "Headers must be primary interface of new Headers()",
-            "success": true
-          },
-          {
-            "name": "Stringification of new Headers()",
-            "success": true
-          },
-          {
-            "name": "Headers interface: new Headers() must inherit property \"append(ByteString, ByteString)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Headers interface: calling append(ByteString, ByteString) on new Headers() with too few arguments must throw TypeError",
-            "success": true
-          },
-          {
-            "name": "Headers interface: new Headers() must inherit property \"delete(ByteString)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Headers interface: calling delete(ByteString) on new Headers() with too few arguments must throw TypeError",
-            "success": true
-          },
-          {
-            "name": "Headers interface: new Headers() must inherit property \"get(ByteString)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Headers interface: calling get(ByteString) on new Headers() with too few arguments must throw TypeError",
-            "success": true
-          },
-          {
-            "name": "Headers interface: new Headers() must inherit property \"getSetCookie()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Headers interface: new Headers() must inherit property \"has(ByteString)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Headers interface: calling has(ByteString) on new Headers() with too few arguments must throw TypeError",
-            "success": true
-          },
-          {
-            "name": "Headers interface: new Headers() must inherit property \"set(ByteString, ByteString)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Headers interface: calling set(ByteString, ByteString) on new Headers() with too few arguments must throw TypeError",
-            "success": true
-          },
-          {
-            "name": "Request interface: existence and properties of interface object",
-            "success": true
-          },
-          {
-            "name": "Request interface object length",
-            "success": true
-          },
-          {
-            "name": "Request interface object name",
-            "success": true
-          },
-          {
-            "name": "Request interface: existence and properties of interface prototype object",
-            "success": true
-          },
-          {
-            "name": "Request interface: existence and properties of interface prototype object's \"constructor\" property",
-            "success": true
-          },
-          {
-            "name": "Request interface: existence and properties of interface prototype object's @@unscopables property",
-            "success": true
-          },
-          {
-            "name": "Request interface: operation clone()",
-            "success": true
-          },
-          {
-            "name": "Request must be primary interface of new Request('about:blank')",
-            "success": true
-          },
-          {
-            "name": "Stringification of new Request('about:blank')",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"method\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"url\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"headers\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"destination\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"referrer\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"referrerPolicy\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"mode\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"credentials\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"cache\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"redirect\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"integrity\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"keepalive\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"isReloadNavigation\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"isHistoryNavigation\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"signal\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"duplex\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"clone()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"body\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"bodyUsed\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"arrayBuffer()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"blob()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"bytes()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"formData()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"json()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: new Request('about:blank') must inherit property \"text()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: existence and properties of interface object",
-            "success": true
-          },
-          {
-            "name": "Response interface object length",
-            "success": true
-          },
-          {
-            "name": "Response interface object name",
-            "success": true
-          },
-          {
-            "name": "Response interface: existence and properties of interface prototype object",
-            "success": true
-          },
-          {
-            "name": "Response interface: existence and properties of interface prototype object's \"constructor\" property",
-            "success": true
-          },
-          {
-            "name": "Response interface: existence and properties of interface prototype object's @@unscopables property",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation error()",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation redirect(USVString, optional unsigned short)",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation json(any, optional ResponseInit)",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation clone()",
-            "success": true
-          },
-          {
-            "name": "Response must be primary interface of new Response()",
-            "success": true
-          },
-          {
-            "name": "Stringification of new Response()",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"error()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"redirect(USVString, optional unsigned short)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: calling redirect(USVString, optional unsigned short) on new Response() with too few arguments must throw TypeError",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"json(any, optional ResponseInit)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: calling json(any, optional ResponseInit) on new Response() with too few arguments must throw TypeError",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"type\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"url\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"redirected\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"status\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"ok\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"statusText\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"headers\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"clone()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"body\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"bodyUsed\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"arrayBuffer()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"blob()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"bytes()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"formData()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"json()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Response interface: new Response() must inherit property \"text()\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "FetchLaterResult interface: existence and properties of interface object",
-            "success": false,
-            "message": "assert_own_property: self does not have own property \"FetchLaterResult\" expected property \"FetchLaterResult\" missing"
-          },
-          {
-            "name": "FetchLaterResult interface object length",
-            "success": false,
-            "message": "assert_own_property: self does not have own property \"FetchLaterResult\" expected property \"FetchLaterResult\" missing"
-          },
-          {
-            "name": "FetchLaterResult interface object name",
-            "success": false,
-            "message": "assert_own_property: self does not have own property \"FetchLaterResult\" expected property \"FetchLaterResult\" missing"
-          },
-          {
-            "name": "FetchLaterResult interface: existence and properties of interface prototype object",
-            "success": false,
-            "message": "assert_own_property: self does not have own property \"FetchLaterResult\" expected property \"FetchLaterResult\" missing"
-          },
-          {
-            "name": "FetchLaterResult interface: existence and properties of interface prototype object's \"constructor\" property",
-            "success": false,
-            "message": "assert_own_property: self does not have own property \"FetchLaterResult\" expected property \"FetchLaterResult\" missing"
-          },
-          {
-            "name": "FetchLaterResult interface: existence and properties of interface prototype object's @@unscopables property",
-            "success": false,
-            "message": "assert_own_property: self does not have own property \"FetchLaterResult\" expected property \"FetchLaterResult\" missing"
-          },
-          {
-            "name": "FetchLaterResult interface: attribute activated",
-            "success": false,
-            "message": "assert_own_property: self does not have own property \"FetchLaterResult\" expected property \"FetchLaterResult\" missing"
-          },
-          {
-            "name": "Window interface: operation fetchLater(RequestInfo, optional DeferredRequestInit)",
-            "success": false,
-            "message": "assert_own_property: global object missing non-static operation expected property \"fetchLater\" missing"
-          },
-          {
-            "name": "Window interface: window must inherit property \"fetchLater(RequestInfo, optional DeferredRequestInit)\" with the proper type",
-            "success": false,
-            "message": "assert_own_property: expected property \"fetchLater\" missing"
-          },
-          {
-            "name": "Window interface: calling fetchLater(RequestInfo, optional DeferredRequestInit) on window with too few arguments must throw TypeError",
-            "success": false,
-            "message": "assert_own_property: expected property \"fetchLater\" missing"
-          },
-          {
-            "name": "Window interface: window must inherit property \"fetch(RequestInfo, optional RequestInit)\" with the proper type",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute method",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute url",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute headers",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute destination",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute referrer",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute referrerPolicy",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute mode",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute credentials",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute cache",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute redirect",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute integrity",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute keepalive",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute isReloadNavigation",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute isHistoryNavigation",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute signal",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute duplex",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute body",
-            "success": true
-          },
-          {
-            "name": "Request interface: attribute bodyUsed",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute type",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute url",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute redirected",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute status",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute ok",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute statusText",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute headers",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute body",
-            "success": true
-          },
-          {
-            "name": "Response interface: attribute bodyUsed",
-            "success": true
-          },
-          {
-            "name": "idl_test setup",
-            "success": true
-          },
-          {
-            "name": "Request interface: operation arrayBuffer()",
-            "success": true
-          },
-          {
-            "name": "Request interface: operation blob()",
-            "success": true
-          },
-          {
-            "name": "Request interface: operation bytes()",
-            "success": true
-          },
-          {
-            "name": "Request interface: operation formData()",
-            "success": true
-          },
-          {
-            "name": "Request interface: operation json()",
-            "success": true
-          },
-          {
-            "name": "Request interface: operation text()",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation arrayBuffer()",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation blob()",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation bytes()",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation formData()",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation json()",
-            "success": true
-          },
-          {
-            "name": "Response interface: operation text()",
-            "success": true
-          },
-          {
-            "name": "Window interface: operation fetch(RequestInfo, optional RequestInit)",
-            "success": false,
-            "message": "assert_unreached: Should have rejected: calling operation with this = {} didn't throw TypeError Reached unreachable code"
-          },
-          {
-            "name": "Window interface: calling fetch(RequestInfo, optional RequestInit) on window with too few arguments must throw TypeError",
-            "success": false,
-            "message": "assert_unreached: Should have rejected: Called with 0 arguments Reached unreachable code"
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "policies": {
         "csp-blocked-worker.html": {
@@ -11304,17 +10711,17 @@
         "success": true,
         "cases": [
           {
-            "name": "Decompresion using gzip-encoded dictionary works as expected",
+            "name": "Decompression using gzip-encoded dictionary works as expected",
             "success": false,
             "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
           },
           {
-            "name": "Decompresion using Brotli-encoded dictionary works as expected",
+            "name": "Decompression using Brotli-encoded dictionary works as expected",
             "success": false,
             "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
           },
           {
-            "name": "Decompresion using Zstandard-encoded dictionary works as expected",
+            "name": "Decompression using Zstandard-encoded dictionary works as expected",
             "success": false,
             "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
           },
@@ -11334,17 +10741,27 @@
         "success": true,
         "cases": [
           {
-            "name": "Decompresion using Brotli with the dictionary works as expected",
+            "name": "Decompression using Brotli with the dictionary works as expected",
             "success": false,
             "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
           },
           {
-            "name": "Decompresion using Zstandard with the dictionary works as expected",
+            "name": "Decompression using Zstandard with the dictionary works as expected",
             "success": false,
             "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
           },
           {
-            "name": "Decompresion of a cross origin resource works as expected",
+            "name": "Decompression of a cross origin resource works as expected",
+            "success": false,
+            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
+          },
+          {
+            "name": "Decompression using Brotli fails when dictionary hash mismatches",
+            "success": false,
+            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
+          },
+          {
+            "name": "Decompression using Zstandard fails when dictionary hash mismatches",
             "success": false,
             "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
           }
@@ -11355,6 +10772,11 @@
         "cases": [
           {
             "name": "Fetch cross-origin no-cors request does not include Available-Dictionary header",
+            "success": false,
+            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
+          },
+          {
+            "name": "Opaque responses resulting from cross-origin redirects in no-cors mode do not register dictionary",
             "success": false,
             "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
           }
@@ -11391,34 +10813,8 @@
         ]
       },
       "dictionary-registration.tentative.https.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "Simple dictionary registration and unregistration",
-            "success": false,
-            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
-          },
-          {
-            "name": "Dictionary registration with dictionary ID",
-            "success": false,
-            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
-          },
-          {
-            "name": "New dictionary registration overrides the existing one",
-            "success": false,
-            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
-          },
-          {
-            "name": "Dictionary registration does not invalidate cache entry",
-            "success": false,
-            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
-          },
-          {
-            "name": "Expired dictionary is not used",
-            "success": false,
-            "message": "assert_equals: expected \":U5abz16WDg7b8KS93msLPpOB4Vbef1uRzoORYkJw9BY=:\" but got \"\\\"available-dictionary\\\" header is not available\""
-          }
-        ]
+        "success": false,
+        "cases": []
       }
     },
     "connection-pool": {
@@ -13776,306 +13172,54 @@
     },
     "fetch-later": {
       "activate-after.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "fetchLater() sends out based on activateAfter.",
-            "success": false,
-            "message": "document is not defined"
-          },
-          {
-            "name": "fetchLater() sends out based on activateAfter, even if document is in BFCache.",
-            "success": false,
-            "message": "window.open is not a function"
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "basic.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "fetchLater() cannot be called without request.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater()\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() with same-origin (https) URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() with http://localhost URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() with https://localhost URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() with http://127.0.0.1 URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() with https://127.0.0.1 URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() with http://[::1] URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() with https://[::1] URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() with https://example.com URL does not throw.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() throws SecurityError on non-trustworthy http URL.",
-            "success": false,
-            "message": "assert_throws_dom: should throw SecurityError for insecure http url http://example.com function \"() => fetchLater(httpUrl)\" threw object \"ReferenceError: fetchLater is not defined\" that is not a DOMException SecurityError: property \"code\" is equal to undefined, expected 18"
-          },
-          {
-            "name": "fetchLater() throws TypeError on file:// scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('file://tmp')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws TypeError on ftp:// scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('ftp://example.com')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws TypeError on ssh:// scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('ssh://example.com')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws TypeError on wss:// scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('wss://example.com')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws TypeError on about: scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('about:blank')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws TypeError on javascript: scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater(`javascript:alert('');`)\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws TypeError on data: scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('data:text/plain,Hello')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws TypeError on blob: scheme.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('blob:https://example.com/some-uuid')\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-          },
-          {
-            "name": "fetchLater() throws RangeError on negative activateAfter.",
-            "success": false,
-            "message": "assert_throws_js: function \"() => fetchLater('https://www.google.com', {activateAfter: -1})\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function RangeError() { [native code] }\" (\"RangeError\")"
-          },
-          {
-            "name": "fetchLater()'s return tells the deferred request is not yet sent.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() throws TypeError when mutating its returned state.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          },
-          {
-            "name": "fetchLater() throws AbortError when its initial abort signal is aborted.",
-            "success": false,
-            "message": "assert_throws_dom: function \"() => fetchLater('/', {signal: controller.signal})\" threw object \"ReferenceError: fetchLater is not defined\" that is not a DOMException AbortError: property \"code\" is equal to undefined, expected 20"
-          },
-          {
-            "name": "fetchLater() does not throw error when it is aborted before sending.",
-            "success": false,
-            "message": "fetchLater is not defined"
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "headers": {
         "header-referrer-no-referrer-when-downgrade.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header https://web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "header-referrer-no-referrer.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header ",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "header-referrer-origin-when-cross-origin.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header https://web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "Test referer header https://www1.web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "header-referrer-origin.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header https://www1.web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "header-referrer-same-origin.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header ",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "Test referer header https://www1.web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "header-referrer-strict-origin-when-cross-origin.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header https://www1.web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "header-referrer-strict-origin.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header https://web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "header-referrer-unsafe-url.tentative.https.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Test referer header https://web-platform.test:8443",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         }
       },
       "iframe.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "A blank iframe can trigger fetchLater.",
-            "success": false,
-            "message": "document is not defined"
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "new-window.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "A blank window[target=''][features=''] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A same-origin window[target=''][features=''] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A cross-origin window[target=''][features=''] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A blank window[target=''][features='popup'] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A same-origin window[target=''][features='popup'] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A cross-origin window[target=''][features='popup'] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A blank window[target='_blank'][features=''] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A same-origin window[target='_blank'][features=''] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A cross-origin window[target='_blank'][features=''] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A blank window[target='_blank'][features='popup'] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A same-origin window[target='_blank'][features='popup'] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "A cross-origin window[target='_blank'][features='popup'] can trigger fetchLater.",
-            "success": false,
-            "message": "window.open is not a function"
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "non-secure.window.html": {
         "success": true,
@@ -14088,89 +13232,24 @@
       },
       "permissions-policy": {
         "deferred-fetch-allowed-by-permissions-policy-attribute-redirect.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Permissions policy allow=\"deferred-fetch\" allows fetchLater() from a redirected same-origin iframe.",
-              "success": false,
-              "message": "document is not defined"
-            },
-            {
-              "name": "Permissions policy allow=\"deferred-fetch\" disallows fetchLater() from a redirected cross-origin iframe.",
-              "success": false,
-              "message": "document is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "deferred-fetch-allowed-by-permissions-policy-attribute.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Permissions policy \"deferred-fetch\" can be enabled in the same-origin iframe using allow=\"deferred-fetch\" attribute.",
-              "success": false,
-              "message": "document is not defined"
-            },
-            {
-              "name": "Permissions policy \"deferred-fetch\" can be enabled in the cross-origin iframe using allow=\"deferred-fetch\" attribute.",
-              "success": false,
-              "message": "document is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "deferred-fetch-allowed-by-permissions-policy.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Permissions policy header: \"deferred-fetch=*\" allows fetchLater() in the same-origin iframe.",
-              "success": false,
-              "message": "document is not defined"
-            },
-            {
-              "name": "Permissions policy header: \"deferred-fetch=*\" allows fetchLater() in the cross-origin iframe.",
-              "success": false,
-              "message": "document is not defined"
-            },
-            {
-              "name": "Permissions policy header: \"deferred-fetch=*\" allow=\"deferred-fetch\" allows fetchLater() in the cross-origin iframe.",
-              "success": false,
-              "message": "document is not defined"
-            },
-            {
-              "name": "Permissions policy header: \"deferred-fetch=*\" allows fetchLater() in the top-level document.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "deferred-fetch-default-permissions-policy.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "Default \"deferred-fetch\" permissions policy [\"self\"] allows fetchLater() in the same-origin iframe.",
-              "success": false,
-              "message": "document is not defined"
-            },
-            {
-              "name": "Default \"deferred-fetch-minimal\" permissions policy [\"*\"] allows fetchLater() in the cross-origin iframe.",
-              "success": false,
-              "message": "document is not defined"
-            },
-            {
-              "name": "Default \"deferred-fetch\" permissions policy [\"self\"] allows fetchLater() in the top-level document.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "deferred-fetch-supported-by-permissions-policy.tentative.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "document.featurePolicy.features should advertise deferred-fetch.",
-              "success": false,
-              "message": "document is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         }
       },
       "policies": {
@@ -14189,477 +13268,80 @@
       },
       "quota": {
         "accumulated-oversized-payload.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "The 2nd fetchLater(same-origin) call in the top-level document is not allowed to exceed per-origin quota for its POST body of String.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "cross-origin-iframe": {
           "accumulated-oversized-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "The 2nd fetchLater(same-origin) call in a default cross-origin child iframe has its owned per-origin quota for a request POST body of String.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: fetchLater is not defined\""
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "empty-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() does not accept empty POST request body of String in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of ArrayBuffer in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts a non-empty POST request body of FormData in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of URLSearchParams in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of Blob in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of File in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "max-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() accepts max payload in a parent-frame-origin POST request body of String in a default cross-origin iframe.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              },
-              {
-                "name": "fetchLater() rejects max+1 payload in a parent-frame-origin POST request body of String in a default cross-origin iframe.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              },
-              {
-                "name": "fetchLater() accepts max payload in a self-frame-origin POST request body of String in a default cross-origin iframe.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              },
-              {
-                "name": "fetchLater() rejects max+1 payload in a self-frame-origin POST request body of String in a default cross-origin iframe.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "multiple-iframes.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() request quota are delegated to cross-origin iframes and not shared, even if they are same origin.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "oversized-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() does not accept payload[size=8193] exceeding per-origin quota in a POST request body of String in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=8193] exceeding per-origin quota in a POST request body of ArrayBuffer in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=8193] exceeding per-origin quota in a POST request body of FormData in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=8193] exceeding per-origin quota in a POST request body of URLSearchParams in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=8193] exceeding per-origin quota in a POST request body of Blob in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=8193] exceeding per-origin quota in a POST request body of File in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "small-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of String in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of ArrayBuffer in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of FormData in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of URLSearchParams in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of Blob in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of File in a default cross-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              }
-            ]
+            "success": false,
+            "cases": []
           }
         },
         "empty-payload.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "fetchLater() does not accept an empty POST request body of String.",
-              "success": false,
-              "message": "assert_throws_js: function \"() => fetchLater('/', requestInit)\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-            },
-            {
-              "name": "fetchLater() does not accept an empty POST request body of ArrayBuffer.",
-              "success": false,
-              "message": "assert_throws_js: function \"() => fetchLater('/', requestInit)\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-            },
-            {
-              "name": "fetchLater() does not accept an empty POST request body of URLSearchParams.",
-              "success": false,
-              "message": "assert_throws_js: function \"() => fetchLater('/', requestInit)\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-            },
-            {
-              "name": "fetchLater() does not accept an empty POST request body of Blob.",
-              "success": false,
-              "message": "assert_throws_js: function \"() => fetchLater('/', requestInit)\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-            },
-            {
-              "name": "fetchLater() does not accept an empty POST request body of File.",
-              "success": false,
-              "message": "assert_throws_js: function \"() => fetchLater('/', requestInit)\" threw object \"ReferenceError: fetchLater is not defined\" (\"ReferenceError\") expected instance of function \"function TypeError() { [native code] }\" (\"TypeError\")"
-            },
-            {
-              "name": "fetchLater() accepts a non-empty POST request body of FormData.",
-              "success": true
-            },
-            {
-              "name": "fetchLater() accept a GET request.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() accept a DELETE request.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() accept a PUT request.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "max-payload.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "fetchLater() rejects max+1 payload in a POST request body of String.",
-              "success": false,
-              "message": "assert_throws_quotaexceedederror: function \"() => {\n    fetchLater(requestUrl, {\n          activateAfter: 0,\n          method: 'POST',\n          body: generatePayload(\n              getRemainingQuota(QUOTA_PER_ORIGIN, requestUrl, headers) + 1,\n              dataType),\n        });\n  }\" threw object \"ReferenceError: fetchLater is not defined\" that is not a correct QuotaExceededError: property \"code\" is equal to undefined, expected 22"
-            },
-            {
-              "name": "fetchLater() accepts max payload in a POST request body of String.",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: fetchLater is not defined\""
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "multiple-origins.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "fetchLater() has per-request-origin quota for its POST body of String.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() has per-request-origin quota for its POST body of ArrayBuffer.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() has per-request-origin quota for its POST body of FormData.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() has per-request-origin quota for its POST body of URLSearchParams.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() has per-request-origin quota for its POST body of Blob.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() has per-request-origin quota for its POST body of File.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "oversized-payload.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of String.",
-              "success": false,
-              "message": "assert_throws_quotaexceedederror: function \"() => {\n      fetchLater('/', {\n        activateAfter: 0,\n        method: 'POST',\n        body: makeBeaconData(\n            generatePayload(OVERSIZED_REQUEST_BODY_SIZE), dataType),\n      });\n    }\" threw object \"ReferenceError: fetchLater is not defined\" that is not a correct QuotaExceededError: property \"code\" is equal to undefined, expected 22"
-            },
-            {
-              "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of ArrayBuffer.",
-              "success": false,
-              "message": "assert_throws_quotaexceedederror: function \"() => {\n      fetchLater('/', {\n        activateAfter: 0,\n        method: 'POST',\n        body: makeBeaconData(\n            generatePayload(OVERSIZED_REQUEST_BODY_SIZE), dataType),\n      });\n    }\" threw object \"ReferenceError: fetchLater is not defined\" that is not a correct QuotaExceededError: property \"code\" is equal to undefined, expected 22"
-            },
-            {
-              "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of FormData.",
-              "success": false,
-              "message": "assert_throws_quotaexceedederror: function \"() => {\n      fetchLater('/', {\n        activateAfter: 0,\n        method: 'POST',\n        body: makeBeaconData(\n            generatePayload(OVERSIZED_REQUEST_BODY_SIZE), dataType),\n      });\n    }\" threw object \"ReferenceError: fetchLater is not defined\" that is not a correct QuotaExceededError: property \"code\" is equal to undefined, expected 22"
-            },
-            {
-              "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of URLSearchParams.",
-              "success": false,
-              "message": "assert_throws_quotaexceedederror: function \"() => {\n      fetchLater('/', {\n        activateAfter: 0,\n        method: 'POST',\n        body: makeBeaconData(\n            generatePayload(OVERSIZED_REQUEST_BODY_SIZE), dataType),\n      });\n    }\" threw object \"ReferenceError: fetchLater is not defined\" that is not a correct QuotaExceededError: property \"code\" is equal to undefined, expected 22"
-            },
-            {
-              "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of Blob.",
-              "success": false,
-              "message": "assert_throws_quotaexceedederror: function \"() => {\n      fetchLater('/', {\n        activateAfter: 0,\n        method: 'POST',\n        body: makeBeaconData(\n            generatePayload(OVERSIZED_REQUEST_BODY_SIZE), dataType),\n      });\n    }\" threw object \"ReferenceError: fetchLater is not defined\" that is not a correct QuotaExceededError: property \"code\" is equal to undefined, expected 22"
-            },
-            {
-              "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of File.",
-              "success": false,
-              "message": "assert_throws_quotaexceedederror: function \"() => {\n      fetchLater('/', {\n        activateAfter: 0,\n        method: 'POST',\n        body: makeBeaconData(\n            generatePayload(OVERSIZED_REQUEST_BODY_SIZE), dataType),\n      });\n    }\" threw object \"ReferenceError: fetchLater is not defined\" that is not a correct QuotaExceededError: property \"code\" is equal to undefined, expected 22"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "same-origin-iframe": {
           "accumulated-oversized-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "The 2nd fetchLater(same-origin) call in a same-origin child iframe is not allowed to exceed per-origin quota for its POST body of String.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: fetchLater is not defined\""
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "empty-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() does not accept empty POST request body of String in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of ArrayBuffer in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts a non-empty POST request body of FormData in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of URLSearchParams in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of Blob in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept empty POST request body of File in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "max-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() accepts max payload in a POST request body of String in same-origin iframe.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              },
-              {
-                "name": "fetchLater() rejects max+1 payload in a POST request body of String in same-origin iframe.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "multiple-iframes.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() request quota are shared by same-origin iframes and root.",
-                "success": false,
-                "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "oversized-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of String in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of ArrayBuffer in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of FormData in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of URLSearchParams in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of Blob in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() does not accept payload[size=65537] exceeding per-origin quota in a POST request body of File in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              }
-            ]
+            "success": false,
+            "cases": []
           },
           "small-payload.tentative.https.window.html": {
-            "success": true,
-            "cases": [
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of String in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of ArrayBuffer in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of FormData in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of URLSearchParams in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of Blob in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              },
-              {
-                "name": "fetchLater() accepts payload[size=20] in a POST request body of File in same-origin iframe.",
-                "success": false,
-                "message": "document is not defined"
-              }
-            ]
+            "success": false,
+            "cases": []
           }
         },
         "small-payload.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "fetchLater() accepts small payload in a POST request body of String.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() accepts small payload in a POST request body of ArrayBuffer.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() accepts small payload in a POST request body of FormData.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() accepts small payload in a POST request body of URLSearchParams.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() accepts small payload in a POST request body of Blob.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            },
-            {
-              "name": "fetchLater() accepts small payload in a POST request body of File.",
-              "success": false,
-              "message": "fetchLater is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         }
       },
       "send-on-deactivate-with-background-sync.tentative.https.window.html": {
@@ -14667,65 +13349,21 @@
         "cases": []
       },
       "send-on-deactivate.tentative.https.window.html": {
-        "success": true,
-        "cases": [
-          {
-            "name": "fetchLater() sends on page entering BFCache if BackgroundSync is off.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "Call fetchLater() when BFCached with activateAfter=0 sends immediately.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "fetchLater() sends on navigating away a page w/o BFCache.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "fetchLater() does not send aborted request on navigating away a page w/o BFCache.",
-            "success": false,
-            "message": "window.open is not a function"
-          },
-          {
-            "name": "fetchLater() with activateAfter=1m sends on page entering BFCache if BackgroundSync is off.",
-            "success": false,
-            "message": "window.open is not a function"
-          }
-        ]
+        "success": false,
+        "cases": []
       },
       "send-on-discard": {
         "not-send-after-abort.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "A discarded document does not send an already aborted fetchLater request.",
-              "success": false,
-              "message": "document is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "send-multiple-with-activate-after.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "A discarded document sends all its fetchLater requests, no matter how much their activateAfter timeout remain.",
-              "success": false,
-              "message": "document is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "send-multiple.tentative.https.window.html": {
-          "success": true,
-          "cases": [
-            {
-              "name": "A discarded document sends all its fetchLater requests.",
-              "success": false,
-              "message": "document is not defined"
-            }
-          ]
+          "success": false,
+          "cases": []
         }
       }
     },
@@ -15252,6 +13890,46 @@
           {
             "name": "When key-order is set , URLs should be compared in an order-insensitive way. Not matched cases",
             "success": true
+          },
+          {
+            "name": "When params names a specific parameter, URLs differing only in that parameter should be cached as the same entry.",
+            "success": false,
+            "message": "assert_less_than: Response 2 does not come from cache expected a number less than 2 but got 2"
+          },
+          {
+            "name": "When params names a specific parameter, URLs differing in other parameters should be cached as different entries.",
+            "success": true
+          },
+          {
+            "name": "When params names multiple parameters, URLs differing only in those parameters should be cached as the same entry.",
+            "success": false,
+            "message": "assert_less_than: Response 2 does not come from cache expected a number less than 2 but got 2"
+          },
+          {
+            "name": "When params=?1 is set explicitly (equivalent to bare params), URLs differing only in their parameters (other than `dispatch` and `uuid`) should be cached as the same entry.",
+            "success": false,
+            "message": "assert_less_than: Response 2 does not come from cache expected a number less than 2 but got 2"
+          },
+          {
+            "name": "When params and except are set, URLs differing in a kept parameter should be cached as different entries.",
+            "success": true
+          },
+          {
+            "name": "When params names a parameter and key-order is set, URLs differing only in that parameter and parameter order should be cached as the same entry.",
+            "success": false,
+            "message": "assert_less_than: Response 2 does not come from cache expected a number less than 2 but got 2"
+          },
+          {
+            "name": "When params names a parameter and key-order is set, URLs differing in other parameters should be cached as different entries.",
+            "success": true
+          },
+          {
+            "name": "When params is an inner list combined with except, it should fall back to exact match and URLs with different parameters should be cached as different entries.",
+            "success": true
+          },
+          {
+            "name": "When except is set without params, it should fall back to exact match and URLs with different parameters should be cached as different entries.",
+            "success": true
           }
         ]
       },
@@ -15324,9 +14002,13 @@
         "success": true,
         "cases": [
           {
-            "name": "Response with Cache-Control: max-age=2592000, public and Pragma: no-cache should be cached",
+            "name": "Response with Cache-Control: max-age=2592000, public and Pragma: no-cache should not be cached",
+            "success": true
+          },
+          {
+            "name": "Response with Cache-Control: max-age=2592000, immutable and Pragma: no-cache should be cached",
             "success": false,
-            "message": "assert_equals: Responses should be identical, indicating caching expected \"Timestamp: 1774110745.180101\" but got \"Timestamp: 1774110745.1738834\""
+            "message": "assert_equals: Responses should be identical, indicating cache use expected \"Token: 77d4714b-3ac4-4def-88c0-d493defdef00\" but got \"Token: 36ecdb03-47dd-44d7-a8e4-1aa0118012e7\""
           }
         ]
       },
@@ -23648,8 +22330,7 @@
           },
           {
             "name": "A blob range request with no end.",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: fetch failed\""
+            "success": true
           },
           {
             "name": "A blob range request with no start.",
@@ -23677,8 +22358,7 @@
           },
           {
             "name": "Blob range with whitespace around equals sign",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: fetch failed\""
+            "success": true
           },
           {
             "name": "Blob range with no value",
@@ -24123,6 +22803,18 @@
               "message": "document is not defined"
             },
             {
+              "name": "Fetch: /images/gr\\teen-1x1.png?img=%3C",
+              "success": true
+            },
+            {
+              "name": "Fetch: /images/green-1x1.png?img=%3C",
+              "success": true
+            },
+            {
+              "name": "Fetch: /images/gre\\ten-1x1.png",
+              "success": true
+            },
+            {
               "name": "Fetch: /images/green-1x1.png",
               "success": true
             },
@@ -24131,15 +22823,7 @@
               "success": true
             },
             {
-              "name": "Fetch: /images/gre\\ten-1x1.png",
-              "success": true
-            },
-            {
-              "name": "Fetch: /images/gre\\ren-1x1.png",
-              "success": true
-            },
-            {
-              "name": "Fetch: /images/green-1x1.png?img=<",
+              "name": "Fetch: /images/green-1x1.png?img=&#10;",
               "success": true
             },
             {
@@ -24147,7 +22831,24 @@
               "success": true
             },
             {
-              "name": "Fetch: /images/green-1x1.png?img=%3C",
+              "name": "Fetch: /images/gre\\nen-1x1.png?img=<",
+              "success": false,
+              "message": "assert_unreached: Fetch should fail. Reached unreachable code"
+            },
+            {
+              "name": "Fetch: /images/gr\\reen-1x1.png?img=%3C",
+              "success": true
+            },
+            {
+              "name": "Fetch: /images/gr\\neen-1x1.png?img=&#10;",
+              "success": true
+            },
+            {
+              "name": "Fetch: /images/green-1x1.png?img=<",
+              "success": true
+            },
+            {
+              "name": "Fetch: /images/gre\\ren-1x1.png",
               "success": true
             },
             {
@@ -24155,28 +22856,16 @@
               "success": true
             },
             {
-              "name": "Fetch: /images/gr\\reen-1x1.png?img=%3C",
-              "success": true
-            },
-            {
-              "name": "Fetch: /images/gr\\teen-1x1.png?img=%3C",
-              "success": true
-            },
-            {
-              "name": "Fetch: /images/green-1x1.png?img=&#10;",
-              "success": true
-            },
-            {
-              "name": "Fetch: /images/green-1x1.png?<\\r=block",
-              "success": false,
-              "message": "assert_unreached: Fetch should fail. Reached unreachable code"
-            },
-            {
               "name": "Fetch: /images/gr\\teen-1x1.png?img=&#10;",
               "success": true
             },
             {
               "name": "Fetch: /images/gre\\ren-1x1.png?img=<",
+              "success": false,
+              "message": "assert_unreached: Fetch should fail. Reached unreachable code"
+            },
+            {
+              "name": "Fetch: /images/green-1x1.png?<\\r=block",
               "success": false,
               "message": "assert_unreached: Fetch should fail. Reached unreachable code"
             },
@@ -24191,22 +22880,13 @@
               "message": "assert_unreached: Fetch should fail. Reached unreachable code"
             },
             {
-              "name": "Fetch: /images/gr\\reen-1x1.png?img=&#10;",
-              "success": true
-            },
-            {
-              "name": "Fetch: /images/gre\\nen-1x1.png?img=<",
-              "success": false,
-              "message": "assert_unreached: Fetch should fail. Reached unreachable code"
-            },
-            {
-              "name": "Fetch: /images/gr\\neen-1x1.png?img=&#10;",
-              "success": true
-            },
-            {
               "name": "Fetch: /images/green-1x1.png?<\\t=block",
               "success": false,
               "message": "assert_unreached: Fetch should fail. Reached unreachable code"
+            },
+            {
+              "name": "Fetch: /images/gr\\reen-1x1.png?img=&#10;",
+              "success": true
             }
           ]
         },
@@ -24392,7 +23072,7 @@
           {
             "name": "Second fetch returns same response",
             "success": false,
-            "message": "assert_equals: expected \"oxxwxmaepucudtbybaij\" but got \"eejepvpvjzlnzrmyaimq\""
+            "message": "assert_equals: expected \"elgfdlxuxmhxxwbyvsut\" but got \"usdbnkxkcbipygmeaeey\""
           }
         ]
       },
@@ -36552,11 +35232,11 @@
       "success": true,
       "cases": [
         {
-          "name": "Application data is 125 byte which means any 'Extended payload length' field isn't used at all.",
+          "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
           "success": true
         },
         {
-          "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
+          "name": "Application data is 125 byte which means any 'Extended payload length' field isn't used at all.",
           "success": true
         },
         {
@@ -38864,9 +37544,9 @@
       "success": true,
       "cases": [
         {
-          "name": "constructing an insecure WebSocket in a secure context should throw",
+          "name": "opening an insecure WebSocket in a secure context should fail",
           "success": false,
-          "message": "assert_throws_dom: constructor should throw function \"() => CreateInsecureWebSocket()\" did not throw"
+          "message": "assert_unreached: open should not fire Reached unreachable code"
         }
       ]
     },
@@ -39164,7 +37844,7 @@
             {
               "name": "backpressure should be applied to received messages",
               "success": false,
-              "message": "assert_greater_than_equal: data send should have taken at least 2 seconds expected a number greater than or equal to 1.8 but got 0.0826730728149414"
+              "message": "assert_greater_than_equal: data send should have taken at least 2 seconds expected a number greater than or equal to 1.8 but got 0.07775568962097168"
             }
           ]
         },
@@ -39188,8 +37868,119 @@
           ]
         },
         "close.any.html?default": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "close code should be sent to server and reflected back",
+              "success": true
+            },
+            {
+              "name": "no close argument should send empty Close frame",
+              "success": true
+            },
+            {
+              "name": "unspecified close code should send empty Close frame",
+              "success": true
+            },
+            {
+              "name": "unspecified close code with empty reason should send empty Close frame",
+              "success": true
+            },
+            {
+              "name": "unspecified close code with non-empty reason should set code to 1000",
+              "success": true
+            },
+            {
+              "name": "close(true) should throw a TypeError",
+              "success": true
+            },
+            {
+              "name": "close() with an overlong reason should throw",
+              "success": true
+            },
+            {
+              "name": "close during handshake should work",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 999 should throw",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 1001 should throw",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 2999 should throw",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 5000 should throw",
+              "success": true
+            },
+            {
+              "name": "closing the writable should result in a clean close",
+              "success": true
+            },
+            {
+              "name": "writer close() promise should not resolve until handshake completes",
+              "success": false,
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.2510350000000017"
+            },
+            {
+              "name": "incomplete closing handshake should be considered unclean close",
+              "success": false,
+              "message": "assert_equals: close code should be Abnormal Closure expected 1006 but got 1005"
+            },
+            {
+              "name": "aborting the writable should result in a clean close",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with attributes not wrapped in a WebSocketError should be ignored",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a code should send that code",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a code and reason should use them",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a reason but no code should default the close code",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a DOMException not set code or reason",
+              "success": true
+            },
+            {
+              "name": "canceling the readable should result in a clean close",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with attributes not wrapped in a WebSocketError should be ignored",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a code should send that code",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a code and reason should use them",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a reason but no code should default the close code",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a DOMException not set code or reason",
+              "success": true
+            }
+          ]
         },
         "close.any.html?wpt_flags=h2": {
           "success": true,
@@ -39331,8 +38122,119 @@
           ]
         },
         "close.any.html?wss": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "close code should be sent to server and reflected back",
+              "success": true
+            },
+            {
+              "name": "no close argument should send empty Close frame",
+              "success": true
+            },
+            {
+              "name": "unspecified close code should send empty Close frame",
+              "success": true
+            },
+            {
+              "name": "unspecified close code with empty reason should send empty Close frame",
+              "success": true
+            },
+            {
+              "name": "unspecified close code with non-empty reason should set code to 1000",
+              "success": true
+            },
+            {
+              "name": "close(true) should throw a TypeError",
+              "success": true
+            },
+            {
+              "name": "close() with an overlong reason should throw",
+              "success": true
+            },
+            {
+              "name": "close during handshake should work",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 999 should throw",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 1001 should throw",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 2999 should throw",
+              "success": true
+            },
+            {
+              "name": "close() with invalid code 5000 should throw",
+              "success": true
+            },
+            {
+              "name": "closing the writable should result in a clean close",
+              "success": true
+            },
+            {
+              "name": "writer close() promise should not resolve until handshake completes",
+              "success": false,
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.27419499999996333"
+            },
+            {
+              "name": "incomplete closing handshake should be considered unclean close",
+              "success": false,
+              "message": "assert_equals: close code should be Abnormal Closure expected 1006 but got 1005"
+            },
+            {
+              "name": "aborting the writable should result in a clean close",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with attributes not wrapped in a WebSocketError should be ignored",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a code should send that code",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a code and reason should use them",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a reason but no code should default the close code",
+              "success": true
+            },
+            {
+              "name": "aborting the writable with a DOMException not set code or reason",
+              "success": true
+            },
+            {
+              "name": "canceling the readable should result in a clean close",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with attributes not wrapped in a WebSocketError should be ignored",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a code should send that code",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a code and reason should use them",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a reason but no code should default the close code",
+              "success": true
+            },
+            {
+              "name": "canceling the readable with a DOMException not set code or reason",
+              "success": true
+            }
+          ]
         },
         "constructor.any.html?wpt_flags=h2": {
           "success": true,
@@ -43495,7 +42397,7 @@
       "success": true,
       "cases": [
         {
-          "name": "EventSource: lastEventId resets",
+          "name": "EventSource: lastEventId persists",
           "success": true
         },
         {
@@ -43503,7 +42405,7 @@
           "success": true
         },
         {
-          "name": "EventSource: lastEventId persists",
+          "name": "EventSource: lastEventId resets",
           "success": true
         }
       ]
