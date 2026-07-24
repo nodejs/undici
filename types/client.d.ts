@@ -160,6 +160,11 @@ export declare namespace Client {
     */
     maxConcurrentStreams?: number;
     /**
+     * @description Enable support for H2C (plain text)
+     * @default false
+     */
+    useH2c?: boolean;
+    /**
      * @description SETTINGS frame object. Default to 'node:http2' defaults
      */
     settings?: Omit<SessionOptions['settings'], 'enablePush' | 'maxConcurrentStreams' | 'enableConnectProtocol'>
