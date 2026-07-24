@@ -9,7 +9,7 @@ retries, response decompression, redirect following, DNS caching, and more.
 ```js
 import { Agent, interceptors } from 'undici'
 
-const { retry, redirect, decompress, dump, responseError, dns, cache, deduplicate } = interceptors
+const { retry, redirect, decompress, dump, responseError, dns, cache, deduplicate, signal } = interceptors
 
 const agent = new Agent().compose([
   retry({ maxRetries: 3 }),
@@ -383,6 +383,49 @@ const agent = new Agent().compose(
     excludeHeaderNames: ['x-request-id', 'x-trace-id'],
     maxBufferSize: 2 * 1024 * 1024
   })
+)
+```
+
+---
+
+## `interceptors.signal()`
+
+Aborts the request when the `signal` dispatch option is aborted. Accepts both
+[`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+and `EventEmitter`-style signals (any object emitting an `abort` event). The
+request is aborted with `signal.reason` when available, or a
+`RequestAbortedError` otherwise. If the signal is already aborted when the
+request is dispatched, the request fails immediately without reaching the
+server.
+
+The abort listener is removed as soon as the request completes, errors or is
+upgraded, so long-lived signals do not accumulate listeners across requests.
+
+This is mainly useful when calling `dispatch()` directly with a custom
+handler; the higher-level API methods (`request`, `stream`, `pipeline`, etc.)
+already handle the `signal` option themselves.
+
+**Parameters**
+
+* None.
+
+**Returns:** {Dispatcher.DispatcherComposeInterceptor}
+
+**Example**
+
+```js
+import { Client, interceptors } from 'undici'
+
+const client = new Client('https://example.com').compose(
+  interceptors.signal()
+)
+
+const ac = new AbortController()
+queueMicrotask(() => ac.abort())
+
+client.dispatch(
+  { method: 'GET', path: '/', signal: ac.signal },
+  myCustomHandler
 )
 ```
 
