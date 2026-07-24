@@ -7,10 +7,8 @@ const connectH2 = require('../lib/dispatcher/client-h2')
 const {
   kUrl,
   kSocket,
-  kMaxConcurrentStreams,
   kHTTP2Session,
-  kHTTP2InitialWindowSize,
-  kHTTP2ConnectionWindowSize
+  kHTTP2Options
 } = require('../lib/core/symbols')
 
 test('Should plumb initialWindowSize and connectionWindowSize into the HTTP/2 session creation path', async (t) => {
@@ -68,11 +66,16 @@ test('Should plumb initialWindowSize and connectionWindowSize into the HTTP/2 se
 
   const client = {
     [kUrl]: new URL('https://localhost'),
-    [kMaxConcurrentStreams]: 100,
-    [kHTTP2InitialWindowSize]: initialWindowSize,
-    [kHTTP2ConnectionWindowSize]: connectionWindowSize,
     [kSocket]: null,
-    [kHTTP2Session]: null
+    [kHTTP2Session]: null,
+    [kHTTP2Options]: {
+      connectionWindowSize,
+      pingInterval: 60e3,
+      maxConcurrentStreams: 100,
+      sessionOptions: {
+        initialWindowSize
+      }
+    }
   }
 
   const socket = new FakeSocket()
