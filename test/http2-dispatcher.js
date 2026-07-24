@@ -772,6 +772,81 @@ test('Should clear h2 request stream references after abort before response', as
   await t.completed
 })
 
+test('Should destroy the h2 stream on abort', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  // Never respond, so the stream stays in-flight when we abort it.
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true
+  })
+  after(() => client.close())
+
+  const abortReason = new Error('abort after h2 stream assigned')
+  let abortRequest = null
+
+  const waitFor = async (fn) => {
+    for (let i = 0; i < 100; i++) {
+      const value = fn()
+      if (value != null) return value
+      await sleep(10)
+    }
+    throw new Error('timed out waiting for h2 request stream')
+  }
+
+  const responseError = new Promise(resolve => {
+    client.dispatch({ path: '/', method: 'GET' }, {
+      onRequestStart (controller) {
+        abortRequest = controller.abort.bind(controller)
+      },
+      onResponseStart () {
+        t.fail('unexpected response')
+      },
+      onResponseData () {
+        return true
+      },
+      onResponseEnd () {
+        t.fail('unexpected response end')
+      },
+      onResponseError (_controller, err) {
+        resolve(err)
+      }
+    })
+  })
+
+  const requestStreamSymbol = await waitFor(() => {
+    const request = client[kQueue][client[kRunningIdx]]
+    if (request == null) return null
+    return Object.getOwnPropertySymbols(request).find(
+      (s) => s.description === 'request stream'
+    )
+  })
+  const stream = await waitFor(
+    () => client[kQueue][client[kRunningIdx]]?.[requestStreamSymbol]
+  )
+
+  abortRequest = await waitFor(() => abortRequest)
+  abortRequest(abortReason)
+
+  // The abort path must destroy the stream synchronously, not just close() it
+  // or defer the destroy: relying on the async 'close' event (or a setImmediate
+  // that never runs while the event loop is stalled) leaks the native
+  // Http2Stream on a busy, long-lived multiplexed session (#5558).
+  t.strictEqual(stream.destroyed, true)
+  t.strictEqual(await responseError, abortReason)
+
+  await t.completed
+})
+
 test('Should only accept valid ping interval values', async t => {
   const planner = tspl(t, { plan: 3 })
 
@@ -1014,4 +1089,74 @@ test('Should not send http2 PING frames after connection is closed', async t => 
   t.equal(pingCounter, 0, 'Expected 0 PING frames to be sent')
 
   await t.completed
+})
+
+test('Should not emit uncaughtException when socket closes after abort', async t => {
+  const assert = tspl(t, { plan: 2 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  // Never respond, keeping the stream in-flight.
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+  })
+
+  t.after(() => {
+    server.close()
+  })
+  await once(server.listen(0), 'listening')
+
+  // Capture any uncaughtException that fires during the test
+  let uncaughtErr = null
+  const originalHandler = process.listeners('uncaughtException').length > 0
+    ? process.listeners('uncaughtException')[0]
+    : null
+  process.removeAllListeners('uncaughtException')
+  const uncaughtHandler = (err) => {
+    uncaughtErr = err
+  }
+  process.on('uncaughtException', uncaughtHandler)
+  t.after(() => {
+    process.removeListener('uncaughtException', uncaughtHandler)
+    if (originalHandler) {
+      process.on('uncaughtException', originalHandler)
+    }
+  })
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true
+  })
+  t.after(() => client.close())
+
+  const controller = new AbortController()
+
+  const requestPromise = client.request({
+    path: '/',
+    method: 'GET',
+    signal: controller.signal
+  })
+
+  // Abort the request to trigger the abort path
+  controller.abort()
+
+  // Wait for the request to reject
+  try {
+    await requestPromise
+    assert.fail('request should have rejected')
+  } catch (err) {
+    assert.ok(err, 'request rejected')
+  }
+
+  // Now close the server to trigger socket 'end' event,
+  // simulating the CDN closing the connection after abort.
+  // This used to trigger an uncaughtException via onHttp2SocketError.
+  server.close()
+
+  // Wait for any pending async error handling
+  await sleep(500)
+
+  assert.equal(uncaughtErr, null, 'No uncaughtException should have been emitted')
+
+  await assert.completed
 })

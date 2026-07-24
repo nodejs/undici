@@ -80,8 +80,16 @@ const BASE_TEST_ENVIRONMENT = {
     '304-etag-update-response-X-Content-Foo',
     '304-etag-update-response-X-Test-Header',
 
-    // We just trim whatever's in the decimal place off (i.e. 7200.0 -> 7200)
+    // The hardening treats malformed or duplicate Age values as stale instead
+    // of ignoring them or using the first parseable value.
+    'age-parse-nonnumeric',
+    'age-parse-negative',
     'age-parse-float',
+    'age-parse-prefix',
+    'age-parse-prefix-twoline',
+    'age-parse-dup-0',
+    'age-parse-dup-0-twoline',
+    'age-parse-dup-old',
 
     // Broken?
     'head-200-update',

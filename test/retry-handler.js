@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
+const FakeTimers = require('@sinonjs/fake-timers')
 
 const { RetryHandler, Client } = require('..')
 const { RequestHandler } = require('../lib/api/api-request')
@@ -346,6 +347,40 @@ test('Should use retry-after header for retries', async t => {
   await t.completed
 })
 
+test('Should retry immediately when retry-after is zero', async t => {
+  const clock = FakeTimers.install()
+  t.after(() => clock.uninstall())
+
+  let retries = 0
+  const handler = new RetryHandler(
+    {
+      method: 'GET',
+      retryOptions: {
+        maxRetries: 1,
+        minTimeout: 500
+      }
+    },
+    {
+      dispatch () {
+        retries++
+      },
+      handler: {}
+    }
+  )
+
+  handler.onResponseError(null, {
+    statusCode: 429,
+    code: 'UND_ERR_REQ_RETRY',
+    headers: {
+      'retry-after': '0'
+    }
+  })
+
+  await clock.tickAsync(0)
+
+  t.assert.strictEqual(retries, 1)
+})
+
 test('Should use retry-after header for retries (date)', async t => {
   t = tspl(t, { plan: 3 })
 
@@ -530,7 +565,7 @@ test('Should handle 206 partial content', async t => {
       })
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')
@@ -626,7 +661,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
       }, 1e2)
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'erwsd')
       res.statusCode = 206
       res.end('def')
@@ -1070,7 +1105,7 @@ test('Issue#2986 - Handle custom 206', async t => {
       })
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')
@@ -1266,7 +1301,7 @@ test('Issue#3128 - Support if-match', async t => {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       t.deepStrictEqual(req.headers['if-match'], 'asd')
 
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
       res.end('def')
@@ -1366,7 +1401,7 @@ test('Issue#3128 - Should ignore weak etags', async t => {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       t.equal(req.headers['if-match'], undefined)
 
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'W/asd')
       res.statusCode = 206
       res.end('def')
@@ -1466,7 +1501,7 @@ test('Weak etags are ignored on range-requests', async t => {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
       t.equal(req.headers['if-match'], undefined)
 
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'W/efg')
       res.statusCode = 206
       res.end('def')

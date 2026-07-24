@@ -174,6 +174,22 @@ test('Cookie Domain Validation', () => {
   })
 })
 
+test('Cookie Unparsed Validation', () => {
+  const parts = [
+    'X-Custom=val; HttpOnly',
+    'Purpose=tracking; SameSite=None; Secure',
+    'HttpOnly; X-Custom=val'
+  ]
+
+  for (const part of parts) {
+    assert.throws(() => setCookie(new Headers(), {
+      name: 'Space',
+      value: 'Cat',
+      unparsed: [part]
+    }))
+  }
+})
+
 test('Cookie Delete', () => {
   let headers = new Headers()
   deleteCookie(headers, 'deno')
@@ -744,4 +760,12 @@ test('Cookie deleteCookie does not throw if headers is an instance of undici own
 test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
   const headers = new globalThis.Headers()
   deleteCookie(headers, 'deno')
+})
+
+test('Set-Cookie parser ignores an unparseable Expires', () => {
+  const headers = new Headers({ 'set-cookie': 'id=a3fWa; Expires=not-a-date' })
+  assert.deepEqual(getSetCookies(headers), [{
+    name: 'id',
+    value: 'a3fWa'
+  }])
 })
