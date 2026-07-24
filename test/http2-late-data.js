@@ -215,6 +215,14 @@ test('Should complete the response and release the stream on end without a close
       t.ifError(err)
     },
     [kResume] () {},
+    [kHTTP2Options]: {
+      pingInterval: 60e3,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100,
+      sessionOptions: {
+        initialWindowSize: 262144
+      }
+    },
     emit () {},
     destroyed: false
   }
@@ -297,6 +305,14 @@ test('Should complete only once when both end and a late close fire', async (t) 
       t.ifError(err)
     },
     [kResume] () {},
+    [kHTTP2Options]: {
+      pingInterval: 60e3,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100,
+      sessionOptions: {
+        initialWindowSize: 262144
+      }
+    },
     emit () {},
     destroyed: false
   }
@@ -453,6 +469,14 @@ test('Should finalize an already-aborted request when its stream closes', async 
       t.ifError(err)
     },
     [kResume] () {},
+    [kHTTP2Options]: {
+      pingInterval: 60e3,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100,
+      sessionOptions: {
+        initialWindowSize: 262144
+      }
+    },
     emit () {},
     destroyed: false
   }
