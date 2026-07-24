@@ -278,4 +278,4 @@ See [API Reference: Global Installation](api/GlobalInstallation.md).
 - [Undici vs. Built-in Fetch](best-practices/undici-vs-builtin-fetch.md) —
   when to install undici vs using Node.js built-in fetch
 - [API Reference](api/Dispatcher.md) — full dispatcher API documentation
-- [Examples](/examples/) — runnable code examples
+- [Examples](https://github.com/nodejs/undici/tree/main/docs/examples) — runnable code examples
