@@ -12,7 +12,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
 const { interceptors, Agent, Client, Pool, request } = require('../..')
-const { dns } = interceptors
+const { dns, cache, deduplicate } = interceptors
 
 // Helper to check if IPv6 is available for localhost
 // This is called synchronously at test definition time
@@ -2150,6 +2150,93 @@ test('#4444 - Should preserve iterable headers', async t => {
   const response = await request(`http://localhost:${server.address().port}`, {
     dispatcher: client,
     headers: new Map([['foo', 'bar']])
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+})
+
+test('#5522 - Should not throw when dns re-dispatches into a composed cache interceptor', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer()
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  // dns is the outer interceptor here, so its re-dispatch after resolving
+  // lands back in cache's normalizeHeaders() with a flat header array.
+  const client = new Agent().compose(cache(), dns({
+    lookup: (_origin, _opts, cb) => {
+      cb(null, [
+        {
+          address: '127.0.0.1',
+          family: 4
+        }
+      ])
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await request(`http://localhost:${server.address().port}`, {
+    dispatcher: client,
+    headers: []
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+})
+
+test('#5522 - Should not throw when dns re-dispatches into a composed deduplicate interceptor', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer()
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  // Same root cause as the cache-interceptor case above, but through
+  // deduplicate() -- it shares the same normalizeHeaders()/makeCacheKey()
+  // utility from lib/util/cache.js, so it was equally affected.
+  const client = new Agent().compose(deduplicate(), dns({
+    lookup: (_origin, _opts, cb) => {
+      cb(null, [
+        {
+          address: '127.0.0.1',
+          family: 4
+        }
+      ])
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await request(`http://localhost:${server.address().port}`, {
+    dispatcher: client,
+    headers: []
   })
 
   t.equal(response.statusCode, 200)
