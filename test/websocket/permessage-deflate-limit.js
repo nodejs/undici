@@ -340,6 +340,103 @@ test('Raw uncompressed payload over immediate limit is rejected', async (t) => {
   t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
 })
 
+test('Control frame before inline payload does not bypass maxPayloadSize', async (t) => {
+  const limit = 1
+  const server = new WebSocketServer({
+    port: 0,
+    perMessageDeflate: false
+  })
+
+  t.after(() => server.close())
+  await once(server, 'listening')
+
+  let messageReceived = false
+
+  server.on('connection', (ws) => {
+    const socket = ws._socket
+
+    // Ping frame followed by a 2-byte text frame. The text frame must be
+    // validated as data, not as the previous control frame.
+    socket.write(Buffer.from([0x89, 0x01, 0x78]))
+    socket.write(Buffer.from([0x81, 0x02, 0x61, 0x62]))
+  })
+
+  const agent = new Agent({
+    webSocket: {
+      maxPayloadSize: limit
+    }
+  })
+
+  t.after(() => agent.close())
+
+  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const timeout = Symbol('timeout')
+
+  client.addEventListener('message', () => {
+    messageReceived = true
+  })
+
+  const result = await Promise.race([
+    once(client, 'close'),
+    sleep(5000, timeout)
+  ])
+
+  t.assert.notStrictEqual(result, timeout, 'Connection should close after inline data exceeds maxPayloadSize')
+  t.assert.strictEqual(messageReceived, false, 'Oversized inline payload after control frame should be rejected')
+  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+})
+
+test('Control frame after inline payload is not counted toward maxPayloadSize', async (t) => {
+  const limit = 1
+  const server = new WebSocketServer({
+    port: 0,
+    perMessageDeflate: false
+  })
+
+  t.after(() => server.close())
+  await once(server, 'listening')
+
+  const serverPong = new Promise((resolve) => {
+    server.on('connection', (ws) => {
+      ws.on('pong', resolve)
+
+      const socket = ws._socket
+
+      // 1-byte text frame at the limit followed by a 2-byte ping. The ping
+      // must be validated as a control frame, not as the previous data frame.
+      socket.write(Buffer.from([0x81, 0x01, 0x61]))
+      socket.write(Buffer.from([0x89, 0x02, 0x78, 0x79]))
+    })
+  })
+
+  const agent = new Agent({
+    webSocket: {
+      maxPayloadSize: limit
+    }
+  })
+
+  t.after(() => agent.close())
+
+  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+  const timeout = Symbol('timeout')
+
+  const message = await Promise.race([
+    once(client, 'message'),
+    sleep(5000, timeout)
+  ])
+
+  t.assert.notStrictEqual(message, timeout, 'Expected inline data frame at maxPayloadSize to be delivered')
+  t.assert.strictEqual(message[0].data, 'a')
+
+  const pong = await Promise.race([
+    serverPong,
+    sleep(5000, timeout)
+  ])
+
+  t.assert.notStrictEqual(pong, timeout, 'Expected ping after data frame to be handled as a control frame')
+  client.close()
+})
+
 test('Raw uncompressed payload over 16-bit extended limit is rejected', async (t) => {
   const limit = 1 * 1024 // 1 KB
   const server = new WebSocketServer({
