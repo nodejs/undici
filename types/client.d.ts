@@ -75,6 +75,8 @@ export declare namespace Client {
     maxResponseSize?: number;
     /** WebSocket-specific options */
     webSocket?: Client.WebSocketOptions;
+    /** EventSource-specific options */
+    eventSource?: Client.EventSourceOptions;
     /** Enables a family autodetection algorithm that loosely implements section 5 of RFC 8305. */
     autoSelectFamily?: boolean;
     /** The amount of time in milliseconds to wait for a connection attempt to finish before trying the next address when using the `autoSelectFamily` option. */
@@ -128,6 +130,14 @@ export declare namespace Client {
      * @default 134217728 (128 MB)
      */
     maxPayloadSize?: number;
+  }
+  export interface EventSourceOptions {
+    /**
+     * Maximum allowed event size in bytes for EventSource messages.
+     * Set to 0 to disable the limit.
+     * @default buffer.kStringMaxLength
+     */
+    maxEventSize?: number;
   }
 }
 
