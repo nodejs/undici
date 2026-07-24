@@ -52,9 +52,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm install -g npm@latest
+      - run: npm install -g npm@11
       - run: npm install
       - name: Create NPM release
         run: npm publish --provenance --access public --tag six
