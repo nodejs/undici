@@ -105,6 +105,8 @@ expectAssignable<Client>(
     autoSelectFamilyAttemptTimeout: 300e3
   })
 )
+
+// TODO: (@metcoder95) - remove in further major
 expectAssignable<Client>(
   new Client('', {
     allowH2: true
@@ -128,6 +130,19 @@ expectAssignable<Client>(
 expectAssignable<Client>(
   new Client('', {
     pingInterval: 60e3
+  })
+)
+expectAssignable<Client>(
+  new Client('', {
+    h2Options: {
+      useH2c: false,
+      pingInterval: 60e3,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100,
+      settings: {
+        initialWindowSize: 262144
+      }
+    }
   })
 )
 

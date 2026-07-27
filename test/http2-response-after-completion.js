@@ -36,7 +36,8 @@ const {
   kOnError,
   kResume,
   kRunning,
-  kPingInterval
+  kPingInterval,
+  kHTTP2Options
 } = require('../lib/core/symbols')
 
 class FakeSocket extends EventEmitter {
@@ -126,6 +127,12 @@ test('Should ignore a late http2 "response" delivered after request completion',
       t.ifError(err)
     },
     [kResume] () {},
+    [kHTTP2Options]: {
+      pingInterval: 60e3,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100, // Max peerConcurrentStreams for a Node h2 server
+      sessionOptions: { initialWindowSize: 262144 }
+    },
     emit () {},
     destroyed: false
   }
