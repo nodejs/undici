@@ -402,5 +402,43 @@ describe('DecoratorHandler', () => {
         t.doesNotThrow(() => decorator.onResponseError(new Controller()))
       })
     })
+
+    describe('#onBodySent', () => {
+      test('should delegate onBodySent to wrapped handler', t => {
+        t = tspl(t, { plan: 1 })
+        const inner = {
+          onBodySent: (chunk) => {
+            t.equal(chunk, 'hello')
+          }
+        }
+        const decorator = new DecoratorHandler(inner)
+        decorator.onBodySent('hello')
+      })
+
+      test('should not throw if wrapped handler has no onBodySent', t => {
+        t = tspl(t, { plan: 1 })
+        const decorator = new DecoratorHandler({ onRequestStart: () => {} })
+        t.doesNotThrow(() => decorator.onBodySent('hello'))
+      })
+    })
+
+    describe('#onRequestSent', () => {
+      test('should delegate onRequestSent to wrapped handler', t => {
+        t = tspl(t, { plan: 1 })
+        const inner = {
+          onRequestSent: () => {
+            t.ok(true)
+          }
+        }
+        const decorator = new DecoratorHandler(inner)
+        decorator.onRequestSent()
+      })
+
+      test('should not throw if wrapped handler has no onRequestSent', t => {
+        t = tspl(t, { plan: 1 })
+        const decorator = new DecoratorHandler({ onRequestStart: () => {} })
+        t.doesNotThrow(() => decorator.onRequestSent())
+      })
+    })
   })
 })
