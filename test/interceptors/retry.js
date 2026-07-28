@@ -445,6 +445,59 @@ test('Should reject initial 206 partial content with mismatched content-length',
   t.strictEqual(x, 1)
 })
 
+test('Should forward a multipart/byteranges 206 without content-range', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const body = [
+    '--THIS_STRING_SEPARATES',
+    'content-type: text/plain',
+    'content-range: bytes 0-3/25',
+    '',
+    'abcd',
+    '--THIS_STRING_SEPARATES',
+    'content-type: text/plain',
+    'content-range: bytes 10-14/25',
+    '',
+    'klmno',
+    '--THIS_STRING_SEPARATES--',
+    ''
+  ].join('\r\n')
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    t.strictEqual(req.headers.range, 'bytes=0-3,10-14')
+    res.statusCode = 206
+    res.setHeader('content-type', 'multipart/byteranges; boundary=THIS_STRING_SEPARATES')
+    res.end(body)
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry({ maxRetries: 0 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    headers: {
+      range: 'bytes=0-3,10-14'
+    }
+  })
+
+  t.strictEqual(response.statusCode, 206)
+  t.strictEqual(response.headers['content-type'], 'multipart/byteranges; boundary=THIS_STRING_SEPARATES')
+  t.strictEqual(await response.body.text(), body)
+})
+
 test('Should handle 206 partial content - bad-etag', async t => {
   t = tspl(t, { plan: 5 })
 
