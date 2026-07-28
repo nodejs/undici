@@ -578,6 +578,35 @@ test('#4970 - Should reject resumed partial content when body exceeds Content-Ra
   })
 })
 
+test('Should not reject a HEAD response with content-length', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.setHeader('content-length', '1234')
+    res.end()
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'HEAD', path: '/' })
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-length'], '1234')
+  t.strictEqual(await response.body.text(), '')
+})
+
 test('retrying a request with a body', async t => {
   t = tspl(t, { plan: 2 })
   let counter = 0
