@@ -1574,6 +1574,46 @@ test('setEncoding(\'utf8\') handles 3-byte UTF-8 characters split across chunks'
   await t.completed
 })
 
+test('#5611 - setEncoding() then .text() does not truncate a body that arrives in several chunks', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  // '傳' is 3 bytes in UTF-8, split across the two chunks below.
+  const text = 'abc傳def'
+  const buf = Buffer.from(text)
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' })
+    res.write(buf.subarray(0, 4))
+    setTimeout(() => {
+      res.end(buf.subarray(4))
+    }, 50)
+  })
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(client.destroy.bind(client))
+
+    const { body } = await client.request({ path: '/', method: 'GET' })
+    body.setEncoding('utf8')
+
+    // Let the whole body arrive before consuming, so that every chunk is
+    // buffered as a decoded string and the split character sits inside the
+    // decoder by the time the consume starts.
+    await new Promise(resolve => setTimeout(resolve, 150))
+
+    const result = await body.text()
+
+    t.strictEqual(result, text)
+    t.strictEqual(Buffer.byteLength(result), buf.length)
+  })
+
+  await t.completed
+})
+
 test('#3736 - Aborted Response (without consuming body)', async (t) => {
   const plan = tspl(t, { plan: 1 })
 
