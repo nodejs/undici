@@ -50,7 +50,8 @@ test('Should handle http2 stream timeout', async t => {
   })
 
   await t.rejects(res.body.text(), {
-    message: 'HTTP/2: "stream timeout after 50"'
+    message: 'HTTP/2: "body timeout after 50"',
+    code: 'UND_ERR_BODY_TIMEOUT'
   })
 
   await t.completed
