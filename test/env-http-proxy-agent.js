@@ -443,6 +443,27 @@ describe('no_proxy', () => {
     return dispatcher.close()
   })
 
+  test('bare IPv6 addresses in no_proxy are matched (issue #5616)', async (t) => {
+    // A bare IPv6 address like ::1 is valid in no_proxy (curl and most tools
+    // accept it), but the old regex confused the last colon as a port separator.
+    t = tspl(t, { plan: 8 })
+    process.env.no_proxy = '::1,[::2]:80,::3'
+    const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(8)
+    // ::1 without brackets – must be matched
+    t.ok(await doesNotProxy('http://[::1]/'))
+    t.ok(await doesNotProxy('http://[::1]:80/'))
+    t.ok(await doesNotProxy('http://[::1]:1337/'))
+    // [::2]:80 – only port 80 bypasses proxy
+    t.ok(await doesNotProxy('http://[::2]:80/'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://[::2]:1337/'))
+    // ::3 without brackets – must be matched
+    t.ok(await doesNotProxy('http://[::3]/'))
+    t.ok(await doesNotProxy('http://[::3]:443/'))
+    // unrelated address must still proxy
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://[::4]/'))
+    return dispatcher.close()
+  })
+
   test('CIDR is NOT supported', async (t) => {
     t = tspl(t, { plan: 2 })
     process.env.no_proxy = '127.0.0.1/32'
