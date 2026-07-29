@@ -1581,12 +1581,15 @@ test('#5611 - setEncoding() then .text() does not truncate a body that arrives i
   const text = 'abc傳def'
   const buf = Buffer.from(text)
 
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  // The rest of the body is released only once the client has called
+  // setEncoding(), which is what puts the second chunk on the wrong side of it.
+  const sendRest = new EE()
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' })
     res.write(buf.subarray(0, 4))
-    setTimeout(() => {
-      res.end(buf.subarray(4))
-    }, 50)
+    await EE.once(sendRest, 'go')
+    res.end(buf.subarray(4))
   })
   after(() => {
     server.closeAllConnections?.()
@@ -1600,10 +1603,13 @@ test('#5611 - setEncoding() then .text() does not truncate a body that arrives i
     const { body } = await client.request({ path: '/', method: 'GET' })
     body.setEncoding('utf8')
 
-    // Let the whole body arrive before consuming, so that every chunk is
-    // buffered as a decoded string and the split character sits inside the
-    // decoder by the time the consume starts.
-    await new Promise(resolve => setTimeout(resolve, 150))
+    // 'drain' means the request has run to completion, so the whole body has
+    // arrived and is buffered as decoded strings, with the split character
+    // held inside the decoder. Waiting on the body itself is not an option:
+    // reading it would disturb it and make the consume below unusable.
+    const completed = EE.once(client, 'drain')
+    sendRest.emit('go')
+    await completed
 
     const result = await body.text()
 
