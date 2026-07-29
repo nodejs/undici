@@ -592,6 +592,15 @@ describe('MockInterceptor - different payloads', () => {
     ['bytes', 'string', 'Uint8Array', '{"test":true}', new TextEncoder().encode('{"test":true}')],
     ['text', 'string', 'string', '{"test":true}', '{"test":true}'],
 
+    // DataView
+    ['arrayBuffer', 'DataView', 'ArrayBuffer', new DataView(new TextEncoder().encode('{"test":true}').buffer), new TextEncoder().encode('{"test":true}').buffer],
+    ['json', 'DataView', 'Object', new DataView(new TextEncoder().encode('{"test":true}').buffer), { test: true }],
+    ['bytes', 'DataView', 'Uint8Array', new DataView(new TextEncoder().encode('{"test":true}').buffer), new TextEncoder().encode('{"test":true}')],
+    ['text', 'DataView', 'string', new DataView(new TextEncoder().encode('{"test":true}').buffer), '{"test":true}'],
+
+    // DataView covering only part of its backing ArrayBuffer
+    ['text', 'DataView with an offset', 'string', new DataView(new TextEncoder().encode('xx{"test":true}yy').buffer, 2, 13), '{"test":true}'],
+
     // object
     ['arrayBuffer', 'Object', 'ArrayBuffer', { test: true }, new TextEncoder().encode('{"test":true}').buffer],
     ['json', 'Object', 'Object', { test: true }, { test: true }],

@@ -214,6 +214,27 @@ describe('getResponseData', () => {
     t.assert.ok(responseData instanceof ArrayBuffer)
   })
 
+  test('it should return the bytes of a DataView', (t) => {
+    t.plan(2)
+    const responseData = getResponseData(new DataView(new TextEncoder().encode('{"test":true}').buffer))
+    t.assert.ok(responseData instanceof Uint8Array)
+    t.assert.strictEqual(Buffer.from(responseData).toString('utf8'), '{"test":true}')
+  })
+
+  test('it should return only the bytes a DataView covers', (t) => {
+    t.plan(1)
+    const buffer = new TextEncoder().encode('xx{"test":true}yy').buffer
+    const responseData = getResponseData(new DataView(buffer, 2, 13))
+    t.assert.strictEqual(Buffer.from(responseData).toString('utf8'), '{"test":true}')
+  })
+
+  test('it should return the bytes of a typed array that is not a Uint8Array', (t) => {
+    t.plan(2)
+    const responseData = getResponseData(new Uint8ClampedArray([1, 2, 3]))
+    t.assert.ok(responseData instanceof Uint8Array)
+    t.assert.deepStrictEqual([...responseData], [1, 2, 3])
+  })
+
   test('it should handle undefined', (t) => {
     t.plan(1)
     const responseData = getResponseData(undefined)
