@@ -352,8 +352,48 @@ test('getUpstream returns undefined for closed/destroyed upstream', (t) => {
 })
 
 function getErrorPort (err) {
-  return err?.socket?.remotePort ?? err?.port
+  if (err?.socket?.remotePort !== undefined) {
+    return err.socket.remotePort
+  }
+
+  if (err?.port !== undefined) {
+    return err.port
+  }
+
+  // The upstreams below are built on `localhost`, which resolves to both ::1 and
+  // 127.0.0.1, so a connection failure arrives as an AggregateError from the
+  // happy eyeballs attempt. The port is only on the individual causes.
+  if (Array.isArray(err?.errors)) {
+    for (const cause of err.errors) {
+      const port = getErrorPort(cause)
+      if (port !== undefined) {
+        return port
+      }
+    }
+  }
+
+  return undefined
 }
+
+test('getErrorPort resolves the port of an aggregated connection error', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  // Nothing listens on port 1. Because the upstream is `localhost`, both ::1 and
+  // 127.0.0.1 are attempted and the refusals arrive wrapped in an AggregateError
+  // that carries no port of its own.
+  const pool = new BalancedPool('http://localhost:1')
+  t.after(() => pool.close())
+
+  try {
+    await pool.request({ path: '/', method: 'GET' })
+    p.fail('request should have been refused')
+  } catch (err) {
+    p.strictEqual(err.code, 'ECONNREFUSED')
+    p.strictEqual(getErrorPort(err), 1)
+  }
+
+  await p.completed
+})
 
 class TestServer {
   constructor ({ config: { server, socketHangup, downOnRequests, socketHangupOnRequests }, onRequest }) {
