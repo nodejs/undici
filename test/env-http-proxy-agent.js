@@ -464,8 +464,6 @@ describe('no_proxy', () => {
     return dispatcher.close()
   })
 
-
-
   test('CIDR is NOT supported', async (t) => {
     t = tspl(t, { plan: 2 })
     process.env.no_proxy = '127.0.0.1/32'
