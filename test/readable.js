@@ -5,6 +5,26 @@ const { test, describe } = require('node:test')
 const { Readable } = require('../lib/api/readable')
 
 describe('Readable', () => {
+  test('consume a body whose end has already been emitted', async function (t) {
+    t = tspl(t, { plan: 1 })
+
+    function resume () {
+    }
+    function abort () {
+    }
+    const r = new Readable({ resume, abort })
+
+    // An empty body, as a 204 gives, drained before anyone asks for it. No data is
+    // emitted, so the body is not disturbed and the consume is allowed to proceed -
+    // it just starts after 'end'. What must not happen is a throw out of the
+    // microtask consumeStart runs on, which no caller can catch.
+    r.push(null)
+    r.resume()
+    await new Promise(resolve => r.on('end', resolve))
+
+    t.strictEqual(await r.text(), '')
+  })
+
   test('avoid body reordering', async function (t) {
     t = tspl(t, { plan: 1 })
 
