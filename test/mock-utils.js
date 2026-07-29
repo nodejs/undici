@@ -124,6 +124,44 @@ describe('getMockDispatch', () => {
     }), new MockNotMatchedError('Mock dispatch not matched for body \'wrong\' on path \'path\''))
   })
 
+  test('it should match a RegExp path with ignoreTrailingSlash', (t) => {
+    t.plan(2)
+    const dispatch = {
+      path: /^\/path$/,
+      method: 'method',
+      ignoreTrailingSlash: true,
+      consumed: false
+    }
+
+    t.assert.deepStrictEqual(getMockDispatch([dispatch], {
+      path: '/path',
+      method: 'method'
+    }), dispatch)
+    t.assert.deepStrictEqual(getMockDispatch([dispatch], {
+      path: '/path/',
+      method: 'method'
+    }), dispatch)
+  })
+
+  test('it should match a function path with ignoreTrailingSlash', (t) => {
+    t.plan(2)
+    const dispatch = {
+      path: (path) => path === '/path',
+      method: 'method',
+      ignoreTrailingSlash: true,
+      consumed: false
+    }
+
+    t.assert.deepStrictEqual(getMockDispatch([dispatch], {
+      path: '/path',
+      method: 'method'
+    }), dispatch)
+    t.assert.deepStrictEqual(getMockDispatch([dispatch], {
+      path: '/path/',
+      method: 'method'
+    }), dispatch)
+  })
+
   test('it should throw if no dispatch matches headers', (t) => {
     t.plan(1)
     const dispatches = [
