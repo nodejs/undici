@@ -1168,6 +1168,33 @@ describe('Deduplicate Interceptor', () => {
     strictEqual(body2, 'response 2')
   })
 
+  test('does not deduplicate upgrade requests', () => {
+    let dispatchCount = 0
+    const dispatchedHandlers = []
+    const dispatch = (_opts, handler) => {
+      dispatchCount++
+      dispatchedHandlers.push(handler)
+      return true
+    }
+    const deduplicate = interceptors.deduplicate()(dispatch)
+    const opts = {
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: {}
+    }
+    const handler = {}
+
+    try {
+      deduplicate(opts, handler)
+      deduplicate({ ...opts, upgrade: 'websocket' }, handler)
+
+      strictEqual(dispatchCount, 2)
+    } finally {
+      dispatchedHandlers[0]?.onResponseEnd?.(null, {})
+    }
+  })
+
   test('does not deduplicate requests that arrive after body streaming starts', async () => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
