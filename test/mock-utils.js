@@ -240,6 +240,12 @@ describe('getResponseData', () => {
     const responseData = getResponseData(undefined)
     t.assert.strictEqual(responseData, '')
   })
+
+  test('it should handle null', (t) => {
+    t.plan(1)
+    const responseData = getResponseData(null)
+    t.assert.strictEqual(responseData, '')
+  })
 })
 
 test('getStatusText', (t) => {
