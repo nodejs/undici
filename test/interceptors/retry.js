@@ -9,6 +9,44 @@ const { spawnSync } = require('node:child_process')
 const { Client, interceptors } = require('../..')
 const { retry, redirect, dns } = interceptors
 
+test('Should handle informational responses', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeEarlyHints({ link: '</style.css>; rel=preload; as=style' })
+    res.end('hello world!')
+  })
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const infos = []
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    onInfo: info => infos.push(info)
+  })
+
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(await response.body.text(), 'hello world!')
+  t.strictEqual(infos.length, 1)
+  t.deepStrictEqual(infos[0], {
+    statusCode: 103,
+    headers: { link: '</style.css>; rel=preload; as=style' }
+  })
+})
+
 test('Should retry status code', async t => {
   t = tspl(t, { plan: 4 })
 
