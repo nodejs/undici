@@ -2,6 +2,7 @@
 
 const net = require('node:net')
 const https = require('node:https')
+const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { request, ProxyAgent } = require('..')
@@ -9,6 +10,11 @@ const { InvalidArgumentError } = require('../lib/core/errors')
 const Socks5ProxyAgent = require('../lib/dispatcher/socks5-proxy-agent')
 const { createServer } = require('node:http')
 const { TestSocks5Server } = require('./fixtures/socks5-test-server')
+
+function getPools (agent) {
+  const poolsSymbol = Object.getOwnPropertySymbols(agent).find(symbol => symbol.description === 'pools')
+  return agent[poolsSymbol]
+}
 
 const tlsCerts = (() => {
   const forge = require('node-forge')
@@ -182,6 +188,40 @@ test('Socks5ProxyAgent - basic HTTP connection', async (t) => {
     message: 'Hello from target server',
     path: '/test'
   }, 'should get correct response body')
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - removes an origin pool after disconnect', async (t) => {
+  const p = tspl(t, { plan: 2 })
+  const server = createServer((req, res) => {
+    res.setHeader('connection', 'close')
+    res.end('OK')
+  })
+  const targetSocketClosed = new Promise((resolve) => {
+    server.once('connection', (socket) => socket.once('close', resolve))
+  })
+  await new Promise(resolve => server.listen(0, resolve))
+  t.after(() => server.close())
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen()
+  t.after(() => socksServer.close())
+
+  const proxyWrapper = new Socks5ProxyAgent(`socks5://localhost:${socksAddress.port}`)
+  t.after(() => proxyWrapper.destroy())
+
+  const responsePromise = request(`http://localhost:${server.address().port}/`, {
+    dispatcher: proxyWrapper
+  })
+  const pool = getPools(proxyWrapper).values().next().value
+  const disconnected = once(pool, 'disconnect')
+  const response = await responsePromise
+  p.equal(await response.body.text(), 'OK')
+
+  await targetSocketClosed
+  await disconnected
+  p.strictEqual(getPools(proxyWrapper).size, 0, 'should remove the disconnected origin pool')
 
   await p.completed
 })
@@ -369,7 +409,7 @@ test('Socks5ProxyAgent - requests to different origins are routed correctly', as
 })
 
 test('Socks5ProxyAgent - connection failure', async (t) => {
-  const p = tspl(t, { plan: 1 })
+  const p = tspl(t, { plan: 2 })
 
   // Create Socks5ProxyAgent pointing to non-existent proxy
   const proxyWrapper = new Socks5ProxyAgent('socks5://localhost:9999')
@@ -382,6 +422,8 @@ test('Socks5ProxyAgent - connection failure', async (t) => {
   } catch (err) {
     p.ok(err, 'should throw error when SOCKS5 proxy is not available')
   }
+
+  p.strictEqual(getPools(proxyWrapper).size, 0, 'should remove the failed origin pool')
 
   await p.completed
 })
