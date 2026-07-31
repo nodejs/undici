@@ -511,6 +511,61 @@ describe('https://github.com/nodejs/undici/issues/3649', () => {
   })
 })
 
+describe('MockInterceptor - ignoreTrailingSlash with non-string path matchers', () => {
+  [
+    ['RegExp', /^\/api\/some-path$/],
+    ['Function', (path) => path === '/api/some-path']
+  ].forEach(([matcherType, path]) => {
+    ['/api/some-path', '/api/some-path/', '/api/some-path///'].forEach((fetchedPath) => {
+      test(`a ${matcherType} path matcher matches '${fetchedPath}' as a MockAgent option`, async (t) => {
+        t.plan(1)
+
+        const mockAgent = new MockAgent({ ignoreTrailingSlash: true })
+        mockAgent.disableNetConnect()
+        t.after(() => mockAgent.close())
+        mockAgent
+          .get('https://localhost')
+          .intercept({ path }).reply(200, { ok: true })
+
+        const res = await fetch(new URL(fetchedPath, 'https://localhost'), { dispatcher: mockAgent })
+
+        t.assert.deepStrictEqual(await res.json(), { ok: true })
+      })
+
+      test(`a ${matcherType} path matcher matches '${fetchedPath}' as an intercept option`, async (t) => {
+        t.plan(1)
+
+        const mockAgent = new MockAgent()
+        mockAgent.disableNetConnect()
+        t.after(() => mockAgent.close())
+        mockAgent
+          .get('https://localhost')
+          .intercept({ path, ignoreTrailingSlash: true }).reply(200, { ok: true })
+
+        const res = await fetch(new URL(fetchedPath, 'https://localhost'), { dispatcher: mockAgent })
+
+        t.assert.deepStrictEqual(await res.json(), { ok: true })
+      })
+    })
+
+    test(`a ${matcherType} path matcher still rejects a non-matching path`, async (t) => {
+      t.plan(1)
+
+      const mockAgent = new MockAgent({ ignoreTrailingSlash: true })
+      mockAgent.disableNetConnect()
+      t.after(() => mockAgent.close())
+      mockAgent
+        .get('https://localhost')
+        .intercept({ path }).reply(200, { ok: true })
+
+      await t.assert.rejects(
+        fetch(new URL('/api/other-path', 'https://localhost'), { dispatcher: mockAgent }),
+        (err) => err.cause instanceof MockNotMatchedError
+      )
+    })
+  })
+})
+
 describe('MockInterceptor - different payloads', () => {
   [
     // Buffer
@@ -536,6 +591,15 @@ describe('MockInterceptor - different payloads', () => {
     ['json', 'string', 'Object', '{"test":true}', { test: true }],
     ['bytes', 'string', 'Uint8Array', '{"test":true}', new TextEncoder().encode('{"test":true}')],
     ['text', 'string', 'string', '{"test":true}', '{"test":true}'],
+
+    // DataView
+    ['arrayBuffer', 'DataView', 'ArrayBuffer', new DataView(new TextEncoder().encode('{"test":true}').buffer), new TextEncoder().encode('{"test":true}').buffer],
+    ['json', 'DataView', 'Object', new DataView(new TextEncoder().encode('{"test":true}').buffer), { test: true }],
+    ['bytes', 'DataView', 'Uint8Array', new DataView(new TextEncoder().encode('{"test":true}').buffer), new TextEncoder().encode('{"test":true}')],
+    ['text', 'DataView', 'string', new DataView(new TextEncoder().encode('{"test":true}').buffer), '{"test":true}'],
+
+    // DataView covering only part of its backing ArrayBuffer
+    ['text', 'DataView with an offset', 'string', new DataView(new TextEncoder().encode('xx{"test":true}yy').buffer, 2, 13), '{"test":true}'],
 
     // object
     ['arrayBuffer', 'Object', 'ArrayBuffer', { test: true }, new TextEncoder().encode('{"test":true}').buffer],
