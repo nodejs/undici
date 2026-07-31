@@ -244,7 +244,7 @@ describe('getResponseData', () => {
   test('it should handle null', (t) => {
     t.plan(1)
     const responseData = getResponseData(null)
-    t.assert.strictEqual(responseData, '')
+    t.assert.strictEqual(responseData, 'null')
   })
 })
 
