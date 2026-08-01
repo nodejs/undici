@@ -339,8 +339,8 @@ request is aborted with `signal.reason` when available, or a
 request is dispatched, the request fails immediately without reaching the
 server.
 
-The abort listener is removed as soon as the request completes, errors or is
-upgraded, so long-lived signals do not accumulate listeners across requests.
+The abort listener is removed once the response has ended or errored, so
+long-lived signals do not accumulate listeners across requests.
 
 This is mainly useful when calling `dispatch()` directly with a custom
 handler; the higher-level API methods (`request`, `stream`, `pipeline`, etc.)
