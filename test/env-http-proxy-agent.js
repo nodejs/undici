@@ -398,6 +398,23 @@ describe('no_proxy', () => {
     return dispatcher.close()
   })
 
+  test('trailing dot is ignored on both sides', async (t) => {
+    // `example.com.` is the fully qualified form of `example.com` (the RFC 1034
+    // root label). curl ignores a trailing dot on the request host and on the
+    // no_proxy entry alike (lib/proxy.c).
+    t = tspl(t, { plan: 7 })
+    process.env.no_proxy = 'example.com,other.com.'
+    const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(7)
+    t.ok(await doesNotProxy('http://example.com./'))
+    t.ok(await doesNotProxy('https://example.com./'))
+    t.ok(await doesNotProxy('http://example.com.:1337/'))
+    t.ok(await doesNotProxy('http://sub.example.com./'))
+    t.ok(await doesNotProxy('http://other.com/'))
+    t.ok(await doesNotProxy('http://other.com./'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://notexample.com./'))
+    return dispatcher.close()
+  })
+
   test('substring suffix are NOT supported', async (t) => {
     t = tspl(t, { plan: 6 })
     process.env.no_proxy = '*example'
