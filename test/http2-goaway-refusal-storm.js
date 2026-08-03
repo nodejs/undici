@@ -130,8 +130,10 @@ async function measure (errorCode, label) {
   await pending
 
   assert.strictEqual(outcome, 'settled', `${label}: the request never settled`)
+  // RFC 9113 section 8.7 allows one automatic retry, so the first attempt plus
+  // one replay. The margin is for a pool that happens to open a spare.
   assert.ok(
-    connections <= 20,
+    connections <= 4,
     `${label}: retried the refused request over ${connections} connections`
   )
 }
