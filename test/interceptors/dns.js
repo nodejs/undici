@@ -2,7 +2,8 @@
 
 const FakeTimers = require('@sinonjs/fake-timers')
 const { test, after } = require('node:test')
-const { isIP } = require('node:net')
+const net = require('node:net')
+const { isIP } = net
 const { lookup } = require('node:dns')
 const { createServer } = require('node:http')
 const { createServer: createSecureServer } = require('node:https')
@@ -213,6 +214,63 @@ test('Should respect DNS origin hostname for SNI on TLS', async t => {
 
   t.equal(response2.statusCode, 200)
   t.equal(await response2.body.text(), 'hello world!')
+})
+
+test('#5573 - Should preserve DNS origin hostname on HTTP sockets', async context => {
+  const t = tspl(context, { plan: 5 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end('hello world!')
+  })
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const client = new Agent().compose(dns({
+    dualStack: false,
+    lookup (_origin, _opts, cb) {
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
+    }
+  }))
+
+  context.after(async () => {
+    await client.close()
+    await new Promise(resolve => server.close(resolve))
+  })
+
+  const originalConnect = net.connect
+  let connectOptions
+
+  net.connect = function (...args) {
+    connectOptions = args[0]
+    return originalConnect.apply(this, args)
+  }
+  context.after(() => {
+    net.connect = originalConnect
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://localhost:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+  t.equal(connectOptions.host, 'localhost')
+
+  await new Promise((resolve, reject) => {
+    connectOptions.lookup(connectOptions.host, {}, (err, address, family) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      t.equal(address, '127.0.0.1')
+      t.equal(family, 4)
+      resolve()
+    })
+  })
 })
 
 test('Should recover on network errors (dual stack - 4)', async t => {
