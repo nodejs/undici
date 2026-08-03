@@ -1,7 +1,7 @@
 'use strict'
 
 const assert = require('node:assert')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { constants, createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
@@ -115,7 +115,7 @@ async function churningServer (rnd) {
 }
 
 for (const seed of SEEDS) {
-  test(`every h2 request settles under connection churn (seed ${seed})`, async () => {
+  test(`every h2 request settles under connection churn (seed ${seed})`, async (t) => {
     const timer = setInterval(() => {}, 1000)
     const rnd = makeRandom(seed)
     const server = await churningServer(rnd)
@@ -127,10 +127,16 @@ for (const seed of SEEDS) {
       headersTimeout: 500,
       bodyTimeout: 500
     })
-    after(async () => {
-      await agent.destroy()
-      server.shutdown()
-      clearInterval(timer)
+    // Release each seed's resources before the next test starts. A file-level
+    // after hook kept every TLS server and keepalive timer until all seeds had
+    // finished, making this churn test sensitive to CI load.
+    t.after(async () => {
+      try {
+        await agent.destroy()
+      } finally {
+        server.shutdown()
+        clearInterval(timer)
+      }
     })
 
     const unsettled = []
