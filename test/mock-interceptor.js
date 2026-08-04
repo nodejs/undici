@@ -232,6 +232,35 @@ describe('MockInterceptor - reply options callback', () => {
       onResponseError: () => {}
     }), new InvalidArgumentError('statusCode must be defined'))
   })
+
+  test('should re-invoke the callback for every persistent reply', async t => {
+    t.plan(7)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    let calls = 0
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(() => ({
+      statusCode: 200,
+      data: `call ${++calls}`
+    })).persist()
+
+    for (let i = 1; i <= 3; i++) {
+      const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(await body.text(), `call ${i}`)
+    }
+
+    t.assert.strictEqual(calls, 3)
+  })
 })
 
 describe('MockInterceptor - asynchronous reply options callback', () => {
@@ -306,6 +335,35 @@ describe('MockInterceptor - asynchronous reply options callback', () => {
     }
 
     await t.assert.rejects(request(`${baseUrl}/test`, { dispatcher: mockAgent }), MockNotMatchedError)
+  })
+
+  test('should re-invoke an asynchronous callback for every persistent reply', async t => {
+    t.plan(5)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    let calls = 0
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async () => ({
+      statusCode: 200,
+      data: `async call ${++calls}`
+    })).persist()
+
+    for (let i = 1; i <= 2; i++) {
+      const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(await body.text(), `async call ${i}`)
+    }
+
+    t.assert.strictEqual(calls, 2)
   })
 
   test('should reject if an asynchronous callback resolves to an invalid format', async t => {
