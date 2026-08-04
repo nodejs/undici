@@ -98,6 +98,18 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
   assert.strictEqual(payload.mirroredV2, true)
 })
 
+test('requiring undici does not break Node.js global fetch with a request-set Content-Length', () => {
+  // See https://github.com/nodejs/undici/issues/5500
+  const result = spawnSync(
+    process.execPath,
+    [join(__dirname, '../fixtures/global-fetch-content-length.js')],
+    { cwd, encoding: 'utf8' }
+  )
+
+  assert.strictEqual(result.status, 0, result.stderr)
+  assert.strictEqual(result.stdout, '13')
+})
+
 test('Dispatcher1Wrapper bridges legacy handlers to a new Agent', () => {
   const script = `
     const { Agent, Dispatcher1Wrapper } = require('./index.js')
