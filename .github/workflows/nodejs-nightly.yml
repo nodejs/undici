@@ -9,38 +9,58 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }}
+  nightly-version:
+    name: Resolve current nightly major
     if: github.repository == 'nodejs/undici'
+    runs-on: ubuntu-latest
+    outputs:
+      major: ${{ steps.resolve.outputs.major }}
+    steps:
+      - name: Determine latest nightly major
+        id: resolve
+        run: |
+          major=$(curl -fsSL https://nodejs.org/download/nightly/index.json | jq -r '.[0].version | ltrimstr("v") | split(".")[0]')
+          if [ -z "$major" ] || [ "$major" = "null" ]; then
+            echo "Failed to resolve the latest nightly major" >&2
+            exit 1
+          fi
+          echo "major=$major" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Test with Node.js ${{ needs.nightly-version.outputs.major }}-nightly on ${{ matrix.runs-on }}
+    if: github.repository == 'nodejs/undici'
+    needs: nightly-version
     strategy:
       fail-fast: false
       max-parallel: 0
       matrix:
-        node-version: ['25-nightly']
         runs-on: [ubuntu-latest, windows-latest, macos-latest]
     uses: ./.github/workflows/nodejs.yml
     with:
-      node-version: ${{ matrix.node-version }}
+      node-version: ${{ needs.nightly-version.outputs.major }}-nightly
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
 
   autobahn:
     if: github.repository == 'nodejs/undici'
+    needs: nightly-version
     uses: ./.github/workflows/autobahn.yml
     with:
-      node-version: '25-nightly'
+      node-version: ${{ needs.nightly-version.outputs.major }}-nightly
     secrets: inherit
 
   test-shared-builtin:
     if: github.repository == 'nodejs/undici'
+    needs: nightly-version
     uses: ./.github/workflows/nodejs-shared.yml
     with:
-      node-version: '25'
+      node-version: ${{ needs.nightly-version.outputs.major }}
       node-download-server-path: '/nightly'
 
   report-failure:
-    if: ${{ always() && (needs.test.result == 'failure' || needs.test-shared-builtin.result == 'failure' || needs.autobahn.result == 'failure') }}
+    if: ${{ always() && (needs.nightly-version.result == 'failure' || needs.test.result == 'failure' || needs.test-shared-builtin.result == 'failure' || needs.autobahn.result == 'failure') }}
     needs:
+      - nightly-version
       - test
       - test-shared-builtin
       - autobahn
