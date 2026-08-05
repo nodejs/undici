@@ -225,7 +225,12 @@ test('fetch POST bodies dispatch concurrently on the same h2 session instead of 
     sessions.add(session)
   })
 
-  server.on('stream', stream => {
+  server.on('stream', (stream, headers) => {
+    if (headers[':path'] === '/warmup') {
+      stream.respond({ ':status': 200 })
+      stream.end('warm')
+      return
+    }
     // Hold every stream open instead of responding immediately, so a
     // serialized client would never let the second request's headers
     // reach the server until the first one's stream is released.
@@ -244,6 +249,11 @@ test('fetch POST bodies dispatch concurrently on the same h2 session instead of 
   })
 
   const origin = `http://127.0.0.1:${server.address().port}`
+
+  // Get the SETTINGS round-trip out of the way. While it is still pending
+  // the client counts as busy, and the pool would answer the second POST
+  // with a fresh connection instead of another stream.
+  await (await fetch(`${origin}/warmup`, { dispatcher, signal: AbortSignal.timeout(5000) })).text()
 
   const first = fetch(origin, { method: 'POST', body: '{"first":1}', dispatcher })
   // Wait for the first request's stream to actually open before dispatching
