@@ -98,6 +98,40 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
   assert.strictEqual(payload.mirroredV2, true)
 })
 
+test('setGlobalDispatcher lets Node.js global fetch use a MockAgent interceptor', () => {
+  const script = `
+    const { MockAgent, setGlobalDispatcher } = require('./index.js')
+
+    ;(async () => {
+      const agent = new MockAgent()
+      agent.disableNetConnect()
+      agent
+        .get('https://example.com')
+        .intercept({ path: '/v1/test' })
+        .reply(200, { mocked: true })
+
+      setGlobalDispatcher(agent)
+      const response = await fetch('https://example.com/v1/test')
+      process.stdout.write(JSON.stringify({
+        status: response.status,
+        body: await response.json()
+      }))
+
+      await agent.close()
+    })().catch((err) => {
+      console.error(err?.cause?.stack || err?.stack || err)
+      process.exit(1)
+    })
+  `
+
+  const result = runNode(script)
+  assert.strictEqual(result.status, 0, result.stderr)
+  assert.deepStrictEqual(JSON.parse(result.stdout), {
+    status: 200,
+    body: { mocked: true }
+  })
+})
+
 test('Dispatcher1Wrapper bridges legacy handlers to a new Agent', () => {
   const script = `
     const { Agent, Dispatcher1Wrapper } = require('./index.js')
