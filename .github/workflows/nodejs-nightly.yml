@@ -20,7 +20,7 @@ jobs:
         id: resolve
         run: |
           major=$(curl -fsSL https://nodejs.org/download/nightly/index.json | jq -r '.[0].version | ltrimstr("v") | split(".")[0]')
-          if [ -z "$major" ] || [ "$major" = "null" ]; then
+          if ! [[ "$major" =~ ^[0-9]+$ ]]; then
             echo "Failed to resolve the latest nightly major" >&2
             exit 1
           fi
