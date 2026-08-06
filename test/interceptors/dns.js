@@ -1,5 +1,6 @@
 'use strict'
 
+const assert = require('node:assert/strict')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { test, after } = require('node:test')
 const net = require('node:net')
@@ -12,7 +13,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { interceptors, Agent, Client, Pool, request } = require('../..')
+const { interceptors, Agent, Client, Pool, fetch, request } = require('../..')
 const { dns, cache, deduplicate } = interceptors
 
 // Helper to check if IPv6 is available for localhost
@@ -33,7 +34,7 @@ function hasIPv6LocalhostSync () {
 const ipv6Available = hasIPv6LocalhostSync()
 
 test('Should validate options', t => {
-  t = tspl(t, { plan: 11 })
+  t = tspl(t, { plan: 12 })
 
   t.throws(() => dns({ dualStack: 'true' }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ dualStack: 0 }), { code: 'UND_ERR_INVALID_ARG' })
@@ -45,7 +46,202 @@ test('Should validate options', t => {
   t.throws(() => dns({ maxItems: -1 }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ lookup: {} }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ pick: [] }), { code: 'UND_ERR_INVALID_ARG' })
+  t.throws(() => dns({ filter: {} }), { code: 'UND_ERR_INVALID_ARG' })
   t.throws(() => dns({ storage: new Map() }), { code: 'UND_ERR_INVALID_ARG' })
+})
+
+test('Should reject literal IP origins blocked by the address filter', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const checked = []
+  const client = new Agent().compose(dns({
+    filter (origin, record) {
+      checked.push({ hostname: origin.hostname, ...record })
+      return false
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+  })
+
+  await assert.rejects(
+    client.request({
+      method: 'GET',
+      path: '/',
+      origin: 'http://127.0.0.1:1'
+    }),
+    { code: 'UND_ERR_INFO' }
+  )
+  t.ok(true)
+
+  await assert.rejects(
+    client.request({
+      method: 'GET',
+      path: '/',
+      origin: 'http://[::1]:1'
+    }),
+    { code: 'UND_ERR_INFO' }
+  )
+  t.ok(true)
+
+  await assert.rejects(
+    client.request({
+      method: 'GET',
+      path: '/',
+      origin: 'http://[::ffff:127.0.0.1]:1'
+    }),
+    { code: 'UND_ERR_INFO' }
+  )
+  t.ok(true)
+
+  t.deepStrictEqual(checked, [
+    { hostname: '127.0.0.1', address: '127.0.0.1', family: 4 },
+    { hostname: '[::1]', address: '::1', family: 6 },
+    { hostname: '[::ffff:7f00:1]', address: '::ffff:7f00:1', family: 6 }
+  ])
+})
+
+test('Should filter resolved addresses before connecting', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const checked = []
+  const server = createServer({ joinDuplicateHeaders: true })
+  server.on('request', (req, res) => {
+    t.equal(req.headers.host, `filtered.test:${server.address().port}`)
+    res.end('hello world!')
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const client = new Agent().compose(dns({
+    lookup (_origin, _opts, cb) {
+      cb(null, [
+        { address: '127.0.0.2', family: 4 },
+        { address: '127.0.0.1', family: 4 }
+      ])
+    },
+    filter (origin, record) {
+      checked.push({ hostname: origin.hostname, ...record })
+      return record.address === '127.0.0.1'
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://filtered.test:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+  t.deepStrictEqual(checked, [
+    { hostname: 'filtered.test', address: '127.0.0.2', family: 4 },
+    { hostname: 'filtered.test', address: '127.0.0.1', family: 4 }
+  ])
+})
+
+test('Should apply the address filter to redirect targets', async t => {
+  const redirectServer = createServer({ joinDuplicateHeaders: true })
+  const blockedServer = createServer({ joinDuplicateHeaders: true })
+  let blockedRequests = 0
+
+  blockedServer.on('request', (_req, res) => {
+    blockedRequests++
+    res.end('should not be reached')
+  })
+
+  redirectServer.on('request', (_req, res) => {
+    res.writeHead(302, {
+      location: `http://blocked.test:${blockedServer.address().port}`
+    })
+    res.end()
+  })
+
+  redirectServer.listen(0, '127.0.0.1')
+  blockedServer.listen(0, '127.0.0.1')
+  await Promise.all([
+    once(redirectServer, 'listening'),
+    once(blockedServer, 'listening')
+  ])
+
+  const client = new Agent().compose(dns({
+    lookup (_origin, _opts, cb) {
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
+    },
+    filter (origin) {
+      return origin.hostname !== 'blocked.test'
+    }
+  }))
+
+  t.after(async () => {
+    await client.close()
+    await Promise.all([
+      new Promise(resolve => redirectServer.close(resolve)),
+      new Promise(resolve => blockedServer.close(resolve))
+    ])
+  })
+
+  await assert.rejects(
+    fetch(`http://allowed.test:${redirectServer.address().port}`, {
+      dispatcher: client
+    }),
+    error => {
+      assert.equal(error.cause?.code, 'UND_ERR_INFO')
+      return true
+    }
+  )
+  assert.equal(blockedRequests, 0)
+})
+
+test('Should keep filtering when the DNS cache is full', async t => {
+  const server = createServer({ joinDuplicateHeaders: true })
+  let requests = 0
+
+  server.on('request', (_req, res) => {
+    requests++
+    res.end('hello world!')
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const client = new Agent().compose(dns({
+    maxItems: 1,
+    lookup (_origin, _opts, cb) {
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
+    },
+    filter (origin) {
+      return origin.hostname !== 'localhost'
+    }
+  }))
+
+  t.after(async () => {
+    await client.close()
+    await new Promise(resolve => server.close(resolve))
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://allowed.test:${server.address().port}`
+  })
+  assert.equal(await response.body.text(), 'hello world!')
+
+  await assert.rejects(
+    client.request({
+      method: 'GET',
+      path: '/',
+      origin: `http://localhost:${server.address().port}`
+    }),
+    { code: 'UND_ERR_INFO' }
+  )
+  assert.equal(requests, 1)
 })
 
 test('Should automatically resolve IPs (dual stack)', async t => {
