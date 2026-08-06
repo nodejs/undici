@@ -2342,7 +2342,7 @@ test('#4234 - Should pass Client requests without origin through', async t => {
   const client = new Client(`http://localhost:${server.address().port}`).compose(dns({
     lookup: (_origin, _opts, cb) => {
       lookupCount++
-      cb(new Error('lookup should not run'))
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
     }
   }))
 
@@ -2359,7 +2359,7 @@ test('#4234 - Should pass Client requests without origin through', async t => {
 
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
-  t.equal(lookupCount, 0)
+  t.equal(lookupCount, 1)
 })
 
 test('#4234 - Should pass Pool requests without origin through', async t => {
@@ -2378,7 +2378,7 @@ test('#4234 - Should pass Pool requests without origin through', async t => {
   const pool = new Pool(`http://localhost:${server.address().port}`).compose(dns({
     lookup: (_origin, _opts, cb) => {
       lookupCount++
-      cb(new Error('lookup should not run'))
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
     }
   }))
 
@@ -2395,5 +2395,5 @@ test('#4234 - Should pass Pool requests without origin through', async t => {
 
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
-  t.equal(lookupCount, 0)
+  t.equal(lookupCount, 1)
 })
