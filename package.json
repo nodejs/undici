@@ -63,6 +63,7 @@
   "types": "index.d.ts",
   "scripts": {
     "build:node": "esbuild index-fetch.js --bundle --platform=node --outfile=undici-fetch.js --define:esbuildDetection=1 --keep-names && node scripts/strip-comments.js",
+    "build:milo": "node build/milo.js",
     "build:wasm": "node build/wasm.js --docker",
     "generate-pem": "node scripts/generate-pem.js",
     "lint": "eslint --cache",
