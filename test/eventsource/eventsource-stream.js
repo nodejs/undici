@@ -4,6 +4,31 @@ const { test, describe } = require('node:test')
 const { EventSourceStream } = require('../../lib/web/eventsource/eventsource-stream')
 
 describe('EventSourceStream', () => {
+  test('limits accumulated event data', (t) => {
+    const stream = new EventSourceStream({ maxEventSize: 5 })
+    const event = {}
+
+    stream.parseLine(Buffer.from('data: hello', 'utf8'), event)
+
+    t.assert.throws(() => {
+      stream.parseLine(Buffer.from('data: world', 'utf8'), event)
+    }, {
+      name: 'Error',
+      message: 'EventSource message size exceeded'
+    })
+    t.assert.strictEqual(event.data, 'hello')
+  })
+
+  test('can disable event data limit', (t) => {
+    const stream = new EventSourceStream({ maxEventSize: 0 })
+    const event = {}
+
+    stream.parseLine(Buffer.from('data: hello', 'utf8'), event)
+    stream.parseLine(Buffer.from('data: world', 'utf8'), event)
+
+    t.assert.strictEqual(event.data, 'hello\nworld')
+  })
+
   test('ignore empty chunks', (t) => {
     const stream = new EventSourceStream()
 
