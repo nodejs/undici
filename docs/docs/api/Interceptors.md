@@ -198,7 +198,8 @@ const agent = new Agent().compose(
 ## `interceptors.decompress([opts])`
 
 Automatically decompresses response bodies encoded with `gzip`, `x-gzip`,
-`br` (Brotli), `deflate`, `compress`, `x-compress`, or `zstd`.
+`br` (Brotli), `deflate`, or `zstd`. Any other coding, including `compress`
+and `x-compress`, is left untouched, matching `fetch()`.
 
 > **Experimental:** This interceptor is experimental and subject to change.
 > A one-time `ExperimentalWarning` is emitted on first use.
