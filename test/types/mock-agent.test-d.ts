@@ -5,8 +5,6 @@ import ProxyAgent from '../../types/proxy-agent'
 import EnvHttpProxyAgent from '../../types/env-http-proxy-agent'
 import RetryAgent from '../../types/retry-agent'
 
-import MockDispatch = MockInterceptor.MockDispatch
-
 expectAssignable<MockAgent>(new MockAgent())
 expectAssignable<MockAgent>(new MockAgent({}))
 
@@ -67,15 +65,11 @@ expectAssignable<MockAgent>(new MockAgent({}))
 }
 
 {
-  interface PendingInterceptor extends MockDispatch {
-    origin: string;
-  }
-
   const agent = new MockAgent({ agent: new Agent() })
-  expectType<() => PendingInterceptor[]>(agent.pendingInterceptors)
+  expectType<() => MockAgent.PendingInterceptor[]>(agent.pendingInterceptors)
   expectType<(options?: {
     pendingInterceptorsFormatter?: {
-      format(pendingInterceptors: readonly PendingInterceptor[]): string;
+      format(pendingInterceptors: readonly MockAgent.PendingInterceptor[]): string;
     }
   }) => void>(agent.assertNoPendingInterceptors)
 }
