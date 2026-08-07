@@ -139,32 +139,10 @@ test('Should dump on abort', { skip }, async t => {
 })
 
 test('Should dump on already aborted request', { skip }, async t => {
-  t = tspl(t, { plan: 3 })
-  let offset = 0
+  t = tspl(t, { plan: 2 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    const max = 1024
-    const buffer = Buffer.alloc(max)
-
-    res.writeHead(200, {
-      'Content-Type': 'application/octet-stream'
-    })
-
-    res.once('close', () => {
-      t.equal(offset, 1024)
-    })
-
-    const interval = setInterval(() => {
-      offset += 256
-      const chunk = buffer.subarray(offset - 256, offset)
-
-      if (offset === max) {
-        clearInterval(interval)
-        res.end(chunk)
-        return
-      }
-
-      res.write(chunk)
-    }, 0)
+    t.fail('pre-aborted request should not be dispatched')
+    res.end()
   })
 
   const abc = new AbortController()
