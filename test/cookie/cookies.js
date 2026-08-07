@@ -59,6 +59,24 @@ test('Cookie parser', () => {
   })
 })
 
+test('Cookie parser keeps a cookie named __proto__', () => {
+  const headers = new Headers()
+  headers.set('Cookie', '__proto__=foo; bar=baz')
+
+  const cookies = getCookies(headers)
+
+  assert.deepStrictEqual(Object.keys(cookies).sort(), ['__proto__', 'bar'])
+  assert.strictEqual(
+    Object.getOwnPropertyDescriptor(cookies, '__proto__').value,
+    'foo'
+  )
+  assert.strictEqual(cookies.bar, 'baz')
+
+  for (const value of Object.values(cookies)) {
+    assert.strictEqual(typeof value, 'string')
+  }
+})
+
 test('Cookie Name Validation', () => {
   const tokens = [
     '"id"',
