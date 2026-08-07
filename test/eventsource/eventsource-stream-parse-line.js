@@ -258,7 +258,7 @@ describe('EventSourceStream - parseLine', () => {
     t.assert.strictEqual(event.retry, undefined)
   })
 
-  test('empty event', (t) => {
+  test('empty event replaces previous event type', (t) => {
     const stream = new EventSourceStream({
       eventSourceSettings: {
         ...defaultEventSourceSettings
@@ -266,15 +266,11 @@ describe('EventSourceStream - parseLine', () => {
     })
 
     const event = {}
-    'event: \ndata:data'.split('\n').forEach((line) => {
-      stream.parseLine(Buffer.from(line, 'utf8'), event)
-    })
 
-    t.assert.strictEqual(typeof event, 'object')
-    t.assert.strictEqual(Object.keys(event).length, 1)
-    t.assert.strictEqual(event.data, 'data')
-    t.assert.strictEqual(event.id, undefined)
-    t.assert.strictEqual(event.event, undefined)
-    t.assert.strictEqual(event.retry, undefined)
+    stream.parseLine(Buffer.from('event: custom', 'utf8'), event)
+    t.assert.strictEqual(event.event, 'custom')
+
+    stream.parseLine(Buffer.from('event: ', 'utf8'), event)
+    t.assert.strictEqual(event.event, '')
   })
 })
