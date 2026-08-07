@@ -138,3 +138,20 @@ test('normalizeHeaders throws on non-string key in flat array', (t) => {
     message: 'opts.headers is not a valid header map'
   })
 })
+
+test('normalizeHeaders keeps a header named __proto__ without reprototyping the result', (t) => {
+  const { strictEqual, deepStrictEqual } = tspl(t, { plan: 5 })
+
+  // JSON.parse is the everyday way an own `__proto__` key shows up, e.g.
+  // headers read from a config file or a request body.
+  const headers = normalizeHeaders({
+    headers: JSON.parse('{"__proto__":"a","x-real":"same"}')
+  })
+
+  deepStrictEqual(Object.keys(headers).sort(), ['__proto__', 'x-real'])
+  strictEqual(Object.getOwnPropertyDescriptor(headers, '__proto__').value, 'a')
+  strictEqual(headers['x-real'], 'same')
+  strictEqual(Object.getPrototypeOf(headers), Object.prototype)
+  // A header named `length` must not resolve through an array prototype.
+  strictEqual(headers.length, undefined)
+})
