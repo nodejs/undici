@@ -82,3 +82,49 @@ test('request handles response trailers that shadow Object.prototype', async (t)
   assert.strictEqual(Object.getOwnPropertyDescriptor(trailers, '__proto__').value, 'trailer')
   assert.strictEqual(Object.getOwnPropertyDescriptor(trailers, 'constructor').value, 'built-in-trailer')
 })
+
+test('fetch sends a request header named __proto__', async (t) => {
+  const { createServer } = require('node:http')
+  const { fetch, Headers } = require('..')
+
+  let rawHeaders = null
+  const server = createServer((req, res) => {
+    rawHeaders = req.rawHeaders
+    res.end('OK')
+  })
+
+  t.after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  await promisify(server.listen.bind(server))(0)
+
+  const headers = new Headers()
+  headers.set('__proto__', 'pwned')
+  headers.set('x-control', 'sent')
+
+  const response = await fetch(`http://localhost:${server.address().port}/`, {
+    headers
+  })
+  await response.text()
+
+  const received = {}
+  for (let i = 0; i < rawHeaders.length; i += 2) {
+    Object.defineProperty(received, rawHeaders[i].toLowerCase(), {
+      configurable: true,
+      enumerable: true,
+      value: rawHeaders[i + 1],
+      writable: true
+    })
+  }
+
+  assert.strictEqual(
+    Object.getOwnPropertyDescriptor(received, 'x-control').value,
+    'sent'
+  )
+  assert.strictEqual(
+    Object.getOwnPropertyDescriptor(received, '__proto__')?.value,
+    'pwned'
+  )
+})
