@@ -26,6 +26,7 @@ declare namespace buildConnector {
     localAddress?: string | null
     socketPath?: string | null
     httpSocket?: Socket
+    signal?: AbortSignal
   }
 
   export type Callback = (...args: CallbackArgs) => void

@@ -113,6 +113,9 @@ added: v4.3.0
   * `httpSocket` {Socket} (optional) An existing socket on which to establish the
     secure connection rather than creating a new one. May only be supplied for a
     TLS upgrade (`protocol` of `'https:'`).
+  * `signal` {AbortSignal} (optional) Aborted when undici no longer needs this
+    connection attempt. Custom connectors should stop their pending work and
+    must not reuse a socket created for an aborted attempt.
 * `callback` {Function} Called once the socket has connected or failed.
   * `err` {Error|null} The connection error, or `null` on success.
   * `socket` {Socket|TLSSocket|null} The connected socket, or `null` on failure.

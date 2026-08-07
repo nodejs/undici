@@ -36,5 +36,6 @@ expectAssignable<buildConnector.Options>({
   port: '',
   localAddress: '127.0.0.1',
   socketPath: '/var/run/undici.sock',
-  httpSocket: new Socket()
+  httpSocket: new Socket(),
+  signal: new AbortController().signal
 })
