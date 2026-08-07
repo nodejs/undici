@@ -10,6 +10,8 @@ const pem = require('@metcoder95/https-pem')
 
 const { Agent } = require('..')
 
+const skipOnNode24 = Number(process.versions.node.split('.')[0]) === 24
+
 // completeRequestStream() runs on an h2 stream's 'close':
 //
 //   releaseRequestStream(this)
@@ -115,7 +117,9 @@ async function churningServer (rnd) {
 }
 
 for (const seed of SEEDS) {
-  test(`every h2 request settles under connection churn (seed ${seed})`, async (t) => {
+  test(`every h2 request settles under connection churn (seed ${seed})`, {
+    skip: skipOnNode24 && 'Node.js 24 has an HTTP/2 memory corruption bug'
+  }, async (t) => {
     const timer = setInterval(() => {}, 1000)
     const rnd = makeRandom(seed)
     const server = await churningServer(rnd)
