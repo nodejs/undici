@@ -1655,3 +1655,24 @@ test('#3736 - Aborted Response (without consuming body)', async (t) => {
 
   await plan.completed
 })
+
+test('#386 - pre-aborted request does not connect', async (t) => {
+  let connectCalls = 0
+  const client = new Client('http://localhost', {
+    connect (_opts, callback) {
+      connectCalls++
+      callback(new Error('unexpected connection attempt'))
+    }
+  })
+  t.after(() => client.destroy())
+
+  const reason = new Error('request aborted')
+  const signal = AbortSignal.abort(reason)
+
+  await t.assert.rejects(client.request({
+    path: '/',
+    method: 'GET',
+    signal
+  }), (err) => err === reason)
+  t.assert.strictEqual(connectCalls, 0)
+})
