@@ -82,3 +82,41 @@ test('request handles response trailers that shadow Object.prototype', async (t)
   assert.strictEqual(Object.getOwnPropertyDescriptor(trailers, '__proto__').value, 'trailer')
   assert.strictEqual(Object.getOwnPropertyDescriptor(trailers, 'constructor').value, 'built-in-trailer')
 })
+
+test('h2 sends a request header named __proto__', async (t) => {
+  const { createSecureServer } = require('node:http2')
+  const { once } = require('node:events')
+  const pem = require('@metcoder95/https-pem')
+
+  let received = null
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+
+  server.on('stream', (stream, headers) => {
+    received = headers
+    stream.respond({ ':status': 200 })
+    stream.end('OK')
+  })
+
+  t.after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connect: { rejectUnauthorized: false }
+  })
+  t.after(() => client.close())
+
+  const { body } = await client.request({
+    path: '/',
+    method: 'GET',
+    // The flat array form is what buildRequestHeaders receives.
+    headers: ['__proto__', 'pwned', 'x-control', 'sent']
+  })
+  await body.text()
+
+  assert.strictEqual(received['x-control'], 'sent')
+  assert.strictEqual(
+    Object.getOwnPropertyDescriptor(received, '__proto__')?.value,
+    'pwned'
+  )
+})
