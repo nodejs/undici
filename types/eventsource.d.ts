@@ -56,11 +56,11 @@ export declare const EventSource: {
 }
 
 interface EventSourceInit {
-  withCredentials?: boolean
+  withCredentials?: boolean | undefined
   // @deprecated use `node.dispatcher` instead
-  dispatcher?: Dispatcher
+  dispatcher?: Dispatcher | undefined
   node?: {
-    dispatcher?: Dispatcher
-    reconnectionTime?: number
-  }
+    dispatcher?: Dispatcher | undefined
+    reconnectionTime?: number | undefined
+  } | undefined
 }

@@ -7,7 +7,7 @@ expectType<RetryHandler.RetryCallback>((err, context, callback) => {
   expectType<{
     state: RetryHandler.RetryState;
     opts: Dispatcher.DispatchOptions & {
-      retryOptions?: RetryHandler.RetryOptions;
+      retryOptions?: RetryHandler.RetryOptions | undefined;
     };
   }>(context)
   expectType<RetryHandler.OnRetryCallback>(callback)
@@ -45,5 +45,5 @@ const contextTest: Parameters<RetryHandler.RetryCallback>[1] = {
 }
 expectType<RetryHandler.RetryState>(contextTest.state)
 expectType<
-  Dispatcher.DispatchOptions & { retryOptions?: RetryHandler.RetryOptions }
+  Dispatcher.DispatchOptions & { retryOptions?: RetryHandler.RetryOptions | undefined }
 >(contextTest.opts)

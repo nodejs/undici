@@ -10,7 +10,7 @@ expectAssignable<ProxyAgent>(
     uri: '',
     auth: '',
     token: '',
-    factory: (_origin: URL, opts: Object) => new Agent(opts),
+    factory: (_origin: string | URL, opts: Object) => new Agent(opts),
     requestTls: {
       ca: [''],
       key: '',

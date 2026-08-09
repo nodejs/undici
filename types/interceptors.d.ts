@@ -6,12 +6,12 @@ import { LookupOptions } from 'node:dns'
 export default Interceptors
 
 declare namespace Interceptors {
-  export type DumpInterceptorOpts = { maxSize?: number }
+  export type DumpInterceptorOpts = { maxSize?: number | undefined }
   export type RetryInterceptorOpts = RetryHandler.RetryOptions
-  export type RedirectInterceptorOpts = { maxRedirections?: number, throwOnMaxRedirect?: boolean, stripHeadersOnRedirect?: string[], stripHeadersOnCrossOriginRedirect?: string[] }
+  export type RedirectInterceptorOpts = { maxRedirections?: number | undefined, throwOnMaxRedirect?: boolean | undefined, stripHeadersOnRedirect?: string[] | undefined, stripHeadersOnCrossOriginRedirect?: string[] | undefined }
   export type DecompressInterceptorOpts = {
-    skipErrorResponses?: boolean
-    skipStatusCodes?: number[]
+    skipErrorResponses?: boolean | undefined
+    skipStatusCodes?: number[] | undefined
   }
 
   export type ResponseErrorInterceptorOpts = { throwOnError: boolean }
@@ -28,13 +28,13 @@ declare namespace Interceptors {
     full(): boolean
   }
   export type DNSInterceptorOpts = {
-    maxTTL?: number
-    maxItems?: number
-    lookup?: (origin: URL, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void
-    pick?: (origin: URL, records: DNSInterceptorOriginRecords, affinity: 4 | 6) => DNSInterceptorRecord
-    dualStack?: boolean
-    affinity?: 4 | 6
-    storage?: DNSStorage
+    maxTTL?: number | undefined
+    maxItems?: number | undefined
+    lookup?: ((origin: URL, options: LookupOptions, callback: (err: NodeJS.ErrnoException | null, addresses: DNSInterceptorRecord[]) => void) => void) | undefined
+    pick?: ((origin: URL, records: DNSInterceptorOriginRecords, affinity: 4 | 6) => DNSInterceptorRecord) | undefined
+    dualStack?: boolean | undefined
+    affinity?: 4 | 6 | undefined
+    storage?: DNSStorage | undefined
   }
 
   // Deduplicate interceptor
@@ -45,13 +45,13 @@ declare namespace Interceptors {
      * Note: Only safe HTTP methods can be deduplicated.
      * @default ['GET']
      */
-    methods?: DeduplicateMethods[]
+    methods?: DeduplicateMethods[] | undefined
     /**
      * Header names that, if present in a request, will cause the request to skip deduplication.
      * Header name matching is case-insensitive.
      * @default []
      */
-    skipHeaderNames?: string[]
+    skipHeaderNames?: string[] | undefined
     /**
      * Header names to exclude from the deduplication key.
      * Requests with different values for these headers will still be deduplicated together.
@@ -59,14 +59,14 @@ declare namespace Interceptors {
      * Header name matching is case-insensitive.
      * @default []
      */
-    excludeHeaderNames?: string[]
+    excludeHeaderNames?: string[] | undefined
     /**
      * Maximum bytes buffered per paused waiting deduplicated handler.
      * If a waiting handler remains paused and exceeds this threshold,
      * it is failed with an abort error to prevent unbounded memory growth.
      * @default 5 * 1024 * 1024
      */
-    maxBufferSize?: number
+    maxBufferSize?: number | undefined
   }
 
   export function dump (opts?: DumpInterceptorOpts): Dispatcher.DispatcherComposeInterceptor

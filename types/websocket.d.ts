@@ -76,9 +76,9 @@ export declare const WebSocket: {
 }
 
 interface CloseEventInit extends EventInit {
-  code?: number
-  reason?: string
-  wasClean?: boolean
+  code?: number | undefined
+  reason?: string | undefined
+  wasClean?: boolean | undefined
 }
 
 interface CloseEvent extends Event {
@@ -93,11 +93,11 @@ export declare const CloseEvent: {
 }
 
 interface MessageEventInit<T = any> extends EventInit {
-  data?: T
-  lastEventId?: string
-  origin?: string
-  ports?: MessagePort[]
-  source?: MessagePort | null
+  data?: T | undefined
+  lastEventId?: string | undefined
+  origin?: string | undefined
+  ports?: MessagePort[] | undefined
+  source?: MessagePort | null | undefined
 }
 
 interface MessageEvent<T = any> extends Event {
@@ -124,10 +124,10 @@ export declare const MessageEvent: {
 }
 
 interface ErrorEventInit extends EventInit {
-  message?: string
-  filename?: string
-  lineno?: number
-  colno?: number
+  message?: string | undefined
+  filename?: string | undefined
+  lineno?: number | undefined
+  colno?: number | undefined
   error?: any
 }
 
@@ -145,14 +145,14 @@ export declare const ErrorEvent: {
 }
 
 interface WebSocketInit {
-  protocols?: string | string[],
-  dispatcher?: Dispatcher,
-  headers?: HeadersInit
+  protocols?: string | string[] | undefined,
+  dispatcher?: Dispatcher | undefined,
+  headers?: HeadersInit | undefined
 }
 
 interface WebSocketStreamOptions {
-  protocols?: string | string[]
-  signal?: AbortSignal
+  protocols?: string | string[] | undefined
+  signal?: AbortSignal | undefined
 }
 
 interface WebSocketCloseInfo {

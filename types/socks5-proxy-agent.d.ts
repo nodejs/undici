@@ -12,14 +12,14 @@ declare class Socks5ProxyAgent extends Dispatcher {
 declare namespace Socks5ProxyAgent {
   export interface Options extends Pool.Options {
     /** Additional headers to send with the proxy connection */
-    headers?: OutgoingHttpHeaders;
+    headers?: OutgoingHttpHeaders | undefined;
     /** SOCKS5 proxy username for authentication */
-    username?: string;
+    username?: string | undefined;
     /** SOCKS5 proxy password for authentication */
-    password?: string;
+    password?: string | undefined;
     /** Custom connector function for proxy connection */
-    connect?: buildConnector.connector;
+    connect?: buildConnector.connector | undefined;
     /** TLS options for the proxy connection (for SOCKS5 over TLS) */
-    proxyTls?: buildConnector.BuildOptions;
+    proxyTls?: buildConnector.BuildOptions | undefined;
   }
 }

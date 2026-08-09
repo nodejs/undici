@@ -42,7 +42,7 @@ declare class MockAgent<TMockAgentOptions extends MockAgent.Options = MockAgent.
   disableCallHistory (): this
   pendingInterceptors (): PendingInterceptor[]
   assertNoPendingInterceptors (options?: {
-    pendingInterceptorsFormatter?: PendingInterceptorsFormatter;
+    pendingInterceptorsFormatter?: PendingInterceptorsFormatter | undefined;
   }): void
 }
 
@@ -54,15 +54,15 @@ declare namespace MockAgent {
   /** MockAgent options. */
   export interface Options extends Agent.Options {
     /** A custom agent to be encapsulated by the MockAgent. */
-    agent?: Dispatcher;
+    agent?: Dispatcher | undefined;
 
     /** Ignore trailing slashes in the path */
-    ignoreTrailingSlash?: boolean;
+    ignoreTrailingSlash?: boolean | undefined;
 
     /** Accept URLs with search parameters using non standard syntaxes. default false */
-    acceptNonStandardSearchParameters?: boolean;
+    acceptNonStandardSearchParameters?: boolean | undefined;
 
     /** Enable call history. you can either call MockAgent.enableCallHistory(). default false */
-    enableCallHistory?: boolean
+    enableCallHistory?: boolean | undefined
   }
 }
