@@ -1375,4 +1375,73 @@ describe('Deduplicate Interceptor', () => {
 
     strictEqual(key1, key2)
   })
+
+  test('aborting a deduplicated request settles it with an AbortError', async () => {
+    const server = createServer(async (req, res) => {
+      await sleep(100)
+      res.end('response-body')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const abortController = new AbortController()
+
+    const primary = client.request({ origin: 'localhost', method: 'GET', path: '/' })
+    const deduplicated = client.request({ origin: 'localhost', method: 'GET', path: '/', signal: abortController.signal })
+
+    abortController.abort()
+
+    // The deduplicated request must settle; without a fix it never does
+    const outcome = await Promise.race([
+      deduplicated.then(() => 'resolved', err => err),
+      sleep(1000).then(() => 'timed-out')
+    ])
+    strictEqual(outcome?.name, 'AbortError')
+
+    // The primary request is unaffected
+    const res = await primary
+    strictEqual(await res.body.text(), 'response-body')
+  })
+
+  test('a deduplicated request with an already aborted signal rejects with an AbortError', async () => {
+    const server = createServer(async (req, res) => {
+      await sleep(100)
+      res.end('response-body')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const abortController = new AbortController()
+    abortController.abort()
+
+    const primary = client.request({ origin: 'localhost', method: 'GET', path: '/' })
+    const deduplicated = client.request({ origin: 'localhost', method: 'GET', path: '/', signal: abortController.signal })
+
+    // The deduplicated request must settle; without a fix it never does
+    const outcome = await Promise.race([
+      deduplicated.then(() => 'resolved', err => err),
+      sleep(1000).then(() => 'timed-out')
+    ])
+    strictEqual(outcome?.name, 'AbortError')
+
+    // The primary request is unaffected
+    const res = await primary
+    strictEqual(await res.body.text(), 'response-body')
+  })
 })
