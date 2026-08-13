@@ -100,11 +100,20 @@ async function churningServer (rnd) {
     } catch {}
   })
 
+  // Churn (client aborts, GOAWAYs, destroyed sessions, agent.destroy()) can
+  // surface a late ECONNRESET on the server, a session, or its socket after
+  // the test body has resolved. An unhandled 'error' there kills the test
+  // process outright -- CI then reports a bare 'test failed' with no TAP.
+  // Same swallow pattern as test/http2-abort.js.
+  server.on('error', () => {})
   const sessions = new Set()
   server.on('session', (session) => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
     sessions.add(session)
     session.on('close', () => sessions.delete(session))
   })
+  server.on('secureConnection', socket => socket.on('error', () => {}))
   server.shutdown = () => {
     for (const session of sessions) session.destroy()
     server.close()
