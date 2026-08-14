@@ -382,6 +382,43 @@ test('Should retry immediately when retry-after is zero', async t => {
   t.assert.strictEqual(retries, 1)
 })
 
+test('Should ignore retry-after header when retryAfter option is false', async t => {
+  const clock = FakeTimers.install()
+  t.after(() => clock.uninstall())
+
+  let retries = 0
+  const handler = new RetryHandler(
+    {
+      method: 'GET',
+      retryOptions: {
+        retryAfter: false,
+        maxRetries: 1,
+        minTimeout: 500
+      }
+    },
+    {
+      dispatch () {
+        retries++
+      },
+      handler: {}
+    }
+  )
+
+  handler.onResponseError(null, {
+    statusCode: 429,
+    code: 'UND_ERR_REQ_RETRY',
+    headers: {
+      'retry-after': '60'
+    }
+  })
+
+  // Retry must be scheduled by the exponential backoff (minTimeout = 500ms),
+  // not by the Retry-After header (60s)
+  await clock.tickAsync(500)
+
+  t.assert.strictEqual(retries, 1)
+})
+
 test('Should use retry-after header for retries (date)', async t => {
   t = tspl(t, { plan: 3 })
 
