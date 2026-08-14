@@ -4,8 +4,24 @@ import { parseArgs, styleText } from 'node:util'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { exit } from 'node:process'
+import { existsSync } from 'node:fs'
 import { fork } from 'node:child_process'
 import { runtimeFeatures } from '../../lib/util/runtime-features.js'
+
+// CITGM / npm-pack installs don't include git submodules. Skip cleanly when the
+// http-tests/cache-tests checkout is missing rather than failing the whole suite
+// (https://github.com/nodejs/undici/issues/5642).
+const CACHE_TESTS_RUNNER = join(
+  import.meta.dirname,
+  '../fixtures/cache-tests/test-engine/client/runner.mjs'
+)
+if (!existsSync(CACHE_TESTS_RUNNER)) {
+  console.warn(
+    'Skipping cache-tests: test/fixtures/cache-tests submodule is not checked out. ' +
+    'Run `git submodule update --init test/fixtures/cache-tests` to enable them.'
+  )
+  exit(0)
+}
 
 /**
  * @typedef {import('../../types/cache-interceptor.d.ts').default.CacheOptions} CacheOptions

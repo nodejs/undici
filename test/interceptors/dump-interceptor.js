@@ -199,6 +199,47 @@ test('Should dump on already aborted request', { skip }, async t => {
   await t.completed
 })
 
+test('Should reject aborted request when response is smaller than maxSize', { skip }, async t => {
+  t = tspl(t, { plan: 2 })
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'application/octet-stream'
+    })
+    res.end(Buffer.alloc(256))
+  })
+
+  const abc = new AbortController()
+
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    signal: abc.signal
+  }
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(dump({ maxSize: 512 }))
+
+  after(async () => {
+    await client.close()
+
+    server.close()
+    await once(server, 'close')
+  })
+
+  abc.abort()
+  client.request(requestOptions).catch(err => {
+    t.equal(err.name, 'AbortError')
+    t.equal(err.message, 'This operation was aborted')
+  })
+
+  await t.completed
+})
+
 test('Should dump response body up to limit (default)', { skip }, async t => {
   t = tspl(t, { plan: 3 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {

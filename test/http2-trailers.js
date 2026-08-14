@@ -1,7 +1,7 @@
 'use strict'
 
-const assert = require('node:assert')
-const { test } = require('node:test')
+const { tspl } = require('@matteo.collina/tspl')
+const { test, after } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 
@@ -10,10 +10,12 @@ const pem = require('@metcoder95/https-pem')
 const { Client } = require('..')
 
 test('Should handle http2 trailers', async t => {
+  t = tspl(t, { plan: 4 })
+
   const server = createSecureServer(pem)
   let client = null
 
-  t.after(async () => {
+  after(async () => {
     await client?.close()
     await new Promise(resolve => server.close(resolve))
   })
@@ -44,14 +46,22 @@ test('Should handle http2 trailers', async t => {
     allowH2: true
   })
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const { statusCode, headers, body, trailers } = await client.request({
     path: '/',
     method: 'PUT',
     body: 'hello'
   })
 
-  assert.strictEqual(statusCode, 200)
-  assert.strictEqual(headers['content-type'], 'text/plain; charset=utf-8')
-  assert.strictEqual(await body.text(), 'hello h2!')
-  assert.deepStrictEqual(trailers, { 'x-trailer': 'hello' })
+  t.strictEqual(statusCode, 200)
+  t.strictEqual(headers['content-type'], 'text/plain; charset=utf-8')
+  t.strictEqual(await body.text(), 'hello h2!')
+  t.deepStrictEqual(trailers, { 'x-trailer': 'hello' })
+
+  await t.completed
 })
