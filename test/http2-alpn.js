@@ -63,6 +63,12 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for GET', async (t) => 
   // close the client on teardown
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   // make an undici request using where it wants http/2
   const response = await client.request({
     path: '/',
@@ -210,6 +216,12 @@ test('Should upgrade to HTTP/2 when HTTPS/1 is available for POST', async (t) =>
 
   // close the client on teardown
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   // make an undici request using where it wants http/2
   const response = await client.request({
