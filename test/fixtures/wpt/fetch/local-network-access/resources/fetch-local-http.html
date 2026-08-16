@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Fetch HTTP private with targetAddressSpace private </title>
+<title>Fetch HTTP local with targetAddressSpace local </title>
 
 <script src="/resources/testdriver.js"></script>
 <script src="/resources/testdriver-vendor.js"></script>
@@ -8,23 +8,22 @@
 <script>
 "use strict";
 
-// Fetch a private address over HTTP. Fetch is annotated with a
-// targetAddressSpace of private to allow for mixed content check bypassing.
+// Fetch a local address over HTTP. Fetch is annotated with a
+// targetAddressSpace of local to allow for mixed content check bypassing.
 //
-// TODO(crbug.com/406991278): consolidate with fetch-private.html adding
+// TODO(crbug.com/406991278): consolidate with fetch-local.html adding
 // options to minimize # of resources needed.
 Promise.resolve().then(async () => {
   test_driver.set_test_context(opener);
   await test_driver.set_permission({ name: 'local-network-access' }, 'granted');
 
   const target = {
-    server: Server.HTTP_PRIVATE,
+    server: Server.HTTP_LOCAL,
     behavior: { response: ResponseBehavior.allowCrossOrigin() },
   };
   const targetUrl = resolveTargetUrl(target);
 
-  // TODO(crbug.com/406991278): rename address space for LNA spec
-  fetch(targetUrl, {targetAddressSpace: 'private'})
+  fetch(targetUrl, {targetAddressSpace: 'local'})
       .then(async function(response) {
         const body = await response.text();
         const message = {
