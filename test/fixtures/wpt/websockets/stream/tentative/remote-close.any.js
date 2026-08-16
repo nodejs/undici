@@ -48,8 +48,7 @@ promise_test(async t => {
   const closedError = await wss.closed.then(t.unreached_func('closed should reject'), e => e);
   assert_equals(closedError.constructor, WebSocketError, 'error should be WebSocketError');
   assert_equals(closedError.closeCode, 4567, 'closeCode should be set');
-  await promise_rejects_dom(
-      t, 'InvalidStateError', writePromise, 'write() should reject');
+  promise_rejects_js(t, WebSocketError, writePromise, 'write() should reject');
 }, 'close with unwritten data should not be considered clean');
 
 promise_test(async t => {

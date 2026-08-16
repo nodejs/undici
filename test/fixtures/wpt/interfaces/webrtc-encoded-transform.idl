@@ -55,17 +55,6 @@ dictionary SFrameTransformErrorEventInit : EventInit {
     CryptoKeyID? keyID;
 };
 
-dictionary RTCEncodedFrameMetadata {
-    unsigned long synchronizationSource;
-    octet payloadType;
-    sequence<unsigned long> contributingSources;
-    unsigned long rtpTimestamp;
-    DOMHighResTimeStamp receiveTime;
-    DOMHighResTimeStamp captureTime;
-    DOMHighResTimeStamp senderCaptureTimeOffset;
-    DOMString mimeType;
-};
-
 // New enum for video frame types. Will eventually re-use the equivalent defined
 // by WebCodecs.
 enum RTCEncodedVideoFrameType {
@@ -74,14 +63,22 @@ enum RTCEncodedVideoFrameType {
     "delta",
 };
 
-dictionary RTCEncodedVideoFrameMetadata : RTCEncodedFrameMetadata {
+dictionary RTCEncodedVideoFrameMetadata {
     unsigned long long frameId;
     sequence<unsigned long long> dependencies;
     unsigned short width;
     unsigned short height;
     unsigned long spatialIndex;
     unsigned long temporalIndex;
+    unsigned long synchronizationSource;
+    octet payloadType;
+    sequence<unsigned long> contributingSources;
     long long timestamp;    // microseconds
+    unsigned long rtpTimestamp;
+    DOMHighResTimeStamp receiveTime;
+    DOMHighResTimeStamp captureTime;
+    DOMHighResTimeStamp senderCaptureTimeOffset;
+    DOMString mimeType;
 };
 
 dictionary RTCEncodedVideoFrameOptions {
@@ -98,9 +95,16 @@ interface RTCEncodedVideoFrame {
     RTCEncodedVideoFrameMetadata getMetadata();
 };
 
-dictionary RTCEncodedAudioFrameMetadata : RTCEncodedFrameMetadata {
+dictionary RTCEncodedAudioFrameMetadata {
+    unsigned long synchronizationSource;
+    octet payloadType;
+    sequence<unsigned long> contributingSources;
     short sequenceNumber;
-    double audioLevel;
+    unsigned long rtpTimestamp;
+    DOMHighResTimeStamp receiveTime;
+    DOMHighResTimeStamp captureTime;
+    DOMHighResTimeStamp senderCaptureTimeOffset;
+    DOMString mimeType;
 };
 
 dictionary RTCEncodedAudioFrameOptions {

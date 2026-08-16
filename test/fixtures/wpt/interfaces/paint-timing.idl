@@ -10,7 +10,5 @@ interface mixin PaintTimingMixin {
 };
 
 [Exposed=Window]
-interface PerformancePaintTiming : PerformanceEntry {
-    [Default] object toJSON();
-};
+interface PerformancePaintTiming : PerformanceEntry {};
 PerformancePaintTiming includes PaintTimingMixin;

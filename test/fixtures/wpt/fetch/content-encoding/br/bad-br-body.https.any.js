@@ -2,11 +2,6 @@
 
 [
   "arrayBuffer",
-  "blob",
-  "bytes",
-  "formData",
-  "json",
-  "text"
 ].forEach(method => {
   promise_test(t => {
     return fetch("resources/bad-br-body.py").then(res => {

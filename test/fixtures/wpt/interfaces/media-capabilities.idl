@@ -91,11 +91,11 @@ dictionary MediaCapabilitiesInfo {
 
 dictionary MediaCapabilitiesDecodingInfo : MediaCapabilitiesInfo {
   required MediaKeySystemAccess? keySystemAccess;
-  required MediaDecodingConfiguration configuration;
+  MediaDecodingConfiguration configuration;
 };
 
 dictionary MediaCapabilitiesEncodingInfo : MediaCapabilitiesInfo {
-  required MediaEncodingConfiguration configuration;
+  MediaEncodingConfiguration configuration;
 };
 
 [Exposed=Window]
