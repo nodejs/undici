@@ -42,3 +42,23 @@ test('h2Options.settings.initialWindowSize reaches the session options', async (
   t.strictEqual(defaulted[kHTTP2Options].sessionOptions.initialWindowSize, 262144)
   await defaulted.close()
 })
+
+test('h2Options.initialWindowSize (legacy flat path) still reaches the session options', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  // Ensure existing code that passes initialWindowSize at the top level of h2Options
+  // is not silently broken by the move to h2Options.settings.*
+  const client = new Client('https://localhost', {
+    h2Options: { initialWindowSize: 98304 }
+  })
+  t.strictEqual(client[kHTTP2Options].sessionOptions.initialWindowSize, 98304)
+  await client.close()
+
+  // settings.* takes precedence over the flat path
+  const withBoth = new Client('https://localhost', {
+    h2Options: { initialWindowSize: 98304, settings: { initialWindowSize: 131072 } }
+  })
+  t.strictEqual(withBoth[kHTTP2Options].sessionOptions.initialWindowSize, 131072)
+  await withBoth.close()
+})
+
