@@ -12,7 +12,7 @@ test('referrerPolicy unsafe-url is respected', async (t) => {
 
   const referrer = 'https://google.com/hello/world'
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     deepEqual(req.headers.referer, referrer)
 
     res.end()

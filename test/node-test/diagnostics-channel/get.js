@@ -8,7 +8,7 @@ const { createServer } = require('node:http')
 
 test('Diagnostics channel - get', (t) => {
   const assert = tspl(t, { plan: 32 })
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.setHeader('trailer', 'foo')
     res.write('hello')

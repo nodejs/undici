@@ -694,7 +694,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
 
   // https://github.com/nodejs/undici/issues/1935
   await t.test('When Headers are cloned, so are the cookies (single entry)', async (t) => {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Set-Cookie', 'test=onetwo')
       res.end('Hello World!')
     }).listen(0)
@@ -710,7 +710,7 @@ test('Headers.prototype.getSetCookie', async (t) => {
   })
 
   await t.test('When Headers are cloned, so are the cookies (multiple entries)', async (t) => {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('Set-Cookie', ['test=onetwo', 'test=onetwothree'])
       res.end('Hello World!')
     }).listen(0)

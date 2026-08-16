@@ -37,7 +37,7 @@ test('should create a PerformanceResourceTiming after each fetch request', (t, d
 
   obs.observe({ entryTypes: ['resource'] })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
@@ -62,7 +62,7 @@ test('should include encodedBodySize in performance entry', (t, done) => {
 
   obs.observe({ entryTypes: ['resource'] })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}`)
@@ -98,7 +98,7 @@ test('timing entries should be in order', (t, done) => {
 
   obs.observe({ entryTypes: ['resource'] })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ok')
   }).listen(0, async () => {
     const body = await fetch(`http://localhost:${server.address().port}/redirect`)
@@ -124,7 +124,7 @@ test('redirect timing entries should be included when redirecting', (t, done) =>
 
   obs.observe({ entryTypes: ['resource'] })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/redirect') {
       res.statusCode = 307
       res.setHeader('location', '/redirect/')

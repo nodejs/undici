@@ -9,7 +9,7 @@ test('validations', async t => {
   let client
   const p = tspl(t, { plan: 10 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'text/plain')
     res.end('hello')
     p.fail('server should never be called')

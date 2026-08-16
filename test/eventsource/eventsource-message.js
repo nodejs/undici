@@ -20,7 +20,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('retry: 100\n\n')
       await setTimeout(100)
@@ -66,7 +66,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:message\n\n')
       await setTimeout(100)
@@ -106,7 +106,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\ndata:test\n\n')
       await setTimeout(100)
@@ -143,7 +143,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('data:test\n\n')
       await setTimeout(100)
@@ -180,7 +180,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('data\n\n')
       await setTimeout(100)
@@ -217,7 +217,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\ndata:\n\n')
       await setTimeout(100)
@@ -254,7 +254,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('data:\n\n')
       await setTimeout(100)
@@ -291,7 +291,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\ndata\n\n')
       await setTimeout(100)
@@ -328,7 +328,7 @@ describe('EventSource - message', () => {
       finishedPromise.reject = reject
     })
 
-    const server = http.createServer(async (req, res) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, async (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
       res.write('event:custom\n\n')
       await setTimeout(100)

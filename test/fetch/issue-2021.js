@@ -9,7 +9,7 @@ const { closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/2021
 test('content-length header is removed on redirect', async (t) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/redirect') {
       res.writeHead(302, { Location: '/redirect2' })
       res.end()

@@ -10,7 +10,7 @@ test('https://github.com/nodejs/undici/issues/803', { timeout: 60000 }, async (t
   t = tspl(t, { plan: 2 })
   const SIZE = 5900373096
 
-  const server = createServer(async (req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     const chunkSize = res.writableHighWaterMark << 5
     const parts = (SIZE / chunkSize) | 0
     const lastPartSize = SIZE % chunkSize

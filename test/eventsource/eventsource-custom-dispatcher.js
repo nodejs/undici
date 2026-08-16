@@ -9,7 +9,7 @@ const { test } = require('node:test')
 test('EventSource allows setting custom dispatcher.', async (t) => {
   const { completed, deepStrictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer(async (req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
     deepStrictEqual(req.headers['x-customer-header'], 'hello world')
 

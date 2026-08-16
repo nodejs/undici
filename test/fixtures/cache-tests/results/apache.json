@@ -100,7 +100,7 @@
   "cdn-date-update-exceed": true,
   "cdn-expires-update-exceed": [
     "Assertion",
-    "Response 2 header Expires is \"null\", not \"Tue, 21 Jan 2025 00:20:15 GMT\""
+    "Response 2 header Expires is \"null\", not \"Wed, 29 Jan 2025 03:37:47 GMT\""
   ],
   "cdn-fresh-cc-nostore": [
     "Assertion",
@@ -340,10 +340,7 @@
   "headers-store-Cache-Control": true,
   "headers-store-Clear-Site-Data": true,
   "headers-store-Connection": true,
-  "headers-store-Content-Encoding": [
-    "AbortError",
-    "This operation was aborted"
-  ],
+  "headers-store-Content-Encoding": true,
   "headers-store-Content-Foo": true,
   "headers-store-Content-Length": true,
   "headers-store-Content-Location": true,
@@ -496,11 +493,11 @@
   "other-cookie": true,
   "other-date-update": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 21 Jan 2025 00:20:09 GMT\", not \"Tue, 21 Jan 2025 00:20:06 GMT\""
+    "Response 2 header Date is \"Wed, 29 Jan 2025 03:37:41 GMT\", not \"Wed, 29 Jan 2025 03:37:38 GMT\""
   ],
   "other-date-update-expires": [
     "Assertion",
-    "Response 2 header Date is \"Tue, 21 Jan 2025 00:20:09 GMT\", not \"Tue, 21 Jan 2025 00:20:06 GMT\""
+    "Response 2 header Date is \"Wed, 29 Jan 2025 03:37:41 GMT\", not \"Wed, 29 Jan 2025 03:37:38 GMT\""
   ],
   "other-date-update-expires-update": true,
   "other-fresh-content-disposition-attachment": true,
@@ -565,17 +562,14 @@
     "fetch failed"
   ],
   "stale-close-s-maxage=2": [
-    "AbortError",
-    "This operation was aborted"
+    "TypeError",
+    "fetch failed"
   ],
   "stale-sie-503": [
     "TypeError",
     "fetch failed"
   ],
-  "stale-sie-close": [
-    "TypeError",
-    "fetch failed"
-  ],
+  "stale-sie-close": true,
   "stale-warning-become": [
     "TypeError",
     "fetch failed"

@@ -16,7 +16,7 @@ test('issue #2828, dispatcher is allowed in RequestInit options', async (t) => {
     }
   }
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     deepStrictEqual(req.headers['x-my-header'], 'hello')
     res.end()
   }).listen(0)

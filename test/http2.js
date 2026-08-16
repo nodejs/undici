@@ -125,8 +125,9 @@ test('Should support H2 connection (headers as array)', async t => {
   const server = createSecureServer(pem)
 
   server.on('stream', (stream, headers) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers['x-my-drink'], 'coffee,tea')
+    t.strictEqual(headers['x-my-header'], 'foo, bar')
+    t.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
+    t.strictEqual(headers['x-other'], 'value')
     t.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
@@ -146,14 +147,20 @@ test('Should support H2 connection (headers as array)', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 8 })
   after(() => server.close())
   after(() => client.close())
 
   const response = await client.request({
     path: '/',
     method: 'GET',
-    headers: ['x-my-header', 'foo', 'x-my-drink', ['coffee', 'tea']]
+    headers: [
+      'x-my-header', 'foo',
+      'x-my-drink', ['coffee', 'tea'],
+      'x-my-drink', 'water',
+      'X-My-Header', 'bar',
+      'x-other', 'value'
+    ]
   })
 
   response.body.on('data', chunk => {
@@ -1492,11 +1499,17 @@ test('#3046 - GOAWAY Frame', async t => {
     allowH2: true
   })
 
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 10 })
   after(() => client.close())
   after(() => server.close())
 
   client.on('disconnect', (url, disconnectClient, err) => {
+    t.ok(url instanceof URL)
+    t.deepStrictEqual(disconnectClient, [client])
+    t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
+  })
+
+  client.on('connectionError', (url, disconnectClient, err) => {
     t.ok(url instanceof URL)
     t.deepStrictEqual(disconnectClient, [client])
     t.strictEqual(err.message, 'HTTP/2: "GOAWAY" frame received with code 0')
@@ -1514,7 +1527,7 @@ test('#3046 - GOAWAY Frame', async t => {
   t.strictEqual(response.headers['x-custom-h2'], 'hello')
   t.strictEqual(response.statusCode, 200)
 
-  t.rejects(response.body.text(), {
+  await t.rejects(response.body.text(), {
     message: 'HTTP/2: "GOAWAY" frame received with code 0',
     code: 'UND_ERR_SOCKET'
   })
@@ -1735,9 +1748,11 @@ test('Should handle http2 stream timeout', async t => {
     body: stream
   })
 
-  t.rejects(res.body.text(), {
+  await t.rejects(res.body.text(), {
     message: 'HTTP/2: "stream timeout after 50"'
   })
+
+  await t.completed
 })
 
 test('Should handle http2 trailers', async t => {

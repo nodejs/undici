@@ -1,6 +1,6 @@
 'use strict'
 
-const { setMaxListeners, getMaxListeners, defaultMaxListeners } = require('events')
+const { setMaxListeners, getMaxListeners, defaultMaxListeners } = require('node:events')
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { Request } = require('../..')

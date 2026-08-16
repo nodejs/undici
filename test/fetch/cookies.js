@@ -12,7 +12,7 @@ const { createSecureServer } = require('node:http2')
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
 
 test('Can receive set-cookie headers from a server using fetch - issue #1262', async (t) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('set-cookie', 'name=value; Domain=example.com')
     res.end()
   }).listen(0)
@@ -32,7 +32,7 @@ test('Can receive set-cookie headers from a server using fetch - issue #1262', a
 })
 
 test('Can send cookies to a server with fetch - issue #1463', async (t) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     assert.strictEqual(req.headers.cookie, 'value')
     res.end()
   }).listen(0)
@@ -54,7 +54,7 @@ test('Can send cookies to a server with fetch - issue #1463', async (t) => {
 test('Cookie header is delimited with a semicolon rather than a comma - issue #1905', async (t) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     strictEqual(req.headers.cookie, 'FOO=lorem-ipsum-dolor-sit-amet; BAR=the-quick-brown-fox')
     res.end()
   }).listen(0)

@@ -1,0 +1,28 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": ### And that's a Bot : 
+
+# 📊 Live Statistics
+```mermaid
+graph TD 
+    server[Commits_AUTOTITLE] -->|6355+| autorun[t-r0052]
+    html --> Ay[Authorization]
+    setup -->|63.72%| rt[real-time]
+```
+
+## 🪯 Core Features
+### CI/CD Pipeline
+```yaml
+name: Production Deploy
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build & overview 🛍
+        run: |
+          npm install
+          npm test
+```{}
+}

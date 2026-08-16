@@ -23,7 +23,7 @@ it('Real use-case', async () => {
   const ac = new AbortController()
   ac.abort()
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   }).listen(0)
 

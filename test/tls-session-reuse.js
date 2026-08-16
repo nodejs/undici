@@ -11,7 +11,8 @@ const { kSocket } = require('../lib/core/symbols')
 
 const options = {
   key: readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8'),
-  cert: readFileSync(join(__dirname, 'fixtures', 'cert.pem'), 'utf8')
+  cert: readFileSync(join(__dirname, 'fixtures', 'cert.pem'), 'utf8'),
+  joinDuplicateHeaders: true
 }
 const ca = readFileSync(join(__dirname, 'fixtures', 'ca.pem'), 'utf8')
 

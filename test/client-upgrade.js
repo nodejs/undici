@@ -11,7 +11,7 @@ const { kBusy } = require('../lib/core/symbols')
 test('basic upgrade', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = net.createServer((c) => {
+  const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
       t.ok(/upgrade: websocket/i.test(d))
       c.write('HTTP/1.1 101\r\n')
@@ -70,7 +70,7 @@ test('basic upgrade', async (t) => {
 test('basic upgrade promise', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer((c) => {
+  const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
       c.write('HTTP/1.1 101\r\n')
       c.write('hello: world\r\n')
@@ -119,7 +119,7 @@ test('basic upgrade promise', async (t) => {
 test('upgrade error', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = net.createServer((c) => {
+  const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
       c.write('HTTP/1.1 101\r\n')
       c.write('hello: world\r\n')
@@ -182,7 +182,7 @@ test('upgrade invalid opts', async (t) => {
 test('basic upgrade2', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = http.createServer()
+  const server = http.createServer({ joinDuplicateHeaders: true })
   server.on('upgrade', (req, c, head) => {
     c.write('HTTP/1.1 101\r\n')
     c.write('hello: world\r\n')
@@ -232,7 +232,7 @@ test('upgrade wait for empty pipeline', async (t) => {
   t = tspl(t, { plan: 7 })
 
   let canConnect = false
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
     canConnect = true
   })
@@ -299,7 +299,7 @@ test('upgrade wait for empty pipeline', async (t) => {
 test('upgrade aborted', async (t) => {
   t = tspl(t, { plan: 6 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.fail()
   })
   server.on('upgrade', (req, c, firstBodyChunk) => {
@@ -339,7 +339,7 @@ test('basic aborted after res', async (t) => {
   t = tspl(t, { plan: 1 })
 
   const signal = new EE()
-  const server = http.createServer()
+  const server = http.createServer({ joinDuplicateHeaders: true })
   server.on('upgrade', (req, c, head) => {
     c.write('HTTP/1.1 101\r\n')
     c.write('hello: world\r\n')
@@ -375,7 +375,7 @@ test('basic aborted after res', async (t) => {
 test('basic upgrade error', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer((c) => {
+  const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
       c.write('HTTP/1.1 101\r\n')
       c.write('hello: world\r\n')
@@ -445,7 +445,7 @@ test('upgrade disconnect', async (t) => {
 test('upgrade invalid signal', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = net.createServer(() => {
+  const server = net.createServer({ joinDuplicateHeaders: true }, () => {
     t.fail()
   })
   after(() => server.close())

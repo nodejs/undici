@@ -10,7 +10,7 @@ test('request examples', async (t) => {
   t = tspl(t, { plan: 7 })
 
   let lastReq
-  const exampleServer = createServer((req, res) => {
+  const exampleServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     lastReq = req
     if (req.method === 'DELETE') {
       res.statusCode = 204
@@ -29,7 +29,7 @@ test('request examples', async (t) => {
     }
   })
 
-  const errorServer = createServer((req, res) => {
+  const errorServer = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     lastReq = req
     res.statusCode = 400
     res.setHeader('content-type', 'application/json')

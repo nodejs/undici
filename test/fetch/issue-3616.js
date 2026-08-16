@@ -17,7 +17,7 @@ describe('https://github.com/nodejs/undici/issues/3616', () => {
   for (const encoding of cases) {
     test(encoding, async t => {
       t = tspl(t, { plan: 2 })
-      const server = createServer((req, res) => {
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
         res.writeHead(200, {
           'Content-Length': '0',
           Connection: 'close',

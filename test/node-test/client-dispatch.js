@@ -94,7 +94,7 @@ test('dispatch invalid opts', (t) => {
 test('basic dispatch get', async (t) => {
   const p = tspl(t, { plan: 11 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -147,7 +147,7 @@ test('basic dispatch get', async (t) => {
 test('trailers dispatch get', async (t) => {
   const p = tspl(t, { plan: 12 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -209,7 +209,7 @@ test('trailers dispatch get', async (t) => {
 test('dispatch onHeaders error', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   t.after(closeServerAsPromise(server))
@@ -246,7 +246,7 @@ test('dispatch onHeaders error', async (t) => {
 test('dispatch onComplete error', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   t.after(closeServerAsPromise(server))
@@ -283,7 +283,7 @@ test('dispatch onComplete error', async (t) => {
 test('dispatch onData error', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -320,7 +320,7 @@ test('dispatch onData error', async (t) => {
 test('dispatch onConnect error', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -358,7 +358,7 @@ test('dispatch onConnect error', async (t) => {
 test('connect call onUpgrade once', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((c) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (c) => {
     p.ok(0)
   })
   server.on('connect', (req, socket, firstBodyChunk) => {
@@ -422,7 +422,7 @@ test('connect call onUpgrade once', async (t) => {
 test('dispatch onHeaders missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -455,7 +455,7 @@ test('dispatch onHeaders missing', async (t) => {
 test('dispatch onData missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -488,7 +488,7 @@ test('dispatch onData missing', async (t) => {
 test('dispatch onComplete missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -521,7 +521,7 @@ test('dispatch onComplete missing', async (t) => {
 test('dispatch onError missing', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -558,7 +558,7 @@ test('dispatch onError missing', async (t) => {
 test('dispatch CONNECT onUpgrade missing', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -589,7 +589,7 @@ test('dispatch CONNECT onUpgrade missing', async (t) => {
 test('dispatch upgrade onUpgrade missing', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -620,7 +620,7 @@ test('dispatch upgrade onUpgrade missing', async (t) => {
 test('dispatch pool onError missing', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -647,7 +647,7 @@ test('dispatch pool onError missing', async (t) => {
 
 test('dispatch onBodySent not a function', async (t) => {
   const p = tspl(t, { plan: 2 })
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -677,7 +677,7 @@ test('dispatch onBodySent not a function', async (t) => {
 test('dispatch onBodySent buffer', async (t) => {
   const p = tspl(t, { plan: 3 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -714,7 +714,7 @@ test('dispatch onBodySent buffer', async (t) => {
 
 test('dispatch onBodySent stream', async (t) => {
   const p = tspl(t, { plan: 8 })
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -756,7 +756,7 @@ test('dispatch onBodySent stream', async (t) => {
 })
 
 test('dispatch onBodySent async-iterable', (t, done) => {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ad')
   })
   t.after(closeServerAsPromise(server))
@@ -792,7 +792,7 @@ test('dispatch onBodySent async-iterable', (t, done) => {
 })
 
 test('dispatch onBodySent throws error', (t, done) => {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ended')
   })
   t.after(closeServerAsPromise(server))
@@ -823,7 +823,7 @@ test('dispatch onBodySent throws error', (t, done) => {
 })
 
 test('dispatches in expected order', async (t) => {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('ended')
   })
   t.after(closeServerAsPromise(server))
@@ -929,7 +929,7 @@ test('dispatches in expected order for http2', async (t) => {
 
 test('Issue#3065 - fix bad destroy handling', async (t) => {
   const p = tspl(t, { plan: 4 })
-  const server = https.createServer(pem, (req, res) => {
+  const server = https.createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, { 'content-type': 'text/plain' })
     res.end('ended')
   })

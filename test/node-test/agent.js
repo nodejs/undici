@@ -45,7 +45,7 @@ test('agent should call callback after closing internal pools', async (t) => {
 
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -97,7 +97,7 @@ test('agent should close internal pools', async (t) => {
 
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -138,7 +138,7 @@ test('agent should destroy internal pools and call callback', async (t) => {
 
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -200,7 +200,7 @@ test('agent should destroy internal pools', async t => {
 
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end(wanted)
   })
@@ -239,7 +239,7 @@ test('multiple connections', async t => {
   const connections = 3
   const p = tspl(t, { plan: 6 * connections })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeHead(200, {
       Connection: 'keep-alive',
       'Keep-Alive': 'timeout=1s'
@@ -299,7 +299,7 @@ test('agent factory supports URL parameter', async (t) => {
     }
   })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('asd')
   })
@@ -337,7 +337,7 @@ test('agent factory supports string parameter', async (t) => {
     }
   })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('asd')
   })
@@ -357,7 +357,7 @@ test('with globalAgent', async t => {
   const p = tspl(t, { plan: 6 })
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -392,7 +392,7 @@ test('with local agent', async t => {
   const p = tspl(t, { plan: 6 })
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -443,7 +443,7 @@ test('with globalAgent', async t => {
   const p = tspl(t, { plan: 6 })
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -484,7 +484,7 @@ test('with a local agent', async t => {
   const p = tspl(t, { plan: 6 })
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -544,7 +544,7 @@ test('with globalAgent', async t => {
   const p = tspl(t, { plan: 6 })
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -585,7 +585,7 @@ test('with a local agent', async t => {
   const p = tspl(t, { plan: 6 })
   const wanted = 'payload'
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     p.strictEqual('/', req.url)
     p.strictEqual('GET', req.method)
     p.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -681,7 +681,7 @@ test('dispatch validations', async t => {
     }
   }
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('asd')
   })
@@ -726,7 +726,7 @@ test('drain', async t => {
     }
   }
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'text/plain')
     res.end('asd')
   })
@@ -747,7 +747,7 @@ test('drain', async t => {
 test('global api', async t => {
   const p = tspl(t, { plan: 6 * 2 })
 
-  const server = http.createServer((req, res) => {
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/bar') {
       p.strictEqual(req.method, 'PUT')
       p.strictEqual(req.url, '/bar')
@@ -807,4 +807,41 @@ test('the dispatcher is truly global', t => {
   const undiciFresh = require('../../index.js')
   assert.ok(require.resolve('../../index.js') in require.cache)
   assert.strictEqual(agent, undiciFresh.getGlobalDispatcher())
+})
+
+test('stats', async t => {
+  const p = tspl(t, { plan: 7 })
+  const wanted = 'payload'
+
+  const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    p.strictEqual('/', req.url)
+    p.strictEqual('GET', req.method)
+    res.end(wanted)
+  })
+
+  t.after(closeServerAsPromise(server))
+
+  const dispatcher = new Agent({
+    connect: {
+      servername: 'agent1'
+    }
+  })
+
+  server.listen(0, () => {
+    request(`http://localhost:${server.address().port}`, { dispatcher })
+      .then(({ statusCode, headers, body }) => {
+        p.strictEqual(statusCode, 200)
+        const originForStats = `http://localhost:${server.address().port}`
+        const agentStats = dispatcher.stats[originForStats]
+        p.strictEqual(agentStats.connected, 1)
+        p.strictEqual(agentStats.pending, 0)
+        p.strictEqual(agentStats.running, 0)
+        p.strictEqual(agentStats.size, 0)
+      })
+      .catch(err => {
+        p.fail(err)
+      })
+  })
+
+  await p.completed
 })

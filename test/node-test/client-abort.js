@@ -11,7 +11,7 @@ class OnAbortError extends Error {}
 test('aborted response errors', async (t) => {
   const p = tspl(t, { plan: 3 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   server.once('request', (req, res) => {
     // TODO: res.write will cause body to emit 'error' twice
     // due to bug in readable-stream.
@@ -42,7 +42,7 @@ test('aborted response errors', async (t) => {
 test('aborted req', async (t) => {
   const p = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(Buffer.alloc(4 + 1, 'a'))
   })
   t.after(server.close.bind(server))
@@ -72,7 +72,7 @@ test('aborted req', async (t) => {
 test('abort', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   t.after(server.close.bind(server))
@@ -113,7 +113,7 @@ test('abort', async (t) => {
 test('abort pipelined', async (t) => {
   const p = tspl(t, { plan: 6 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
   t.after(server.close.bind(server))
 
@@ -183,7 +183,7 @@ test('abort pipelined', async (t) => {
 test('propagate unallowed throws in request.onError', async (t) => {
   const p = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   t.after(server.close.bind(server))

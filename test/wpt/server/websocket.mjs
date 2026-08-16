@@ -7,6 +7,7 @@ import { server } from './server.mjs'
 // event, so I'm unsure if we can stop relying on server.
 
 const wss = new WebSocketServer({
+  maxPayload: 1024 * 1024 * 1024,
   noServer: true,
   handleProtocols: (protocols) => protocols.values().next().value
 })

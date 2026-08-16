@@ -10,7 +10,7 @@ test('override HEAD reset', async (t) => {
   t = tspl(t, { plan: 4 })
 
   const expected = 'testing123'
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.method === 'GET') {
       res.write(expected)
     }

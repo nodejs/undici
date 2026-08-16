@@ -40,7 +40,7 @@ test('request json', (t, done) => {
   const { deepStrictEqual } = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
   t.after(closeServerAsPromise(server))
@@ -56,7 +56,7 @@ test('request text', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
   t.after(closeServerAsPromise(server))
@@ -72,7 +72,7 @@ test('request arrayBuffer', (t, done) => {
   const { deepStrictEqual } = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
   t.after(closeServerAsPromise(server))
@@ -88,7 +88,7 @@ test('should set type of blob object to the value of the `Content-Type` header f
   const { strictEqual } = tspl(t, { plan: 1 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify(obj))
   })
@@ -104,7 +104,7 @@ test('should set type of blob object to the value of the `Content-Type` header f
 test('pre aborted with readable request body', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
   t.after(closeServerAsPromise(server))
 
@@ -129,7 +129,7 @@ test('pre aborted with readable request body', (t, done) => {
 test('pre aborted with closed readable request body', (t, done) => {
   const { ok, strictEqual } = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
   })
   t.after(closeServerAsPromise(server))
 
@@ -161,7 +161,7 @@ test('pre aborted with closed readable request body', (t, done) => {
 test('unsupported formData 1', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'asdasdsad')
     res.end()
   })
@@ -190,7 +190,7 @@ test('multipart formdata not base64', async (t) => {
   const boundary = tempRes.headers.get('content-type').split('boundary=')[1]
   const formRaw = await tempRes.text()
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'multipart/form-data; boundary=' + boundary)
     res.write(formRaw)
     res.end()
@@ -223,7 +223,7 @@ test('multipart formdata base64', (t, done) => {
     '\r\n' +
     '------formdata-undici-0.5786922755719377--'
 
-  const server = createServer(async (req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     res.setHeader('content-type', 'multipart/form-data; boundary=----formdata-undici-0.5786922755719377')
 
     for (let offset = 0; offset < formRaw.length;) {
@@ -274,7 +274,7 @@ test('busboy emit error', async (t) => {
   const tempRes = new Response(formData)
   const formRaw = await tempRes.text()
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'multipart/form-data; boundary=wrongboundary')
     res.write(formRaw)
     res.end()
@@ -303,7 +303,7 @@ test('parsing formData preserve full path on files', async (t) => {
 test('urlencoded formData', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
     res.end('field1=value1&field2=value2')
   })
@@ -323,7 +323,7 @@ test('urlencoded formData', (t, done) => {
 test('text with BOM', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
     res.end('\uFEFFtest=\uFEFF')
   })
@@ -342,7 +342,7 @@ test('text with BOM', (t, done) => {
 test('formData with BOM', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('content-type', 'application/x-www-form-urlencoded')
     res.end('\uFEFFtest=\uFEFF')
   })
@@ -361,7 +361,7 @@ test('formData with BOM', (t, done) => {
 test('locked blob body', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   t.after(closeServerAsPromise(server))
@@ -379,7 +379,7 @@ test('locked blob body', (t, done) => {
 test('disturbed blob body', (t, done) => {
   const { ok, strictEqual } = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   t.after(closeServerAsPromise(server))
@@ -400,7 +400,7 @@ test('redirect with body', (t, done) => {
   const { strictEqual } = tspl(t, { plan: 3 })
 
   let count = 0
-  const server = createServer(async (req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     let body = ''
     for await (const chunk of req) {
       body += chunk
@@ -431,7 +431,7 @@ test('redirect with stream', (t, done) => {
 
   const location = '/asd'
   const body = 'hello!'
-  const server = createServer(async (req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     res.writeHead(302, { location })
     let count = 0
     const l = setInterval(() => {
@@ -493,7 +493,7 @@ test('post FormData with Blob', (t, done) => {
   const body = new FormData()
   body.append('field1', new Blob(['asd1']))
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   t.after(closeServerAsPromise(server))
@@ -514,7 +514,7 @@ test('post FormData with File', (t, done) => {
   const body = new FormData()
   body.append('field1', new File(['asd1'], 'filename123'))
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   t.after(closeServerAsPromise(server))
@@ -545,7 +545,7 @@ test('custom agent', (t, done) => {
   const { ok, deepStrictEqual } = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
   t.after(closeServerAsPromise(server))
@@ -572,7 +572,7 @@ test('custom agent node fetch', (t, done) => {
   const { ok, deepStrictEqual } = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify(obj))
   })
   t.after(closeServerAsPromise(server))
@@ -596,7 +596,7 @@ test('custom agent node fetch', (t, done) => {
 })
 
 test('error on redirect', (t, done) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.statusCode = 302
     res.end()
   })
@@ -614,7 +614,7 @@ test('error on redirect', (t, done) => {
 
 // https://github.com/nodejs/undici/issues/1527
 test('fetching with Request object - issue #1527', async (t) => {
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     assert.ok(true)
     res.end()
   }).listen(0)
@@ -635,7 +635,7 @@ test('do not decode redirect body', (t, done) => {
   const { ok, strictEqual } = tspl(t, { plan: 3 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     if (req.url === '/resource') {
       ok(true)
       res.statusCode = 301
@@ -663,7 +663,7 @@ test('decode non-redirect body with location header', (t, done) => {
   const { ok, strictEqual } = tspl(t, { plan: 2 })
 
   const obj = { asd: true }
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     ok(true)
     res.statusCode = 201
     res.setHeader('location', '/resource/')
@@ -688,7 +688,7 @@ test('Receiving non-Latin1 headers', async (t) => {
     'inline; filename="100 % loading&perf.png"; filename*=UTF-8\'\'100%20%25%20loading%26perf.png'
   ]
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     for (let i = 0; i < ContentDisposition.length; i++) {
       res.setHeader(`Content-Disposition-${i + 1}`, ContentDisposition[i])
     }

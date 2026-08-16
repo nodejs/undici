@@ -10,7 +10,7 @@ const { tspl } = require('@matteo.collina/tspl')
 test('An invalid Origin header is not set', async (t) => {
   const { deepStrictEqual } = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     deepStrictEqual(req.headers.origin, undefined)
 
     res.end()

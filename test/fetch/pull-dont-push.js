@@ -14,7 +14,7 @@ test('pull dont\'t push', async (t) => {
   let count = 0
   let socket
   const max = 1_000_000
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.statusCode = 200
     socket = res.socket
 

@@ -4,12 +4,12 @@ const { test, after } = require('node:test')
 const { strictEqual } = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { request, Client, interceptors } = require('../../index')
-const { setTimeout: sleep } = require('timers/promises')
 
 test('revalidates the request when the response is stale', async () => {
   let count = 0
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.setHeader('Cache-Control', 'public, max-age=1')
     res.end('hello world ' + count++)
   })

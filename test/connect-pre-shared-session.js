@@ -12,7 +12,7 @@ test('custom session passed to client will be used in tls connect call', async (
 
   const mockConnect = mock.method(tls, 'connect')
 
-  const server = createServer(pem, (req, res) => {
+  const server = createServer({ ...pem, joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     res.setHeader('content-type', 'text/plain')

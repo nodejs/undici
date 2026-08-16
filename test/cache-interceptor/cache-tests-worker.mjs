@@ -50,8 +50,10 @@ if (environment.ignoredTests) {
 const client = new Agent().compose(interceptors.cache(environment.opts))
 setGlobalDispatcher(client)
 
+globalThis.fetch = fetch
+
 // Run the suite
-await runTestSuite(tests, fetch, true, process.env.BASE_URL)
+await runTestSuite(tests, true, process.env.BASE_URL)
 
 let exitCode = 0
 
@@ -206,6 +208,10 @@ function printStats (stats) {
     dependencyFailed,
     retried
   } = stats
+
+  if (total < 0) {
+    throw new Error('Total tests cannot be negative')
+  }
 
   console.log(`\n        Total tests: ${total}`)
   console.log(`            ${styleText('gray', 'Skipped')}: ${skipped} (${((skipped / total) * 100).toFixed(1)}%)`)

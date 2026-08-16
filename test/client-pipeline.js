@@ -16,7 +16,7 @@ const {
 test('pipeline get', async (t) => {
   t = tspl(t, { plan: 17 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     t.strictEqual('/', req.url)
     t.strictEqual('GET', req.method)
     t.strictEqual(`localhost:${server.address().port}`, req.headers.host)
@@ -75,7 +75,7 @@ test('pipeline get', async (t) => {
 test('pipeline echo', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -124,7 +124,7 @@ test('pipeline ignore request body', async (t) => {
   t = tspl(t, { plan: 2 })
 
   let done
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
     res.end()
     done()
@@ -185,7 +185,7 @@ test('pipeline invalid handler', async (t) => {
 test('pipeline invalid handler return after destroy should not error', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -221,7 +221,7 @@ test('pipeline invalid handler return after destroy should not error', async (t)
 test('pipeline error body', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -263,7 +263,7 @@ test('pipeline error body', async (t) => {
 test('pipeline destroy body', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -305,7 +305,7 @@ test('pipeline destroy body', async (t) => {
 test('pipeline backpressure', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -340,7 +340,7 @@ test('pipeline backpressure', async (t) => {
 test('pipeline invalid handler return', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -381,7 +381,7 @@ test('pipeline invalid handler return', async (t) => {
 test('pipeline throw handler', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -410,7 +410,7 @@ test('pipeline throw handler', async (t) => {
 test('pipeline destroy and throw handler', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
   })
   after(() => server.close())
@@ -444,7 +444,7 @@ test('pipeline abort res', async (t) => {
   t = tspl(t, { plan: 2 })
 
   let _res
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
     _res = res
   })
@@ -483,7 +483,7 @@ test('pipeline abort res', async (t) => {
 test('pipeline abort server res', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.destroy()
   })
   after(() => server.close())
@@ -510,7 +510,7 @@ test('pipeline abort server res', async (t) => {
 test('pipeline abort duplex', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end()
   })
   after(() => server.close())
@@ -543,7 +543,7 @@ test('pipeline abort duplex', async (t) => {
 test('pipeline abort piped res', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
   })
   after(() => server.close())
@@ -574,7 +574,7 @@ test('pipeline abort piped res', async (t) => {
 test('pipeline abort piped res 2', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
   })
   after(() => server.close())
@@ -609,7 +609,7 @@ test('pipeline abort piped res 2', async (t) => {
 test('pipeline abort piped res 3', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
   })
   after(() => server.close())
@@ -645,7 +645,7 @@ test('pipeline abort server res after headers', async (t) => {
   t = tspl(t, { plan: 1 })
 
   let _res
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
     _res = res
   })
@@ -675,7 +675,7 @@ test('pipeline w/ write abort server res after headers', async (t) => {
   t = tspl(t, { plan: 1 })
 
   let _res
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     req.pipe(res)
     _res = res
   })
@@ -706,7 +706,7 @@ test('destroy in push', async (t) => {
   t = tspl(t, { plan: 3 })
 
   let _res
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
     _res = res
   })
@@ -763,7 +763,7 @@ test('pipeline args validation', async (t) => {
 test('pipeline factory throw not unhandled', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('asd')
   })
   after(() => server.close())
@@ -790,7 +790,7 @@ test('pipeline factory throw not unhandled', async (t) => {
 test('pipeline destroy before dispatch', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('hello')
   })
   after(() => server.close())
@@ -816,7 +816,7 @@ test('pipeline destroy before dispatch', async (t) => {
 test('pipeline legacy stream', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write(Buffer.alloc(16e3))
     setImmediate(() => {
       res.end(Buffer.alloc(16e3))
@@ -847,7 +847,7 @@ test('pipeline legacy stream', async (t) => {
 test('pipeline objectMode', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify({ asd: 1 }))
   })
   after(() => server.close())
@@ -877,7 +877,7 @@ test('pipeline objectMode', async (t) => {
 test('pipeline invalid opts', async (t) => {
   t = tspl(t, { plan: 2 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end(JSON.stringify({ asd: 1 }))
   })
   after(() => server.close())
@@ -904,7 +904,7 @@ test('pipeline invalid opts', async (t) => {
 test('pipeline CONNECT throw', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -932,7 +932,7 @@ test('pipeline CONNECT throw', async (t) => {
 test('pipeline body without destroy', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('asd')
   })
   after(() => server.close())
@@ -962,7 +962,7 @@ test('pipeline body without destroy', async (t) => {
 test('pipeline ignore 1xx', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
@@ -993,7 +993,7 @@ test('pipeline ignore 1xx and use onInfo', async (t) => {
   t = tspl(t, { plan: 3 })
 
   const infos = []
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeProcessing()
     res.end('hello')
   })
@@ -1030,7 +1030,7 @@ test('pipeline backpressure', async (t) => {
 
   const expected = Buffer.alloc(1e6).toString()
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeProcessing()
     res.end(expected)
   })
@@ -1068,7 +1068,7 @@ test('pipeline backpressure', async (t) => {
 test('pipeline abort after headers', async (t) => {
   t = tspl(t, { plan: 1 })
 
-  const server = createServer((req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.writeProcessing()
     res.write('asd')
     setImmediate(() => {

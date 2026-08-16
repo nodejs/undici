@@ -10,7 +10,7 @@ const { test, after } = require('node:test')
 test('socket back-pressure', async (t) => {
   t = tspl(t, { plan: 3 })
 
-  const server = createServer()
+  const server = createServer({ joinDuplicateHeaders: true })
   let bytesWritten = 0
 
   const buf = Buffer.allocUnsafe(16384)

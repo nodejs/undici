@@ -75,7 +75,7 @@ test('fetch', async (t) => {
   await assert.rejects(fetch('/relative/path'), TypeError('Failed to parse URL from /relative/path'))
 
   await t.test('Basic fetch', async (t) => {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       assert.strictEqual(req.url, '/relative/path')
       res.end()
     }).listen(0)
@@ -88,7 +88,7 @@ test('fetch', async (t) => {
   })
 
   await t.test('fetch return', async (t) => {
-    const server = createServer((req, res) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       assert.strictEqual(req.url, '/relative/path')
       res.end()
     }).listen(0)

@@ -7,7 +7,7 @@ const {
   interceptors: { retry }
 } = require('../../..')
 
-const server = createServer()
+const server = createServer({ joinDuplicateHeaders: true })
 
 server.on('request', (req, res) => {
   res.writeHead(418, { 'Content-Type': 'text/plain' })
