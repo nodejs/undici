@@ -61,4 +61,3 @@ test('h2Options.initialWindowSize (legacy flat path) still reaches the session o
   t.strictEqual(withBoth[kHTTP2Options].sessionOptions.initialWindowSize, 131072)
   await withBoth.close()
 })
-
