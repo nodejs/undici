@@ -11,6 +11,19 @@ test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects w
   t = tspl(t, { plan: 3 })
 
   const server = createServer()
+
+  // A timed-out request is aborted client-side, so the server session and its
+  // socket can surface a late ECONNRESET after the test body has resolved. The
+  // runner turns that into a file-level failure with no failing assertion.
+  // Same swallow pattern as test/http2-abort.js, minus the TLS-only
+  // 'secureConnection' hook: these servers are h2c.
+  server.on('error', () => {})
+  server.on('connection', (socket) => socket.on('error', () => {}))
+  server.on('session', (session) => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
+
   server.on('stream', (stream) => {
     stream.respond({ ':status': 200, 'content-type': 'text/plain' })
     setTimeout(() => {
@@ -51,6 +64,19 @@ test('https://github.com/nodejs/undici/issues/5087 headersTimeout over h2 reject
   t = tspl(t, { plan: 3 })
 
   const server = createServer()
+
+  // A timed-out request is aborted client-side, so the server session and its
+  // socket can surface a late ECONNRESET after the test body has resolved. The
+  // runner turns that into a file-level failure with no failing assertion.
+  // Same swallow pattern as test/http2-abort.js, minus the TLS-only
+  // 'secureConnection' hook: these servers are h2c.
+  server.on('error', () => {})
+  server.on('connection', (socket) => socket.on('error', () => {}))
+  server.on('session', (session) => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
+
   server.on('stream', (stream) => {
     setTimeout(() => {
       try {
@@ -89,6 +115,19 @@ test('https://github.com/nodejs/undici/issues/5087 RetryAgent retries h2 body ti
 
   let hits = 0
   const server = createServer()
+
+  // A timed-out request is aborted client-side, so the server session and its
+  // socket can surface a late ECONNRESET after the test body has resolved. The
+  // runner turns that into a file-level failure with no failing assertion.
+  // Same swallow pattern as test/http2-abort.js, minus the TLS-only
+  // 'secureConnection' hook: these servers are h2c.
+  server.on('error', () => {})
+  server.on('connection', (socket) => socket.on('error', () => {}))
+  server.on('session', (session) => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
+
   server.on('stream', (stream) => {
     hits += 1
 
