@@ -78,6 +78,22 @@ expectAssignable<MockAgent>(new MockAgent({}))
       format(pendingInterceptors: readonly PendingInterceptor[]): string;
     }
   }) => void>(agent.assertNoPendingInterceptors)
+
+  // the same types have to be reachable from outside the package
+  expectAssignable<MockAgent.PendingInterceptor>({
+    origin: 'http://localhost',
+    path: '/',
+    method: 'GET',
+    data: { error: null, statusCode: 200, data: '', headers: {}, trailers: {} },
+    consumed: false,
+    times: null,
+    persist: false
+  })
+  expectAssignable<MockAgent.PendingInterceptorsFormatter>({
+    format (pendingInterceptors: readonly MockAgent.PendingInterceptor[]): string {
+      return String(pendingInterceptors.length)
+    }
+  })
 }
 
 // issue #3444
