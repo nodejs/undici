@@ -7,8 +7,9 @@ const { once } = require('node:events')
 const { Readable } = require('node:stream')
 const FakeTimers = require('@sinonjs/fake-timers')
 
-const { RetryHandler, Client } = require('..')
+const { RetryHandler, RetryAgent, Client } = require('..')
 const { RequestHandler } = require('../lib/api/api-request')
+const { kRetryHandlerDefaultRetry } = require('../lib/core/symbols')
 
 test('Should retry status code', async t => {
   t = tspl(t, { plan: 3 })
@@ -377,6 +378,43 @@ test('Should retry immediately when retry-after is zero', async t => {
   })
 
   await clock.tickAsync(0)
+
+  t.assert.strictEqual(retries, 1)
+})
+
+test('Should ignore retry-after header when retryAfter option is false', async t => {
+  const clock = FakeTimers.install()
+  t.after(() => clock.uninstall())
+
+  let retries = 0
+  const handler = new RetryHandler(
+    {
+      method: 'GET',
+      retryOptions: {
+        retryAfter: false,
+        maxRetries: 1,
+        minTimeout: 500
+      }
+    },
+    {
+      dispatch () {
+        retries++
+      },
+      handler: {}
+    }
+  )
+
+  handler.onResponseError(null, {
+    statusCode: 429,
+    code: 'UND_ERR_REQ_RETRY',
+    headers: {
+      'retry-after': '60'
+    }
+  })
+
+  // Retry must be scheduled by the exponential backoff (minTimeout = 500ms),
+  // not by the Retry-After header (60s)
+  await clock.tickAsync(500)
 
   t.assert.strictEqual(retries, 1)
 })
@@ -1762,6 +1800,116 @@ test('Should use retry-after header for retries (date) but date format is wrong'
       },
       handler
     )
+  })
+
+  await t.completed
+})
+
+test('Should abort immediately when aborted during the retry backoff', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let hits = 0
+  const ac = new AbortController()
+  const startedAt = Date.now()
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    hits++
+    res.writeHead(500)
+    res.end('failed')
+  })
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const agent = new RetryAgent(client, {
+      minTimeout: 10_000,
+      maxRetries: 5,
+      retry: (err, ctx, done) => {
+        // The default policy has just scheduled a 10s backoff; abort while it
+        // is pending (setImmediate so the handler captures the timer first).
+        setImmediate(() => ac.abort())
+        return RetryHandler[kRetryHandlerDefaultRetry](err, ctx, done)
+      }
+    })
+
+    after(async () => {
+      await agent.close()
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    agent.request({
+      method: 'GET',
+      path: '/',
+      signal: ac.signal
+    }).then(() => {
+      t.fail('request should have been aborted')
+    }, (err) => {
+      t.strictEqual(err.name, 'AbortError', 'rejects with the abort reason')
+      t.ok(Date.now() - startedAt < 5_000, 'rejects long before the 10s backoff elapses')
+      t.strictEqual(hits, 1, 'no retry is dispatched after the abort')
+    })
+  })
+
+  await t.completed
+})
+
+test('Should ignore a late retry decision after an abort during the backoff', async t => {
+  t = tspl(t, { plan: 4 })
+
+  let hits = 0
+  let policyCalls = 0
+  const ac = new AbortController()
+  const startedAt = Date.now()
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    hits++
+    res.writeHead(500)
+    res.end('failed')
+  })
+
+  server.listen(0, () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const agent = new RetryAgent(client, {
+      maxRetries: 5,
+      retry: (err, ctx, done) => {
+        policyCalls++
+        if (policyCalls > 1) {
+          done(err)
+          return
+        }
+        // A custom policy with its own 3s backoff that does not return the
+        // timer: the abort must still terminate the request immediately and
+        // the late decision must be ignored.
+        setTimeout(() => done(null), 3_000)
+        setImmediate(() => ac.abort())
+      }
+    })
+
+    after(async () => {
+      await agent.close()
+      server.close()
+
+      await once(server, 'close')
+    })
+
+    agent.request({
+      method: 'GET',
+      path: '/',
+      signal: ac.signal
+    }).then(() => {
+      t.fail('request should have been aborted')
+    }, async (err) => {
+      t.strictEqual(err.name, 'AbortError', 'rejects with the abort reason')
+      t.ok(Date.now() - startedAt < 1_500, 'rejects long before the 3s custom backoff')
+      t.strictEqual(hits, 1, 'no retry is dispatched after the abort')
+
+      // The custom policy's timer fires at 3s; its late decision is moot.
+      await new Promise(resolve => setTimeout(resolve, 3_500))
+      t.strictEqual(hits, 1, 'late retry decision is ignored')
+    })
   })
 
   await t.completed

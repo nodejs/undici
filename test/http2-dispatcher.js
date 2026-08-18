@@ -45,6 +45,12 @@ test('Dispatcher#Stream', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   await client.stream(
     { path: '/', opaque: { bufs }, method: 'POST', body: expectedBody },
     ({ statusCode, headers, opaque: { bufs } }) => {
@@ -98,6 +104,12 @@ test('Dispatcher#Pipeline', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   pipeline(
     new Readable({
@@ -159,6 +171,12 @@ test('Dispatcher#Connect', async t => {
     })
     after(() => forward.close())
 
+    forward.on('disconnect', () => {
+      if (!forward.closed && !forward.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
+
     try {
       const response = await forward.request({
         path: '/',
@@ -205,6 +223,12 @@ test('Dispatcher#Connect', async t => {
   after(() => client.close())
   after(() => proxy.close())
   after(() => server.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const { statusCode, headers, socket } = await client.connect({ path: '/', headers: { 'x-my-header': 'foo' } })
   t.strictEqual(statusCode, 200)
@@ -589,6 +613,12 @@ test('Should handle h2 request without body', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     path: '/',
     method: 'POST',
@@ -634,6 +664,12 @@ test('Should clear h2 request stream references before completing a response', a
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   let requestStreamIdSymbol = null
   let requestStreamSymbol = null
@@ -925,6 +961,12 @@ test('Should send http2 PING frames', async t => {
     server.close()
   })
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   client.dispatch({
     path: '/',
     method: 'PUT',
@@ -994,6 +1036,12 @@ test('Should not send http2 PING frames if interval === 0', async t => {
 
   after(async () => {
     server.close()
+  })
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
   })
 
   client.dispatch({
@@ -1066,6 +1114,12 @@ test('Should not send http2 PING frames after connection is closed', async t => 
   after(async () => {
     session.close()
     server.close()
+  })
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
   })
 
   client.dispatch({
