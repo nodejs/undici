@@ -732,3 +732,24 @@ test('POST string body is delivered without reading the request stream', async (
   })
   t.assert.strictEqual(await response.text(), 'ok')
 })
+
+test('POST Uint8Array body is delivered without reading the request stream', async (t) => {
+  const payload = new TextEncoder().encode('{"hello":"bytes"}')
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => {
+      t.assert.deepStrictEqual(Buffer.concat(chunks), Buffer.from(payload))
+      res.end('ok')
+    })
+  }).listen(0)
+
+  t.after(closeServerAsPromise(server))
+  await once(server, 'listening')
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}`, {
+    method: 'POST',
+    body: payload
+  })
+  t.assert.strictEqual(await response.text(), 'ok')
+})
