@@ -711,3 +711,24 @@ test('Receiving non-Latin1 headers', async (t) => {
   t.assert.deepStrictEqual(cdHeaders, ContentDisposition)
   t.assert.deepStrictEqual(lengths, [30, 34, 94, 104, 90])
 })
+
+test('POST string body is delivered without reading the request stream', async (t) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => {
+      t.assert.strictEqual(Buffer.concat(chunks).toString(), '{"hello":"world"}')
+      t.assert.strictEqual(req.headers['content-type'], 'text/plain;charset=UTF-8')
+      res.end('ok')
+    })
+  }).listen(0)
+
+  t.after(closeServerAsPromise(server))
+  await once(server, 'listening')
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}`, {
+    method: 'POST',
+    body: '{"hello":"world"}'
+  })
+  t.assert.strictEqual(await response.text(), 'ok')
+})

@@ -116,6 +116,53 @@ test('response clone', (t) => {
   t.assert.strictEqual(response2.body, null)
 })
 
+// Dictionary defaults (status: 200, statusText: "") must not force
+// initialize-a-response work on every `new Response()` / `new Response(body)`.
+test('omitted ResponseInit uses makeResponse defaults', (t) => {
+  const res = new Response()
+  t.assert.strictEqual(res.status, 200)
+  t.assert.strictEqual(res.statusText, '')
+  t.assert.strictEqual(res.ok, true)
+  t.assert.deepStrictEqual([...res.headers], [])
+})
+
+test('empty ResponseInit object is treated as omitted', (t) => {
+  const res = new Response(null, {})
+  t.assert.strictEqual(res.status, 200)
+  t.assert.strictEqual(res.statusText, '')
+  t.assert.deepStrictEqual([...res.headers], [])
+})
+
+test('explicit ResponseInit members are still applied', (t) => {
+  const res = new Response(null, { status: 201, statusText: 'Created', headers: { 'x-a': '1' } })
+  t.assert.strictEqual(res.status, 201)
+  t.assert.strictEqual(res.statusText, 'Created')
+  t.assert.deepStrictEqual([...res.headers], [['x-a', '1']])
+})
+
+test('string body consume marks bodyUsed', async (t) => {
+  const res = new Response('hello')
+  t.assert.strictEqual(res.bodyUsed, false)
+  t.assert.strictEqual(res.headers.get('content-type'), 'text/plain;charset=UTF-8')
+  t.assert.strictEqual(await res.text(), 'hello')
+  t.assert.strictEqual(res.bodyUsed, true)
+  await t.assert.rejects(res.text(), TypeError)
+})
+
+test('cloned string body can be consumed independently', async (t) => {
+  const res = new Response('hello')
+  const clone = res.clone()
+  t.assert.strictEqual(await Promise.all([res.text(), clone.text()]).then((v) => v.join(',')), 'hello,hello')
+})
+
+test('Uint8Array body consume', async (t) => {
+  const res = new Response(new TextEncoder().encode('{"a":1}'), {
+    headers: { 'content-type': 'application/json' }
+  })
+  t.assert.deepStrictEqual(await res.json(), { a: 1 })
+  t.assert.strictEqual(res.bodyUsed, true)
+})
+
 test('Symbol.toStringTag', (t) => {
   const resp = new Response()
 
