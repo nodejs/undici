@@ -1,26 +1,71 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { createServer } = require('node:http2')
 const { once } = require('node:events')
 
 const { Client, Agent, RetryAgent, errors, request } = require('..')
 
-test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects with BodyTimeoutError', async (t) => {
-  t = tspl(t, { plan: 3 })
+function onExpectedTeardownError (error) {
+  if (error.code !== 'ECONNRESET' && error.code !== 'ERR_HTTP2_STREAM_ERROR') {
+    throw error
+  }
+}
 
+function trackServerResources (server) {
+  const sessions = new Set()
+  const timers = new Set()
+
+  server.on('error', onExpectedTeardownError)
+  server.on('session', (session) => {
+    session.on('error', onExpectedTeardownError)
+    session.socket?.on('error', onExpectedTeardownError)
+    sessions.add(session)
+    session.on('close', () => sessions.delete(session))
+  })
+  server.on('connection', (socket) => socket.on('error', onExpectedTeardownError))
+
+  return {
+    setTimer (callback, delay) {
+      const timer = setTimeout(() => {
+        timers.delete(timer)
+        callback()
+      }, delay)
+      timers.add(timer)
+    },
+    clearTimers () {
+      for (const timer of timers) {
+        clearTimeout(timer)
+      }
+      timers.clear()
+    },
+    async close () {
+      for (const session of sessions) {
+        session.destroy()
+      }
+      await new Promise((resolve, reject) => {
+        server.close((error) => error ? reject(error) : resolve())
+      })
+    }
+  }
+}
+
+test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects with BodyTimeoutError', async (t) => {
+  const plan = tspl(t, { plan: 3 })
   const server = createServer()
+  const resources = trackServerResources(server)
+
   server.on('stream', (stream) => {
+    stream.on('error', onExpectedTeardownError)
     stream.respond({ ':status': 200, 'content-type': 'text/plain' })
-    setTimeout(() => {
+    resources.setTimer(() => {
       try {
         stream.end('late')
       } catch {}
     }, 500)
   })
 
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`, {
@@ -29,7 +74,14 @@ test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects w
     bodyTimeout: 50,
     headersTimeout: 50
   })
-  after(() => client.close())
+  t.after(async () => {
+    resources.clearTimers()
+    try {
+      await client.destroy()
+    } finally {
+      await resources.close()
+    }
+  })
 
   const res = await client.request({ path: '/', method: 'GET' })
 
@@ -40,26 +92,27 @@ test('https://github.com/nodejs/undici/issues/5087 bodyTimeout over h2 rejects w
     err = error
   }
 
-  t.ok(err instanceof errors.BodyTimeoutError)
-  t.strictEqual(err.code, 'UND_ERR_BODY_TIMEOUT')
-  t.strictEqual(err.message, 'HTTP/2: "stream timeout after 50"')
+  plan.ok(err instanceof errors.BodyTimeoutError)
+  plan.strictEqual(err.code, 'UND_ERR_BODY_TIMEOUT')
+  plan.strictEqual(err.message, 'HTTP/2: "stream timeout after 50"')
 
-  await t.completed
+  await plan.completed
 })
 
 test('https://github.com/nodejs/undici/issues/5087 headersTimeout over h2 rejects with HeadersTimeoutError', async (t) => {
-  t = tspl(t, { plan: 3 })
-
+  const plan = tspl(t, { plan: 3 })
   const server = createServer()
+  const resources = trackServerResources(server)
+
   server.on('stream', (stream) => {
-    setTimeout(() => {
+    stream.on('error', onExpectedTeardownError)
+    resources.setTimer(() => {
       try {
         stream.close()
       } catch {}
     }, 500)
   })
 
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`http://localhost:${server.address().port}`, {
@@ -68,7 +121,14 @@ test('https://github.com/nodejs/undici/issues/5087 headersTimeout over h2 reject
     bodyTimeout: 60_000,
     headersTimeout: 50
   })
-  after(() => client.close())
+  t.after(async () => {
+    resources.clearTimers()
+    try {
+      await client.destroy()
+    } finally {
+      await resources.close()
+    }
+  })
 
   let err = null
   try {
@@ -77,25 +137,27 @@ test('https://github.com/nodejs/undici/issues/5087 headersTimeout over h2 reject
     err = error
   }
 
-  t.ok(err instanceof errors.HeadersTimeoutError)
-  t.strictEqual(err.code, 'UND_ERR_HEADERS_TIMEOUT')
-  t.strictEqual(err.message, 'HTTP/2: "headers timeout after 50"')
+  plan.ok(err instanceof errors.HeadersTimeoutError)
+  plan.strictEqual(err.code, 'UND_ERR_HEADERS_TIMEOUT')
+  plan.strictEqual(err.message, 'HTTP/2: "headers timeout after 50"')
 
-  await t.completed
+  await plan.completed
 })
 
 test('https://github.com/nodejs/undici/issues/5087 RetryAgent retries h2 body timeouts by default error code matching', async (t) => {
-  t = tspl(t, { plan: 2 })
-
+  const plan = tspl(t, { plan: 2 })
   let hits = 0
   const server = createServer()
+  const resources = trackServerResources(server)
+
   server.on('stream', (stream) => {
+    stream.on('error', onExpectedTeardownError)
     hits += 1
 
     stream.respond({ ':status': 200, 'content-type': 'text/plain' })
 
     if (hits === 1) {
-      setTimeout(() => {
+      resources.setTimer(() => {
         try {
           stream.end('late')
         } catch {}
@@ -106,7 +168,6 @@ test('https://github.com/nodejs/undici/issues/5087 RetryAgent retries h2 body ti
     stream.end(`ok after ${hits} attempt(s)`)
   })
 
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const dispatcher = new RetryAgent(new Agent({
@@ -119,15 +180,22 @@ test('https://github.com/nodejs/undici/issues/5087 RetryAgent retries h2 body ti
     minTimeout: 10,
     errorCodes: ['UND_ERR_BODY_TIMEOUT']
   })
-  after(() => dispatcher.close())
+  t.after(async () => {
+    resources.clearTimers()
+    try {
+      await dispatcher.destroy()
+    } finally {
+      await resources.close()
+    }
+  })
 
   const res = await request(`http://localhost:${server.address().port}/`, {
     dispatcher,
     method: 'GET'
   })
 
-  t.strictEqual(await res.body.text(), 'ok after 2 attempt(s)')
-  t.strictEqual(hits, 2)
+  plan.strictEqual(await res.body.text(), 'ok after 2 attempt(s)')
+  plan.strictEqual(hits, 2)
 
-  await t.completed
+  await plan.completed
 })
