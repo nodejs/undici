@@ -191,6 +191,42 @@ describe('DecoratorHandler', () => {
       })
     })
 
+    describe('#onBodySent', () => {
+      test('should delegate onBodySent-method', t => {
+        t = tspl(t, { plan: 1 })
+        const decorator = new DecoratorHandler({
+          onBodySent: (chunk) => {
+            t.equal(chunk, 'chunk')
+          }
+        })
+        decorator.onBodySent('chunk')
+      })
+
+      test('should not throw if onBodySent-method is not defined in the handler', t => {
+        t = tspl(t, { plan: 1 })
+        const decorator = new DecoratorHandler({})
+        t.doesNotThrow(() => decorator.onBodySent('chunk'))
+      })
+    })
+
+    describe('#onRequestSent', () => {
+      test('should delegate onRequestSent-method', t => {
+        t = tspl(t, { plan: 1 })
+        const decorator = new DecoratorHandler({
+          onRequestSent: () => {
+            t.ok(true)
+          }
+        })
+        decorator.onRequestSent()
+      })
+
+      test('should not throw if onRequestSent-method is not defined in the handler', t => {
+        t = tspl(t, { plan: 1 })
+        const decorator = new DecoratorHandler({})
+        t.doesNotThrow(() => decorator.onRequestSent())
+      })
+    })
+
     describe('#onResponseError', () => {
       test('should delegate onResponseError-method', t => {
         t = tspl(t, { plan: 1 })
