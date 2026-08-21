@@ -422,3 +422,31 @@ test('SnapshotRecorder - redirect responses are stored correctly', (t) => {
   assert.strictEqual(snapshot.responses[0].statusCode, 302, 'First response should be redirect')
   assert.strictEqual(snapshot.responses[1].statusCode, 200, 'Second response should be final')
 })
+
+test('SnapshotRecorder - a header named __proto__ does not collide with its absence', (t) => {
+  const filters = createHeaderFilters({})
+
+  // JSON.parse is the everyday way an own `__proto__` key appears.
+  const withProto = formatRequestKey({
+    origin: 'https://example.com',
+    path: '/resource',
+    method: 'GET',
+    headers: JSON.parse('{"__proto__":"a","x-real":"same"}')
+  }, filters)
+
+  const withoutProto = formatRequestKey({
+    origin: 'https://example.com',
+    path: '/resource',
+    method: 'GET',
+    headers: { 'x-real': 'same' }
+  }, filters)
+
+  assert.strictEqual(
+    Object.getOwnPropertyDescriptor(withProto.headers, '__proto__')?.value,
+    'a'
+  )
+  assert.notStrictEqual(
+    createRequestHash(withProto),
+    createRequestHash(withoutProto)
+  )
+})
