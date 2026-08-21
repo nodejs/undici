@@ -31,20 +31,16 @@ for (const [name, length] of Object.entries(settings)) {
 
   const headersListSorted = getHeadersList(headersSorted)
 
-  const kHeadersSortedMap = Reflect.ownKeys(headersList).find(
-    (c) => String(c) === 'Symbol(headers map sorted)'
-  )
-
   group(`length ${length} #${name}`, () => {
     bench('Headers@@iterator', () => {
       // prevention of memoization of results
-      headersList[kHeadersSortedMap] = null
+      headersList.sortedMap = null
       return [...headers]
     })
 
     bench('Headers@@iterator (sorted)', () => {
       // prevention of memoization of results
-      headersListSorted[kHeadersSortedMap] = null
+      headersListSorted.sortedMap = null
       return [...headersSorted]
     })
   })
