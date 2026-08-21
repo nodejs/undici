@@ -4,7 +4,7 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { Pool } = require('../..')
+const { Agent, Pool, fetch } = require('../..')
 
 // Regression for #5600 / #5606:
 // Reusing an idle keep-alive socket must not stall behind the poll phase.
@@ -63,6 +63,52 @@ test('reusing an idle keep-alive socket must not stall', { timeout: 1000 }, asyn
 
     const res = await resPromise
     assert.strictEqual(await res.body.text(), 'ok')
+    assert.strictEqual(connections, 1, 'keep-alive socket must be reused')
+  }
+})
+
+test('fetch reusing an idle keep-alive socket must not stall', { timeout: 1000 }, async (t) => {
+  let connections = 0
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-length': 2 })
+    res.end('ok')
+  })
+
+  server.on('connection', () => {
+    connections++
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const url = `http://127.0.0.1:${server.address().port}`
+  const agent = new Agent({
+    connections: 1,
+    pipelining: 1,
+    keepAliveTimeout: 60_000
+  })
+
+  t.after(async () => {
+    await agent.close()
+    server.close()
+  })
+
+  {
+    const res = await fetch(`${url}/0`, { dispatcher: agent })
+    assert.strictEqual(await res.text(), 'ok')
+  }
+  assert.strictEqual(connections, 1)
+
+  for (let i = 1; i <= REUSES; i++) {
+    const requested = once(server, 'request')
+    const resPromise = fetch(`${url}/${i}`, { dispatcher: agent })
+    resPromise.catch(() => {})
+
+    await requested
+
+    const res = await resPromise
+    assert.strictEqual(await res.text(), 'ok')
     assert.strictEqual(connections, 1, 'keep-alive socket must be reused')
   }
 })
