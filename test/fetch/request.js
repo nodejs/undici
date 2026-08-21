@@ -420,10 +420,11 @@ test('request.referrer', (t) => {
   }
 })
 
-// Dictionary defaults (undici's priority: "auto") must not make an omitted
-// RequestInit count as non-empty. That used to force a header clone/clear
-// on every fetch(url) / new Request(url) and reset copied request state.
-test('omitted RequestInit is empty even though priority defaults to auto', (t) => {
+// RequestInit.priority must not have a WebIDL default. A converter default
+// of "auto" made every omitted init non-empty (Object.keys never empty),
+// which cloned/cleared headers on fetch(url) / new Request(url) and reset
+// copied request state.
+test('omitted RequestInit is empty', (t) => {
   const parent = new Request('http://localhost/a', {
     method: 'POST',
     body: 'hi',
