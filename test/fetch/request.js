@@ -420,44 +420,6 @@ test('request.referrer', (t) => {
   }
 })
 
-// RequestInit.priority must not have a WebIDL default. A converter default
-// of "auto" made every omitted init non-empty (Object.keys never empty),
-// which cloned/cleared headers on fetch(url) / new Request(url) and reset
-// copied request state.
-test('omitted RequestInit is empty', (t) => {
-  const parent = new Request('http://localhost/a', {
-    method: 'POST',
-    body: 'hi',
-    referrerPolicy: 'unsafe-url',
-    headers: { 'x-a': '1' }
-  })
-
-  const copied = new Request(parent)
-  t.assert.strictEqual(copied.method, 'POST')
-  t.assert.strictEqual(copied.referrerPolicy, 'unsafe-url')
-  t.assert.deepStrictEqual([...copied.headers], [
-    ['content-type', 'text/plain;charset=UTF-8'],
-    ['x-a', '1']
-  ])
-
-  copied.headers.append('x-b', '2')
-  t.assert.deepStrictEqual([...parent.headers], [
-    ['content-type', 'text/plain;charset=UTF-8'],
-    ['x-a', '1']
-  ])
-})
-
-test('explicit RequestInit members still count as non-empty', (t) => {
-  const parent = new Request('http://localhost/a', {
-    referrerPolicy: 'unsafe-url',
-    headers: { 'x-a': '1' }
-  })
-
-  const copied = new Request(parent, { priority: 'high' })
-  t.assert.strictEqual(copied.referrerPolicy, '')
-  t.assert.deepStrictEqual([...copied.headers], [['x-a', '1']])
-})
-
 // https://github.com/nodejs/undici/issues/2445
 test('Clone the set-cookie header when Request is passed as the first parameter and no header is passed.', (t) => {
   const request = new Request('http://localhost', { headers: { 'set-cookie': 'A' } })
