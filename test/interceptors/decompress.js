@@ -1206,3 +1206,50 @@ test('should work with global dispatcher for both fetch() and request()', async 
 
   await t.completed
 })
+
+test('should decompress a response whose content-encoding arrives as repeated header lines', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const net = require('node:net')
+
+  const data = 'Repeated Content-Encoding field lines, joined per RFC 9110 section 5.3.'
+  const body = gzipSync(gzipSync(data))
+
+  const server = net.createServer(socket => {
+    socket.once('data', () => {
+      socket.write(
+        'HTTP/1.1 200 OK\r\n' +
+        'Content-Type: text/plain\r\n' +
+        'Content-Encoding: gzip\r\n' +
+        'Content-Encoding: gzip\r\n' +
+        `Content-Length: ${body.length}\r\n` +
+        'Connection: close\r\n' +
+        '\r\n'
+      )
+      socket.end(body)
+    })
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
