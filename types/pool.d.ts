@@ -30,10 +30,10 @@ declare namespace Pool {
   export type PoolStats = TPoolStats
   export interface Options extends Client.Options {
     /** Default: `(origin, opts) => new Client(origin, opts)`. */
-    factory?(origin: URL, opts: object): Dispatcher;
+    factory?: ((origin: URL, opts: object) => Dispatcher) | undefined;
     /** The max number of clients to create. `null` if no limit. Default `null`. */
-    connections?: number | null;
+    connections?: number | null | undefined;
     /** The amount of time before a client is removed from the pool and closed. `null` if no time limit. Default `null` */
-    clientTtl?: number | null;
+    clientTtl?: number | null | undefined;
   }
 }

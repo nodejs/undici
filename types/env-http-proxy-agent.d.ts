@@ -13,10 +13,10 @@ declare class EnvHttpProxyAgent extends Dispatcher {
 declare namespace EnvHttpProxyAgent {
   export interface Options extends Omit<ProxyAgent.Options, 'uri'> {
     /** Overrides the value of the HTTP_PROXY environment variable  */
-    httpProxy?: string;
+    httpProxy?: string | undefined;
     /** Overrides the value of the HTTPS_PROXY environment variable  */
-    httpsProxy?: string;
+    httpsProxy?: string | undefined;
     /** Overrides the value of the NO_PROXY environment variable  */
-    noProxy?: string;
+    noProxy?: string | undefined;
   }
 }

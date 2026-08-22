@@ -29,44 +29,44 @@ export class H2CClient extends Dispatcher {
 export declare namespace H2CClient {
   export interface Options {
     /** The maximum length of request headers in bytes. Default: Node.js' `--max-http-header-size` or `16384` (16KiB). */
-    maxHeaderSize?: number;
+    maxHeaderSize?: number | undefined;
     /** The amount of time, in milliseconds, the parser will wait to receive the complete HTTP headers (Node 14 and above only). Default: `300e3` milliseconds (300s). */
-    headersTimeout?: number;
+    headersTimeout?: number | undefined;
     /** The timeout for establishing a socket connection, in milliseconds. Use `0` to disable it entirely. Default: `10e3` milliseconds (10s). */
-    connectTimeout?: number;
+    connectTimeout?: number | undefined;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use `0` to disable it entirely. Default: `300e3` milliseconds (300s). */
-    bodyTimeout?: number;
+    bodyTimeout?: number | undefined;
     /** the timeout, in milliseconds, after which a socket without active requests will time out. Monitors time between activity on a connected socket. This value may be overridden by *keep-alive* hints from the server. Default: `4e3` milliseconds (4s). */
-    keepAliveTimeout?: number;
+    keepAliveTimeout?: number | undefined;
     /** the maximum allowed `idleTimeout`, in milliseconds, when overridden by *keep-alive* hints from the server. Default: `600e3` milliseconds (10min). */
-    keepAliveMaxTimeout?: number;
+    keepAliveMaxTimeout?: number | undefined;
     /** A number of milliseconds subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuracies caused by e.g. transport latency. Default: `1e3` milliseconds (1s). */
-    keepAliveTimeoutThreshold?: number;
+    keepAliveTimeoutThreshold?: number | undefined;
     /** An IPC endpoint, either a Unix domain socket or Windows named pipe. Default: `null`. */
-    socketPath?: string;
+    socketPath?: string | undefined;
     /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
-    pipelining?: number;
+    pipelining?: number | undefined;
     /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`. */
-    strictContentLength?: boolean;
+    strictContentLength?: boolean | undefined;
     /** Maximum number of TLS cached sessions used by the built-in connector. Use `0` to disable TLS session caching. Default: `100`. */
-    maxCachedSessions?: number;
+    maxCachedSessions?: number | undefined;
     /** Connector options passed to `buildConnector`, or a custom connector function. Default: `null`. */
-    connect?: Omit<Partial<buildConnector.BuildOptions>, 'allowH2'> | buildConnector.connector;
+    connect?: Omit<Partial<buildConnector.BuildOptions>, 'allowH2'> | buildConnector.connector | undefined;
     /** The maximum number of requests to send over a single connection before it is reset. Use `0` to disable this limit. Default: `null`. */
-    maxRequestsPerClient?: number;
+    maxRequestsPerClient?: number | undefined;
     /** Local IP address the socket should connect from. */
-    localAddress?: string;
+    localAddress?: string | undefined;
     /** Max response body size in bytes, -1 is disabled */
-    maxResponseSize?: number;
+    maxResponseSize?: number | undefined;
     /** Enables a family autodetection algorithm that loosely implements section 5 of RFC 8305. */
-    autoSelectFamily?: boolean;
+    autoSelectFamily?: boolean | undefined;
     /** The amount of time in milliseconds to wait for a connection attempt to finish before trying the next address when using the `autoSelectFamily` option. */
-    autoSelectFamilyAttemptTimeout?: number;
+    autoSelectFamilyAttemptTimeout?: number | undefined;
     /**
      * @description Dictates the maximum number of concurrent streams for a single H2 session. It can be overridden by a SETTINGS remote frame.
      * @default 100
     */
-    maxConcurrentStreams?: number
+    maxConcurrentStreams?: number | undefined
   }
 }
 

@@ -5,20 +5,20 @@ import type { Headers } from './fetch'
 export interface Cookie {
   name: string
   value: string
-  expires?: Date | number
-  maxAge?: number
-  domain?: string
-  path?: string
-  secure?: boolean
-  httpOnly?: boolean
-  sameSite?: 'Strict' | 'Lax' | 'None'
-  unparsed?: string[]
+  expires?: Date | number | undefined
+  maxAge?: number | undefined
+  domain?: string | undefined
+  path?: string | undefined
+  secure?: boolean | undefined
+  httpOnly?: boolean | undefined
+  sameSite?: 'Strict' | 'Lax' | 'None' | undefined
+  unparsed?: string[] | undefined
 }
 
 export function deleteCookie (
   headers: Headers,
   name: string,
-  attributes?: { path?: string, domain?: string }
+  attributes?: { path?: string | undefined, domain?: string | undefined }
 ): void
 
 export function getCookies (headers: Headers): Record<string, string>

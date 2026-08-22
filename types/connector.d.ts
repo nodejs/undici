@@ -6,26 +6,26 @@ declare function buildConnector (options?: buildConnector.BuildOptions): buildCo
 
 declare namespace buildConnector {
   export type BuildOptions = (ConnectionOptions | TcpNetConnectOpts | IpcNetConnectOpts) & {
-    allowH2?: boolean;
-    preferH2?: boolean;
-    maxCachedSessions?: number | null;
-    socketPath?: string | null;
-    timeout?: number | null;
-    port?: number;
-    keepAlive?: boolean | null;
-    keepAliveInitialDelay?: number | null;
-    typeOfService?: number | null;
+    allowH2?: boolean | undefined;
+    preferH2?: boolean | undefined;
+    maxCachedSessions?: number | null | undefined;
+    socketPath?: string | null | undefined;
+    timeout?: number | null | undefined;
+    port?: number | undefined;
+    keepAlive?: boolean | null | undefined;
+    keepAliveInitialDelay?: number | null | undefined;
+    typeOfService?: number | null | undefined;
   }
 
   export interface Options {
     hostname: string
-    host?: string
+    host?: string | undefined
     protocol: string
     port: string
-    servername?: string
-    localAddress?: string | null
-    socketPath?: string | null
-    httpSocket?: Socket
+    servername?: string | undefined
+    localAddress?: string | null | undefined
+    socketPath?: string | null | undefined
+    httpSocket?: Socket | undefined
   }
 
   export type Callback = (...args: CallbackArgs) => void

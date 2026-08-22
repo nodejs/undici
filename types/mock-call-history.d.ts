@@ -44,7 +44,7 @@ declare namespace MockCallHistory {
   /** modify the filtering behavior */
   export interface FilterCallsOptions {
     /** the operator to apply when filtering. 'OR' will adds any MockCallHistoryLog matching any criteria given. 'AND' will adds only MockCallHistoryLog matching every criteria given. (default 'OR')  */
-    operator?: FilterCallsOperator | Lowercase<FilterCallsOperator>
+    operator?: FilterCallsOperator | Lowercase<FilterCallsOperator> | undefined
   }
   /** a function to be executed for filtering MockCallHistoryLog */
   export type FilterCallsFunctionCriteria = (log: MockCallHistoryLog) => boolean
@@ -55,21 +55,21 @@ declare namespace MockCallHistory {
   /** an object to execute multiple filtering at once */
   export interface FilterCallsObjectCriteria extends Record<string, FilterCallsParameter> {
     /** filter by request protocol. ie https: */
-    protocol?: FilterCallsParameter;
+    protocol?: FilterCallsParameter | undefined;
     /** filter by request host. */
-    host?: FilterCallsParameter;
+    host?: FilterCallsParameter | undefined;
     /** filter by request port. */
-    port?: FilterCallsParameter;
+    port?: FilterCallsParameter | undefined;
     /** filter by request origin. */
-    origin?: FilterCallsParameter;
+    origin?: FilterCallsParameter | undefined;
     /** filter by request path. */
-    path?: FilterCallsParameter;
+    path?: FilterCallsParameter | undefined;
     /** filter by request hash. */
-    hash?: FilterCallsParameter;
+    hash?: FilterCallsParameter | undefined;
     /** filter by request fullUrl. */
-    fullUrl?: FilterCallsParameter;
+    fullUrl?: FilterCallsParameter | undefined;
     /** filter by request method. */
-    method?: FilterCallsParameter;
+    method?: FilterCallsParameter | undefined;
   }
 }
 

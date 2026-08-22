@@ -8,13 +8,13 @@ declare namespace CacheHandler {
   export interface CacheHandlerOptions {
     store: CacheStore
 
-    cacheByDefault?: number
+    cacheByDefault?: number | undefined
 
-    type?: CacheOptions['type']
+    type?: CacheOptions['type'] | undefined
   }
 
   export interface CacheOptions {
-    store?: CacheStore
+    store?: CacheStore | undefined
 
     /**
      * The methods to cache
@@ -23,7 +23,7 @@ declare namespace CacheHandler {
      * @see https://www.rfc-editor.org/rfc/rfc9111.html#name-invalidating-stored-respons
      * @see https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1
      */
-    methods?: CacheMethods[]
+    methods?: CacheMethods[] | undefined
 
     /**
      * RFC9111 allows for caching responses that we aren't explicitly told to
@@ -31,55 +31,55 @@ declare namespace CacheHandler {
      * @see https://www.rfc-editor.org/rfc/rfc9111.html#section-3-5
      * @default undefined
      */
-    cacheByDefault?: number
+    cacheByDefault?: number | undefined
 
     /**
      * TODO docs
      * @default 'shared'
      */
-    type?: 'shared' | 'private'
+    type?: 'shared' | 'private' | undefined
 
     /**
      * Array of origins to cache. Only requests to these origins will be cached.
      * Supports strings (case insensitive) and RegExp patterns.
      * @default undefined (cache all origins)
      */
-    origins?: (string | RegExp)[]
+    origins?: (string | RegExp)[] | undefined
   }
 
   export interface CacheControlDirectives {
-    'max-stale'?: number;
-    'min-fresh'?: number;
-    'max-age'?: number;
-    's-maxage'?: number;
-    'stale-while-revalidate'?: number;
-    'stale-if-error'?: number;
-    public?: true;
-    private?: true | string[];
-    'no-store'?: true;
-    'no-cache'?: true | string[];
-    'must-revalidate'?: true;
-    'proxy-revalidate'?: true;
-    immutable?: true;
-    'no-transform'?: true;
-    'must-understand'?: true;
-    'only-if-cached'?: true;
+    'max-stale'?: number | undefined;
+    'min-fresh'?: number | undefined;
+    'max-age'?: number | undefined;
+    's-maxage'?: number | undefined;
+    'stale-while-revalidate'?: number | undefined;
+    'stale-if-error'?: number | undefined;
+    public?: true | undefined;
+    private?: true | string[] | undefined;
+    'no-store'?: true | undefined;
+    'no-cache'?: true | string[] | undefined;
+    'must-revalidate'?: true | undefined;
+    'proxy-revalidate'?: true | undefined;
+    immutable?: true | undefined;
+    'no-transform'?: true | undefined;
+    'must-understand'?: true | undefined;
+    'only-if-cached'?: true | undefined;
   }
 
   export interface CacheKey {
     origin: string
     method: string
     path: string
-    headers?: Record<string, string | string[]>
+    headers?: Record<string, string | string[]> | undefined
   }
 
   export interface CacheValue {
     statusCode: number
     statusMessage: string
     headers: Record<string, string | string[]>
-    vary?: Record<string, string | string[] | null>
-    etag?: string
-    cacheControlDirectives?: CacheControlDirectives
+    vary?: Record<string, string | string[] | null> | undefined
+    etag?: string | undefined
+    cacheControlDirectives?: CacheControlDirectives | undefined
     cachedAt: number
     staleAt: number
     deleteAt: number
@@ -95,9 +95,9 @@ declare namespace CacheHandler {
     statusCode: number
     statusMessage: string
     headers: Record<string, string | string[]>
-    vary?: Record<string, string | string[] | null>
-    etag?: string
-    body?: Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string
+    vary?: Record<string, string | string[] | null> | undefined
+    etag?: string | undefined
+    body?: Readable | Iterable<Buffer> | AsyncIterable<Buffer> | Buffer | Iterable<string> | AsyncIterable<string> | string | undefined
     cacheControlDirectives: CacheControlDirectives,
     cachedAt: number
     staleAt: number
@@ -119,19 +119,19 @@ declare namespace CacheHandler {
     /**
        * @default Infinity
        */
-    maxCount?: number
+    maxCount?: number | undefined
 
     /**
      * @default Infinity
      */
-    maxSize?: number
+    maxSize?: number | undefined
 
     /**
      * @default Infinity
      */
-    maxEntrySize?: number
+    maxEntrySize?: number | undefined
 
-    errorCallback?: (err: Error) => void
+    errorCallback?: ((err: Error) => void) | undefined
   }
 
   export class MemoryCacheStore implements CacheStore {
@@ -149,17 +149,17 @@ declare namespace CacheHandler {
      * Location of the database
      * @default ':memory:'
      */
-    location?: string
+    location?: string | undefined
 
     /**
      * @default Infinity
      */
-    maxCount?: number
+    maxCount?: number | undefined
 
     /**
      * @default Infinity
      */
-    maxEntrySize?: number
+    maxEntrySize?: number | undefined
   }
 
   export class SqliteCacheStore implements CacheStore {

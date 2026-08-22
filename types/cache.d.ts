@@ -24,13 +24,13 @@ export interface Cache {
 }
 
 export interface CacheQueryOptions {
-  ignoreSearch?: boolean,
-  ignoreMethod?: boolean,
-  ignoreVary?: boolean
+  ignoreSearch?: boolean | undefined,
+  ignoreMethod?: boolean | undefined,
+  ignoreVary?: boolean | undefined
 }
 
 export interface MultiCacheQueryOptions extends CacheQueryOptions {
-  cacheName?: string
+  cacheName?: string | undefined
 }
 
 export declare const caches: CacheStorage

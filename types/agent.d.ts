@@ -21,8 +21,8 @@ declare class Agent extends Dispatcher {
 declare namespace Agent {
   export interface Options extends Pool.Options {
     /** Default: `(origin, opts) => new Pool(origin, opts)`. */
-    factory?(origin: string | URL, opts: Object): Dispatcher;
-    maxOrigins?: number
+    factory?: ((origin: string | URL, opts: Object) => Dispatcher) | undefined;
+    maxOrigins?: number | undefined
   }
 
   export interface DispatchOptions extends Dispatcher.DispatchOptions {

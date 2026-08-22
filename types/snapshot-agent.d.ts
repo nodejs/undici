@@ -21,22 +21,22 @@ declare namespace SnapshotRecorder {
   type SnapshotRecorderMode = 'record' | 'playback' | 'update'
 
   export interface Options {
-    snapshotPath?: string
-    mode?: SnapshotRecorderMode
-    maxSnapshots?: number
-    autoFlush?: boolean
-    flushInterval?: number
-    matchHeaders?: string[]
-    ignoreHeaders?: string[]
-    excludeHeaders?: string[]
-    matchBody?: boolean
-    normalizeBody?: (body: string | Buffer | null | undefined) => string
-    matchQuery?: boolean
-    normalizeQuery?: (query: URLSearchParams) => string
-    caseSensitive?: boolean
-    shouldRecord?: (requestOpts: any) => boolean
-    shouldPlayback?: (requestOpts: any) => boolean
-    excludeUrls?: (string | RegExp)[]
+    snapshotPath?: string | undefined
+    mode?: SnapshotRecorderMode | undefined
+    maxSnapshots?: number | undefined
+    autoFlush?: boolean | undefined
+    flushInterval?: number | undefined
+    matchHeaders?: string[] | undefined
+    ignoreHeaders?: string[] | undefined
+    excludeHeaders?: string[] | undefined
+    matchBody?: boolean | undefined
+    normalizeBody?: ((body: string | Buffer | null | undefined) => string) | undefined
+    matchQuery?: boolean | undefined
+    normalizeQuery?: ((query: URLSearchParams) => string) | undefined
+    caseSensitive?: boolean | undefined
+    shouldRecord?: ((requestOpts: any) => boolean) | undefined
+    shouldPlayback?: ((requestOpts: any) => boolean) | undefined
+    excludeUrls?: (string | RegExp)[] | undefined
   }
 
   export interface Snapshot {
@@ -44,7 +44,7 @@ declare namespace SnapshotRecorder {
       method: string
       url: string
       headers: Record<string, string>
-      body?: string
+      body?: string | undefined
     }
     responses: {
       statusCode: number
@@ -62,7 +62,7 @@ declare namespace SnapshotRecorder {
       method: string
       url: string
       headers: Record<string, string>
-      body?: string
+      body?: string | undefined
     }
     responseCount: number
     callCount: number
@@ -91,22 +91,22 @@ declare class SnapshotAgent extends MockAgent {
 
 declare namespace SnapshotAgent {
   export interface Options extends MockAgent.Options {
-    mode?: SnapshotRecorder.SnapshotRecorderMode
-    snapshotPath?: string
-    maxSnapshots?: number
-    autoFlush?: boolean
-    flushInterval?: number
-    matchHeaders?: string[]
-    ignoreHeaders?: string[]
-    excludeHeaders?: string[]
-    matchBody?: boolean
-    normalizeBody?: (body: string | Buffer | null | undefined) => string
-    matchQuery?: boolean
-    normalizeQuery?: (query: URLSearchParams) => string
-    caseSensitive?: boolean
-    shouldRecord?: (requestOpts: any) => boolean
-    shouldPlayback?: (requestOpts: any) => boolean
-    excludeUrls?: (string | RegExp)[]
+    mode?: SnapshotRecorder.SnapshotRecorderMode | undefined
+    snapshotPath?: string | undefined
+    maxSnapshots?: number | undefined
+    autoFlush?: boolean | undefined
+    flushInterval?: number | undefined
+    matchHeaders?: string[] | undefined
+    ignoreHeaders?: string[] | undefined
+    excludeHeaders?: string[] | undefined
+    matchBody?: boolean | undefined
+    normalizeBody?: ((body: string | Buffer | null | undefined) => string) | undefined
+    matchQuery?: boolean | undefined
+    normalizeQuery?: ((query: URLSearchParams) => string) | undefined
+    caseSensitive?: boolean | undefined
+    shouldRecord?: ((requestOpts: any) => boolean) | undefined
+    shouldPlayback?: ((requestOpts: any) => boolean) | undefined
+    excludeUrls?: (string | RegExp)[] | undefined
   }
 }
 

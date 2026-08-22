@@ -91,7 +91,7 @@
     "test:node-test": "borp --timeout 180000 -p \"test/node-test/**/*.js\"",
     "test:tdd": "borp --timeout 180000 --expose-gc -p \"test/*.js\"",
     "test:tdd:node-test": "borp --timeout 180000 -p \"test/node-test/**/*.js\" -w",
-    "test:typescript": "tsd && tsc test/imports/undici-import.ts --typeRoots ./types --noEmit && tsc ./types/*.d.ts --noEmit --typeRoots ./types",
+    "test:typescript": "tsd && tsc test/imports/undici-import.ts --typeRoots ./types --noEmit --exactOptionalPropertyTypes && tsc ./types/*.d.ts --noEmit --typeRoots ./types --exactOptionalPropertyTypes",
     "test:webidl": "borp --timeout 180000 -p \"test/webidl/*.js\"",
     "test:websocket": "borp --timeout 180000 -p \"test/websocket/**/*.js\"",
     "test:websocket:autobahn": "node test/autobahn/client.js",
@@ -139,6 +139,7 @@
     "directory": "test/types",
     "compilerOptions": {
       "esModuleInterop": true,
+      "exactOptionalPropertyTypes": true,
       "lib": [
         "esnext"
       ]
