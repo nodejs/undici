@@ -7,6 +7,8 @@ const { deflateRawSync } = require('node:zlib')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { WebSocketServer } = require('ws')
 const { WebSocket, Agent } = require('../..')
+const { MessageSizeExceededError } = require('../../lib/core/errors')
+const { PerMessageDeflate } = require('../../lib/web/websocket/permessage-deflate')
 
 test('Compressed message under limit decompresses successfully', async (t) => {
   const server = new WebSocketServer({
@@ -298,6 +300,39 @@ test('Fragmented compressed payload over total limit is rejected', async (t) => 
 
   t.assert.strictEqual(messageReceived, false, 'Fragmented compressed message over total limit should be rejected')
   t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed after exceeding limit')
+})
+
+test('PerMessageDeflate enforces maxPayloadSize against existing decompressed fragments', async (t) => {
+  const limit = 10
+  const currentPayloadSize = 5
+  const inflater = new PerMessageDeflate(new Map(), { maxPayloadSize: limit })
+  const timeout = Symbol('timeout')
+
+  // Keep the same inflater instance across calls so the limit check must use
+  // the latest currentPayloadSize argument, not values captured when the
+  // inflater was created.
+  const first = await Promise.race([
+    new Promise((resolve) => {
+      inflater.decompress(Buffer.alloc(0), false, (error, data) => resolve({ error, data }))
+    }),
+    sleep(5000, timeout)
+  ])
+
+  t.assert.notStrictEqual(first, timeout, 'Initial inflate operation should complete')
+  t.assert.ifError(first.error)
+  t.assert.strictEqual(first.data.length, 0)
+
+  const compressed = deflateRawSync(Buffer.alloc(6, 0x41))
+  const second = await Promise.race([
+    new Promise((resolve) => {
+      inflater.decompress(compressed, true, (error, data) => resolve({ error, data }), currentPayloadSize)
+    }),
+    sleep(5000, timeout)
+  ])
+
+  t.assert.notStrictEqual(second, timeout, 'Inflate should fail once the remaining message budget is exceeded')
+  t.assert.ok(second.error instanceof MessageSizeExceededError)
+  t.assert.strictEqual(second.data, undefined)
 })
 
 test('Raw uncompressed payload over immediate limit is rejected', async (t) => {
