@@ -288,6 +288,10 @@ dual-stack (IPv4 + IPv6) and custom lookup/storage implementations.
     `(origin, options, callback) => void`.
   * `pick` {Function} (optional) Custom record-selection function called with
     `(origin, records, affinity)` to choose which resolved address to use.
+  * `filter` {Function} (optional) Address policy called with
+    `(origin, record)` for every resolved address and literal IP origin. Return
+    `true` to allow the address or `false` to reject it. If all addresses are
+    rejected, the request fails before a connection is attempted.
   * `storage` {DNSStorage} (optional) Custom storage backend. Must implement
     `get`, `set`, `delete`, `full`, and `size`.
 
@@ -318,6 +322,30 @@ const agent = new Agent().compose(
   })
 )
 ```
+
+The optional `filter` hook can enforce an application-defined network policy
+without a separate DNS preflight lookup. Accepted hostnames are connected
+through the resolved IP address while the original host header and TLS
+servername are preserved. The policy is also applied to literal IPv4 and IPv6
+origins and to redirect targets when the dispatcher is used with `fetch`.
+
+```js
+import { Agent, interceptors } from 'undici'
+
+const agent = new Agent().compose(
+  interceptors.dns({
+    filter (origin, { address, family }) {
+      return addressPolicy.allows({ origin, address, family })
+    }
+  })
+)
+
+const response = await fetch(userControlledURL, { dispatcher: agent })
+```
+
+`filter` does not provide an address classification policy. Applications are
+responsible for rejecting every address range that is not permitted in their
+environment, including IPv4-mapped IPv6 addresses where applicable.
 
 ---
 
