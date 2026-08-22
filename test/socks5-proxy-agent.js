@@ -463,6 +463,39 @@ test('Socks5ProxyAgent - proxy connection refused', async (t) => {
   await p.completed
 })
 
+test('Socks5ProxyAgent - SOCKS5 negotiation timeout destroys the underlying socket (#5704)', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  // Proxy that accepts the TCP connection and reads the SOCKS5 greeting but
+  // never replies, stalling negotiation so the auth timeout fires.
+  const sockets = []
+  let resolveClosed
+  const proxySocketClosed = new Promise((resolve) => { resolveClosed = resolve })
+  const proxy = net.createServer((socket) => {
+    sockets.push(socket)
+    socket.on('data', () => {}) // drain the greeting, never reply
+    socket.once('close', () => resolveClosed())
+  })
+
+  await new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve))
+
+  const agent = new Socks5ProxyAgent(`socks5://127.0.0.1:${proxy.address().port}`)
+
+  await request('http://example.invalid/', { dispatcher: agent }).catch((err) => {
+    p.equal(err.message, 'SOCKS5 authentication timeout', 'request should reject with authentication timeout')
+  })
+
+  await agent.close()
+
+  // The socket opened for the stalled negotiation must have been destroyed by
+  // the timeout path (previously it leaked untracked for the process lifetime).
+  await proxySocketClosed
+  p.equal(sockets[0].destroyed, true, 'proxy-side socket should be destroyed after negotiation timeout')
+
+  proxy.close()
+  await p.completed
+})
+
 test('Socks5ProxyAgent - close and destroy', async (t) => {
   const p = tspl(t, { plan: 2 })
 
