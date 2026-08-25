@@ -428,6 +428,45 @@ test('Socks5ProxyAgent - connection failure', async (t) => {
   await p.completed
 })
 
+test('Socks5ProxyAgent - destroys socket when negotiation times out', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  // SOCKS5 proxy that accepts the TCP connection but never replies to the greeting
+  const stalledProxy = net.createServer(() => {})
+  await new Promise((resolve) => {
+    stalledProxy.listen(0, '127.0.0.1', resolve)
+  })
+
+  let connectorSocket
+  const agent = new Socks5ProxyAgent(`socks5://127.0.0.1:${stalledProxy.address().port}`, {
+    connect (opts, callback) {
+      const socket = net.connect({ host: opts.hostname, port: opts.port })
+      connectorSocket = socket
+      socket.once('connect', () => callback(null, socket))
+      socket.once('error', callback)
+      return socket
+    }
+  })
+
+  try {
+    await request('http://example.invalid/', {
+      dispatcher: agent
+    })
+    p.fail('should have thrown an error')
+  } catch (err) {
+    p.ok(err, 'should throw error when SOCKS5 negotiation stalls')
+  }
+
+  await agent.close()
+  p.ok(connectorSocket.destroyed, 'socket left by the timed out negotiation should be destroyed')
+
+  t.after(async () => {
+    stalledProxy.close()
+  })
+
+  await p.completed
+})
+
 test('Socks5ProxyAgent - proxy connection refused', async (t) => {
   const p = tspl(t, { plan: 1 })
 
