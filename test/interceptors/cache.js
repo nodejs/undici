@@ -1679,6 +1679,74 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('304 synchronous revalidation with a new max-age freshens the stored entry', async () => {
+    // https://www.rfc-editor.org/rfc/rfc9111.html#name-freshening-stored-responses
+    // The origin answers the conditional request with a longer max-age, which is
+    // how a CDN extends a cached response without resending it. The stored entry
+    // has to pick that lifetime up, otherwise every later request revalidates
+    // again and the 304 buys nothing.
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    let conditionalRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      res.setHeader('date', new Date().toUTCString())
+      res.setHeader('etag', '"cached"')
+
+      if (req.headers['if-none-match']) {
+        conditionalRequests++
+        res.statusCode = 304
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end()
+        return
+      }
+
+      res.setHeader('cache-control', 'public, max-age=1')
+      res.end('cached')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'cached')
+    }
+
+    clock.tick(1500)
+
+    {
+      const res = await client.request(request)
+      equal(conditionalRequests, 1)
+      strictEqual(await res.body.text(), 'cached')
+    }
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2, 'the max-age carried by the 304 must freshen the stored entry')
+      strictEqual(res.headers.warning, undefined)
+      strictEqual(await res.body.text(), 'cached')
+    }
+  })
+
   test('304 stale-while-revalidate metadata that forbids reuse evicts the cached response', async () => {
     for (const testCase of [
       { name: 'no-store', headers: { 'cache-control': 'no-store' } },
