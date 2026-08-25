@@ -793,4 +793,16 @@ test('Cookie setCookie supports valueless unparsed attributes (e.g. Partitioned)
     unparsed: ['Partitioned']
   })
   assert.equal(headers.get('Set-Cookie'), 'session=abc; Secure; Path=/; Partitioned')
+
+  assert.throws(() => {
+    setCookie(headers, { name: 'session', value: 'abc', unparsed: [''] })
+  }, /Invalid unparsed/)
+
+  assert.throws(() => {
+    setCookie(headers, { name: 'session', value: 'abc', unparsed: ['  '] })
+  }, /Invalid unparsed/)
+
+  assert.throws(() => {
+    setCookie(headers, { name: 'session', value: 'abc', unparsed: ['=val'] })
+  }, /Invalid unparsed/)
 })
