@@ -39934,11 +39934,6 @@
       "success": true,
       "cases": [
         {
-          "name": "idl_test setup",
-          "success": false,
-          "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
-        },
-        {
           "name": "idl_test validation",
           "success": true
         },
@@ -40691,6 +40686,11 @@
           "name": "ProgressEvent interface: new ProgressEvent(\"type\") must inherit property \"total\" with the proper type",
           "success": false,
           "message": "assert_equals: Unexpected exception when evaluating object expected null but got object \"ReferenceError: ProgressEvent is not defined\""
+        },
+        {
+          "name": "idl_test setup",
+          "success": false,
+          "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
         }
       ]
     },
@@ -40750,10 +40750,6 @@
           "name": "Use text/xml as fallback MIME type, 2",
           "success": false,
           "message": "XMLHttpRequest is not defined"
-        },
-        {
-          "name": "Loading data…",
-          "success": true
         },
         {
           "name": "1) MIME types need to be parsed and serialized: text/html;charset=gbk",
@@ -41124,6 +41120,10 @@
           "name": "74) MIME types need to be parsed and serialized: \"text/html\"",
           "success": false,
           "message": "XMLHttpRequest is not defined"
+        },
+        {
+          "name": "Loading data…",
+          "success": true
         }
       ]
     },
@@ -42196,6 +42196,71 @@
     "xmlhttprequest-timeout-worker-twice.html?timeout%20fires%20normally%20with%20same%20timeout%20set%20twice": {
       "success": false,
       "cases": []
+    },
+    "abort-during-navigation.window.html": {
+      "success": true,
+      "cases": [
+        {
+          "name": "XHR should not fire abort or error events when cancelled by navigation",
+          "success": false,
+          "message": "document is not defined"
+        }
+      ]
+    },
+    "abort-progress-events.any.html": {
+      "success": true,
+      "cases": [
+        {
+          "name": "Events must not fire when state is UNSENT after abort()",
+          "success": false,
+          "message": "XMLHttpRequest is not defined"
+        },
+        {
+          "name": "Calling open/abort in readystatechange should not crash",
+          "success": false,
+          "message": "XMLHttpRequest is not defined"
+        }
+      ]
+    },
+    "sync-xhr-supported-by-permissions-policy.tentative.html": {
+      "success": true,
+      "cases": [
+        {
+          "name": "document.permissionsPolicy.features should advertise sync-xhr.",
+          "success": false,
+          "message": "document is not defined"
+        }
+      ]
+    },
+    "xmlhttprequest-sync-default-permissions-policy.tentative.sub.html": {
+      "success": true,
+      "cases": [
+        {
+          "name": "Default \"sync-xhr\" permissions policy [\"*\"] allows the top-level document.",
+          "success": false,
+          "message": "promise_test: Unhandled rejection with value: object \"[object Object]\""
+        },
+        {
+          "name": "Default \"sync-xhr\" permissions policy [\"*\"] allows same-origin iframes.",
+          "success": false,
+          "message": "document is not defined"
+        },
+        {
+          "name": "Default \"sync-xhr\" permissions policy [\"*\"] allows cross-origin iframes.",
+          "success": false,
+          "message": "document is not defined"
+        },
+        {
+          "name": "permissions policy \"sync-xhr\" can be disabled in cross-origin iframes using \"allow\" attribute.",
+          "success": false,
+          "message": "document is not defined"
+        },
+        {
+          "name": "permissions policy \"sync-xhr\" can be disabled in same-origin iframes using \"allow\" attribute.",
+          "success": false,
+          "message": "document is not defined"
+        }
+      ]
     }
   },
   "eventsource": {
