@@ -56,11 +56,13 @@ test('controller proxy returns safe defaults and is a no-op before a connection 
     proxy.pause()
     proxy.resume()
     proxy.abort(new Error('ignored'))
+    proxy.rawHeaders = ['x', 'y']
+    proxy.rawTrailers = ['z', '1']
   })
 })
 
 test('controller proxy forwards reads/writes to the active connection and stays stable across callbacks', (t) => {
-  t = tspl(t, { plan: 9 })
+  t = tspl(t, { plan: 11 })
 
   let downstreamController = null
   let upgradeController = null
@@ -101,6 +103,14 @@ test('controller proxy forwards reads/writes to the active connection and stays 
   downstreamController.resume()
   downstreamController.abort('stop')
   t.deepStrictEqual(connection.calls, ['pause', 'resume', ['abort', 'stop']])
+
+  // Decompress (and other interceptors) rewrite rawHeaders/rawTrailers on the
+  // controller they were given. Those assignments must reach the active
+  // connection instead of throwing on a getter-only proxy.
+  downstreamController.rawHeaders = ['x-foo', 'bar']
+  downstreamController.rawTrailers = ['x-end', '1']
+  t.deepStrictEqual(connection.rawHeaders, ['x-foo', 'bar'])
+  t.deepStrictEqual(connection.rawTrailers, ['x-end', '1'])
 
   // An upgrade on the same dispatch is forwarded through the very same proxy
   // instance (not the raw controller), keeping the downstream wiring stable.
