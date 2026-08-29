@@ -7,6 +7,32 @@ const { cacheStoreTests } = require('./cache-store-test-utils.js')
 
 cacheStoreTests(MemoryCacheStore)
 
+test('evicts entries when a single entry is stored per key', async () => {
+  const store = new MemoryCacheStore({ maxSize: 1000, maxCount: 5 })
+
+  // Store one response per distinct key — the case where the old eviction
+  // logic (entries.length / 2) silently evicted nothing and the limits were
+  // never enforced.
+  for (let i = 0; i < 100; i++) {
+    const writeStream = store.createWriteStream(
+      { origin: 'test', path: `/test-${i}`, method: 'GET' },
+      {
+        statusCode: 200,
+        statusMessage: 'OK',
+        headers: {},
+        cachedAt: Date.now(),
+        staleAt: Date.now() + 60000,
+        deleteAt: Date.now() + 120000
+      }
+    )
+    writeStream.write('X'.repeat(100))
+    writeStream.end()
+  }
+
+  equal(store.size <= 1000, true, 'Store should be evicted back below maxSize')
+  equal(store.isFull(), false, 'Store should not be full after eviction')
+})
+
 test('default limits prevent memory leaks', async () => {
   const store = new MemoryCacheStore() // Uses new defaults
 
@@ -27,8 +53,9 @@ test('default limits prevent memory leaks', async () => {
     writeStream.end()
   }
 
-  // Should be full after exceeding maxCount default of 1024
-  equal(store.isFull(), true, 'Store should be full after exceeding maxCount default')
+  // After exceeding the maxCount default, eviction must bring the store back
+  // under the limit rather than leaving it full.
+  equal(store.isFull(), false, 'Store should be evicted back under maxCount default')
 })
 
 test('default maxEntrySize prevents large entries', async () => {
@@ -90,7 +117,7 @@ test('isFull returns false when under limits', () => {
   equal(store.isFull(), false, 'Should not be full when empty')
 })
 
-test('isFull returns true when maxSize reached', async () => {
+test('evicts entry back under limits when maxSize reached', async () => {
   const maxSize = 10
   const store = new MemoryCacheStore({ maxSize })
   const testData = 'x'.repeat(maxSize + 1) // Exceed maxSize
@@ -110,10 +137,13 @@ test('isFull returns true when maxSize reached', async () => {
   writeStream.write(testData)
   writeStream.end()
 
-  equal(store.isFull(), true, 'Should be full when maxSize exceeded')
+  // The entry exceeds maxSize, so eviction must remove it and bring the store
+  // back under the limit.
+  equal(store.size <= maxSize, true, 'Store should be evicted back below maxSize')
+  equal(store.isFull(), false, 'Store should not be full after eviction')
 })
 
-test('isFull returns true when maxCount reached', async () => {
+test('evicts entries back under limits when maxCount reached', async () => {
   const maxCount = 2
   const store = new MemoryCacheStore({ maxCount })
 
@@ -133,7 +163,9 @@ test('isFull returns true when maxCount reached', async () => {
     writeStream.end('test')
   }
 
-  equal(store.isFull(), true, 'Should be full when maxCount exceeded')
+  // After exceeding maxCount, eviction must bring the store back under the
+  // limit rather than leaving it full.
+  equal(store.isFull(), false, 'Store should not be full after eviction')
 })
 
 test('emits maxSizeExceeded event when limits exceeded', async () => {
