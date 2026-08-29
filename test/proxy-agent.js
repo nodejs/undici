@@ -1041,7 +1041,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
 
   after(() => setGlobalDispatcher(defaultDispatcher))
 
-  const expectedHeaders = Object.assign(Object.create(null), {
+  const expectedHeaders = {
     host: `localhost:${server.address().port}`,
     connection: 'keep-alive',
     'test-header': 'value',
@@ -1050,13 +1050,13 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
     'sec-fetch-mode': 'cors',
     'user-agent': 'undici',
     'accept-encoding': 'gzip, deflate'
-  })
+  }
 
-  const expectedProxyHeaders = Object.assign(Object.create(null), {
+  const expectedProxyHeaders = {
     'proxy-connection': 'keep-alive',
     host: `localhost:${server.address().port}`,
     connection: 'close'
-  })
+  }
 
   proxy.on('connect', (req, res) => {
     t.deepStrictEqual(req.headers, expectedProxyHeaders)
