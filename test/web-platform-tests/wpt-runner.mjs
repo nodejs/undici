@@ -15,7 +15,7 @@ const REPO_ROOT = join(import.meta.dirname, '..', '..')
 const WPT_DIR = join(import.meta.dirname, 'wpt')
 const WPT_SCRIPT_PATH = join(WPT_DIR, 'wpt')
 const EXPECTATION_PATH = join(import.meta.dirname, 'expectation.json')
-const CA_CERT_PATH = join(import.meta.dirname, 'runner/certs/cacert.pem')
+const CA_CERT_PATH = join(WPT_DIR, 'tools', 'certs', 'cacert.pem')
 
 const log = debuglog('UNDICI_WPT')
 const WPT_SERVER_URL = 'http://web-platform.test:8000'
