@@ -18298,18 +18298,15 @@
             },
             {
               "name": "sec-fetch-mode - Not sent to non-trustworthy same-origin destination, no init",
-              "success": false,
-              "message": "assert_not_own_property: unexpected property \"sec-fetch-mode\" is found on object"
+              "success": true
             },
             {
               "name": "sec-fetch-mode - Not sent to non-trustworthy same-site destination, no init",
-              "success": false,
-              "message": "assert_not_own_property: unexpected property \"sec-fetch-mode\" is found on object"
+              "success": true
             },
             {
               "name": "sec-fetch-mode - Not sent to non-trustworthy cross-site destination, no init",
-              "success": false,
-              "message": "assert_not_own_property: unexpected property \"sec-fetch-mode\" is found on object"
+              "success": true
             },
             {
               "name": "sec-fetch-dest - Not sent to non-trustworthy same-origin destination, no init",
