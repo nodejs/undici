@@ -7,7 +7,7 @@ const { once, EventEmitter } = require('node:events')
 
 const pem = require('@metcoder95/https-pem')
 
-const { Client, Pool } = require('..')
+const { Agent, Client, Pool, fetch } = require('..')
 
 test('#3046 - GOAWAY Frame', async t => {
   t = tspl(t, { plan: 8 })
@@ -202,6 +202,92 @@ test('#5468 - requeue multiplexed requests after mid-burst GOAWAY', async (t) =>
   t.ok(streams >= requests - 1)
 
   await t.completed
+})
+
+test('Agent keeps a Pool with requests requeued after GOAWAY', async (t) => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let firstSession = null
+  const sessionCounts = new Map()
+
+  server.on('session', (session) => {
+    sessionCounts.set(session, 0)
+    firstSession ??= session
+  })
+
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+
+    const count = sessionCounts.get(stream.session) + 1
+    sessionCounts.set(stream.session, count)
+
+    // The first request warms the session. Accept two requests from the burst,
+    // then refuse the remaining streams so the Client has to requeue them.
+    if (stream.session === firstSession && count === 3) {
+      firstSession.goaway(constants.NGHTTP2_NO_ERROR, stream.id)
+    }
+
+    stream.respond({ ':status': 200 })
+    setTimeout(() => {
+      if (!stream.destroyed) {
+        stream.end('ok')
+      }
+    }, 150)
+  })
+
+  await once(server.listen(0), 'listening')
+
+  let pool = null
+  const agent = new Agent({
+    factory (origin) {
+      pool = new Pool(origin, {
+        connections: 1,
+        connect: {
+          rejectUnauthorized: false
+        }
+      })
+      return pool
+    }
+  })
+  const disconnectErrors = []
+  agent.on('disconnect', (_origin, _targets, err) => {
+    disconnectErrors.push(err)
+  })
+
+  t.after(async () => {
+    agent.removeAllListeners('disconnect')
+    await agent.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const url = `https://localhost:${server.address().port}`
+  const warmup = await fetch(url, { dispatcher: agent })
+  await warmup.text()
+
+  const disconnected = once(agent, 'disconnect')
+  const requests = Array.from({ length: 6 }, async () => {
+    const response = await fetch(url, {
+      dispatcher: agent,
+      signal: AbortSignal.timeout(3000)
+    })
+
+    return `${response.status}:${await response.text()}`
+  })
+
+  await disconnected
+  const poolWasClosed = pool.closed
+  const results = await Promise.allSettled(requests)
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // GOAWAY detaches the session before the refused requests are replayed. The
+  // Pool must remain open while those requests are pending; otherwise its
+  // replacement Client is destroyed as soon as the replay finishes.
+  t.assert.deepStrictEqual(results, Array(6).fill(null).map(() => ({
+    status: 'fulfilled',
+    value: '200:ok'
+  })))
+  t.assert.deepStrictEqual(disconnectErrors.map(err => err.code), ['UND_ERR_INFO'])
+  t.assert.strictEqual(poolWasClosed, false)
 })
 
 test('#5089 - Handle GOAWAY Gracefully', async (t) => {
