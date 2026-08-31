@@ -192,7 +192,9 @@ added: v7.0.0
     body. Responses whose body exceeds this value are not cached. Must not
     exceed `2000000000` (2 GB). **Default:** `2000000000` (2 GB).
   * `compressThreshold` {number} The size, in bytes, above which a response
-    body is stored compressed with zstd. Requires a Node version with zstd
+    body is stored compressed with zstd. Responses with an easily compressible
+    Content-Type (e.g. json, xml, plain text) are compressed regardless of
+    size. Requires a Node version with zstd
     support (22.19+); when unavailable, bodies are stored uncompressed.
     **Default:** `1048576` (1 MiB).
 
@@ -249,7 +251,8 @@ added: v7.0.0
 
 Writes a response into the database directly, without going through a stream. If
 the body exceeds `maxEntrySize`, nothing is stored. A body larger than
-`compressThreshold` is compressed with zstd before being written. When an entry
+`compressThreshold`, or with an easily compressible Content-Type (e.g. json,
+xml, plain text), is compressed with zstd before being written. When an entry
 already exists for `key` it is overwritten; otherwise a new row is inserted and
 old entries are pruned to honour `maxCount`. This method is used internally by
 [`sqliteCacheStore.createWriteStream()`](#sqlitecachestorecreatewritestreamkey-value).
@@ -270,7 +273,8 @@ added: v7.0.0
 Returns a {Writable} stream used to write the response body into the store. When
 the stream finishes, the buffered body is committed via
 [`sqliteCacheStore.set()`](#sqlitecachestoresetkey-value), where bodies larger
-than `compressThreshold` are compressed with zstd. If the body exceeds
+than `compressThreshold` or with an easily compressible Content-Type are
+compressed with zstd. If the body exceeds
 `maxEntrySize`, the stream is destroyed and nothing is stored.
 
 ### `sqliteCacheStore.delete(key)`

@@ -163,7 +163,9 @@ declare namespace CacheHandler {
 
     /**
      * Responses whose body size, in bytes, is greater than this value are
-     * stored compressed with zstd. Requires Node with zstd support
+     * stored compressed with zstd. Responses with an easily compressible
+     * Content-Type (e.g. json, xml, plain text) are compressed regardless of
+     * size. Requires Node with zstd support
      * (22.19+).
      * @default 1048576 (1 MiB)
      */

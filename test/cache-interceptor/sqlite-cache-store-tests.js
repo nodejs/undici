@@ -440,6 +440,17 @@ test('SqliteCacheStore compresses big files with zstd', { skip: skipCompression 
     deepStrictEqual(result.body, smallBody)
   }
 
+  // A compressible mime type (application/json) must be compressed even when
+  // the body is below compressThreshold.
+  const jsonBody = Buffer.from('{"key":"value"}'.repeat(20))
+  store.set({ ...key, path: '/json' }, { ...value, headers: { 'content-type': 'application/json' }, body: jsonBody })
+
+  {
+    const result = store.get(structuredClone({ ...key, path: '/json' }))
+    notEqual(result, undefined)
+    deepStrictEqual(result.body, jsonBody)
+  }
+
   // Inspect the raw rows to make sure compression actually happened.
   store.close()
   storeClosed = true
@@ -448,9 +459,11 @@ test('SqliteCacheStore compresses big files with zstd', { skip: skipCompression 
   const rows = db.prepare('SELECT compressed, body FROM cacheInterceptorV4 ORDER BY id').all()
   db.close()
 
-  strictEqual(rows.length, 2)
-  strictEqual(rows[0].compressed, 1)
+  strictEqual(rows.length, 3)
+  strictEqual(rows[0].compressed, 'zstd')
   strictEqual(rows[0].body.byteLength < bigBody.byteLength, true)
-  strictEqual(rows[1].compressed, 0)
+  strictEqual(rows[1].compressed, null)
   strictEqual(Buffer.from(rows[1].body).equals(smallBody), true)
+  strictEqual(rows[2].compressed, 'zstd')
+  strictEqual(rows[2].body.byteLength < jsonBody.byteLength, true)
 })
