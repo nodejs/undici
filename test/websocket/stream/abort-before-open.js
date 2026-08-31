@@ -33,11 +33,11 @@ test('WebSocketStream aborts before handshake completes', async (t) => {
 
   const [opened, closed] = await Promise.allSettled([wss.opened, wss.closed])
 
+  // Per the spec, aborting before the handshake completes rejects both
+  // promises with the abort signal's own reason.
   t.assert.strictEqual(opened.status, 'rejected')
-  t.assert.strictEqual(opened.reason.name, 'WebSocketError')
-  t.assert.strictEqual(opened.reason.message, 'Socket never opened')
+  t.assert.strictEqual(opened.reason.message, 'abort before open')
 
   t.assert.strictEqual(closed.status, 'rejected')
-  t.assert.strictEqual(closed.reason.name, 'WebSocketError')
-  t.assert.strictEqual(closed.reason.message, 'unclean close')
+  t.assert.strictEqual(closed.reason.message, 'abort before open')
 })
