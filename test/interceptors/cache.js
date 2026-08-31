@@ -54,6 +54,113 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('shared cache does not store responses with Set-Cookie', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      const cookie = req.headers.cookie
+      res.setHeader('cache-control', 'public, max-age=300')
+      res.setHeader('set-cookie', `session-for-${cookie}`)
+      res.end(`response for ${cookie}`)
+    }).listen(0)
+
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-a' }
+        })
+        equal(requestsToOrigin, 1)
+        equal(res.headers['set-cookie'], 'session-for-user-a')
+        strictEqual(await res.body.text(), 'response for user-a')
+      }
+
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-b' }
+        })
+        equal(requestsToOrigin, 2)
+        equal(res.headers['set-cookie'], 'session-for-user-b')
+        strictEqual(await res.body.text(), 'response for user-b')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
+  test('shared cache does not serve existing entries with Set-Cookie', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      const cookie = req.headers.cookie
+      res.setHeader('cache-control', 'public, max-age=300')
+      res.setHeader('set-cookie', `session-for-${cookie}`)
+      res.end(`response for ${cookie}`)
+    }).listen(0)
+
+    await once(server, 'listening')
+
+    const store = new MemoryCacheStore()
+    const origin = `http://localhost:${server.address().port}`
+    const privateClient = new Client(origin)
+      .compose(interceptors.cache({ store, type: 'private' }))
+    const sharedClient = new Client(origin)
+      .compose(interceptors.cache({ store, type: 'shared' }))
+
+    try {
+      {
+        const res = await privateClient.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-a' }
+        })
+        equal(requestsToOrigin, 1)
+        equal(res.headers['set-cookie'], 'session-for-user-a')
+        strictEqual(await res.body.text(), 'response for user-a')
+      }
+
+      {
+        const res = await privateClient.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-a' }
+        })
+        equal(requestsToOrigin, 1)
+        equal(res.headers['set-cookie'], 'session-for-user-a')
+        strictEqual(await res.body.text(), 'response for user-a')
+      }
+
+      {
+        const res = await sharedClient.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-b' }
+        })
+        equal(requestsToOrigin, 2)
+        equal(res.headers['set-cookie'], 'session-for-user-b')
+        strictEqual(await res.body.text(), 'response for user-b')
+      }
+    } finally {
+      await privateClient.close()
+      await sharedClient.close()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
   test('vary directives used to decide which response to use', async () => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -1077,20 +1184,20 @@ describe('Cache Interceptor', () => {
 
   test('qualified no-cache/private with OWS around = strip named headers from cached responses', async () => {
     for (const cacheControl of [
-      'public, max-age=60, no-cache= "set-cookie"',
-      'public, max-age=60, no-cache ="set-cookie"',
-      'public, max-age=60, no-cache \t= \t"set-cookie"',
-      'public, max-age=60, no-cache="set-cookie"\t, immutable',
-      'public, max-age=60, private= "set-cookie"',
-      'public, max-age=60, private ="set-cookie"',
-      'public, max-age=60, private\t=\t"set-cookie"',
-      'public, max-age=60, private="set-cookie"\t, immutable'
+      'public, max-age=60, no-cache= "x-secret"',
+      'public, max-age=60, no-cache ="x-secret"',
+      'public, max-age=60, no-cache \t= \t"x-secret"',
+      'public, max-age=60, no-cache="x-secret"\t, immutable',
+      'public, max-age=60, private= "x-secret"',
+      'public, max-age=60, private ="x-secret"',
+      'public, max-age=60, private\t=\t"x-secret"',
+      'public, max-age=60, private="x-secret"\t, immutable'
     ]) {
       let requestToOrigin = 0
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         requestToOrigin++
         res.setHeader('cache-control', cacheControl)
-        res.setHeader('set-cookie', 'session=secret')
+        res.setHeader('x-secret', 'secret')
         res.end('ok')
       }).listen(0)
 
@@ -1109,14 +1216,14 @@ describe('Cache Interceptor', () => {
         {
           const res = await client.request(request)
           equal(requestToOrigin, 1, cacheControl)
-          equal(res.headers['set-cookie'], 'session=secret', cacheControl)
+          equal(res.headers['x-secret'], 'secret', cacheControl)
           strictEqual(await res.body.text(), 'ok')
         }
 
         {
           const res = await client.request(request)
           equal(requestToOrigin, 1, cacheControl)
-          equal(res.headers['set-cookie'], undefined, cacheControl)
+          equal(res.headers['x-secret'], undefined, cacheControl)
           strictEqual(await res.body.text(), 'ok')
         }
       } finally {
@@ -1131,8 +1238,8 @@ describe('Cache Interceptor', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       requestToOrigin++
       res.setHeader('cache-control', 's-maxage=10')
-      res.setHeader('connection', ['Set-Cookie, X-Secret', 'Keep-Alive, X-Empty'])
-      res.setHeader('set-cookie', 'session=secret')
+      res.setHeader('connection', ['X-Other-Secret, X-Secret', 'Keep-Alive, X-Empty'])
+      res.setHeader('x-other-secret', 'other secret')
       res.setHeader('x-secret', 'secret')
       res.setHeader('x-empty', '')
       res.end('ok')
@@ -1157,7 +1264,7 @@ describe('Cache Interceptor', () => {
     {
       const res = await client.request(request)
       equal(requestToOrigin, 1)
-      equal(res.headers['set-cookie'], 'session=secret')
+      equal(res.headers['x-other-secret'], 'other secret')
       equal(res.headers['x-secret'], 'secret')
       equal(res.headers['x-empty'], '')
       strictEqual(await res.body.text(), 'ok')
@@ -1166,7 +1273,7 @@ describe('Cache Interceptor', () => {
     {
       const res = await client.request(request)
       equal(requestToOrigin, 1)
-      equal(res.headers['set-cookie'], undefined)
+      equal(res.headers['x-other-secret'], undefined)
       equal(res.headers['x-secret'], undefined)
       equal(res.headers['x-empty'], undefined)
       strictEqual(await res.body.text(), 'ok')
@@ -1447,6 +1554,7 @@ describe('Cache Interceptor', () => {
     for (const testCase of [
       { name: 'no-store', headers: { 'cache-control': 'no-store' } },
       { name: 'private', headers: { 'cache-control': 'private' } },
+      { name: 'set-cookie', headers: { 'set-cookie': 'session=secret' } },
       { name: 'vary-star', headers: { vary: '*' } },
       { name: 'malformed-vary', headers: { vary: 'cookie authorization' } }
     ]) {
@@ -1598,6 +1706,7 @@ describe('Cache Interceptor', () => {
     for (const testCase of [
       { name: 'no-store', headers: { 'cache-control': 'no-store' } },
       { name: 'private', headers: { 'cache-control': 'private' } },
+      { name: 'set-cookie', headers: { 'set-cookie': 'session=secret' } },
       { name: 'vary-star', headers: { vary: '*' } },
       { name: 'malformed-vary', headers: { vary: 'cookie authorization' } },
       { name: 'explicitly-stale', headers: { 'cache-control': 'public, max-age=0' } },
@@ -1677,6 +1786,75 @@ describe('Cache Interceptor', () => {
         await new Promise(resolve => server.close(resolve))
         clock.uninstall()
       }
+    }
+  })
+
+  test('stale-while-revalidate evicts a shared entry when its replacement has Set-Cookie', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    let conditionalRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      res.setHeader('date', new Date().toUTCString())
+
+      if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+        conditionalRequests++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('set-cookie', 'session=secret')
+        res.end('personalized')
+        return
+      }
+
+      if (requestsToOrigin === 1) {
+        res.setHeader('cache-control', 'public, max-age=1, stale-while-revalidate=10')
+        res.setHeader('etag', '"cached"')
+        res.end('cached')
+        return
+      }
+
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.end('refetched')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      await once(server, 'listening')
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      {
+        const res = await client.request(request)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      clock.tick(1500)
+
+      {
+        const res = await client.request(request)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      await sleep(100)
+      equal(conditionalRequests, 1)
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 3)
+        strictEqual(await res.body.text(), 'refetched')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+      clock.uninstall()
     }
   })
 
