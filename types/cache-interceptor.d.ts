@@ -160,6 +160,14 @@ declare namespace CacheHandler {
      * @default Infinity
      */
     maxEntrySize?: number
+
+    /**
+     * Responses whose body size, in bytes, is greater than this value are
+     * stored compressed with zstd. Requires Node with zstd support
+     * (22.19+).
+     * @default 1048576 (1 MiB)
+     */
+    compressThreshold?: number
   }
 
   export class SqliteCacheStore implements CacheStore {
