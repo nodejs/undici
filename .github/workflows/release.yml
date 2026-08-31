@@ -31,17 +31,17 @@ jobs:
             const version = require("./package.json").version
             const versionTag = `v${version}`
 
-            const { data: releases } = await github.rest.repos.listReleases({
-              owner,
-              repo
-            })
+            try {
+              await github.rest.repos.getReleaseByTag({
+                owner,
+                repo,
+                tag: versionTag
+              })
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error
+              }
 
-            const currentMajor = versionTag.match(/^v\d+/)?.[0]
-            const previousRelease = releases.find((r) => {
-              return r.tag_name !== versionTag && r.tag_name.startsWith(`${currentMajor}.`)
-            })
-
-            if (versionTag !== previousRelease?.tag_name) {
               return versionTag
             }
 
