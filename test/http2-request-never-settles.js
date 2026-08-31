@@ -11,7 +11,8 @@ const pem = require('@metcoder95/https-pem')
 const { Agent } = require('..')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
-const skipOnAffectedNode = process.platform === 'linux' && (nodeMajor === 24 || nodeMajor === 25)
+const skipForMemoryCorruption = process.platform === 'linux' && (nodeMajor === 24 || nodeMajor === 25)
+const skipForOnreadAssertion = nodeMajor === 26
 
 // completeRequestStream() runs on an h2 stream's 'close':
 //
@@ -131,7 +132,8 @@ async function churningServer (rnd) {
 for (const seed of SEEDS) {
   test(`every h2 request settles under connection churn (seed ${seed})`, {
     // https://github.com/nodejs/node/issues/64841
-    skip: skipOnAffectedNode && 'Node.js has an HTTP/2 memory corruption bug'
+    // https://github.com/nodejs/node/issues/64850
+    skip: (skipForMemoryCorruption || skipForOnreadAssertion) && 'Node.js has HTTP/2 session teardown crashes'
   }, async (t) => {
     const timer = setInterval(() => {}, 1000)
     const rnd = makeRandom(seed)
