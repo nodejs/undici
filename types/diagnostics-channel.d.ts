@@ -5,9 +5,9 @@ import Dispatcher from './dispatcher'
 
 declare namespace DiagnosticsChannel {
   interface Request {
-    origin?: string | URL;
+    origin?: string | URL | undefined;
     completed: boolean;
-    method?: Dispatcher.HttpMethod;
+    method?: Dispatcher.HttpMethod | undefined;
     path: string;
     headers: any;
   }

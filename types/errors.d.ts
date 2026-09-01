@@ -38,8 +38,8 @@ declare namespace Errors {
       message: string,
       code: number,
       options: {
-        headers?: IncomingHttpHeaders | string[] | null,
-        body?: null | Record<string, any> | string
+        headers?: IncomingHttpHeaders | string[] | null | undefined,
+        body?: null | Record<string, any> | string | undefined
       }
     )
     name: 'ResponseError'

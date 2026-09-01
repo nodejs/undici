@@ -315,10 +315,10 @@ export interface Webidl {
    */
   dictionaryConverter (converters: {
     key: string,
-    defaultValue?: () => unknown,
-    required?: boolean,
+    defaultValue?: (() => unknown) | undefined,
+    required?: boolean | undefined,
     converter: (...args: unknown[]) => unknown,
-    allowedValues?: unknown[]
+    allowedValues?: unknown[] | undefined
   }[]): (V: unknown) => Record<string, unknown>
 
   /**

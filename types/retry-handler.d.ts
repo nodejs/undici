@@ -5,7 +5,7 @@ export default RetryHandler
 declare class RetryHandler implements Dispatcher.DispatchHandler {
   constructor (
     options: Dispatcher.DispatchOptions & {
-      retryOptions?: RetryHandler.RetryOptions;
+      retryOptions?: RetryHandler.RetryOptions | undefined;
     },
     retryHandlers: RetryHandler.RetryHandlers
   )
@@ -17,7 +17,7 @@ declare namespace RetryHandler {
   export type RetryContext = {
     state: RetryState;
     opts: Dispatcher.DispatchOptions & {
-      retryOptions?: RetryHandler.RetryOptions;
+      retryOptions?: RetryHandler.RetryOptions | undefined;
     };
   }
 
@@ -28,7 +28,7 @@ declare namespace RetryHandler {
     context: {
       state: RetryState;
       opts: Dispatcher.DispatchOptions & {
-        retryOptions?: RetryHandler.RetryOptions;
+        retryOptions?: RetryHandler.RetryOptions | undefined;
       };
     },
     callback: OnRetryCallback
@@ -43,7 +43,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default true
      */
-    throwOnError?: boolean;
+    throwOnError?: boolean | undefined;
     /**
      * Callback to be invoked on every retry iteration.
      * It receives the error, current state of the retry object and the options object
@@ -52,7 +52,7 @@ declare namespace RetryHandler {
      * @type {RetryCallback}
      * @memberof RetryOptions
      */
-    retry?: RetryCallback;
+    retry?: RetryCallback | undefined;
     /**
      * Maximum number of retries to allow.
      *
@@ -60,7 +60,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default 5
      */
-    maxRetries?: number;
+    maxRetries?: number | undefined;
     /**
      * Max number of milliseconds allow between retries
      *
@@ -68,7 +68,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default 30000
      */
-    maxTimeout?: number;
+    maxTimeout?: number | undefined;
     /**
      * Initial number of milliseconds to wait before retrying for the first time.
      *
@@ -76,7 +76,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default 500
      */
-    minTimeout?: number;
+    minTimeout?: number | undefined;
     /**
      * Factior to multiply the timeout factor between retries.
      *
@@ -84,7 +84,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default 2
      */
-    timeoutFactor?: number;
+    timeoutFactor?: number | undefined;
     /**
      * It enables to automatically infer timeout between retries based on the `Retry-After` header.
      *
@@ -92,7 +92,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default true
      */
-    retryAfter?: boolean;
+    retryAfter?: boolean | undefined;
     /**
      * HTTP methods to retry.
      *
@@ -100,14 +100,14 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE'],
      */
-    methods?: Dispatcher.HttpMethod[];
+    methods?: Dispatcher.HttpMethod[] | undefined;
     /**
      * Error codes to be retried. e.g. `ECONNRESET`, `ENOTFOUND`, `ETIMEDOUT`, `ECONNREFUSED`, etc.
      *
      * @type {string[]}
      * @default ['ECONNRESET','ECONNREFUSED','ENOTFOUND','ENETDOWN','ENETUNREACH','EHOSTDOWN','EHOSTUNREACH','EPIPE']
      */
-    errorCodes?: string[];
+    errorCodes?: string[] | undefined;
     /**
      * HTTP status codes to be retried.
      *
@@ -115,7 +115,7 @@ declare namespace RetryHandler {
      * @memberof RetryOptions
      * @default [500, 502, 503, 504, 429],
      */
-    statusCodes?: number[];
+    statusCodes?: number[] | undefined;
   }
 
   export interface RetryHandlers {

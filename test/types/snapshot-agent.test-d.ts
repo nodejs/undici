@@ -259,7 +259,7 @@ expectAssignable<SnapshotAgent.Options>({
     method: string
     url: string
     headers: Record<string, string>
-    body?: string
+    body?: string | undefined
   }>(info.request)
   expectType<number>(info.responseCount)
   expectType<number>(info.callCount)

@@ -7,9 +7,9 @@ declare class BodyReadable extends Readable {
   constructor (opts: {
     resume: (this: Readable, size: number) => void | null;
     abort: () => void | null;
-    contentType?: string;
-    contentLength?: number;
-    highWaterMark?: number;
+    contentType?: string | undefined;
+    contentLength?: number | undefined;
+    highWaterMark?: number | undefined;
   })
 
   /** Consumes and returns the body as a string
@@ -64,5 +64,5 @@ declare class BodyReadable extends Readable {
    * @param opts.limit Number of bytes to read (optional) - Default: 131072
    * @param opts.signal AbortSignal to cancel the operation (optional)
    */
-  dump (opts?: { limit: number; signal?: AbortSignal }): Promise<void>
+  dump (opts?: { limit: number; signal?: AbortSignal | undefined }): Promise<void>
 }

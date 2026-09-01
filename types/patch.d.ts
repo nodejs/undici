@@ -3,19 +3,19 @@
 // See https://github.com/nodejs/undici/issues/1740
 
 export interface EventInit {
-  bubbles?: boolean
-  cancelable?: boolean
-  composed?: boolean
+  bubbles?: boolean | undefined
+  cancelable?: boolean | undefined
+  composed?: boolean | undefined
 }
 
 export interface EventListenerOptions {
-  capture?: boolean
+  capture?: boolean | undefined
 }
 
 export interface AddEventListenerOptions extends EventListenerOptions {
-  once?: boolean
-  passive?: boolean
-  signal?: AbortSignal
+  once?: boolean | undefined
+  passive?: boolean | undefined
+  signal?: AbortSignal | undefined
 }
 
 export type EventListenerOrEventListenerObject = EventListener | EventListenerObject

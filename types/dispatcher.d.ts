@@ -98,72 +98,72 @@ declare namespace Dispatcher {
   export type Dispatch = Dispatcher['dispatch']
   export type DispatcherComposeInterceptor = (dispatch: Dispatch) => Dispatch
   export interface DispatchOptions {
-    origin?: string | URL;
+    origin?: string | URL | undefined;
     path: string;
     method: HttpMethod;
     /** Default: `null` */
-    body?: string | Buffer | Uint8Array | Readable | null | FormData;
+    body?: string | Buffer | Uint8Array | Readable | null | FormData | undefined;
     /** Default: `null` */
-    headers?: UndiciHeaders;
+    headers?: UndiciHeaders | undefined;
     /** Query string params to be embedded in the request URL. Default: `null` */
-    query?: Record<string, any>;
+    query?: Record<string, any> | undefined;
     /** Whether the requests can be safely retried or not. If `false` the request won't be sent until all preceding requests in the pipeline have completed. Default: `true` if `method` is `HEAD` or `GET`. */
-    idempotent?: boolean;
+    idempotent?: boolean | undefined;
     /** Whether the response is expected to take a long time and would end up blocking the pipeline. When this is set to `true` further pipelining will be avoided on the same connection until headers have been received. Defaults to `method !== 'HEAD'`. */
-    blocking?: boolean;
+    blocking?: boolean | undefined;
     /** The IP Type of Service (ToS) value for the request socket. Must be an integer between 0 and 255. */
-    typeOfService?: number | null;
+    typeOfService?: number | null | undefined;
     /** Upgrade the request. Should be used to specify the kind of upgrade i.e. `'Websocket'`. Default: `method === 'CONNECT' || null`. */
-    upgrade?: boolean | string | null;
+    upgrade?: boolean | string | null | undefined;
     /** The amount of time, in milliseconds, the parser will wait to receive the complete HTTP headers. Defaults to 300 seconds. HTTP/1.1 parser timeouts are not guaranteed to fire with exact millisecond precision: delays up to 1000ms use native timers, while larger delays use lower-overhead fast timers with a target resolution around 500ms. */
-    headersTimeout?: number | null;
+    headersTimeout?: number | null | undefined;
     /** The timeout after which a request will time out, in milliseconds. Monitors time between receiving body data. Use 0 to disable it entirely. Defaults to 300 seconds. HTTP/1.1 parser timeouts are not guaranteed to fire with exact millisecond precision: delays up to 1000ms use native timers, while larger delays use lower-overhead fast timers with a target resolution around 500ms. */
-    bodyTimeout?: number | null;
+    bodyTimeout?: number | null | undefined;
     /** Whether the request should stablish a keep-alive or not. Default `false` */
-    reset?: boolean;
+    reset?: boolean | undefined;
     /** For H2, it appends the expect: 100-continue header, and halts the request body until a 100-continue is received from the remote server */
-    expectContinue?: boolean;
+    expectContinue?: boolean | undefined;
   }
   export interface ConnectOptions<TOpaque = null> {
     origin: string | URL;
     path: string;
     /** Default: `null` */
-    headers?: UndiciHeaders;
+    headers?: UndiciHeaders | undefined;
     /** Default: `null` */
-    signal?: AbortSignal | EventEmitter | null;
+    signal?: AbortSignal | EventEmitter | null | undefined;
     /** This argument parameter is passed through to `ConnectData` */
-    opaque?: TOpaque;
+    opaque?: TOpaque | undefined;
     /** Default: `null` */
-    responseHeaders?: 'raw' | null;
+    responseHeaders?: 'raw' | null | undefined;
   }
   export interface RequestOptions<TOpaque = null> extends DispatchOptions {
     /** Default: `null` */
-    opaque?: TOpaque;
+    opaque?: TOpaque | undefined;
     /** Default: `null` */
-    signal?: AbortSignal | EventEmitter | null;
+    signal?: AbortSignal | EventEmitter | null | undefined;
     /** Default: `null` */
-    onInfo?: (info: { statusCode: number, headers: Record<string, string | string[]> }) => void;
+    onInfo?: ((info: { statusCode: number, headers: Record<string, string | string[]> }) => void) | undefined;
     /** Default: `null` */
-    responseHeaders?: 'raw' | null;
+    responseHeaders?: 'raw' | null | undefined;
     /** Default: `64 KiB` */
-    highWaterMark?: number;
+    highWaterMark?: number | undefined;
   }
   export interface PipelineOptions<TOpaque = null> extends RequestOptions<TOpaque> {
     /** `true` if the `handler` will return an object stream. Default: `false` */
-    objectMode?: boolean;
+    objectMode?: boolean | undefined;
   }
   export interface UpgradeOptions {
     path: string;
     /** Default: `'GET'` */
-    method?: string;
+    method?: string | undefined;
     /** Default: `null` */
-    headers?: UndiciHeaders;
+    headers?: UndiciHeaders | undefined;
     /** A string of comma separated protocols, in descending preference order. Default: `'Websocket'` */
-    protocol?: string;
+    protocol?: string | undefined;
     /** Default: `null` */
-    signal?: AbortSignal | EventEmitter | null;
+    signal?: AbortSignal | EventEmitter | null | undefined;
     /** Default: `null` */
-    responseHeaders?: 'raw' | null;
+    responseHeaders?: 'raw' | null | undefined;
   }
   export interface ConnectData<TOpaque = null> {
     statusCode: number;
@@ -208,27 +208,27 @@ declare namespace Dispatcher {
     get aborted(): boolean
     get paused(): boolean
     get reason(): Error | null
-    rawHeaders?: Buffer[] | string[] | IncomingHttpHeaders | null
-    rawTrailers?: Buffer[] | string[] | IncomingHttpHeaders | null
+    rawHeaders?: Buffer[] | string[] | IncomingHttpHeaders | null | undefined
+    rawTrailers?: Buffer[] | string[] | IncomingHttpHeaders | null | undefined
     abort(reason: Error): void
     pause(): void
     resume(): void
   }
 
   export interface DispatchHandler {
-    onRequestStart?(controller: DispatchController, context: any): void;
-    onRequestUpgrade?(controller: DispatchController, statusCode: number, headers: IncomingHttpHeaders, socket: Duplex): void;
-    onResponseStart?(controller: DispatchController, statusCode: number, headers: IncomingHttpHeaders, statusMessage?: string): void;
-    onResponseData?(controller: DispatchController, chunk: Buffer): void;
-    onResponseEnd?(controller: DispatchController, trailers: IncomingHttpHeaders): void;
-    onResponseError?(controller: DispatchController, error: Error): void;
+    onRequestStart?: ((controller: DispatchController, context: any) => void) | undefined;
+    onRequestUpgrade?: ((controller: DispatchController, statusCode: number, headers: IncomingHttpHeaders, socket: Duplex) => void) | undefined;
+    onResponseStart?: ((controller: DispatchController, statusCode: number, headers: IncomingHttpHeaders, statusMessage?: string) => void) | undefined;
+    onResponseData?: ((controller: DispatchController, chunk: Buffer) => void) | undefined;
+    onResponseEnd?: ((controller: DispatchController, trailers: IncomingHttpHeaders) => void) | undefined;
+    onResponseError?: ((controller: DispatchController, error: Error) => void) | undefined;
 
     /** Invoked when response is received, before headers have been read. **/
-    onResponseStarted?(): void;
+    onResponseStarted?: (() => void) | undefined;
     /** Invoked when a body chunk is sent to the server. May be invoked multiple times for chunked requests */
-    onBodySent?(chunk: Buffer): void;
+    onBodySent?: ((chunk: Buffer) => void) | undefined;
     /** Invoked after the request body is fully sent. */
-    onRequestSent?(): void;
+    onRequestSent?: (() => void) | undefined;
   }
   export type PipelineHandler<TOpaque = null> = (data: PipelineHandlerData<TOpaque>) => Readable
   export type HttpMethod = Autocomplete<'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'CONNECT' | 'OPTIONS' | 'TRACE' | 'PATCH'>
@@ -237,7 +237,7 @@ declare namespace Dispatcher {
    * @link https://fetch.spec.whatwg.org/#body-mixin
    */
   interface BodyMixin {
-    readonly body?: never;
+    readonly body?: never | undefined;
     readonly bodyUsed: boolean;
     arrayBuffer(): Promise<ArrayBuffer>;
     blob(): Promise<Blob>;

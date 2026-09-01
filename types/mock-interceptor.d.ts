@@ -39,13 +39,13 @@ declare namespace MockInterceptor {
     /** Path to intercept on. */
     path: string | RegExp | ((path: string) => boolean);
     /** Method to intercept on. Defaults to GET. */
-    method?: string | RegExp | ((method: string) => boolean);
+    method?: string | RegExp | ((method: string) => boolean) | undefined;
     /** Body to intercept on. */
-    body?: string | RegExp | ((body: string) => boolean);
+    body?: string | RegExp | ((body: string) => boolean) | undefined;
     /** Headers to intercept on. */
-    headers?: Record<string, string | RegExp | ((body: string) => boolean)> | ((headers: Record<string, string>) => boolean);
+    headers?: Record<string, string | RegExp | ((body: string) => boolean)> | ((headers: Record<string, string>) => boolean) | undefined;
     /** Query params to intercept on */
-    query?: Record<string, any>;
+    query?: Record<string, any> | undefined;
   }
   export interface MockDispatch<TData extends object = object, TError extends Error = Error> extends Options {
     times: number | null;
@@ -55,20 +55,20 @@ declare namespace MockInterceptor {
   }
   export interface MockDispatchData<TData extends object = object, TError extends Error = Error> extends MockResponseOptions {
     error: TError | null;
-    statusCode?: number;
-    data?: TData | string;
+    statusCode?: number | undefined;
+    data?: TData | string | undefined;
   }
   export interface MockResponseOptions {
-    headers?: IncomingHttpHeaders;
-    trailers?: Record<string, string>;
+    headers?: IncomingHttpHeaders | undefined;
+    trailers?: Record<string, string> | undefined;
   }
 
   export interface MockResponseCallbackOptions {
     path: string;
     method: string;
-    headers?: Headers | Record<string, string>;
-    origin?: string;
-    body?: BodyInit | Dispatcher.DispatchOptions['body'] | null;
+    headers?: Headers | Record<string, string> | undefined;
+    origin?: string | undefined;
+    body?: BodyInit | Dispatcher.DispatchOptions['body'] | null | undefined;
   }
 
   export type MockResponseDataHandler<TData extends object = object> = (
@@ -76,7 +76,7 @@ declare namespace MockInterceptor {
   ) => TData | Buffer | string
 
   export type MockReplyOptions<TData extends object = object> = {
-    statusCode: number, data?: TData | Buffer | string, responseOptions?: MockResponseOptions
+    statusCode: number, data?: TData | Buffer | string | undefined, responseOptions?: MockResponseOptions | undefined
   }
 
   export type MockReplyOptionsCallback<TData extends object = object> = (

@@ -144,21 +144,21 @@ type RequestDestination =
   | 'xslt'
 
 export interface RequestInit {
-  body?: BodyInit | null
-  cache?: RequestCache
-  credentials?: RequestCredentials
-  dispatcher?: Dispatcher
-  duplex?: RequestDuplex
-  headers?: HeadersInit
-  integrity?: string
-  keepalive?: boolean
-  method?: string
-  mode?: RequestMode
-  redirect?: RequestRedirect
-  referrer?: string
-  referrerPolicy?: ReferrerPolicy
-  signal?: AbortSignal | null
-  window?: null
+  body?: BodyInit | null | undefined
+  cache?: RequestCache | undefined
+  credentials?: RequestCredentials | undefined
+  dispatcher?: Dispatcher | undefined
+  duplex?: RequestDuplex | undefined
+  headers?: HeadersInit | undefined
+  integrity?: string | undefined
+  keepalive?: boolean | undefined
+  method?: string | undefined
+  mode?: RequestMode | undefined
+  redirect?: RequestRedirect | undefined
+  referrer?: string | undefined
+  referrerPolicy?: ReferrerPolicy | undefined
+  signal?: AbortSignal | null | undefined
+  window?: null | undefined
 }
 
 export type ReferrerPolicy =
@@ -201,9 +201,9 @@ export declare class Request extends BodyMixin {
 }
 
 export interface ResponseInit {
-  readonly status?: number
-  readonly statusText?: string
-  readonly headers?: HeadersInit
+  readonly status?: number | undefined
+  readonly statusText?: string | undefined
+  readonly headers?: HeadersInit | undefined
 }
 
 export type ResponseType =
