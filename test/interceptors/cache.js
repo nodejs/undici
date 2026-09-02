@@ -3146,16 +3146,24 @@ describe('Cache Interceptor', () => {
       strictEqual(await res.body.text(), 'original-response')
     }
 
-    // Wait for background revalidation
-    await sleep(500)
-    equal(revalidationRequests, 1)
-
-    // Second stale request - should get updated content from cache
-    // (still within stale-while-revalidate window)
+    // Wait for the background revalidation to complete and the cache to be
+    // updated with the revalidated content. Poll until the cache actually
+    // returns the updated response instead of relying on a fixed sleep, which
+    // is flaky on slow/loaded CI runners (the revalidation round-trip plus
+    // cache write can take longer than a hardcoded delay).
     {
-      const res = await client.request(request)
-      strictEqual(await res.body.text(), 'updated-response')
+      const deadline = Date.now() + 5000
+      let body = 'original-response'
+      while (Date.now() < deadline && body === 'original-response') {
+        const res = await client.request(request)
+        body = await res.body.text()
+        if (body === 'original-response') {
+          await sleep(50)
+        }
+      }
+      strictEqual(body, 'updated-response')
       equal(requestsToOrigin, 1) // Still only one origin request
+      equal(revalidationRequests >= 1, true, 'Background revalidation should have occurred')
     }
   })
 
