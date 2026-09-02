@@ -4,6 +4,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
+const { Writable } = require('node:stream')
 
 const { RetryAgent, Client } = require('..')
 test('Should retry status code', async t => {
@@ -65,3 +66,61 @@ test('Should retry status code', async t => {
 
   await t.completed
 })
+
+for (const throwOnError of [true, false]) {
+  test(`Should reject a non-206 response when resuming a partially consumed response | throwOnError: ${throwOnError}`, async context => {
+    const t = tspl(context, { plan: 4 })
+
+    let requestCount = 0
+    const chunks = []
+    const server = createServer((req, res) => {
+      if (requestCount++ === 0) {
+        res.writeHead(200, { 'content-length': '12' })
+        res.write('AAAA')
+        const socket = res.socket
+        setTimeout(() => socket.destroy(), 50)
+        return
+      }
+
+      t.equal(req.headers.range, 'bytes=4-11')
+      res.writeHead(412, { 'content-length': '8' })
+      res.end('XXXXXXXX')
+    })
+
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+    const agent = new RetryAgent(client, {
+      throwOnError,
+      maxRetries: 3,
+      minTimeout: 10,
+      maxTimeout: 10
+    })
+
+    context.after(async () => {
+      await agent.close()
+      server.close()
+      await once(server, 'close')
+    })
+
+    await t.rejects(agent.stream({
+      method: 'GET',
+      path: '/'
+    }, ({ statusCode }) => {
+      t.equal(statusCode, 200)
+      return new Writable({
+        write (chunk, encoding, callback) {
+          chunks.push(chunk)
+          callback()
+        }
+      })
+    }), {
+      code: 'UND_ERR_REQ_RETRY',
+      message: 'server does not support the range header and the payload was partially consumed'
+    })
+
+    t.equal(Buffer.concat(chunks).toString(), 'AAAA')
+    await t.completed
+  })
+}
