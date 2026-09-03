@@ -226,7 +226,14 @@ expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(
     }
   }
 ))
+// @ts-expect-error cannot use both array and variadic arguments
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([null], null))
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(null))
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose(null, undefined))
+expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([null, undefined]))
 expectAssignable<Dispatcher.ComposedDispatcher>(new Dispatcher().compose([
+  null,
+  undefined,
   (dispatcher) => {
     expectAssignable<Dispatcher['dispatch']>(dispatcher)
     return (opts, handlers) => {
