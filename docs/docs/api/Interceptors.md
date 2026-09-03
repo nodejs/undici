@@ -210,6 +210,9 @@ Automatically decompresses response bodies encoded with `gzip`, `x-gzip`,
     skipped. **Default:** `[204, 304]`.
   * `skipErrorResponses` {boolean} When `true`, responses with a status code
     >= 400 are not decompressed. **Default:** `true`.
+  * `maxSize` {number} Maximum decompressed response size in bytes. The request
+    fails with a `ResponseExceededMaxSizeError` if the decoded body exceeds
+    this limit. **Default:** `67108864` (64 MiB).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
@@ -221,7 +224,8 @@ import { Agent, interceptors } from 'undici'
 const agent = new Agent().compose(
   interceptors.decompress({
     skipStatusCodes: [204, 304],
-    skipErrorResponses: false // decompress error bodies too
+    skipErrorResponses: false, // decompress error bodies too
+    maxSize: 16 * 1024 * 1024 // limit decoded bodies to 16 MiB
   })
 )
 ```

@@ -31,6 +31,7 @@ expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.du
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.redirect())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.retry())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress())
+expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress({ maxSize: 1024 }))
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.cache())
 expectAssignable<CacheInterceptor.CacheStore>(new Undici.cacheStores.MemoryCacheStore())
 expectAssignable<CacheInterceptor.CacheStore>(new Undici.cacheStores.SqliteCacheStore())
