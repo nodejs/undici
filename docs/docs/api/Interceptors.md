@@ -101,8 +101,8 @@ body yourself.
 
 * `opts` {Object} (optional)
   * `maxSize` {number} Maximum number of bytes to read and discard. Responses
-    whose `Content-Length` exceeds this value are aborted. **Default:**
-    `1_048_576` (1 MiB).
+    whose declared or received body size exceeds this value are aborted.
+    **Default:** `1_048_576` (1 MiB).
 
 Per-request override: set `dumpMaxSize` on the dispatch options to override
 the global `maxSize` for a specific request.
