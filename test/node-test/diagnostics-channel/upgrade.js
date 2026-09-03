@@ -199,7 +199,7 @@ test('an aborted upgrade emits an error without successful completion', async (t
   assert.strictEqual(records[0].request.completed, false)
 })
 
-test('an HTTP/2 upgrade completes the request diagnostics lifecycle', async (testContext) => {
+test('HTTP/2 upgrades publish terminal request diagnostics', async (testContext) => {
   const server = createSecureServer({
     ...(await pem.generate({ opts: { keySize: 2048 } })),
     settings: { enableConnectProtocol: true }
@@ -241,4 +241,25 @@ test('an HTTP/2 upgrade completes the request diagnostics lifecycle', async (tes
   assert.strictEqual(records.length, 2)
   assert.deepStrictEqual(records[1].events, ['create', 'headers', 'error'])
   assert.strictEqual(records[1].request.completed, false)
+
+  const expectedError = new Error('upgrade handler failed')
+  const responseError = new Promise((resolve, reject) => {
+    client.dispatch({ method: 'GET', path: '/', upgrade: 'websocket' }, {
+      onRequestStart () {},
+      onRequestUpgrade () {
+        throw expectedError
+      },
+      onResponseError (_controller, error) {
+        if (error === expectedError) resolve()
+        else reject(error)
+      }
+    })
+  })
+  await responseError
+
+  assert.strictEqual(records.length, 3)
+  assert.deepStrictEqual(records[2].events, ['create', 'headers', 'error'])
+  assert.strictEqual(records[2].request.completed, false)
+  assert.strictEqual(records[2].request.aborted, true)
+  assert.strictEqual(client.stats.running, 0)
 })
