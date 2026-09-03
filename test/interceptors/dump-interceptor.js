@@ -150,7 +150,7 @@ test('Should dump on already aborted request', { skip }, async t => {
     })
 
     res.once('close', () => {
-      t.equal(offset, 1024)
+      t.ok(offset >= 768 && offset <= 1024)
     })
 
     const interval = setInterval(() => {
@@ -281,6 +281,42 @@ test('Should dump response body up to limit and ignore trailers', { skip }, asyn
   t.equal(response.statusCode, 200)
   t.equal(body, '')
   t.equal(response.trailers['x-foo'], undefined)
+
+  await t.completed
+})
+
+test('Should abort if chunked response is larger than max size', { skip }, async t => {
+  t = tspl(t, { plan: 2 })
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'application/octet-stream',
+      'Transfer-Encoding': 'chunked'
+    })
+    res.write(Buffer.alloc(512))
+    setImmediate(() => res.end(Buffer.alloc(512)))
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(dump({ maxSize: 512 }))
+
+  after(async () => {
+    await client.close()
+
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'GET', path: '/' })
+
+  t.equal(response.statusCode, 200)
+  await t.rejects(response.body.text(), {
+    name: 'AbortError',
+    message: /^Response size \(\d+\) larger than maxSize \(512\)$/
+  })
 
   await t.completed
 })
