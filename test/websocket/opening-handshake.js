@@ -179,6 +179,54 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
   }
 })
 
+// A regression here hangs rather than fails, so bound the test.
+test('WebSocket over H2 fails the handshake when the extended CONNECT response is not 200', { timeout: 10000 }, async (t) => {
+  const planner = tspl(t, { plan: 3 })
+  const sessions = new Set()
+  const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+    .on('session', (session) => {
+      sessions.add(session)
+      session.on('close', () => sessions.delete(session))
+    })
+    .on('stream', (stream) => {
+      stream.respond({ ':status': 401 })
+      stream.end()
+    })
+    .listen(0)
+
+  await once(h2Server, 'listening')
+
+  const dispatcher = new Agent({
+    allowH2: true,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher })
+
+  t.after(async () => {
+    for (const session of sessions) {
+      session.close()
+    }
+
+    await new Promise((resolve) => h2Server.close(resolve))
+    await dispatcher.close()
+  })
+
+  ws.onmessage = ws.onopen = () => planner.fail('should not open')
+
+  ws.addEventListener('error', ({ error }) => {
+    planner.ok(error)
+  })
+
+  ws.addEventListener('close', ({ code, wasClean }) => {
+    planner.equal(code, 1006)
+    planner.equal(wasClean, false)
+  })
+
+  await planner.completed
+})
+
 test('WebSocket on H2 with a server that does not support extended CONNECT protocol', async (t) => {
   const planner = tspl(t, { plan: 1 })
   const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: false } })
