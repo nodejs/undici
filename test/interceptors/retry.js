@@ -669,6 +669,103 @@ test('#4970 - Should reject resumed partial content when body exceeds Content-Ra
   })
 })
 
+test('#3900615 - Should reject a resumed response that exceeds an error response content-length', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let x = 0
+  let retries = 0
+  const injectedResponse = 'HTTP/1.1 302 Found\r\nLocation: http://evil.com\r\nContent-Length: 0\r\n\r\n'
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    if (x === 0) {
+      res.statusCode = 404
+      res.setHeader('content-length', '2')
+      res.end('1', () => res.destroy())
+    } else if (x === 1) {
+      t.strictEqual(req.headers.range, 'bytes=1-1')
+      res.statusCode = 206
+      res.setHeader('connection', 'close')
+      res.setHeader('content-range', `bytes 1-${injectedResponse.length + 1}/${injectedResponse.length + 2}`)
+      res.end(`2${injectedResponse}`)
+    }
+    x++
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.destroy()
+    server.closeAllConnections()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    retryOptions: {
+      retry: (err, _context, done) => {
+        if (err.message.includes('other side closed') && retries++ === 0) {
+          done(null)
+          return
+        }
+
+        done(err)
+      }
+    }
+  })
+  t.strictEqual(response.statusCode, 404)
+  await t.rejects(response.body.text(), {
+    name: 'RequestRetryError',
+    code: 'UND_ERR_REQ_RETRY',
+    message: 'Content-Range mismatch'
+  })
+})
+
+test('#3900104 - Should not resume a 206 response without a usable content-range', async t => {
+  t = tspl(t, { plan: 4 })
+
+  let x = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    t.strictEqual(x, 0, 'must not retry an uncheckpointed partial response')
+    res.statusCode = 206
+    res.setHeader('content-length', '2')
+    res.setHeader('content-range', 'bytes 0-999')
+    res.write('1', () => res.destroy())
+    x++
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.destroy()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'GET', path: '/' })
+  t.strictEqual(response.statusCode, 206)
+  await t.rejects(response.body.text(), {
+    name: 'SocketError',
+    code: 'UND_ERR_SOCKET',
+    message: 'other side closed'
+  })
+  t.strictEqual(x, 1)
+})
+
 test('Should not reject a HEAD response with content-length', async t => {
   t = tspl(t, { plan: 3 })
 
