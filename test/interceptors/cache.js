@@ -931,6 +931,82 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('unsafe methods are not served from cache', async () => {
+    // A heuristically-cacheable response (404) with an explicit max-age would
+    // previously be stored under the unsafe method and replayed on a second,
+    // identical state-changing request without ever hitting the origin.
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      res.statusCode = 404
+      res.setHeader('cache-control', 'max-age=60')
+      res.end(`origin-hit-#${requestsToOrigin}`)
+    }).listen(0)
+
+    after(() => server.close())
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        store: new MemoryCacheStore()
+      }))
+
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      const req = { origin: 'localhost', method, path: '/resource/123' }
+      const before = requestsToOrigin
+
+      const res1 = await client.request(req)
+      const body1 = await res1.body.text()
+
+      const res2 = await client.request(req)
+      const body2 = await res2.body.text()
+
+      // Every unsafe-method request must reach the origin; none may be served from cache.
+      equal(requestsToOrigin - before, 2)
+      equal(body1, `origin-hit-#${before + 1}`)
+      equal(body2, `origin-hit-#${before + 2}`)
+    }
+
+    await client.close()
+  })
+
+  test('successful unsafe methods still invalidate cached entries', async () => {
+    // The fix routes unsafe methods through CacheHandler (not a bare dispatch) so a
+    // successful unsafe request keeps invalidating an existing cached GET for the same path.
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      if (req.method === 'GET') {
+        res.statusCode = 200
+        res.setHeader('cache-control', 'max-age=60')
+      } else {
+        res.statusCode = 200
+      }
+      res.end(`origin-hit-#${requestsToOrigin}`)
+    }).listen(0)
+
+    after(() => server.close())
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        store: new MemoryCacheStore()
+      }))
+
+    const get = { origin: 'localhost', method: 'GET', path: '/resource/123' }
+
+    await (await client.request(get)).body.text()
+    const afterPrime = requestsToOrigin
+    await (await client.request(get)).body.text()
+    equal(requestsToOrigin, afterPrime) // second GET served from cache
+
+    await (await client.request({ origin: 'localhost', method: 'POST', path: '/resource/123' })).body.text()
+
+    const beforeFinalGet = requestsToOrigin
+    await (await client.request(get)).body.text()
+    equal(requestsToOrigin - beforeFinalGet, 1) // GET re-fetched after invalidation
+
+    await client.close()
+  })
+
   test('necessary headers are stripped', async () => {
     const headers = [
       // Headers defined in the spec that we need to strip
