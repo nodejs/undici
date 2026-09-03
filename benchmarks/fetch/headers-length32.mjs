@@ -40,12 +40,8 @@ const headers = new Headers(
 
 const headersList = getHeadersList(headers)
 
-const kHeadersSortedMap = Reflect.ownKeys(headersList).find(
-  (c) => String(c) === 'Symbol(headers map sorted)'
-)
-
 bench('Headers@@iterator', () => {
-  headersList[kHeadersSortedMap] = null
+  headersList.sortedMap = null
   return [...headers]
 })
 
