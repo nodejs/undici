@@ -1206,3 +1206,51 @@ test('should work with global dispatcher for both fetch() and request()', async 
 
   await t.completed
 })
+
+test('should pass through a compress-encoded response instead of inflating it', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const net = require('node:net')
+
+  // Content-Encoding: compress is the UNIX compress (LZW) format per RFC 9110
+  // section 8.4.1.1, not zlib, so this body is not inflatable.
+  const payload = Buffer.from('this body is not deflate data')
+
+  const server = net.createServer(socket => {
+    socket.once('data', () => {
+      socket.write(
+        'HTTP/1.1 200 OK\r\n' +
+        'Content-Type: text/plain\r\n' +
+        'Content-Encoding: compress\r\n' +
+        `Content-Length: ${payload.length}\r\n` +
+        'Connection: close\r\n' +
+        '\r\n'
+      )
+      socket.end(payload)
+    })
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], 'compress', 'the encoding is left on the response since nothing was decoded')
+  t.equal(await response.body.text(), payload.toString())
+
+  await t.completed
+})
