@@ -3,10 +3,10 @@
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { createGzip, createDeflate, createBrotliCompress, createZstdCompress } = require('node:zlib')
+const { createGzip, createDeflate, createBrotliCompress, createZstdCompress, deflateSync, gzipSync } = require('node:zlib')
 const { tspl } = require('@matteo.collina/tspl')
 
-const { Client, getGlobalDispatcher, setGlobalDispatcher, request } = require('../..')
+const { Client, errors, getGlobalDispatcher, setGlobalDispatcher, request, interceptors } = require('../..')
 const createDecompressInterceptor = require('../../lib/interceptor/decompress')
 
 test('should decompress gzip response', async t => {
@@ -882,6 +882,213 @@ test('should handle controller pause with chained decompression', async t => {
     method: 'GET',
     path: '/'
   }, handler)
+
+  await t.completed
+})
+
+test('should reject a response that exceeds maxSize after decompression', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const data = 'a'.repeat(1024 * 1024)
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: 1024 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  await t.rejects(response.body.text(), {
+    name: 'ResponseExceededMaxSizeError',
+    code: 'UND_ERR_RES_EXCEEDED_MAX_SIZE'
+  })
+
+  await t.completed
+})
+
+test('should enforce maxSize on intermediate output of a decompression chain', async t => {
+  t = tspl(t, { plan: 1 })
+
+  // The outer deflate layer expands to many concatenated empty gzip members.
+  // The final gunzip output is empty, so only an intermediate-stage limit
+  // catches the amplification.
+  const gzipMembers = Buffer.concat(Array(100).fill(gzipSync('')))
+  const compressed = deflateSync(gzipMembers)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip, deflate'
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: 1024 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  await t.rejects(response.body.text(), {
+    name: 'ResponseExceededMaxSizeError',
+    code: 'UND_ERR_RES_EXCEEDED_MAX_SIZE'
+  })
+
+  await t.completed
+})
+
+test('should enforce maxSize on the final output of a decompression chain', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const data = 'chained decompression limit'.repeat(100)
+  const compressed = deflateSync(gzipSync(data))
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip, deflate'
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: data.length - 1 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  await t.rejects(response.body.text(), err => {
+    t.ok(err instanceof errors.ResponseExceededMaxSizeError)
+    return true
+  })
+
+  await t.completed
+})
+
+test('should work when composed after the retry interceptor', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const data = 'retry composition response'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose([
+    interceptors.retry(),
+    interceptors.decompress({ maxSize: Buffer.byteLength(data) })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
+
+test('should allow a decompressed response exactly equal to maxSize', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const data = 'maximum size response'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip'
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: Buffer.byteLength(data) }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
+
+test('should reject invalid maxSize values', async t => {
+  t = tspl(t, { plan: 5 })
+
+  for (const maxSize of [0, -1, 1.5, Infinity, '1024']) {
+    const dispatch = createDecompressInterceptor({ maxSize })(() => true)
+    t.throws(() => dispatch({ method: 'GET' }, {}), {
+      name: 'InvalidArgumentError',
+      code: 'UND_ERR_INVALID_ARG',
+      message: 'maxSize must be a positive integer'
+    })
+  }
 
   await t.completed
 })
