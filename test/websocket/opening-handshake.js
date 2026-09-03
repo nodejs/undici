@@ -516,3 +516,36 @@ test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeat
     })
   })
 })
+
+test('Server sends Sec-WebSocket-Protocol header when no protocols were requested', { skip: runtimeFeatures.has('crypto') === false }, (t) => {
+  const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+
+  return new Promise((resolve, reject) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const key = req.headers['sec-websocket-key']
+      t.assert.ok(key)
+      t.assert.strictEqual(req.headers['sec-websocket-protocol'], undefined)
+
+      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
+
+      res.setHeader('Upgrade', 'websocket')
+      res.setHeader('Connection', 'upgrade')
+      res.setHeader('Sec-WebSocket-Accept', accept)
+      res.setHeader('Sec-WebSocket-Protocol', 'chat') // <-- never requested
+      res.statusCode = 101
+
+      res.end()
+    }).listen(0, () => {
+      // No subprotocols requested, so the request omits Sec-WebSocket-Protocol.
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+      ws.onopen = reject
+
+      ws.addEventListener('error', ({ error }) => {
+        t.assert.ok(error)
+        server.close()
+        resolve()
+      })
+    })
+  })
+})
