@@ -630,6 +630,21 @@ test('Set-Cookie parser', () => {
   assert.deepEqual(getSetCookies(headers), [])
 })
 
+test('Set-Cookie parser does not recurse unboundedly on many empty attributes', () => {
+  // Regression test for GHSA-pf6r-83r6-f2x8: a header of the form
+  // `a=b;;;;...` previously recursed once per attribute and overflowed
+  // the stack. It must now parse iteratively without throwing.
+  const headers = new Headers()
+  headers.append('set-cookie', 'a=b' + ';'.repeat(5000))
+
+  const cookies = getSetCookies(headers)
+  assert.strictEqual(cookies.length, 1)
+  assert.strictEqual(cookies[0].name, 'a')
+  assert.strictEqual(cookies[0].value, 'b')
+  assert.strictEqual(cookies[0].unparsed.length, 5000)
+  assert.ok(cookies[0].unparsed.every((entry) => entry === '='))
+})
+
 test('Set-Cookie parser does not percent-decode cookie values', () => {
   assert.deepEqual(
     parseCookie(

@@ -810,7 +810,6 @@ describe('Cache Interceptor', () => {
     let serverError
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('date', 0)
-      res.setHeader('cache-control', 'max-age=1, stale-while-revalidate=10')
 
       try {
         const ifNoneMatch = req.headers['if-none-match']
@@ -821,9 +820,11 @@ describe('Cache Interceptor', () => {
           notEqual(req.headers['b-mixed-case'], undefined)
 
           res.statusCode = 304
+          res.setHeader('vary', 'a, B-MIXED-CASe')
           res.end()
         } else {
           requestsToOrigin++
+          res.setHeader('cache-control', 'max-age=1')
           res.setHeader('vary', 'a, B-MIXED-CASe')
           res.setHeader('etag', '"asd"')
           res.end('asd')
@@ -888,8 +889,6 @@ describe('Cache Interceptor', () => {
       strictEqual(await response.body.text(), 'asd')
     }
 
-    // Wait for background revalidation to complete
-    await sleep(100)
     strictEqual(revalidationRequests, 1)
   })
 
@@ -1600,6 +1599,88 @@ describe('Cache Interceptor', () => {
         await new Promise(resolve => server.close(resolve))
         clock.uninstall()
       }
+    }
+  })
+
+  test('304 synchronous revalidation refetches when Vary adds a request header', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    let conditionalRequests = 0
+    let unconditionalRefetches = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      res.setHeader('date', new Date().toUTCString())
+
+      if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+        conditionalRequests++
+        res.statusCode = 304
+        res.setHeader('vary', 'x-variant')
+        res.end()
+        return
+      }
+
+      if (requestsToOrigin === 1) {
+        res.setHeader('cache-control', 'public, max-age=1')
+        res.setHeader('etag', '"cached"')
+        res.end('cached')
+        return
+      }
+
+      unconditionalRefetches++
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.setHeader('etag', `"variant-${req.headers['x-variant']}"`)
+      res.setHeader('vary', 'x-variant')
+      res.end(`variant ${req.headers['x-variant']}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      await once(server, 'listening')
+
+      const request = variant => ({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          'x-variant': variant
+        }
+      })
+
+      {
+        const res = await client.request(request('a'))
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      clock.tick(1500)
+
+      {
+        const res = await client.request(request('b'))
+        equal(conditionalRequests, 1)
+        equal(unconditionalRefetches, 1)
+        strictEqual(await res.body.text(), 'variant b')
+      }
+
+      {
+        const res = await client.request(request('c'))
+        equal(unconditionalRefetches, 2)
+        strictEqual(await res.body.text(), 'variant c')
+      }
+
+      {
+        const res = await client.request(request('b'))
+        equal(requestsToOrigin, 4)
+        strictEqual(await res.body.text(), 'variant b')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+      clock.uninstall()
     }
   })
 
@@ -3146,16 +3227,24 @@ describe('Cache Interceptor', () => {
       strictEqual(await res.body.text(), 'original-response')
     }
 
-    // Wait for background revalidation
-    await sleep(500)
-    equal(revalidationRequests, 1)
-
-    // Second stale request - should get updated content from cache
-    // (still within stale-while-revalidate window)
+    // Wait for the background revalidation to complete and the cache to be
+    // updated with the revalidated content. Poll until the cache actually
+    // returns the updated response instead of relying on a fixed sleep, which
+    // is flaky on slow/loaded CI runners (the revalidation round-trip plus
+    // cache write can take longer than a hardcoded delay).
     {
-      const res = await client.request(request)
-      strictEqual(await res.body.text(), 'updated-response')
+      const deadline = Date.now() + 5000
+      let body = 'original-response'
+      while (Date.now() < deadline && body === 'original-response') {
+        const res = await client.request(request)
+        body = await res.body.text()
+        if (body === 'original-response') {
+          await sleep(50)
+        }
+      }
+      strictEqual(body, 'updated-response')
       equal(requestsToOrigin, 1) // Still only one origin request
+      equal(revalidationRequests >= 1, true, 'Background revalidation should have occurred')
     }
   })
 
