@@ -3,7 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const diagnosticsChannel = require('node:diagnostics_channel')
-const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
+const { request, fetch, Headers, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError, ConnectTimeoutError, SecureProxyConnectionError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/dispatcher/proxy-agent')
 const Pool = require('../lib/dispatcher/pool')
@@ -837,7 +837,7 @@ test('use proxy-agent with custom headers with tunneling enabled', async (t) => 
 })
 
 test('sending proxy-authorization in request headers should throw', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t = tspl(t, { plan: 5 })
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -883,6 +883,29 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
         headers: {
           'Proxy-Authorization': Buffer.from('user:pass').toString('base64')
         }
+      }
+    ),
+    'Proxy-Authorization should be sent in ProxyAgent'
+  )
+
+  // Iterable containers (Map/Headers) must not bypass the guard (GHSA-6cv7-626c-qhqw)
+  await t.rejects(
+    request(
+      serverUrl + '/hello?foo=bar',
+      {
+        dispatcher: proxyAgent,
+        headers: new Map([['proxy-authorization', Buffer.from('user:pass').toString('base64')]])
+      }
+    ),
+    'Proxy-Authorization should be sent in ProxyAgent'
+  )
+
+  await t.rejects(
+    request(
+      serverUrl + '/hello?foo=bar',
+      {
+        dispatcher: proxyAgent,
+        headers: new Headers({ 'proxy-authorization': Buffer.from('user:pass').toString('base64') })
       }
     ),
     'Proxy-Authorization should be sent in ProxyAgent'
