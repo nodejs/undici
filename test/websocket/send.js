@@ -15,11 +15,18 @@ async function closeWebSocket (ws) {
   await close
 }
 
-async function closeWebSocketServer (server) {
-  for (const client of server.clients) {
-    client.terminate()
+async function terminateWebSocket (ws) {
+  if (ws.readyState === WebSocket.CLOSED) {
+    return
   }
 
+  const close = once(ws, 'close')
+  ws.terminate()
+  await close
+}
+
+async function closeWebSocketServer (server) {
+  await Promise.allSettled(Array.from(server.clients, terminateWebSocket))
   await new Promise((resolve) => server.close(resolve))
 }
 
@@ -122,12 +129,15 @@ test('Sending data after close', async (t) => {
     t.assert.fail('Received unexpected message after closing the client')
   })
 
+  const clientClose = once(ws, 'close')
+  const socketClose = once(socket, 'close')
+
   ws.close()
   ws.send('Some message')
 
   await Promise.all([
-    once(ws, 'close'),
-    once(socket, 'close')
+    clientClose,
+    socketClose
   ])
 })
 
