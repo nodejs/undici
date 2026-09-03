@@ -117,6 +117,82 @@ describe('cache interceptor with async store', () => {
     strictEqual(count304, 1)
   })
 
+  test('synchronous 304 revalidation refetches when Vary adds a request header', async () => {
+    const clock = FakeTimers.install({ now: 1, toFake: ['Date'] })
+    let count200 = 0
+    let count304 = 0
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.sendDate = false
+      res.setHeader('date', new Date(clock.now).toUTCString())
+
+      if (req.headers['if-none-match']) {
+        count304++
+        res.statusCode = 304
+        res.setHeader('vary', 'x-variant')
+        res.end()
+        return
+      }
+
+      count200++
+      res.setHeader('cache-control', `public, max-age=${count200 === 1 ? 10 : 60}`)
+      res.setHeader('etag', `"response-${count200}"`)
+
+      if (count200 === 1) {
+        res.end('cached')
+      } else {
+        res.setHeader('vary', 'x-variant')
+        res.end(`variant ${req.headers['x-variant']}`)
+      }
+    })
+
+    server.listen(0)
+    await once(server, 'listening')
+
+    const store = new AsyncCacheStore()
+    const dispatcher = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({ store }))
+    const url = `http://localhost:${server.address().port}`
+    const makeRequest = variant => request(url, {
+      dispatcher,
+      headers: {
+        'x-variant': variant
+      }
+    })
+
+    try {
+      {
+        const res = await makeRequest('a')
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      clock.tick(12000)
+
+      {
+        const res = await makeRequest('b')
+        strictEqual(await res.body.text(), 'variant b')
+        strictEqual(count304, 1)
+        strictEqual(count200, 2)
+      }
+
+      {
+        const res = await makeRequest('c')
+        strictEqual(await res.body.text(), 'variant c')
+        strictEqual(count200, 3)
+      }
+
+      {
+        const res = await makeRequest('b')
+        strictEqual(await res.body.text(), 'variant b')
+        strictEqual(count200, 3)
+      }
+    } finally {
+      await dispatcher.close()
+      await new Promise(resolve => server.close(resolve))
+      clock.uninstall()
+    }
+  })
+
   test('stale-while-revalidate 200 refreshes cache with async store', async () => {
     const clock = FakeTimers.install({ now: 1 })
     after(() => clock.uninstall())
