@@ -896,6 +896,67 @@ test('should not error if request is not meant to be retried', async t => {
   t.equal(await response.body.text(), 'Bad request')
 })
 
+test('should reject the original response body when a retry returns a non-retryable status', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let count = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    count++
+
+    if (count === 1) {
+      res.setHeader('content-length', '5')
+      res.write('123', () => res.destroy())
+      return
+    }
+
+    if (count === 2) {
+      res.writeHead(400)
+      res.end()
+      return
+    }
+
+    t.fail('unexpected request')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`,
+    { bodyTimeout: 100 }
+  ).compose(retry({ minTimeout: 10 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.strictEqual(response.statusCode, 200)
+
+  let timer
+  let bodyError
+  try {
+    bodyError = await Promise.race([
+      response.body.text().then(() => null, err => err),
+      new Promise(resolve => {
+        timer = setTimeout(() => resolve(new Error('response body timed out')), 2e3)
+      })
+    ])
+  } finally {
+    clearTimeout(timer)
+    response.body.destroy()
+  }
+
+  t.strictEqual(bodyError?.code, 'UND_ERR_REQ_RETRY')
+  t.strictEqual(count, 2)
+})
+
 test('#3975 - keep event loop ticking', async t => {
   const suite = tspl(t, { plan: 2 })
 
