@@ -3260,15 +3260,15 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
         .compose(interceptors.cache({
-          origins: ['localhost']
+          origins: [origin]
         }))
 
       after(() => client.close())
 
       const request = {
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       }
@@ -3555,15 +3555,15 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
         .compose(interceptors.cache({
-          origins: ['LOCALHOST']
+          origins: [origin.toUpperCase()]
         }))
 
       after(() => client.close())
 
       const request = {
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       }
