@@ -3,7 +3,6 @@
 const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
-const { EventEmitter } = require('node:events')
 const fs = require('node:fs')
 const { createServer } = require('node:http')
 const https = require('node:https')
