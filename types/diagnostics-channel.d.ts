@@ -2,7 +2,6 @@ import { Socket } from 'node:net'
 import { URL } from 'node:url'
 import buildConnector from './connector'
 import Dispatcher from './dispatcher'
-import { IncomingHttpHeaders } from './header'
 
 declare namespace DiagnosticsChannel {
   interface Request {
@@ -15,7 +14,7 @@ declare namespace DiagnosticsChannel {
   interface Response {
     statusCode: number;
     statusText: string;
-    headers: Array<Buffer> | IncomingHttpHeaders;
+    headers: Array<Buffer>;
   }
   interface ConnectParams {
     host: URL['host'];

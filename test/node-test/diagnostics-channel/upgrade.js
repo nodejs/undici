@@ -65,6 +65,40 @@ function observeRequestLifecycles (testContext) {
   return records
 }
 
+/**
+ * @param {Client} client
+ * @param {import('../../../types/dispatcher').default.DispatchOptions} options
+ * @param {Error} expectedError
+ * @returns {Promise<import('node:http2').ClientHttp2Session|undefined>}
+ */
+async function waitForUpgradeHandlerError (client, options, expectedError) {
+  let session
+  let streamClosed
+
+  await new Promise((resolve, reject) => {
+    client.dispatch(options, {
+      onRequestStart () {},
+      onRequestUpgrade (_controller, _statusCode, _headers, stream) {
+        session = stream.session
+        if (session) {
+          streamClosed = once(stream, 'close')
+        }
+        throw expectedError
+      },
+      onResponseError (_controller, error) {
+        if (error === expectedError) resolve()
+        else reject(error)
+      }
+    })
+  })
+
+  if (streamClosed) {
+    await streamClosed
+  }
+
+  return session
+}
+
 test('successful upgrades complete the request diagnostics lifecycle', async (testContext) => {
   const server = createServer()
   server.on('upgrade', (_request, socket) => {
@@ -150,19 +184,7 @@ test('an upgrade handler error aborts the request diagnostics lifecycle', async 
   testContext.after(() => client.close())
 
   const expectedError = new Error('upgrade handler failed')
-  const responseError = new Promise((resolve, reject) => {
-    client.dispatch({ method: 'GET', path: '/', upgrade: 'test' }, {
-      onRequestStart () {},
-      onRequestUpgrade () {
-        throw expectedError
-      },
-      onResponseError (_controller, error) {
-        if (error === expectedError) resolve()
-        else reject(error)
-      }
-    })
-  })
-  await responseError
+  await waitForUpgradeHandlerError(client, { method: 'GET', path: '/', upgrade: 'test' }, expectedError)
 
   assert.strictEqual(records.length, 1)
   assert.deepStrictEqual(records[0].events, ['create', 'bodySent', 'headers', 'error'])
@@ -243,23 +265,33 @@ test('HTTP/2 upgrades publish terminal request diagnostics', async (testContext)
   assert.strictEqual(records[1].request.completed, false)
 
   const expectedError = new Error('upgrade handler failed')
-  const responseError = new Promise((resolve, reject) => {
-    client.dispatch({ method: 'GET', path: '/', upgrade: 'websocket' }, {
-      onRequestStart () {},
-      onRequestUpgrade () {
-        throw expectedError
-      },
-      onResponseError (_controller, error) {
-        if (error === expectedError) resolve()
-        else reject(error)
-      }
-    })
-  })
-  await responseError
+  const session = await waitForUpgradeHandlerError(
+    client,
+    { method: 'GET', path: '/', upgrade: 'websocket' },
+    expectedError
+  )
 
   assert.strictEqual(records.length, 3)
   assert.deepStrictEqual(records[2].events, ['create', 'headers', 'error'])
   assert.strictEqual(records[2].request.completed, false)
   assert.strictEqual(records[2].request.aborted, true)
+  assert.ok(session)
+  const openStreams = Object.getOwnPropertySymbols(session).find(symbol => symbol.description === 'open streams')
+  assert.ok(openStreams)
+  assert.strictEqual(session[openStreams], 0)
+
+  const expectedConnectError = new Error('CONNECT handler failed')
+  const connectSession = await waitForUpgradeHandlerError(
+    client,
+    { method: 'CONNECT', path: '/' },
+    expectedConnectError
+  )
+
+  assert.strictEqual(records.length, 4)
+  assert.deepStrictEqual(records[3].events, ['create', 'headers', 'error'])
+  assert.strictEqual(records[3].request.completed, false)
+  assert.strictEqual(records[3].request.aborted, true)
+  assert.strictEqual(connectSession, session)
+  assert.strictEqual(session[openStreams], 0)
   assert.strictEqual(client.stats.running, 0)
 })
