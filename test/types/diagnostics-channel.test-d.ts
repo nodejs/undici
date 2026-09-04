@@ -35,6 +35,14 @@ expectAssignable<DiagnosticsChannel.RequestHeadersMessage>({
   request,
   response
 })
+expectAssignable<DiagnosticsChannel.RequestHeadersMessage>({
+  request,
+  response: {
+    statusCode: 200,
+    statusText: '',
+    headers: { ':protocol': 'websocket' }
+  }
+})
 expectAssignable<DiagnosticsChannel.RequestBodyChunkReceivedMessage>({ request, chunk: Buffer.from('') })
 expectAssignable<DiagnosticsChannel.RequestTrailersMessage>({
   request,
