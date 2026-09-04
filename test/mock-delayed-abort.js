@@ -135,3 +135,60 @@ test('MockAgent with delayed response and DecoratorHandler should not call onRes
 
   p.ok(true, 'Decorator handler invariants maintained')
 })
+
+test('MockAgent abort before an async reply options callback rejects should settle onResponseError exactly once', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  let onResponseErrorCount = 0
+
+  class CountingHandler extends DecoratorHandler {
+    onResponseError (controller, err) {
+      onResponseErrorCount++
+      return super.onResponseError(controller, err)
+    }
+  }
+
+  const agent = new MockAgent()
+  t.after(() => agent.close())
+
+  const mockPool = agent.get('https://example.com')
+
+  // An async reply *options* callback whose promise rejects only after the
+  // request has already been aborted. A request body forces the callback to be
+  // resolved inside dispatchMockReply (rather than eagerly in mockDispatch), so
+  // the controller is already live and the abort can win the race.
+  mockPool.intercept({ path: '/test', method: 'POST' })
+    .reply(() => new Promise((resolve, reject) => {
+      setTimeout(() => reject(new Error('reply callback failed')), 50)
+    }))
+
+  const ac = new AbortController()
+
+  // Abort after the callback has been invoked but before its promise rejects.
+  setTimeout(() => {
+    ac.abort(new Error('Request aborted'))
+  }, 10)
+
+  const originalDispatch = agent.dispatch.bind(agent)
+  agent.dispatch = (opts, handler) => {
+    return originalDispatch(opts, new CountingHandler(handler))
+  }
+
+  try {
+    await agent.request({
+      origin: 'https://example.com',
+      path: '/test',
+      method: 'POST',
+      body: 'a request body',
+      signal: ac.signal
+    })
+    p.fail('Should have thrown an error')
+  } catch (err) {
+    p.ok(err.message === 'Request aborted' || err.name === 'AbortError', 'Error should be related to abort')
+  }
+
+  // Wait for the rejecting callback promise to settle (at ~50ms).
+  await new Promise(resolve => setTimeout(resolve, 150))
+
+  p.strictEqual(onResponseErrorCount, 1, 'onResponseError must fire exactly once for an aborted request')
+})
