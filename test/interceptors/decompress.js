@@ -51,6 +51,47 @@ test('should decompress gzip response', async t => {
   await t.completed
 })
 
+test('retry composed before decompress can rewrite rawHeaders', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const data = 'ok'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'content-encoding': 'gzip',
+      'content-length': String(compressed.length)
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose([
+    interceptors.retry({ maxRetries: 0 }),
+    interceptors.decompress()
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    headers: { 'accept-encoding': 'gzip' }
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
+
 test('should preserve trailers when decompressing response', async t => {
   const data = 'Response with trailers'
   const compressed = gzipSync(data)
