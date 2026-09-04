@@ -797,3 +797,27 @@ test('Set-Cookie parser ignores an unparseable Expires', () => {
     value: 'a3fWa'
   }])
 })
+
+test('Cookie setCookie supports valueless unparsed attributes (e.g. Partitioned)', () => {
+  const headers = new Headers()
+  setCookie(headers, {
+    name: 'session',
+    value: 'abc',
+    secure: true,
+    path: '/',
+    unparsed: ['Partitioned']
+  })
+  assert.equal(headers.get('Set-Cookie'), 'session=abc; Secure; Path=/; Partitioned')
+
+  assert.throws(() => {
+    setCookie(headers, { name: 'session', value: 'abc', unparsed: [''] })
+  }, /Invalid unparsed/)
+
+  assert.throws(() => {
+    setCookie(headers, { name: 'session', value: 'abc', unparsed: ['  '] })
+  }, /Invalid unparsed/)
+
+  assert.throws(() => {
+    setCookie(headers, { name: 'session', value: 'abc', unparsed: ['=val'] })
+  }, /Invalid unparsed/)
+})
