@@ -227,6 +227,46 @@ test('WebSocket over H2 fails the handshake when the extended CONNECT response i
   await planner.completed
 })
 
+// RFC 8441 §5: an h2 extended CONNECT handshake does not use Sec-WebSocket-Accept.
+test('WebSocket over H2 opens when the extended CONNECT response has no Sec-WebSocket-Accept header', async (t) => {
+  const sessions = new Set()
+  const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+    .on('session', (session) => {
+      sessions.add(session)
+      session.on('close', () => sessions.delete(session))
+    })
+    .on('stream', (stream, headers) => {
+      t.assert.strictEqual(headers[':protocol'], 'websocket')
+      stream.respond({ ':status': 200 })
+    })
+    .listen(0)
+
+  t.after(async () => {
+    for (const session of sessions) {
+      session.destroy()
+    }
+
+    await new Promise((resolve) => h2Server.close(resolve))
+  })
+
+  await once(h2Server, 'listening')
+
+  const dispatcher = new Agent({
+    allowH2: true,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  t.after(() => dispatcher.close())
+
+  const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher })
+
+  await new Promise((resolve, reject) => {
+    ws.onopen = resolve
+    ws.onerror = ({ error }) => reject(error)
+  })
+})
+
 test('WebSocket on H2 with a server that does not support extended CONNECT protocol', async (t) => {
   const planner = tspl(t, { plan: 1 })
   const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: false } })
