@@ -109,6 +109,42 @@ test('controller proxy forwards reads/writes to the active connection and stays 
   t.deepStrictEqual(upgradeArgs, [101, { upgrade: 'websocket' }, 'SOCKET'])
 })
 
+test('controller proxy forwards rawHeaders/rawTrailers writes to the active connection', (t) => {
+  t = tspl(t, { plan: 5 })
+
+  let downstreamController = null
+
+  const handler = new RetryHandler(baseOpts, {
+    dispatch: () => {},
+    handler: {
+      onRequestStart (controller) {
+        downstreamController = controller
+      }
+    }
+  })
+
+  const connection = activeConnectionController()
+  handler.onRequestStart(connection, {})
+
+  // Regression for https://github.com/nodejs/undici/issues/5726: interceptors
+  // composed downstream of retry (e.g. decompress, cache) reassign rawHeaders to
+  // strip headers they consumed. rawHeaders/rawTrailers used to be getter-only on
+  // the proxy, so the assignment threw "Cannot set property rawHeaders ... which
+  // has only a getter". The proxy must forward the write to the active connection.
+  t.doesNotThrow(() => {
+    downstreamController.rawHeaders = ['content-type', 'text/plain']
+    downstreamController.rawTrailers = ['x-checksum', 'verified']
+  })
+
+  // The write reaches the active connection's controller...
+  t.deepStrictEqual(connection.rawHeaders, ['content-type', 'text/plain'])
+  t.deepStrictEqual(connection.rawTrailers, ['x-checksum', 'verified'])
+
+  // ...and reads back through the proxy reflect it.
+  t.deepStrictEqual(downstreamController.rawHeaders, ['content-type', 'text/plain'])
+  t.deepStrictEqual(downstreamController.rawTrailers, ['x-checksum', 'verified'])
+})
+
 test('controller proxy is forwarded downstream on a 206 whose content-range is unparseable', (t) => {
   t = tspl(t, { plan: 3 })
 

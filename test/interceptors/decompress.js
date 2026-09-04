@@ -1206,3 +1206,48 @@ test('should work with global dispatcher for both fetch() and request()', async 
 
   await t.completed
 })
+
+test('should decompress when retry is composed before decompress (issue #5726)', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const data = 'retry composed before decompress'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip',
+      'Content-Length': String(compressed.length)
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  // Retry ahead of decompress hands the decompress interceptor the retry
+  // controller proxy. The proxy must accept the rawHeaders write the decompress
+  // interceptor performs to strip content-encoding/content-length, otherwise it
+  // throws "Cannot set property rawHeaders ... which has only a getter".
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose([interceptors.retry({ maxRetries: 0 }), interceptors.decompress()])
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], undefined)
+  t.equal(body, data)
+
+  await t.completed
+})
