@@ -2,6 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { describe, test, after } = require('node:test')
+const { createServer } = require('node:net')
 const { WebSocketServer } = require('ws')
 const { WebSocket } = require('../..')
 
@@ -147,6 +148,30 @@ describe('Close', () => {
       ws.close(1000)
       ws.close(1000)
     })
+
+    await t.completed
+  })
+
+  // Regression test for https://github.com/nodejs/undici/issues/4741
+  test('close() while CONNECTING fires error/close asynchronously, not during close()', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    // Accepts the TCP connection but never responds, so the WebSocket
+    // handshake never completes and the client stays in CONNECTING.
+    const server = createServer((socket) => socket.resume())
+    after(() => server.close())
+
+    await new Promise((resolve) => server.listen(0, resolve))
+
+    const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+
+    let closeReturned = false
+    ws.addEventListener('close', () => {
+      t.ok(closeReturned, 'close event must fire after close() returns')
+    })
+
+    ws.close()
+    closeReturned = true
 
     await t.completed
   })
