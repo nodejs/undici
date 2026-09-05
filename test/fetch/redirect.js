@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { fetch } = require('../..')
+const { fetch, Agent } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 
 // https://github.com/nodejs/undici/issues/1776
@@ -72,6 +72,31 @@ test('Redirecting with a body does not fail to write body - #2543', async (t) =>
     method: 'POST',
     body: 'body'
   })
+  t.assert.strictEqual(await resp.text(), 'ok')
+  t.assert.ok(resp.redirected)
+})
+
+// https://github.com/nodejs/undici/issues/5728
+test('Following a redirect with a large body releases the connection - #5728', async (t) => {
+  const redirectBody = Buffer.alloc(128 * 1024, 0x78)
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    if (req.url === '/redirect') {
+      res.writeHead(301, { location: '/target' })
+      res.end(redirectBody)
+    } else {
+      res.end('ok')
+    }
+  }).listen(0)
+
+  const dispatcher = new Agent({ connections: 1, keepAliveTimeout: 10_000 })
+
+  t.after(closeServerAsPromise(server))
+  t.after(() => dispatcher.destroy())
+  await once(server, 'listening')
+
+  const resp = await fetch(`http://localhost:${server.address().port}/redirect`, { dispatcher })
+  t.assert.strictEqual(resp.status, 200)
   t.assert.strictEqual(await resp.text(), 'ok')
   t.assert.ok(resp.redirected)
 })
