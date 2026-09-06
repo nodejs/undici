@@ -7,7 +7,7 @@
 
 const { test } = require('node:test')
 const { createServer } = require('node:http')
-const { Client, Pool, interceptors } = require('../../')
+const { Agent, Client, Pool, Headers, interceptors, request } = require('../../')
 
 function listen (server) {
   return new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -16,6 +16,38 @@ function listen (server) {
 function close (server) {
   return new Promise(resolve => server.close(resolve))
 }
+
+test('compose() normalizes request headers before invoking interceptors', async (t) => {
+  const server = createServer((req, res) => res.end('ok'))
+  await listen(server)
+  t.after(() => close(server))
+
+  const seen = []
+  const dispatcher = new Agent().compose(dispatch => (opts, handler) => {
+    seen.push(opts.headers)
+    return dispatch(opts, handler)
+  })
+  t.after(() => dispatcher.close())
+
+  const origin = `http://127.0.0.1:${server.address().port}`
+  const inputs = [
+    ['x-a', '1', 'x-b', '2'],
+    { 'X-A': '1', 'x-b': '2' },
+    new Headers([['x-a', '1'], ['x-b', '2']]),
+    { * [Symbol.iterator] () { yield ['x-a', '1']; yield ['x-a', '2']; yield ['x-b', '2'] } }
+  ]
+
+  for (const headers of inputs) {
+    await request(origin, { dispatcher, headers })
+  }
+
+  t.assert.deepStrictEqual(seen, [
+    { 'x-a': '1', 'x-b': '2' },
+    { 'x-a': '1', 'x-b': '2' },
+    { 'x-a': '1', 'x-b': '2' },
+    { 'x-a': ['1', '2'], 'x-b': '2' }
+  ])
+})
 
 // ---------------------------------------------------------------------------
 // cache() on Client
