@@ -836,6 +836,34 @@ test('use proxy-agent with custom headers with tunneling enabled', async (t) => 
   proxyAgent.close()
 })
 
+test('use proxy-agent with repeated iterable headers', async (t) => {
+  t = tspl(t, { plan: 1 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent(proxyUrl)
+
+  server.on('request', (req, res) => {
+    t.strictEqual(req.headers['x-duplicate'], 'first, second')
+    res.end()
+  })
+
+  const headers = {
+    * [Symbol.iterator] () {
+      yield ['x-duplicate', 'first']
+      yield ['x-duplicate', 'second']
+    }
+  }
+
+  await request(serverUrl, { dispatcher: proxyAgent, headers })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('sending proxy-authorization in request headers should throw', async (t) => {
   t = tspl(t, { plan: 5 })
   const server = await buildServer()
