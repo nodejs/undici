@@ -19,7 +19,7 @@
     "axios": "^1.6.7",
     "concurrently": "^10.0.3",
     "cronometro": "^6.0.3",
-    "got": "^15.0.0",
+    "got": "^16.0.0",
     "mitata": "^1.0.4",
     "node-fetch": "^3.3.2",
     "request": "^2.88.2",
