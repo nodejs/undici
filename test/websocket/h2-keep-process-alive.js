@@ -6,7 +6,7 @@ const { once } = require('node:events')
 const { createSecureServer } = require('node:http2')
 const { join } = require('node:path')
 const { WebSocket: WSWebSocket } = require('ws')
-const { key, cert } = require('@metcoder95/https-pem')
+const { key, cert } = require('../utils/pem')
 const { uid } = require('../../lib/web/websocket/constants')
 const { runtimeFeatures } = require('../../lib/util/runtime-features')
 

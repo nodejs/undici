@@ -7,7 +7,7 @@ const { createSecureServer } = require('node:http2')
 
 const { tspl } = require('@matteo.collina/tspl')
 const { WebSocketServer, WebSocket: WSWebsocket } = require('ws')
-const { key, cert } = require('@metcoder95/https-pem')
+const { key, cert } = require('../utils/pem')
 const { WebSocket, Agent, EnvHttpProxyAgent } = require('../..')
 const { runtimeFeatures } = require('../../lib/util/runtime-features')
 const { uid } = require('../../lib/web/websocket/constants')

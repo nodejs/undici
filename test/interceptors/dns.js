@@ -10,7 +10,7 @@ const { createServer: createSecureServer } = require('node:https')
 const { once } = require('node:events')
 
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('@metcoder95/https-pem')
+const pem = require('../utils/pem')
 
 const { interceptors, Agent, Client, Pool, request } = require('../..')
 const { dns, cache, deduplicate } = interceptors

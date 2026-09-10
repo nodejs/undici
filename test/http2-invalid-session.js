@@ -5,7 +5,7 @@ const { EventEmitter, once } = require('node:events')
 const { createSecureServer } = require('node:http2')
 const { tspl } = require('@matteo.collina/tspl')
 
-const pem = require('@metcoder95/https-pem')
+const pem = require('./utils/pem')
 
 const { Client } = require('..')
 

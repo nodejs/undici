@@ -30,7 +30,7 @@ const { Agent, interceptors } = require('..')
 // ── Server (runs in worker thread) ──────────────────────────────────────────
 if (!isMainThread) {
   const http2 = require('node:http2')
-  const pem = require('@metcoder95/https-pem')
+  const pem = require('./utils/pem')
 
   pem.generate({ opts: { keySize: 2048 } }).then((cert) => {
     const body = JSON.stringify({ ok: true })

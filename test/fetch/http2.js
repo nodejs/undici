@@ -7,7 +7,7 @@ const { once } = require('node:events')
 const { Readable } = require('node:stream')
 
 const { test } = require('node:test')
-const pem = require('@metcoder95/https-pem')
+const pem = require('../utils/pem')
 
 const { Client, fetch, Headers } = require('../..')
 

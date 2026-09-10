@@ -6,7 +6,7 @@ const { createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
 
-const pem = require('@metcoder95/https-pem')
+const pem = require('./utils/pem')
 
 const { Client } = require('..')
 

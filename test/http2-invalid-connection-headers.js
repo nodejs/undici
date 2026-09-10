@@ -5,7 +5,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const { createSecureServer } = require('node:http2')
 
-const pem = require('@metcoder95/https-pem')
+const pem = require('./utils/pem')
 
 const { Client } = require('..')
 const { InformationalError } = require('../lib/core/errors')

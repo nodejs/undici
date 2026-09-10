@@ -4,7 +4,7 @@ const { test, after } = require('node:test')
 const { createSecureServer, createServer } = require('node:http2')
 const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('@metcoder95/https-pem')
+const pem = require('./utils/pem')
 
 const { Agent, Client, Pool, fetch } = require('..')
 

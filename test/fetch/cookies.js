@@ -5,7 +5,7 @@ const { createServer } = require('node:http')
 const { test, describe, before, after } = require('node:test')
 const { stringify: qsStringify } = require('node:querystring')
 const { Client, fetch, Headers } = require('../..')
-const pem = require('@metcoder95/https-pem')
+const pem = require('../utils/pem')
 const { createSecureServer } = require('node:http2')
 
 const loopback = '127.0.0.1'

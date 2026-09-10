@@ -8,7 +8,7 @@ const { Writable, pipeline, PassThrough, Readable } = require('node:stream')
 
 const { tspl } = require('@matteo.collina/tspl')
 
-const pem = require('@metcoder95/https-pem')
+const pem = require('./utils/pem')
 
 const { Client, errors } = require('..')
 const { kQueue, kRunningIdx } = require('../lib/core/symbols')
