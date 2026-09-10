@@ -111,7 +111,7 @@
   "devDependencies": {
     "@fastify/busboy": "3.2.2",
     "@matteo.collina/tspl": "^0.2.0",
-    "@metcoder95/https-pem": "^1.0.0",
+    "@metcoder95/https-pem": "^1.0.1",
     "@sinonjs/fake-timers": "^12.0.0",
     "@types/node": "^22.0.0",
     "abort-controller": "^3.0.0",
