@@ -114,6 +114,11 @@ expectAssignable<Client>(
 )
 expectAssignable<Client>(
   new Client('', {
+    useMilo: true
+  })
+)
+expectAssignable<Client>(
+  new Client('', {
     maxConcurrentStreams: 100
   })
 )
