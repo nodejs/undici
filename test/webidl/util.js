@@ -72,7 +72,7 @@ test('webidl.util.ConvertToInt(V)', () => {
   assert.equal(ConvertToInt(-max - 1, 64, 'signed'), -max, 'signed neg')
 
   assert.equal(ConvertToInt(max + 1, 64, 'unsigned'), max + 1, 'unsigned pos')
-  assert.equal(ConvertToInt(-max - 1, 64, 'unsigned'), -max - 1, 'unsigned neg')
+  assert.equal(ConvertToInt(-max - 1, 64, 'unsigned'), 2 ** 64 - max, 'unsigned neg wraps to two\'s complement')
 
   for (const signedness of ['signed', 'unsigned']) {
     assert.equal(ConvertToInt(Infinity, 64, signedness), 0)
@@ -143,5 +143,16 @@ test('webidl.util.ConvertToInt(V)', () => {
     ConvertToInt(-(2 ** 31), 32, 'signed', webidl.attributes.EnforceRange),
     -(2 ** 31),
     '32-bit signed EnforceRange lower bound'
+  )
+
+  // Negative inputs must wrap via two's complement instead of being returned
+  // as-is. These mirror the corresponding typed-array behavior, e.g.
+  // new Uint8Array([-3])[0] === 253, new Int8Array([-200])[0] === 56.
+  assert.equal(ConvertToInt(-3, 8, 'unsigned'), 253, '8-bit unsigned wraps -3 to 253')
+  assert.equal(ConvertToInt(-1, 32, 'unsigned'), 4294967295, '32-bit unsigned wraps -1')
+  assert.equal(ConvertToInt(-200, 8, 'signed'), 56, '8-bit signed wraps -200 to 56')
+  assert.ok(
+    Object.is(ConvertToInt(-256, 8, 'unsigned'), 0),
+    'modulo wrap of negative multiple of 2^bitLength returns +0, not -0'
   )
 })
