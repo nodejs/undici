@@ -5,7 +5,7 @@ const { strictEqual, notStrictEqual } = require('node:assert')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
-const { request, Client, interceptors } = require('../../index')
+const { request, Client, Dispatcher, interceptors } = require('../../index')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { setTimeout } = require('node:timers/promises')
@@ -48,6 +48,113 @@ class AsyncCacheStore {
 }
 
 describe('cache interceptor with async store', () => {
+  // Delivers start, data and end synchronously inside dispatch(), so an
+  // empty 304 ends before an async store lookup settles.
+  class SyncDispatcher extends Dispatcher {
+    requests = 0
+
+    dispatch (opts, handler) {
+      this.requests++
+      const controller = {
+        paused: false,
+        aborted: false,
+        reason: null,
+        pause () {},
+        resume () {},
+        abort () {}
+      }
+      handler.onRequestStart?.(controller, {})
+      if (opts.headers?.['if-none-match'] === '"abc"') {
+        // Without cache-control the 304 is passed through untouched.
+        handler.onResponseStart?.(controller, 304, { etag: '"abc"', 'cache-control': 'public, max-age=60' }, 'Not Modified')
+        handler.onResponseEnd?.(controller, {})
+        return true
+      }
+      const body = Buffer.from('cached body')
+      handler.onResponseStart?.(controller, 200, {
+        'cache-control': 'public, max-age=60',
+        etag: '"abc"',
+        'content-length': String(body.length)
+      }, 'OK')
+      handler.onResponseData?.(controller, body)
+      handler.onResponseEnd?.(controller, {})
+      return true
+    }
+  }
+
+  test('a 304 to a conditional request that missed the cache reaches the client intact', async () => {
+    const store = new AsyncCacheStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+
+    const response = await client.request({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      headers: { 'if-none-match': '"abc"' }
+    })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), '')
+  })
+
+  // Misses on the interceptor's lookup and hits on the lookup CacheHandler
+  // makes after the 304, so handle304 runs with a cached value to replay.
+  class MissThenHitStore {
+    #inner = new MemoryCacheStore()
+    #asStream
+    misses = 0
+
+    constructor ({ asStream = false } = {}) {
+      this.#asStream = asStream
+    }
+
+    async get (key) {
+      if (this.misses > 0) {
+        this.misses--
+        return undefined
+      }
+      const result = this.#inner.get(key)
+      if (!result || !this.#asStream) return result
+      const { body, ...rest } = result
+      return { ...rest, body: Readable.from(body ?? []) }
+    }
+
+    createWriteStream (key, value) {
+      return this.#inner.createWriteStream(key, value)
+    }
+
+    delete (key) {
+      return this.#inner.delete(key)
+    }
+  }
+
+  for (const [name, asStream] of [['an array of Buffers', false], ['a Readable', true]]) {
+    test(`a 304 resolved against an async store replays a cached body that is ${name} before the end`, async () => {
+      const store = new MissThenHitStore({ asStream })
+      const dispatcher = new SyncDispatcher()
+      const client = dispatcher.compose(interceptors.cache({ store }))
+
+      {
+        const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })
+        strictEqual(response.statusCode, 200)
+        strictEqual(await response.body.text(), 'cached body')
+      }
+
+      // The origin's 304 goes downstream, followed by the cached body, then the end.
+      store.misses = 1
+      {
+        const response = await client.request({
+          origin: 'http://localhost',
+          method: 'GET',
+          path: '/',
+          headers: { 'if-none-match': '"abc"' }
+        })
+        strictEqual(response.statusCode, 304)
+        strictEqual(await response.body.text(), 'cached body')
+      }
+      strictEqual(dispatcher.requests, 2)
+    })
+  }
+
   test('stale-while-revalidate 304 refreshes cache with async store', async () => {
     const clock = FakeTimers.install({ now: 1 })
     after(() => clock.uninstall())
