@@ -1444,4 +1444,132 @@ describe('Deduplicate Interceptor', () => {
     const res = await primary
     strictEqual(await res.body.text(), 'response-body')
   })
+
+  // https://github.com/nodejs/undici/issues/5711
+  test('aborting the primary request must not reject the coalesced waiters', async () => {
+    let requestsToOrigin = 0
+    let releaseResponse
+    const responseGate = new Promise((resolve) => { releaseResponse = resolve })
+    let markRequestReached
+    const requestReached = new Promise((resolve) => { markRequestReached = resolve })
+    const server = createServer(async (req, res) => {
+      requestsToOrigin++
+      markRequestReached()
+      // Hold the response open until the test releases it (no timers), so the
+      // primary can abort while the waiter is still attached.
+      await responseGate
+      res.end('response-body')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      releaseResponse()
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = { origin: 'localhost', method: 'GET', path: '/' }
+
+    const abortController = new AbortController()
+
+    // The primary carries a signal; the waiter carries none.
+    const primary = client.request({ ...request, signal: abortController.signal })
+    const waiter = client.request({ ...request })
+
+    // Catch the primary's rejection eagerly so aborting it does not surface as
+    // an unhandled rejection while we await the waiter.
+    const primaryOutcome = primary.then(() => 'resolved', err => err)
+
+    // The single coalesced request has reached the origin, so the waiter has
+    // joined the group: abort the primary (deterministic, no timers).
+    await requestReached
+    abortController.abort()
+
+    const outcome = await primaryOutcome
+    strictEqual(outcome?.name, 'AbortError')
+
+    // The waiter never passed a signal: it must still receive the response.
+    releaseResponse()
+    const res = await waiter
+    strictEqual(res.statusCode, 200)
+    strictEqual(await res.body.text(), 'response-body')
+
+    // Coalescing held: only one request ever reached the origin.
+    strictEqual(requestsToOrigin, 1)
+  })
+
+  // https://github.com/nodejs/undici/issues/5711
+  test('when every member of a coalesced group aborts, the pending entry is released', async () => {
+    let requestsToOrigin = 0
+    let releaseResponse
+    const responseGate = new Promise((resolve) => { releaseResponse = resolve })
+    let markRequestReached
+    const requestReached = new Promise((resolve) => { markRequestReached = resolve })
+    const server = createServer(async (req, res) => {
+      requestsToOrigin++
+      markRequestReached()
+      await responseGate
+      res.end('response-body')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    const events = []
+    let markEntryRemoved
+    const entryRemoved = new Promise((resolve) => { markEntryRemoved = resolve })
+    const onPending = (msg) => {
+      events.push(msg)
+      if (msg.type === 'removed') markEntryRemoved()
+    }
+    diagnosticsChannel.subscribe('undici:request:pending-requests', onPending)
+
+    after(async () => {
+      diagnosticsChannel.unsubscribe('undici:request:pending-requests', onPending)
+      releaseResponse()
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = { origin: 'localhost', method: 'GET', path: '/' }
+
+    const acPrimary = new AbortController()
+    const acWaiter = new AbortController()
+
+    const primary = client.request({ ...request, signal: acPrimary.signal })
+    const waiter = client.request({ ...request, signal: acWaiter.signal })
+
+    const primaryOutcome = primary.then(() => 'resolved', err => err)
+    const waiterOutcome = waiter.then(() => 'resolved', err => err)
+
+    // The single coalesced request has reached the origin (both members joined).
+    await requestReached
+
+    // Detach the primary first: the waiter still wants the response, so the
+    // shared dispatch must survive.
+    acPrimary.abort()
+    strictEqual((await primaryOutcome)?.name, 'AbortError')
+
+    // Now the last remaining member leaves; the shared dispatch is torn down
+    // and the pending entry must be released.
+    acWaiter.abort()
+    strictEqual((await waiterOutcome)?.name, 'AbortError')
+
+    // Wait for the entry-released event instead of a timer.
+    await entryRemoved
+
+    // Exactly one 'added' and one 'removed' event: the entry was released.
+    strictEqual(events.filter(e => e.type === 'added').length, 1)
+    strictEqual(events.filter(e => e.type === 'removed').length, 1)
+    strictEqual(events[events.length - 1].size, 0)
+
+    // Coalescing held: only one request ever reached the origin.
+    strictEqual(requestsToOrigin, 1)
+  })
 })
