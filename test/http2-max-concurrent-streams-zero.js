@@ -134,9 +134,9 @@ test('a drained h2 origin must not accumulate wedged connections', async () => {
   await warm.body.dump()
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  // Every request that finds the existing Clients wedged makes the Pool build
-  // another Client + socket, which serves one request and wedges in turn. Those
-  // sockets must not pile up for the lifetime of the process.
+  // Requests that find the existing Clients wedged can make the Pool build a
+  // replacement Client and socket. Those sockets must not pile up for the
+  // lifetime of the process.
   let live = 0
   server.on('session', (session) => {
     live++
