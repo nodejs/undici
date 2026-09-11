@@ -1,7 +1,9 @@
 'use strict'
 
 const { test, after } = require('node:test')
+const assert = require('node:assert')
 const { createSecureServer, createServer } = require('node:http2')
+const { createServer: createHttpsServer } = require('node:https')
 const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
@@ -64,6 +66,125 @@ test('h2 client multiplexes concurrent requests by default (#4143)', async t => 
   await t.completed
 })
 
+test('Pool waits for ALPN instead of fanning out cold h2 bursts', async t => {
+  const N = 5
+  const DELAY = 200
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const sessions = new Set()
+  const sessionClosed = []
+  const sockets = new Set()
+  let inFlight = 0
+  let peakInFlight = 0
+
+  server.on('session', session => {
+    sessions.add(session)
+    sessionClosed.push(once(session, 'close'))
+  })
+  server.on('connection', socket => sockets.add(socket))
+  server.on('stream', stream => {
+    inFlight++
+    peakInFlight = Math.max(peakInFlight, inFlight)
+    setTimeout(() => {
+      inFlight--
+      stream.respond({ ':status': 200 })
+      stream.end('ok')
+    }, DELAY)
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const pool = new Pool(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true,
+    keepAliveTimeout: 50
+  })
+
+  t.after(async () => {
+    await pool.destroy()
+    await new Promise(resolve => server.close(resolve))
+  })
+
+  const disconnected = once(pool, 'disconnect')
+  const results = await Promise.all(
+    Array.from({ length: N }, () =>
+      pool.request({ path: '/', method: 'GET' })
+        .then(async response => {
+          await response.body.text()
+          return response.statusCode
+        })
+    )
+  )
+
+  assert.deepStrictEqual(results, new Array(N).fill(200))
+  assert.strictEqual(sessions.size, 1)
+  assert.strictEqual(sockets.size, 1)
+  assert.strictEqual(peakInFlight, N)
+
+  await Promise.all([sessionClosed[0], disconnected])
+  peakInFlight = 0
+
+  const repeatedResults = await Promise.all(
+    Array.from({ length: N }, () =>
+      pool.request({ path: '/', method: 'GET' })
+        .then(async response => {
+          await response.body.text()
+          return response.statusCode
+        })
+    )
+  )
+
+  assert.deepStrictEqual(repeatedResults, new Array(N).fill(200))
+  assert.strictEqual(sessions.size, 2)
+  assert.strictEqual(sockets.size, 2)
+  assert.strictEqual(peakInFlight, N)
+})
+
+test('Pool restores connection fan-out when ALPN selects h1', async t => {
+  const N = 5
+  const DELAY = 200
+  const sockets = new Set()
+  let inFlight = 0
+  let peakInFlight = 0
+  const server = createHttpsServer(
+    await pem.generate({ opts: { keySize: 2048 } }),
+    (request, response) => {
+      inFlight++
+      peakInFlight = Math.max(peakInFlight, inFlight)
+      setTimeout(() => {
+        inFlight--
+        response.end('ok')
+      }, DELAY)
+    }
+  )
+
+  server.on('connection', socket => sockets.add(socket))
+  await once(server.listen(0), 'listening')
+
+  const pool = new Pool(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true
+  })
+
+  t.after(async () => {
+    await pool.destroy()
+    await new Promise(resolve => server.close(resolve))
+  })
+
+  const results = await Promise.all(
+    Array.from({ length: N }, () =>
+      pool.request({ path: '/', method: 'GET' })
+        .then(async response => {
+          await response.body.text()
+          return response.statusCode
+        })
+    )
+  )
+
+  assert.deepStrictEqual(results, new Array(N).fill(200))
+  assert.strictEqual(sockets.size, N)
+  assert.strictEqual(peakInFlight, N)
+})
+
 test('Pool with connections=1 multiplexes h2 streams on the single session (#4143)', async t => {
   const N = 5
   const DELAY = 200
@@ -88,13 +209,6 @@ test('Pool with connections=1 multiplexes h2 streams on the single session (#414
   // With connections=1 the Pool funnels every dispatch through a single
   // Client; that Client's h2 context lets the N concurrent requests
   // multiplex on one session.
-  //
-  // The unconstrained Pool case (no `connections` cap) is intentionally
-  // not asserted here: during the TLS/ALPN handshake the Client cannot
-  // yet know whether h2 will be negotiated, so the per-Client `kPending`
-  // gate still fans out and a cold burst opens one socket per request.
-  // Resolving that needs a Pool-level lazy-connect strategy and is left
-  // for a follow-up (see #4143 discussion).
   const pool = new Pool(`https://localhost:${server.address().port}`, {
     connect: { rejectUnauthorized: false },
     allowH2: true,
