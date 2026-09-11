@@ -4,7 +4,7 @@ const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { createServer: createSecureServer } = require('node:https')
 const { test, before, after, describe } = require('node:test')
-const pem = require('@metcoder95/https-pem')
+const pem = require('../utils/pem')
 const { fetch, Client } = require('../..')
 
 describe('content-encoding handling', () => {

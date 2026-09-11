@@ -4,7 +4,7 @@ const { test } = require('node:test')
 const { Client, Pool } = require('../../')
 const http = require('node:http')
 const https = require('node:https')
-const pem = require('@metcoder95/https-pem')
+const pem = require('../utils/pem')
 const fs = require('node:fs')
 const { tspl } = require('@matteo.collina/tspl')
 

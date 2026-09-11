@@ -6,7 +6,7 @@ const { once } = require('node:events')
 const { setTimeout: sleep } = require('node:timers/promises')
 
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('@metcoder95/https-pem')
+const pem = require('./utils/pem')
 
 const { Agent, request } = require('..')
 

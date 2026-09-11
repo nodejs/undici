@@ -5,7 +5,7 @@ const { once } = require('node:events')
 const { test } = require('node:test')
 
 const { tspl } = require('@matteo.collina/tspl')
-const pem = require('@metcoder95/https-pem')
+const pem = require('./utils/pem')
 
 const { H2CClient, Client, Agent, Pool, request } = require('..')
 

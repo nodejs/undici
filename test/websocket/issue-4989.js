@@ -17,7 +17,7 @@ const { createSecureServer } = require('node:http2')
 
 const { tspl } = require('@matteo.collina/tspl')
 const { WebSocketServer } = require('ws')
-const { key, cert } = require('@metcoder95/https-pem')
+const { key, cert } = require('../utils/pem')
 
 // Self-signed certs require this since native WebSocket uses the
 // bundled dispatcher which has no rejectUnauthorized override.

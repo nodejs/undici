@@ -8,7 +8,7 @@ const { createSecureServer } = require('node:http2')
 const { PassThrough } = require('node:stream')
 const { test } = require('node:test')
 
-const pem = require('@metcoder95/https-pem')
+const pem = require('../../utils/pem')
 
 const { Agent, Client, connect, getGlobalDispatcher, setGlobalDispatcher } = require('../../..')
 

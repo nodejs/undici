@@ -5,7 +5,7 @@ const { once } = require('node:events')
 const { createSecureServer } = require('node:http2')
 const { test } = require('node:test')
 
-const pem = require('@metcoder95/https-pem')
+const pem = require('../utils/pem')
 
 const { Client, fetch } = require('../..')
 const { closeClientAndServerAsPromise } = require('../utils/node-http')
