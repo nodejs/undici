@@ -92,6 +92,10 @@ added: v7.7.0
   * `maxRequestsPerClient` {number} The maximum number of requests to send over
     a single connection before it is reset. Use `0` to disable this limit.
     **Default:** `null`.
+    A request is counted per successfully opened HTTP/2 stream. Once the limit
+    is reached the session is retired: it accepts no further streams and the
+    streams it already accepted are allowed to complete before the connection is
+    closed. Queued and subsequent requests are dispatched on a new session.
   * `localAddress` {string} The local IP address the socket should connect from.
   * `maxResponseSize` {number} The maximum allowed response body size in bytes.
     Use `-1` to disable. **Default:** `-1`.

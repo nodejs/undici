@@ -75,6 +75,12 @@ added: v1.0.0
   * `maxRequestsPerClient` {number|null} The maximum number of requests to send
     over a single connection before the socket is reset. Use `0` to disable this
     limit. **Default:** `null`.
+    Over HTTP/1.1 a request is counted per message and the socket is reset once
+    the limit is reached. Over HTTP/2 a request is counted per successfully
+    opened stream: the session is retired once the limit is reached, meaning it
+    accepts no further streams and the streams it already accepted are allowed
+    to complete before the connection is closed. Queued and subsequent requests
+    are dispatched on a new session.
   * `localAddress` {string|null} The local IP address the socket should connect
     from. **Default:** `null`.
   * `pipelining` {number|null} The number of concurrent requests sent over the
