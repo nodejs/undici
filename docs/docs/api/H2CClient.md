@@ -64,7 +64,9 @@ added: v7.7.0
   * `maxHeaderSize` {number} The maximum length of request headers in bytes.
     **Default:** Node.js' `--max-http-header-size` or `16384` (16 KiB).
   * `headersTimeout` {number} The amount of time, in milliseconds, the parser
-    waits to receive the complete HTTP headers. **Default:** `300e3`.
+    waits to receive the complete HTTP headers. This also bounds how long a
+    session retired by `maxRequestsPerClient` may wait for its active streams
+    to close. **Default:** `300e3`.
   * `connectTimeout` {number} The timeout for establishing a socket connection,
     in milliseconds. Use `0` to disable it entirely. **Default:** `10e3`.
   * `bodyTimeout` {number} The timeout, in milliseconds, after which a request
@@ -93,9 +95,10 @@ added: v7.7.0
     a single connection before it is reset. Use `0` to disable this limit.
     **Default:** `null`.
     A request is counted per successfully opened HTTP/2 stream. Once the limit
-    is reached the session is retired: it accepts no further streams and the
-    streams it already accepted are allowed to complete before the connection is
-    closed. Queued and subsequent requests are dispatched on a new session.
+    is reached the session is retired: it accepts no further streams. Streams
+    it already accepted are allowed to complete for up to `headersTimeout`
+    before the connection is reset. Queued and subsequent requests are
+    dispatched on a new session.
   * `localAddress` {string} The local IP address the socket should connect from.
   * `maxResponseSize` {number} The maximum allowed response body size in bytes.
     Use `-1` to disable. **Default:** `-1`.

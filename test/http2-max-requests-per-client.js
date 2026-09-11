@@ -356,6 +356,50 @@ test('h2 counts a websocket upgrade stream and waits for it to close', async t =
   t.deepStrictEqual(sessions.perSession, [1, 1])
 })
 
+test('h2 bounds retired session draining with headersTimeout', async t => {
+  t = tspl(t, { plan: 6 })
+
+  let interval
+  const { sessions, origin } = await startSecureServer(t, (stream, headers) => {
+    stream.on('error', () => {})
+
+    if (headers[':path'] === '/events') {
+      stream.respond({
+        ':status': 200,
+        'content-type': 'text/event-stream'
+      })
+      stream.write('data: started\n\n')
+      interval = setInterval(() => stream.write('data: keepalive\n\n'), 25).unref()
+      stream.once('close', () => clearInterval(interval))
+      return
+    }
+
+    respond(stream)
+  })
+
+  const client = h2Client(origin, {
+    maxRequestsPerClient: 1,
+    headersTimeout: 100,
+    bodyTimeout: 1000
+  })
+  after(() => client.close())
+
+  const events = await client.request({ path: '/events', method: 'GET' })
+  t.strictEqual(events.statusCode, 200)
+  const eventsError = events.body.text().then(() => null, err => err)
+
+  const queued = client.request({ path: '/queued', method: 'GET' })
+  t.strictEqual(await Promise.race([queued, sleep(50).then(() => 'pending')]), 'pending')
+
+  const response = await queued
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(await response.body.text(), 'hello')
+
+  const err = await eventsError
+  t.strictEqual(err?.code, 'UND_ERR_INFO')
+  t.deepStrictEqual(sessions.perSession, [1, 1])
+})
+
 test('h2 settles every request when the peer sends GOAWAY while retiring', async t => {
   t = tspl(t, { plan: 2 })
 

@@ -49,6 +49,8 @@ added: v1.0.0
   * `headersTimeout` {number|null} The timeout, in milliseconds, the parser
     waits to receive the complete HTTP headers before the request times out. Use
     `0` to disable it entirely. **Default:** `300e3`.
+    Over HTTP/2 this also bounds how long a session retired by
+    `maxRequestsPerClient` may wait for its active streams to close.
     HTTP/1.1 headers/body parser timeouts are not guaranteed to fire with exact
     millisecond precision: delays up to 1000ms use native timers, while larger
     delays use undici's lower-overhead fast timers with a target resolution
@@ -78,9 +80,9 @@ added: v1.0.0
     Over HTTP/1.1 a request is counted per message and the socket is reset once
     the limit is reached. Over HTTP/2 a request is counted per successfully
     opened stream: the session is retired once the limit is reached, meaning it
-    accepts no further streams and the streams it already accepted are allowed
-    to complete before the connection is closed. Queued and subsequent requests
-    are dispatched on a new session.
+    accepts no further streams. Streams it already accepted are allowed to
+    complete for up to `headersTimeout` before the connection is reset. Queued
+    and subsequent requests are then dispatched on a new session.
   * `localAddress` {string|null} The local IP address the socket should connect
     from. **Default:** `null`.
   * `pipelining` {number|null} The number of concurrent requests sent over the
