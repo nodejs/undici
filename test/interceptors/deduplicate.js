@@ -1338,6 +1338,26 @@ describe('Deduplicate Interceptor', () => {
     notStrictEqual(key1, key2)
   })
 
+  test('makeDeduplicationKey does not collide on a header named __proto__', () => {
+    const withProto = JSON.parse('{"__proto__":"a","x-real":"same"}')
+
+    const key1 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: withProto
+    })
+
+    const key2 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { 'x-real': 'same' }
+    })
+
+    notStrictEqual(key1, key2)
+  })
+
   test('makeDeduplicationKey produces same key for identical headers', () => {
     const key1 = makeDeduplicationKey({
       origin: 'https://example.com',
