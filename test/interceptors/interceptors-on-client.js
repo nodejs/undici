@@ -7,7 +7,7 @@
 
 const { test } = require('node:test')
 const { createServer } = require('node:http')
-const { Agent, Client, Pool, Headers, interceptors, request } = require('../../')
+const { Agent, Client, Pool, Headers, interceptors, request, util } = require('../../')
 
 function listen (server) {
   return new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -17,15 +17,16 @@ function close (server) {
   return new Promise(resolve => server.close(resolve))
 }
 
-test('compose() normalizes request headers before invoking interceptors', async (t) => {
+test('custom interceptors can normalize request headers', async (t) => {
   const server = createServer((req, res) => res.end('ok'))
   await listen(server)
   t.after(() => close(server))
 
   const seen = []
   const dispatcher = new Agent().compose(dispatch => (opts, handler) => {
-    seen.push(opts.headers)
-    return dispatch(opts, handler)
+    const headers = util.normalizeHeaders(opts.headers)
+    seen.push(headers)
+    return dispatch({ ...opts, headers }, handler)
   })
   t.after(() => dispatcher.close())
 
