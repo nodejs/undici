@@ -397,6 +397,27 @@ test('Cookie Set', () => {
     'Space=Cat; Expires=Fri, 07 Jan 1983 15:32:00 GMT'
   )
 
+  // A numeric 0 is the Unix epoch, the canonical "expire now" value, not an
+  // absent option.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: 0
+  })
+  assert.equal(
+    headers.get('Set-Cookie'),
+    'Space=Cat; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  )
+
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: null
+  })
+  assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+
   headers = new Headers()
   setCookie(headers, { name: '__Secure-Kitty', value: 'Meow' })
   assert.equal(headers.get('Set-Cookie'), '__Secure-Kitty=Meow; Secure')
