@@ -5,7 +5,9 @@ const {
   URLSerializer,
   stringPercentDecode,
   parseMIMEType,
-  collectAnHTTPQuotedString
+  collectAnHTTPQuotedString,
+  serializeAMimeType,
+  HTTP_TOKEN_CODEPOINTS
 } = require('../../lib/web/fetch/data-url')
 const { fetch } = require('../..')
 
@@ -99,6 +101,50 @@ test('https://mimesniff.spec.whatwg.org/#parse-a-mime-type', (t) => {
     subtype: 'javascript',
     parameters: new Map(),
     essence: 'application/javascript'
+  })
+})
+
+// https://mimesniff.spec.whatwg.org/#http-token-code-point
+// The HTTP token code points include the range U+005E (^) to U+0060 (`),
+// so the backtick is a token code point just like ^ and _.
+test('U+0060 (`) is an HTTP token code point', async (t) => {
+  await t.test('is allowed in a type and a subtype', (t) => {
+    t.assert.deepStrictEqual(parseMIMEType('te`xt/plain'), {
+      type: 'te`xt',
+      subtype: 'plain',
+      parameters: new Map(),
+      essence: 'te`xt/plain'
+    })
+
+    t.assert.deepStrictEqual(parseMIMEType('text/pl`ain'), {
+      type: 'text',
+      subtype: 'pl`ain',
+      parameters: new Map(),
+      essence: 'text/pl`ain'
+    })
+  })
+
+  await t.test('is allowed in a parameter name', (t) => {
+    t.assert.deepStrictEqual(parseMIMEType('text/plain;a`b=1'), {
+      type: 'text',
+      subtype: 'plain',
+      parameters: new Map([['a`b', '1']]),
+      essence: 'text/plain'
+    })
+  })
+
+  await t.test('does not force a parameter value to be quoted when serialized', (t) => {
+    const mimeType = parseMIMEType('text/plain;x="a`b"')
+
+    t.assert.notStrictEqual(mimeType, 'failure')
+    t.assert.strictEqual(serializeAMimeType(mimeType), 'text/plain;x=a`b')
+  })
+
+  await t.test('is matched by HTTP_TOKEN_CODEPOINTS', (t) => {
+    // ^ and _ are the other two code points in the same range.
+    t.assert.ok(HTTP_TOKEN_CODEPOINTS.test('^'))
+    t.assert.ok(HTTP_TOKEN_CODEPOINTS.test('_'))
+    t.assert.ok(HTTP_TOKEN_CODEPOINTS.test('`'))
   })
 })
 
