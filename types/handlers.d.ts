@@ -11,6 +11,9 @@ export declare class RedirectHandler implements Dispatcher.DispatchHandler {
   )
 }
 
+/**
+ * @deprecated Use a plain handler object instead.
+ */
 export declare class DecoratorHandler implements Dispatcher.DispatchHandler {
   constructor (handler: Dispatcher.DispatchHandler)
 }
