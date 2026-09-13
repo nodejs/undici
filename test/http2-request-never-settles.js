@@ -11,7 +11,9 @@ const pem = require('@metcoder95/https-pem')
 const { Agent } = require('..')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
-const skipForMemoryCorruption = process.platform === 'linux' && (nodeMajor === 24 || nodeMajor === 25)
+const skipForMemoryCorruption =
+  (process.platform === 'linux' && nodeMajor === 24) ||
+  nodeMajor === 25
 const skipForOnreadAssertion = nodeMajor === 26
 
 // completeRequestStream() runs on an h2 stream's 'close':
