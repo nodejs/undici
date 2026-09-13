@@ -445,3 +445,56 @@ test('#5453 - request onto a GOAWAY-rejected session is requeued on a fresh sess
 
   await t.completed
 })
+
+test('a request whose response already started fails instead of being replayed after GOAWAY', { timeout: 10000 }, async (t) => {
+  const p = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let secondStream = null
+  let secondRequests = 0
+
+  server.on('stream', (stream, headers) => {
+    stream.on('error', () => {})
+
+    if (headers[':path'] === '/second') {
+      secondRequests++
+      secondStream = stream
+      // Respond without ending, so the GOAWAY below arrives mid-response.
+      stream.respond({ ':status': 200 })
+      return
+    }
+
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  t.after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connect: { rejectUnauthorized: false }
+  })
+  t.after(() => client.close())
+
+  // Stream 1 completes, so the GOAWAY below can name a lower stream id.
+  const first = await client.request({ path: '/first', method: 'GET' })
+  p.strictEqual(await first.body.text(), 'ok')
+
+  // Stream 3 has received its response headers when this resolves.
+  const second = await client.request({ path: '/second', method: 'GET' })
+
+  // A misbehaving peer names stream 1 as the last processed, even though it
+  // already responded on stream 3. undici must fail the request with the
+  // GOAWAY error rather than replay a response it has already started.
+  secondStream.session.goaway(constants.NGHTTP2_NO_ERROR, 1)
+
+  await p.rejects(second.body.text(), { code: 'UND_ERR_INFO' })
+  p.strictEqual(secondRequests, 1)
+
+  // After the GOAWAY, a new request still succeeds on a fresh connection.
+  const third = await client.request({ path: '/third', method: 'GET' })
+  p.strictEqual(await third.body.text(), 'ok')
+
+  await p.completed
+})
