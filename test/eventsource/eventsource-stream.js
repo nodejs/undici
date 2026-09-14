@@ -29,6 +29,30 @@ describe('EventSourceStream', () => {
     t.assert.strictEqual(event.data, 'hello\nworld')
   })
 
+  test('enforces maxEventSize on an unterminated line', async (t) => {
+    const stream = new EventSourceStream({ maxEventSize: 10 })
+    stream.processEvent = () => t.assert.fail()
+
+    // A server can stream a `data:` field that never contains a line terminator.
+    // The buffered line must not grow past maxEventSize without being rejected.
+    const error = await new Promise((resolve) => {
+      stream.on('error', resolve)
+      stream.write(Buffer.alloc(100, 0x41))
+    })
+
+    t.assert.strictEqual(error.message, 'EventSource message size exceeded')
+  })
+
+  test('accepts a terminated data line with a value equal to maxEventSize', (t) => {
+    const stream = new EventSourceStream({ maxEventSize: 10 })
+
+    stream.processEvent = function (event) {
+      t.assert.strictEqual(event.data, '123456789a')
+    }
+
+    stream.write(Buffer.from('data: 123456789a\n\n', 'utf8'))
+  })
+
   test('ignore empty chunks', (t) => {
     const stream = new EventSourceStream()
 

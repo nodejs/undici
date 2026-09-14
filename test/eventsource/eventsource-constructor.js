@@ -41,6 +41,39 @@ describe('EventSource - withCredentials', () => {
     t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
   })
 
+  test('dispatcher eventSource.maxEventSize closes the connection on an unterminated data line', async (t) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      // A data field that never contains a line terminator must not bypass the
+      // configured maxEventSize and drive the client toward memory exhaustion.
+      res.write('data: 123456789a123456789a')
+    })
+
+    await once(server.listen(0), 'listening')
+    const port = server.address().port
+
+    const agent = new Agent({
+      eventSource: {
+        maxEventSize: 10
+      }
+    })
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`, {
+      node: {
+        dispatcher: agent
+      }
+    })
+    t.after(async () => {
+      eventSourceInstance.close()
+      server.close()
+      await agent.close()
+    })
+
+    await once(eventSourceInstance, 'open')
+    await once(eventSourceInstance, 'error', { signal: AbortSignal.timeout(1000) })
+
+    t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
+  })
+
   test('withCredentials should be false by default', async (t) => {
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
