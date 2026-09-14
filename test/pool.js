@@ -1351,3 +1351,78 @@ test('stats', async (t) => {
 
   await t.completed
 })
+
+test('pool does not dispatch to clientTtl-evicted client when stale drain fires', async (t) => {
+  t = tspl(t, { plan: 5 })
+
+  let created = 0
+  const clients = []
+
+  class FakeClient extends EventEmitter {
+    constructor () {
+      super()
+      this.id = ++created
+      this.closed = false
+      this.destroyed = false
+      clients.push(this)
+    }
+
+    dispatch (opts, handler) {
+      if (this.closed) {
+        throw new errors.ClientClosedError()
+      }
+      if (this.id === 1) {
+        // Emit connect on first dispatch so the pool records a TTL timestamp
+        if (!this.ttl) {
+          this.emit('connect', new URL('http://notahost'), [this])
+        }
+        return true
+      }
+      // Simulate C2 mid-TLS-handshake: accepted the request but at capacity
+      return false
+    }
+
+    close (cb) {
+      this.closed = true
+      if (cb) cb()
+    }
+
+    destroy () {
+      this.destroyed = true
+    }
+  }
+
+  const pool = new Pool('http://notahost', {
+    connections: 1,
+    clientTtl: 1,
+    factory: () => new FakeClient()
+  })
+  after(() => pool.destroy())
+
+  const handler = { onResponseError (_controller, err) { throw err } }
+
+  // First dispatch: creates C1, C1 emits connect (TTL timestamp recorded), returns true
+  pool.dispatch({ path: '/', method: 'GET' }, handler)
+  t.strictEqual(created, 1, 'C1 created')
+
+  // Wait for clientTtl to expire
+  await new Promise(resolve => setTimeout(resolve, 10))
+
+  // Second dispatch: C1's TTL expired → evicted (closed=true), C2 created.
+  // C2.dispatch returns false (mid-handshake) → C2[kNeedDrain]=true → pool at capacity.
+  pool.dispatch({ path: '/', method: 'GET' }, handler)
+  t.strictEqual(created, 2, 'C2 created after C1 evicted by TTL')
+
+  const c1 = clients[0]
+  t.strictEqual(c1.closed, true, 'C1 closed after TTL eviction')
+
+  // Third dispatch: C2 is at capacity and connections limit reached → item queued in pool
+  pool.dispatch({ path: '/', method: 'GET' }, handler)
+  t.strictEqual(pool.stats.queued, 1, 'request sits in pool queue while C2 is connecting')
+
+  // Simulate C1 completing an in-flight response — its stale drain listener fires.
+  // Without the fix kOnDrain(C1) dispatches the queued item to the closed C1,
+  // throwing ClientClosedError. With the fix it returns early for closed clients.
+  c1.emit('drain', new URL('http://notahost'), [c1])
+  t.ok(true, 'no ClientClosedError when evicted client emits drain')
+})
