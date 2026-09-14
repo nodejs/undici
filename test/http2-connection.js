@@ -1,7 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
@@ -9,20 +9,34 @@ const { Readable } = require('node:stream')
 const pem = require('@metcoder95/https-pem')
 
 const { Client } = require('..')
+const { guardAgainstUnexpectedDisconnect } = require('./utils/h2-disconnect-guard')
+
+// Tears the client down before the server, so the client never has to react to
+// a GOAWAY it did not ask for, and waits for both.
+function teardown (t, server, getClient) {
+  t.after(async () => {
+    const client = getClient()
+    if (client != null && !client.destroyed) {
+      await client.close()
+    }
+    await new Promise(resolve => server.close(resolve))
+  })
+}
 
 test('Should support H2 connection', async t => {
-  t = tspl(t, { plan: 9 })
+  const assert = tspl(t, { plan: 9 })
 
   const body = []
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createSecureServer(pem)
   let authority = ''
+  let client = null
 
   server.on('stream', (stream, headers, _flags, rawHeaders) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers[':method'], 'GET')
-    t.strictEqual(headers[':scheme'], 'https')
-    t.strictEqual(headers[':path'], '/')
-    t.strictEqual(headers[':authority'], authority)
+    assert.strictEqual(headers['x-my-header'], 'foo')
+    assert.strictEqual(headers[':method'], 'GET')
+    assert.strictEqual(headers[':scheme'], 'https')
+    assert.strictEqual(headers[':path'], '/')
+    assert.strictEqual(headers[':authority'], authority)
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -31,24 +45,19 @@ test('Should support H2 connection', async t => {
     stream.end('hello h2!')
   })
 
-  after(() => server.close())
+  teardown(t, server, () => client)
 
-  await once(server.listen(0), 'listening')
+  await once(server.listen(0, '127.0.0.1'), 'listening')
 
-  authority = `localhost:${server.address().port}`
-  const client = new Client(`https://${authority}`, {
+  authority = `127.0.0.1:${server.address().port}`
+  client = new Client(`https://${authority}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
-  after(() => client.close())
 
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardAgainstUnexpectedDisconnect(assert, client)
 
   const response = await client.request({
     path: '/',
@@ -64,27 +73,28 @@ test('Should support H2 connection', async t => {
 
   await once(response.body, 'end')
 
-  t.strictEqual(response.statusCode, 200)
-  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  assert.strictEqual(response.statusCode, 200)
+  assert.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  assert.strictEqual(response.headers['x-custom-h2'], 'hello')
+  assert.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 
-  await t.completed
+  await assert.completed
 })
 
 test('Should support H2 connection(multiple requests)', async t => {
-  t = tspl(t, { plan: 21 })
+  const assert = tspl(t, { plan: 21 })
 
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createSecureServer(pem)
+  let client = null
 
   server.on('stream', async (stream, headers, _flags, rawHeaders) => {
-    t.strictEqual(headers['x-my-header'], 'foo')
-    t.strictEqual(headers[':method'], 'POST')
+    assert.strictEqual(headers['x-my-header'], 'foo')
+    assert.strictEqual(headers[':method'], 'POST')
     const reqData = []
     stream.on('data', chunk => reqData.push(chunk.toString()))
     await once(stream, 'end')
     const reqBody = reqData.join('')
-    t.strictEqual(reqBody.length > 0, true)
+    assert.strictEqual(reqBody.length > 0, true)
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -93,22 +103,18 @@ test('Should support H2 connection(multiple requests)', async t => {
     stream.end(`hello h2! ${reqBody}`)
   })
 
-  after(() => server.close())
-  await once(server.listen(0), 'listening')
+  teardown(t, server, () => client)
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+
+  client = new Client(`https://127.0.0.1:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
-  after(() => client.close())
 
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardAgainstUnexpectedDisconnect(assert, client)
 
   for (let i = 0; i < 3; i++) {
     const sendBody = `seq ${i}`
@@ -129,26 +135,27 @@ test('Should support H2 connection(multiple requests)', async t => {
 
     await once(response.body, 'end')
 
-    t.strictEqual(response.statusCode, 200)
-    t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-    t.strictEqual(response.headers['x-custom-h2'], 'hello')
-    t.strictEqual(Buffer.concat(body).toString('utf8'), `hello h2! ${sendBody}`)
+    assert.strictEqual(response.statusCode, 200)
+    assert.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+    assert.strictEqual(response.headers['x-custom-h2'], 'hello')
+    assert.strictEqual(Buffer.concat(body).toString('utf8'), `hello h2! ${sendBody}`)
   }
 
-  await t.completed
+  await assert.completed
 })
 
 test('Should support H2 connection (headers as array)', async t => {
-  t = tspl(t, { plan: 8 })
+  const assert = tspl(t, { plan: 8 })
 
   const body = []
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createSecureServer(pem)
+  let client = null
 
   server.on('stream', (stream, headers) => {
-    t.strictEqual(headers['x-my-header'], 'foo, bar')
-    t.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
-    t.strictEqual(headers['x-other'], 'value')
-    t.strictEqual(headers[':method'], 'GET')
+    assert.strictEqual(headers['x-my-header'], 'foo, bar')
+    assert.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
+    assert.strictEqual(headers['x-other'], 'value')
+    assert.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -157,22 +164,18 @@ test('Should support H2 connection (headers as array)', async t => {
     stream.end('hello h2!')
   })
 
-  after(() => server.close())
-  await once(server.listen(0), 'listening')
+  teardown(t, server, () => client)
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+
+  client = new Client(`https://127.0.0.1:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
-  after(() => client.close())
 
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardAgainstUnexpectedDisconnect(assert, client)
 
   const response = await client.request({
     path: '/',
@@ -192,52 +195,53 @@ test('Should support H2 connection (headers as array)', async t => {
 
   await once(response.body, 'end')
 
-  t.strictEqual(response.statusCode, 200)
-  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  assert.strictEqual(response.statusCode, 200)
+  assert.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  assert.strictEqual(response.headers['x-custom-h2'], 'hello')
+  assert.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 
-  await t.completed
+  await assert.completed
 })
 
 test('Should support multiple header values with semicolon separator', async t => {
-  t = tspl(t, { plan: 9 * 2 })
+  const assert = tspl(t, { plan: 9 * 2 })
 
   const body = []
   const body2 = []
   const expectedCookieHeaders = ['a=b', 'c=d', 'e=f']
-  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  const server = createSecureServer(pem)
+  let client = null
 
+  // The two requests carry the same headers by design, so tell their responses
+  // apart to keep each assertion pinned to its own response.
+  let seq = 0
   server.on('stream', (stream, headers) => {
-    t.strictEqual(headers['x-my-header'], 'foo, bar')
-    t.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
-    t.strictEqual(headers['x-other'], 'value')
-    t.strictEqual(headers['cookie'], expectedCookieHeaders.join('; '))
-    t.strictEqual(headers[':method'], 'GET')
+    const n = ++seq
+    assert.strictEqual(headers['x-my-header'], 'foo, bar')
+    assert.strictEqual(headers['x-my-drink'], 'coffee, tea, water')
+    assert.strictEqual(headers['x-other'], 'value')
+    assert.strictEqual(headers.cookie, expectedCookieHeaders.join('; '))
+    assert.strictEqual(headers[':method'], 'GET')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
       ':status': 200
     })
-    stream.end('hello h2!')
+    stream.end(`hello h2! ${n}`)
   })
 
-  after(() => server.close())
-  await once(server.listen(0), 'listening')
+  teardown(t, server, () => client)
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+
+  client = new Client(`https://127.0.0.1:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
-  after(() => client.close())
 
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardAgainstUnexpectedDisconnect(assert, client)
 
   const response = await client.request({
     path: '/',
@@ -258,10 +262,10 @@ test('Should support multiple header values with semicolon separator', async t =
 
   await once(response.body, 'end')
 
-  t.strictEqual(response.statusCode, 200)
-  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  assert.strictEqual(response.statusCode, 200)
+  assert.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  assert.strictEqual(response.headers['x-custom-h2'], 'hello')
+  assert.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2! 1')
 
   const response2 = await client.request({
     path: '/',
@@ -284,25 +288,26 @@ test('Should support multiple header values with semicolon separator', async t =
 
   await once(response2.body, 'end')
 
-  t.strictEqual(response2.statusCode, 200)
-  t.strictEqual(response2.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response2.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  assert.strictEqual(response2.statusCode, 200)
+  assert.strictEqual(response2.headers['content-type'], 'text/plain; charset=utf-8')
+  assert.strictEqual(response2.headers['x-custom-h2'], 'hello')
+  assert.strictEqual(Buffer.concat(body2).toString('utf8'), 'hello h2! 2')
 
-  await t.completed
+  await assert.completed
 })
 
 test('Should support H2 connection(POST Buffer)', async t => {
-  t = tspl(t, { plan: 6 })
+  const assert = tspl(t, { plan: 6 })
 
-  const server = createSecureServer({ ...await pem.generate({ opts: { keySize: 2048 } }), allowHTTP1: false })
+  const server = createSecureServer({ key: pem.key, cert: pem.cert, allowHTTP1: false })
+  let client = null
 
   server.on('stream', async (stream, headers, _flags, rawHeaders) => {
-    t.strictEqual(headers[':method'], 'POST')
+    assert.strictEqual(headers[':method'], 'POST')
     const reqData = []
     stream.on('data', chunk => reqData.push(chunk.toString()))
     await once(stream, 'end')
-    t.strictEqual(reqData.join(''), 'hello!')
+    assert.strictEqual(reqData.join(''), 'hello!')
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': 'hello',
@@ -311,22 +316,18 @@ test('Should support H2 connection(POST Buffer)', async t => {
     stream.end('hello h2!')
   })
 
-  after(() => server.close())
-  await once(server.listen(0), 'listening')
+  teardown(t, server, () => client)
 
-  const client = new Client(`https://localhost:${server.address().port}`, {
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+
+  client = new Client(`https://127.0.0.1:${server.address().port}`, {
     connect: {
       rejectUnauthorized: false
     },
     allowH2: true
   })
-  after(() => client.close())
 
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
+  guardAgainstUnexpectedDisconnect(assert, client)
 
   const sendBody = 'hello!'
   const body = []
@@ -342,10 +343,10 @@ test('Should support H2 connection(POST Buffer)', async t => {
 
   await once(response.body, 'end')
 
-  t.strictEqual(response.statusCode, 200)
-  t.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
-  t.strictEqual(response.headers['x-custom-h2'], 'hello')
-  t.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
+  assert.strictEqual(response.statusCode, 200)
+  assert.strictEqual(response.headers['content-type'], 'text/plain; charset=utf-8')
+  assert.strictEqual(response.headers['x-custom-h2'], 'hello')
+  assert.strictEqual(Buffer.concat(body).toString('utf8'), 'hello h2!')
 
-  await t.completed
+  await assert.completed
 })
