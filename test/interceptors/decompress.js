@@ -373,6 +373,49 @@ test('should pass through unsupported encoding', async t => {
   await t.completed
 })
 
+// `constructor` and `__proto__` are the only Object.prototype member names that
+// survive the toLowerCase() in onResponseStart, so they are the two an origin
+// can actually put on the wire.
+for (const encoding of ['constructor', '__proto__', 'gzip, constructor']) {
+  test(`should pass through an Object.prototype name as an encoding: ${encoding}`, async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Content-Encoding': encoding
+      })
+      res.end('This has unsupported encoding')
+    })
+
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(
+      `http://localhost:${server.address().port}`
+    ).compose(createDecompressInterceptor())
+
+    after(async () => {
+      await client.close()
+      server.close()
+      await once(server, 'close')
+    })
+
+    const response = await client.request({
+      method: 'GET',
+      path: '/'
+    })
+
+    const body = await response.body.text()
+
+    t.equal(response.statusCode, 200)
+    t.equal(response.headers['content-encoding'], encoding)
+    t.equal(body, 'This has unsupported encoding')
+
+    await t.completed
+  })
+}
+
 test('should pass through error responses (4xx, 5xx)', async t => {
   t = tspl(t, { plan: 3 })
 
