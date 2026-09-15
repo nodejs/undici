@@ -8,6 +8,7 @@ const { once } = require('node:events')
 const pem = require('@metcoder95/https-pem')
 
 const { Client } = require('..')
+const { kHTTP2Options } = require('../lib/core/symbols')
 
 test('Should throw if bad allowH2 has been passed', async t => {
   t = tspl(t, { plan: 1 })
@@ -48,6 +49,24 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
   })
 
   await t.completed
+})
+
+test('Should accept each h2Options field on its own', async t => {
+  const p = tspl(t, { plan: 3 })
+
+  const maxConcurrentStreams = new Client('https://localhost:1000', { allowH2: true, h2Options: { maxConcurrentStreams: 10 } })
+  t.after(() => maxConcurrentStreams.close())
+  p.strictEqual(maxConcurrentStreams[kHTTP2Options].maxConcurrentStreams, 10)
+
+  const connectionWindowSize = new Client('https://localhost:1000', { allowH2: true, h2Options: { connectionWindowSize: 65535 } })
+  t.after(() => connectionWindowSize.close())
+  p.strictEqual(connectionWindowSize[kHTTP2Options].connectionWindowSize, 65535)
+
+  const pingInterval = new Client('https://localhost:1000', { allowH2: true, h2Options: { pingInterval: 1000 } })
+  t.after(() => pingInterval.close())
+  p.strictEqual(pingInterval[kHTTP2Options].pingInterval, 1000)
+
+  await p.completed
 })
 
 test(
