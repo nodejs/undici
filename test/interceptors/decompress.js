@@ -1640,6 +1640,47 @@ test('should handle controller pause with chained decompression', async t => {
   await t.completed
 })
 
+test('should disable the decompressed size limit by default', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const decompressedSize = 64 * 1024 * 1024 + 1
+  const compressed = gzipSync(Buffer.alloc(decompressedSize, 0x61))
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  let received = 0
+  for await (const chunk of response.body) {
+    received += chunk.length
+  }
+
+  t.equal(received, decompressedSize)
+
+  await t.completed
+})
+
 test('should reject a response that exceeds maxSize after decompression', async t => {
   t = tspl(t, { plan: 1 })
 
@@ -1874,12 +1915,15 @@ test('should allow a decompressed response exactly equal to maxSize', async t =>
 test('should reject invalid maxSize values', async t => {
   t = tspl(t, { plan: 5 })
 
-  for (const maxSize of [0, -1, 1.5, Infinity, '1024']) {
+  const unlimitedDispatch = createDecompressInterceptor({ maxSize: 0 })(() => true)
+  t.doesNotThrow(() => unlimitedDispatch({ method: 'GET' }, {}))
+
+  for (const maxSize of [-1, 1.5, Infinity, '1024']) {
     const dispatch = createDecompressInterceptor({ maxSize })(() => true)
     t.throws(() => dispatch({ method: 'GET' }, {}), {
       name: 'InvalidArgumentError',
       code: 'UND_ERR_INVALID_ARG',
-      message: 'maxSize must be a positive integer'
+      message: 'maxSize must be a non-negative integer'
     })
   }
 
