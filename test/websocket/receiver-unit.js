@@ -85,7 +85,9 @@ function createRecordingHandler () {
     onMessage (type, data) {
       events.push(`message:${data.length}`)
     },
-    onPing () {},
+    onPing () {
+      events.push('ping')
+    },
     onPong () {},
     onSocketClose () {
       events.push('close')
@@ -177,4 +179,89 @@ test('ByteParser fails the connection on a continuation frame after a multi-frag
   await tick()
 
   t.assert.deepStrictEqual(handler.events, ['message:5', 'abort'])
+})
+
+test('ByteParser fails the connection on a continuation frame separated from a compressed message by a control frame', async (t) => {
+  const handler = createRecordingHandler()
+  const parser = new ByteParser(handler, new Map([['permessage-deflate', 'permessage-deflate']]), {})
+
+  t.after(() => parser.destroy())
+
+  const payload = await deflate(Buffer.from('hello'))
+
+  parser.write(Buffer.concat([Buffer.from([0xC1, payload.length]), payload]))
+  await tick()
+
+  // A ping does not carry RSV1, but control frames never update the compressed
+  // flag, so it must not launder the stray continuation frame that follows.
+  parser.write(Buffer.from([0x89, 0x00]))
+  await tick()
+
+  parser.write(Buffer.from([0x80, 0x00]))
+  await tick()
+
+  t.assert.deepStrictEqual(handler.events, ['message:5', 'ping', 'abort'])
+})
+
+test('ByteParser fails the connection on a non-empty continuation frame after a compressed message', async (t) => {
+  const handler = createRecordingHandler()
+  const parser = new ByteParser(handler, new Map([['permessage-deflate', 'permessage-deflate']]), {})
+
+  t.after(() => parser.destroy())
+
+  const payload = await deflate(Buffer.from('hello'))
+
+  parser.write(Buffer.concat([Buffer.from([0xC1, payload.length]), payload]))
+  await tick()
+
+  // The stray continuation carries a payload that would decompress cleanly, so
+  // the connection must fail on the frame's opcode, not on a zlib error.
+  parser.write(Buffer.concat([Buffer.from([0x80, payload.length]), payload]))
+  await tick()
+
+  t.assert.deepStrictEqual(handler.events, ['message:5', 'abort'])
+})
+
+test('ByteParser delivers two consecutive compressed messages (control)', async (t) => {
+  const handler = createRecordingHandler()
+  const parser = new ByteParser(handler, new Map([['permessage-deflate', 'permessage-deflate']]), {})
+
+  t.after(() => parser.destroy())
+
+  const payload = await deflate(Buffer.from('hello'))
+  const frame = Buffer.concat([Buffer.from([0xC1, payload.length]), payload])
+
+  parser.write(frame)
+  await tick()
+
+  // Clearing the flag when a message completes must not stop the next frame
+  // from being read as compressed.
+  parser.write(frame)
+  await tick()
+
+  t.assert.deepStrictEqual(handler.events, ['message:5', 'message:5'])
+})
+
+test('ByteParser keeps the compressed flag across a control frame inside a fragmented message (control)', async (t) => {
+  const handler = createRecordingHandler()
+  const parser = new ByteParser(handler, new Map([['permessage-deflate', 'permessage-deflate']]), {})
+
+  t.after(() => parser.destroy())
+
+  const payload = await deflate(Buffer.from('hello'))
+  const head = payload.subarray(0, 2)
+  const tail = payload.subarray(2)
+
+  parser.write(Buffer.concat([Buffer.from([0x41, head.length]), head]))
+  await tick()
+
+  // Control frames may be interleaved into a fragmented message; the flag
+  // describes the message in progress and must survive until it completes.
+  parser.write(Buffer.from([0x89, 0x00]))
+  await tick()
+
+  parser.write(Buffer.concat([Buffer.from([0x80, tail.length]), tail]))
+  await tick()
+
+  t.assert.deepStrictEqual(handler.events, ['ping', 'message:5'])
 })
