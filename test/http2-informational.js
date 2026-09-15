@@ -41,6 +41,12 @@ test('h2 forwards 1xx informational responses to onInfo', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const infos = []
   const response = await client.request({
     path: '/',

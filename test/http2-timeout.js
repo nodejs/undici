@@ -41,6 +41,12 @@ test('Should handle http2 stream timeout', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const res = await client.request({
     path: '/',
     method: 'PUT',
@@ -89,6 +95,12 @@ test('http2 stream timeout keeps open-stream counter non-negative', async t => {
     pipelining: 1
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   // Drive three sequential request timeouts on the same h2 session. Each one
   // should leave the open-stream counter at 0, not at a negative value.
