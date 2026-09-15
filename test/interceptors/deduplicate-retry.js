@@ -81,12 +81,19 @@ for (const deduplicateFirst of [true, false]) {
             }
           }
 
-          t.assert.strictEqual(hits, 2)
+          if (deduplicateFirst && !synchronous) {
+            // Each request has its own retry timer. The retries only deduplicate
+            // if they overlap; otherwise both make a separate origin request.
+            t.assert.ok(hits === 2 || hits === 3, `expected 2 or 3 origin requests, got ${hits}`)
+          } else {
+            t.assert.strictEqual(hits, 2)
+          }
           t.assert.strictEqual(events.at(-1).size, 0)
           t.assert.strictEqual(events.filter(event => event.type === 'added').length,
             events.filter(event => event.type === 'removed').length)
 
           // A later request for the same key must not attach to a stale entry.
+          const hitsBeforeLater = hits
           const later = client.request(request)
           if (!succeeds && throwOnError) {
             await t.assert.rejects(later, { code: 'UND_ERR_REQ_RETRY', statusCode })
@@ -95,7 +102,7 @@ for (const deduplicateFirst of [true, false]) {
             t.assert.strictEqual(response.statusCode, succeeds ? 200 : statusCode)
             await response.body.dump()
           }
-          t.assert.strictEqual(hits, succeeds ? 3 : 4)
+          t.assert.strictEqual(hits - hitsBeforeLater, succeeds ? 1 : 2)
           t.assert.strictEqual(events.at(-1).size, 0)
         })
       }
