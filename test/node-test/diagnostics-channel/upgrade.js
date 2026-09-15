@@ -160,6 +160,64 @@ test('successful upgrades complete the request diagnostics lifecycle', async (te
   assert.deepStrictEqual(records[1].trailers, [[]])
 })
 
+test('completed upgrades retain transport abort without reopening request diagnostics', async (testContext) => {
+  const serverSockets = new Set()
+  const server = createServer()
+  server.on('upgrade', (_request, socket) => {
+    serverSockets.add(socket)
+    socket.once('close', () => serverSockets.delete(socket))
+    socket.write('HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: test\r\n\r\n')
+  })
+  server.on('connect', (_request, socket) => {
+    serverSockets.add(socket)
+    socket.once('close', () => serverSockets.delete(socket))
+    socket.write('HTTP/1.1 200 Connection Established\r\n\r\n')
+  })
+  testContext.after(() => {
+    for (const socket of serverSockets) {
+      socket.destroy()
+    }
+    server.close()
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const records = observeRequestLifecycles(testContext)
+  const client = new Client(`http://127.0.0.1:${server.address().port}`)
+  testContext.after(() => client.close())
+
+  const requests = [
+    { method: 'GET', path: '/', upgrade: 'test' },
+    { method: 'CONNECT', path: '/' }
+  ]
+
+  for (const options of requests) {
+    let abort
+    const socket = await new Promise((resolve, reject) => {
+      client.dispatch(options, {
+        onConnect (abortRequest) {
+          abort = abortRequest
+        },
+        onUpgrade (_statusCode, _headers, socket) {
+          resolve(socket)
+        },
+        onError: reject
+      })
+    })
+
+    const socketClosure = waitForStreamErrorAndClose(socket)
+    abort()
+    const error = await socketClosure
+    assert.strictEqual(error.code, 'UND_ERR_INFO')
+    assert.strictEqual(error.message, 'aborted')
+  }
+
+  assert.strictEqual(records.length, 2)
+  assert.deepStrictEqual(records[0].events, ['create', 'bodySent', 'headers', 'trailers'])
+  assert.deepStrictEqual(records[1].events, ['create', 'bodySent', 'headers', 'trailers'])
+})
+
 test('a rejected upgrade emits an error without successful completion', async (testContext) => {
   const server = createServer((_request, response) => response.end())
   testContext.after(() => server.close())
@@ -233,6 +291,7 @@ test('upgrade handler errors and aborts terminate the request diagnostics lifecy
       }
     })
   })
+  abort(expectedAbort)
 
   assert.strictEqual(records.length, 2)
   assert.deepStrictEqual(records[1].events, ['create', 'bodySent', 'headers', 'error'])
@@ -286,6 +345,14 @@ test('HTTP/2 CONNECT preserves callback timing and completes diagnostics', async
     }
     if (headers['x-error'] === 'true') {
       server.emit('errorStream', stream)
+      return
+    }
+    if (headers['x-retained-abort'] === 'true') {
+      server.emit('retainedAbortStream', stream)
+      return
+    }
+    if (headers['x-completed-abort'] === 'true') {
+      server.emit('completedAbortStream', stream)
       return
     }
     stream.resume()
@@ -359,36 +426,93 @@ test('HTTP/2 CONNECT preserves callback timing and completes diagnostics', async
   assert.ok(openStreams)
   assert.strictEqual(session[openStreams], 0)
 
-  const expectedAbort = new Error('CONNECT handler aborted')
   let abort
   let abortedStreamClosed
-  const handlerAbort = new Promise((resolve, reject) => {
+  const handlerAbort = new Promise((resolve) => {
     client.dispatch({ method: 'CONNECT', path: '/' }, {
       onConnect (abortRequest) {
         abort = abortRequest
       },
       onUpgrade (_statusCode, _headers, stream) {
         assert.strictEqual(stream.session, session)
-        abortedStreamClosed = waitForStreamClose(stream, expectedAbort)
-        abort(expectedAbort)
+        abortedStreamClosed = waitForStreamErrorAndClose(stream)
+        abort()
       },
       onError (error) {
-        if (error === expectedAbort) {
-          resolve()
-        } else {
-          reject(error)
-        }
+        resolve(error)
       }
     })
   })
 
-  await handlerAbort
-  await abortedStreamClosed
+  const handlerAbortError = await handlerAbort
+  const streamAbortError = await abortedStreamClosed
+  assert.strictEqual(handlerAbortError, streamAbortError)
+  assert.strictEqual(handlerAbortError.code, 'UND_ERR_ABORTED')
 
   assert.strictEqual(records.length, 3)
   assert.deepStrictEqual(records[2].events, ['create', 'error'])
   assert.strictEqual(records[2].request.completed, false)
   assert.strictEqual(records[2].request.aborted, true)
+  assert.strictEqual(session[openStreams], 0)
+
+  const retainedAbortStreamReceived = once(server, 'retainedAbortStream')
+  let retainedAbort
+  const retainedAbortStream = await new Promise((resolve, reject) => {
+    client.dispatch({ method: 'CONNECT', path: '/', headers: { 'x-retained-abort': 'true' } }, {
+      onConnect (abortRequest) {
+        retainedAbort = abortRequest
+      },
+      onUpgrade (_statusCode, _headers, stream) {
+        resolve(stream)
+      },
+      onError: reject
+    })
+  })
+  await retainedAbortStreamReceived
+
+  const retainedAbortStreamClosed = waitForStreamErrorAndClose(retainedAbortStream)
+  retainedAbort()
+  assert.strictEqual(retainedAbortStream.destroyed, true)
+  const retainedAbortError = await retainedAbortStreamClosed
+  assert.strictEqual(retainedAbortError.code, 'UND_ERR_ABORTED')
+
+  assert.strictEqual(records.length, 4)
+  assert.deepStrictEqual(records[3].events, ['create', 'error'])
+  assert.strictEqual(records[3].errors[0], retainedAbortError)
+  assert.strictEqual(records[3].request.completed, true)
+  assert.strictEqual(records[3].request.aborted, false)
+  assert.strictEqual(session[openStreams], 0)
+
+  const completedAbortStreamReceived = once(server, 'completedAbortStream')
+  let completedAbort
+  const completedAbortStream = await new Promise((resolve, reject) => {
+    client.dispatch({ method: 'CONNECT', path: '/', headers: { 'x-completed-abort': 'true' } }, {
+      onConnect (abortRequest) {
+        completedAbort = abortRequest
+      },
+      onUpgrade (_statusCode, _headers, stream) {
+        resolve(stream)
+      },
+      onError: reject
+    })
+  })
+  const [completedAbortServerStream] = await completedAbortStreamReceived
+  const completedAbortResponseReceived = once(completedAbortStream, 'response')
+  completedAbortServerStream.respond({ ':status': 200 }, { endStream: false })
+  await completedAbortResponseReceived
+
+  assert.strictEqual(records.length, 5)
+  assert.deepStrictEqual(records[4].events, ['create', 'headers', 'trailers'])
+
+  const expectedCompletedAbort = new Error('completed CONNECT abort')
+  const completedAbortStreamClosed = waitForStreamClose(completedAbortStream, expectedCompletedAbort)
+  completedAbort(expectedCompletedAbort)
+  assert.strictEqual(completedAbortStream.destroyed, true)
+  await completedAbortStreamClosed
+
+  assert.deepStrictEqual(records[4].events, ['create', 'headers', 'trailers'])
+  assert.strictEqual(records[4].request.completed, true)
+  assert.strictEqual(records[4].request.aborted, false)
   assert.strictEqual(session[openStreams], 0)
 
   const cancelledStreamReceived = once(server, 'cancelStream')
@@ -399,12 +523,12 @@ test('HTTP/2 CONNECT preserves callback timing and completes diagnostics', async
   cancelledServerStream.close(NGHTTP2_CANCEL)
   await cancelledStreamClosed
 
-  assert.strictEqual(records.length, 4)
-  assert.deepStrictEqual(records[3].events, ['create', 'error'])
-  assert.strictEqual(records[3].errors[0].code, 'UND_ERR_INFO')
-  assert.strictEqual(records[3].errors[0].message, 'HTTP/2: "stream error" received - code 8')
-  assert.strictEqual(records[3].request.completed, true)
-  assert.strictEqual(records[3].request.aborted, false)
+  assert.strictEqual(records.length, 6)
+  assert.deepStrictEqual(records[5].events, ['create', 'error'])
+  assert.strictEqual(records[5].errors[0].code, 'UND_ERR_INFO')
+  assert.strictEqual(records[5].errors[0].message, 'HTTP/2: "stream error" received - code 8')
+  assert.strictEqual(records[5].request.completed, true)
+  assert.strictEqual(records[5].request.aborted, false)
   assert.strictEqual(session[openStreams], 0)
 
   const erroredStreamReceived = once(server, 'errorStream')
@@ -415,11 +539,11 @@ test('HTTP/2 CONNECT preserves callback timing and completes diagnostics', async
   erroredServerStream.close(NGHTTP2_INTERNAL_ERROR)
   const responseError = await streamError
 
-  assert.strictEqual(records.length, 5)
-  assert.deepStrictEqual(records[4].events, ['create', 'error'])
-  assert.strictEqual(records[4].errors[0], responseError)
-  assert.strictEqual(records[4].request.completed, true)
-  assert.strictEqual(records[4].request.aborted, false)
+  assert.strictEqual(records.length, 7)
+  assert.deepStrictEqual(records[6].events, ['create', 'error'])
+  assert.strictEqual(records[6].errors[0], responseError)
+  assert.strictEqual(records[6].request.completed, true)
+  assert.strictEqual(records[6].request.aborted, false)
   assert.strictEqual(session[openStreams], 0)
 
   const response = await client.request({ method: 'GET', path: '/' })
