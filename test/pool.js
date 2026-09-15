@@ -1397,7 +1397,7 @@ test('pool does not dispatch to clientTtl-evicted client when stale drain fires'
     clientTtl: 1,
     factory: () => new FakeClient()
   })
-  after(() => pool.destroy())
+  after(() => pool.destroy().catch(() => {}))
 
   const handler = { onResponseError (_controller, err) { throw err } }
 
