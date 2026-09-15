@@ -155,3 +155,26 @@ test('ByteParser still assembles a fragmented compressed message (control)', asy
 
   t.assert.deepStrictEqual(handler.events, ['message:5'])
 })
+
+test('ByteParser fails the connection on a continuation frame after a multi-fragment compressed message', async (t) => {
+  const handler = createRecordingHandler()
+  const parser = new ByteParser(handler, new Map([['permessage-deflate', 'permessage-deflate']]), {})
+
+  t.after(() => parser.destroy())
+
+  const payload = await deflate(Buffer.from('hello'))
+  const head = payload.subarray(0, 2)
+  const tail = payload.subarray(2)
+
+  // Two-fragment compressed message, so consumeFragments() takes the
+  // concatenating branch rather than the single-fragment shortcut.
+  parser.write(Buffer.concat([Buffer.from([0x41, head.length]), head]))
+  await tick()
+  parser.write(Buffer.concat([Buffer.from([0x80, tail.length]), tail]))
+  await tick()
+
+  parser.write(Buffer.from([0x80, 0x00]))
+  await tick()
+
+  t.assert.deepStrictEqual(handler.events, ['message:5', 'abort'])
+})
