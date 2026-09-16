@@ -53,10 +53,11 @@ describe('cache interceptor with async store', () => {
   class SyncDispatcher extends Dispatcher {
     requests = 0
 
-    constructor ({ dataOn304, errorOn304 } = {}) {
+    constructor ({ dataOn304, errorOn304, headers304 } = {}) {
       super()
       this.dataOn304 = dataOn304
       this.errorOn304 = errorOn304
+      this.headers304 = headers304
     }
 
     dispatch (opts, handler) {
@@ -86,7 +87,7 @@ describe('cache interceptor with async store', () => {
       }
       handler.onRequestStart?.(controller, {})
       if (opts.headers?.['if-none-match'] === '"abc"') {
-        handler.onResponseStart?.(controller, 304, { etag: '"abc"', 'cache-control': 'public, max-age=60' }, 'Not Modified')
+        handler.onResponseStart?.(controller, 304, this.headers304 ?? { etag: '"abc"', 'cache-control': 'public, max-age=60' }, 'Not Modified')
         const onResponseEnd = () => {
           if (this.errorOn304) {
             handler.onResponseError?.(controller, this.errorOn304)
@@ -158,6 +159,22 @@ describe('cache interceptor with async store', () => {
         }
       })
     })
+  })
+
+  test('a rejected asynchronous delete does not interrupt a 304 response', async () => {
+    const store = new AsyncCacheStore()
+    store.delete = () => Promise.reject(new Error('delete failed'))
+    const client = new SyncDispatcher({ headers304: { etag: '"abc"', 'cache-control': 'no-store' } })
+      .compose(interceptors.cache({ store }))
+
+    const response = await client.request({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      headers: { 'if-none-match': '"abc"' }
+    })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), '')
   })
 
   // Misses on the interceptor's lookup and hits on the lookup CacheHandler
