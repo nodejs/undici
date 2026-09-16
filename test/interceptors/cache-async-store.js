@@ -1,11 +1,11 @@
 'use strict'
 
 const { test, after, describe } = require('node:test')
-const { strictEqual, notStrictEqual } = require('node:assert')
+const { strictEqual, notStrictEqual, rejects } = require('node:assert')
 const { createServer } = require('node:http')
-const { once } = require('node:events')
-const { Readable } = require('node:stream')
-const { request, Client, interceptors } = require('../../index')
+const { once, EventEmitter } = require('node:events')
+const { Readable, Writable } = require('node:stream')
+const { request, Client, Dispatcher, interceptors } = require('../../index')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { setTimeout } = require('node:timers/promises')
@@ -48,6 +48,455 @@ class AsyncCacheStore {
 }
 
 describe('cache interceptor with async store', () => {
+  // Respects dispatcher backpressure, including when an async 304 lookup
+  // pauses the response before its end is delivered.
+  class SyncDispatcher extends Dispatcher {
+    requests = 0
+
+    constructor ({ dataOn304, errorOn304, headers304 } = {}) {
+      super()
+      this.dataOn304 = dataOn304
+      this.errorOn304 = errorOn304
+      this.headers304 = headers304
+    }
+
+    dispatch (opts, handler) {
+      this.requests++
+      const controller = {
+        paused: false,
+        aborted: false,
+        reason: null,
+        resumeCallback: null,
+        pause () {
+          this.paused = true
+        },
+        resume () {
+          if (!this.paused) return
+          this.paused = false
+          const callback = this.resumeCallback
+          this.resumeCallback = null
+          callback?.()
+        },
+        abort (reason) {
+          if (this.aborted) return
+          this.aborted = true
+          this.reason = reason
+          this.resumeCallback = null
+          handler.onResponseError?.(this, reason)
+        }
+      }
+      handler.onRequestStart?.(controller, {})
+      if (opts.upgrade) {
+        handler.onRequestUpgrade?.(controller, 101, {}, {})
+        return true
+      }
+      if (opts.headers?.['if-none-match'] === '"abc"') {
+        handler.onResponseStart?.(controller, 304, this.headers304 ?? { etag: '"abc"', 'cache-control': 'public, max-age=60' }, 'Not Modified')
+        const onResponseEnd = () => {
+          if (this.errorOn304) {
+            handler.onResponseError?.(controller, this.errorOn304)
+            return
+          }
+          if (this.dataOn304) {
+            handler.onResponseData?.(controller, this.dataOn304)
+          }
+          handler.onResponseEnd?.(controller, {})
+        }
+        if (controller.paused) {
+          controller.resumeCallback = onResponseEnd
+        } else {
+          onResponseEnd()
+        }
+        return true
+      }
+      handler.onResponseStart?.(controller, 200, {
+        'cache-control': 'public, max-age=60',
+        etag: '"abc"',
+        'content-length': '11'
+      }, 'OK')
+      handler.onResponseData?.(controller, Buffer.from('cached '))
+      handler.onResponseData?.(controller, Buffer.from('body'))
+      handler.onResponseEnd?.(controller, {})
+      return true
+    }
+  }
+
+  test('a 304 to a conditional request that missed the cache reaches the client intact', async () => {
+    const store = new AsyncCacheStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+
+    const response = await client.request({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      headers: { 'if-none-match': '"abc"' }
+    })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), '')
+  })
+
+  test('a downstream handler can abort a pending 304', async () => {
+    const store = new AsyncCacheStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    const expected = new Error('aborted by downstream')
+
+    await new Promise((resolve, reject) => {
+      client.dispatch({
+        origin: 'http://localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'if-none-match': '"abc"' }
+      }, {
+        onRequestStart () {},
+        onResponseStart (controller) {
+          controller.abort(expected)
+        },
+        onResponseData () {
+          reject(new Error('unexpected response data'))
+        },
+        onResponseEnd () {
+          reject(new Error('unexpected response end'))
+        },
+        onResponseError (_, err) {
+          strictEqual(err, expected)
+          resolve()
+        }
+      })
+    })
+  })
+
+  test('an upgrade receives the downstream controller', () => {
+    const client = new SyncDispatcher().compose(interceptors.cache({ store: new AsyncCacheStore() }))
+    let requestController
+
+    client.dispatch({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      upgrade: 'websocket'
+    }, {
+      onRequestStart (controller) {
+        requestController = controller
+      },
+      onRequestUpgrade (controller, statusCode) {
+        strictEqual(controller, requestController)
+        strictEqual(statusCode, 101)
+      },
+      onResponseError (_, err) {
+        throw err
+      }
+    })
+  })
+
+  test('a rejected asynchronous delete does not interrupt a 304 response', async () => {
+    const store = new AsyncCacheStore()
+    store.delete = () => Promise.reject(new Error('delete failed'))
+    const client = new SyncDispatcher({ headers304: { etag: '"abc"', 'cache-control': 'no-store' } })
+      .compose(interceptors.cache({ store }))
+
+    const response = await client.request({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      headers: { 'if-none-match': '"abc"' }
+    })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), '')
+  })
+
+  // Misses on the interceptor's lookup and hits on the lookup CacheHandler
+  // makes after the 304, so handle304 runs with a cached value to replay.
+  class MissThenHitStore {
+    #inner = new MemoryCacheStore()
+    #asyncGet
+    #asStream
+    #bodyError
+    #bodyErrorThenEnd
+    #unsupportedBody
+    misses = 0
+    deletes = 0
+    // 'slow', 'error', 'close', 'none' or 'throw': the write stream handed out from now on
+    writeStream = null
+
+    constructor ({ asyncGet = true, asStream = false, bodyError = null, bodyErrorThenEnd = false, unsupportedBody = false } = {}) {
+      this.#asyncGet = asyncGet
+      this.#asStream = asStream
+      this.#bodyError = bodyError
+      this.#bodyErrorThenEnd = bodyErrorThenEnd
+      this.#unsupportedBody = unsupportedBody
+    }
+
+    get (key) {
+      let value
+      if (this.misses > 0) {
+        this.misses--
+      } else {
+        const result = this.#inner.get(key)
+        if (!result) {
+          value = result
+        } else if (this.#bodyErrorThenEnd) {
+          const body = new EventEmitter()
+          setImmediate(() => {
+            body.emit('error', new Error('body failed'))
+            body.emit('end')
+          })
+          value = { ...result, body }
+        } else if (this.#unsupportedBody) {
+          value = { ...result, body: {} }
+        } else if (!this.#asStream) {
+          value = result
+        } else {
+          const { body, ...rest } = result
+          const bodyError = this.#bodyError
+          const readable = Readable.from(body ?? [])
+          if (bodyError) {
+            readable.push = readable.push.bind(readable)
+            readable.once('data', () => readable.destroy(bodyError))
+          }
+          value = { ...rest, body: readable }
+        }
+      }
+      return this.#asyncGet ? Promise.resolve(value) : value
+    }
+
+    createWriteStream (key, value) {
+      if (this.writeStream === 'slow') {
+        // Each write exceeds the high water mark: write() returns false and
+        // the replay has to wait for 'drain'.
+        return new Writable({ highWaterMark: 1, write (chunk, encoding, callback) { setImmediate(callback) } })
+      }
+      if (this.writeStream === 'error') {
+        return new Writable({ write (chunk, encoding, callback) { callback(new Error('write failed')) } })
+      }
+      if (this.writeStream === 'close') {
+        return new Writable({ highWaterMark: 1, write (chunk, encoding, callback) { this.destroy(); callback() } })
+      }
+      if (this.writeStream === 'none') {
+        return undefined
+      }
+      if (this.writeStream === 'throw') {
+        throw new Error('write failed')
+      }
+      return this.#inner.createWriteStream(key, value)
+    }
+
+    delete (key) {
+      this.deletes++
+      return this.#inner.delete(key)
+    }
+  }
+
+  for (const [name, asStream] of [['an array of Buffers', false], ['a Readable', true]]) {
+    test(`a 304 resolved against an async store replays a cached body that is ${name} before the end`, async () => {
+      const store = new MissThenHitStore({ asStream })
+      const dispatcher = new SyncDispatcher()
+      const client = dispatcher.compose(interceptors.cache({ store }))
+
+      {
+        const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })
+        strictEqual(response.statusCode, 200)
+        strictEqual(await response.body.text(), 'cached body')
+      }
+
+      // The origin's 304 goes downstream, followed by the cached body, then the end.
+      store.misses = 1
+      {
+        const response = await client.request({
+          origin: 'http://localhost',
+          method: 'GET',
+          path: '/',
+          headers: { 'if-none-match': '"abc"' }
+        })
+        strictEqual(response.statusCode, 304)
+        strictEqual(await response.body.text(), 'cached body')
+      }
+      strictEqual(dispatcher.requests, 2)
+    })
+  }
+
+  test('the replay of an array body waits for the write stream to drain', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'slow'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), 'cached body')
+  })
+
+  test('a synchronous store pauses the 304 until cached body replay completes', async () => {
+    const store = new MissThenHitStore({ asyncGet: false })
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'slow'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), 'cached body')
+  })
+
+  test('a downstream pause during replay holds the 304 end until it resumes', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    let controller
+    let body = ''
+    let ended = false
+    let resolvePaused
+    const paused = new Promise((resolve) => {
+      resolvePaused = resolve
+    })
+    let resolveEnd
+    const end = new Promise((resolve) => {
+      resolveEnd = resolve
+    })
+
+    client.dispatch({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      headers: { 'if-none-match': '"abc"' }
+    }, {
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData (downstreamController, chunk) {
+        body += chunk
+        if (!controller) {
+          controller = downstreamController
+          strictEqual(controller.paused, false)
+          controller.pause()
+          strictEqual(controller.paused, true)
+          resolvePaused()
+        }
+      },
+      onResponseEnd () {
+        ended = true
+        resolveEnd()
+      },
+      onResponseError (_, err) {
+        throw err
+      }
+    })
+
+    await paused
+    strictEqual(body, 'cached body')
+    strictEqual(ended, false)
+    controller.resume()
+    strictEqual(controller.paused, false)
+    await end
+  })
+
+  test('the replay of an array body continues if the write stream closes while full', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'close'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), 'cached body')
+  })
+
+  test('a 304 without a cache write stream ends after the lookup', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'none'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), '')
+  })
+
+  test('a 304 with an unsupported cached body ends after the lookup', async () => {
+    const store = new MissThenHitStore({ unsupportedBody: true })
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), '')
+  })
+
+  test('a cached body error followed by end releases a 304 once', async () => {
+    const store = new MissThenHitStore({ bodyErrorThenEnd: true })
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), '')
+    strictEqual(store.deletes, 1)
+  })
+
+  test('an error while handling an async 304 aborts the request', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'throw'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    await rejects(response.body.text(), { message: 'write failed' })
+  })
+
+  for (const [name, asStream] of [['an array of Buffers', false], ['a Readable', true]]) {
+    test(`a failing write stream during the replay of ${name} drops the entry and still ends the response`, async () => {
+      const store = new MissThenHitStore({ asStream })
+      const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+      await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+      store.misses = 1
+      store.writeStream = 'error'
+      const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+      strictEqual(response.statusCode, 304)
+      strictEqual(await response.body.text(), 'cached body')
+      strictEqual(store.deletes, 1)
+    })
+  }
+
+  test('a cached body stream that errors during the replay drops the entry and still ends the response', async () => {
+    const store = new MissThenHitStore({ asStream: true, bodyError: new Error('body failed') })
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    await response.body.text()
+    strictEqual(store.deletes, 1)
+  })
+
+  test('data from the origin after a pending 304 is delivered after the cached body', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher({ dataOn304: Buffer.from('+extra') }).compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), 'cached body+extra')
+  })
+
+  test('an error from the origin after a pending 304 is delivered after the start', async () => {
+    const store = new AsyncCacheStore()
+    const client = new SyncDispatcher({ errorOn304: new Error('origin failed') }).compose(interceptors.cache({ store }))
+
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    await rejects(response.body.text(), { message: 'origin failed' })
+  })
+
   test('stale-while-revalidate 304 refreshes cache with async store', async () => {
     const clock = FakeTimers.install({ now: 1 })
     after(() => clock.uninstall())
