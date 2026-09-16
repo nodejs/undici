@@ -48,8 +48,8 @@ class AsyncCacheStore {
 }
 
 describe('cache interceptor with async store', () => {
-  // Delivers start, data and end synchronously inside dispatch(), so an
-  // empty 304 ends before an async store lookup settles.
+  // Respects dispatcher backpressure, including when an async 304 lookup
+  // pauses the response before its end is delivered.
   class SyncDispatcher extends Dispatcher {
     requests = 0
 
@@ -65,22 +65,43 @@ describe('cache interceptor with async store', () => {
         paused: false,
         aborted: false,
         reason: null,
-        pause () {},
-        resume () {},
-        abort () {}
+        resumeCallback: null,
+        pause () {
+          this.paused = true
+        },
+        resume () {
+          if (!this.paused) return
+          this.paused = false
+          const callback = this.resumeCallback
+          this.resumeCallback = null
+          callback?.()
+        },
+        abort (reason) {
+          if (this.aborted) return
+          this.aborted = true
+          this.reason = reason
+          this.resumeCallback = null
+          handler.onResponseError?.(this, reason)
+        }
       }
       handler.onRequestStart?.(controller, {})
       if (opts.headers?.['if-none-match'] === '"abc"') {
-        // Without cache-control the 304 is passed through untouched.
         handler.onResponseStart?.(controller, 304, { etag: '"abc"', 'cache-control': 'public, max-age=60' }, 'Not Modified')
-        if (this.errorOn304) {
-          handler.onResponseError?.(controller, this.errorOn304)
-          return true
+        const onResponseEnd = () => {
+          if (this.errorOn304) {
+            handler.onResponseError?.(controller, this.errorOn304)
+            return
+          }
+          if (this.dataOn304) {
+            handler.onResponseData?.(controller, this.dataOn304)
+          }
+          handler.onResponseEnd?.(controller, {})
         }
-        if (this.dataOn304) {
-          handler.onResponseData?.(controller, this.dataOn304)
+        if (controller.paused) {
+          controller.resumeCallback = onResponseEnd
+        } else {
+          onResponseEnd()
         }
-        handler.onResponseEnd?.(controller, {})
         return true
       }
       handler.onResponseStart?.(controller, 200, {
@@ -113,33 +134,40 @@ describe('cache interceptor with async store', () => {
   // makes after the 304, so handle304 runs with a cached value to replay.
   class MissThenHitStore {
     #inner = new MemoryCacheStore()
+    #asyncGet
     #asStream
     #bodyError
     misses = 0
     deletes = 0
-    // 'slow' or 'error': the write stream handed out from now on
+    // 'slow', 'error', 'close' or 'throw': the write stream handed out from now on
     writeStream = null
 
-    constructor ({ asStream = false, bodyError = null } = {}) {
+    constructor ({ asyncGet = true, asStream = false, bodyError = null } = {}) {
+      this.#asyncGet = asyncGet
       this.#asStream = asStream
       this.#bodyError = bodyError
     }
 
-    async get (key) {
+    get (key) {
+      let value
       if (this.misses > 0) {
         this.misses--
-        return undefined
+      } else {
+        const result = this.#inner.get(key)
+        if (!result || !this.#asStream) {
+          value = result
+        } else {
+          const { body, ...rest } = result
+          const bodyError = this.#bodyError
+          const readable = Readable.from(body ?? [])
+          if (bodyError) {
+            readable.push = readable.push.bind(readable)
+            readable.once('data', () => readable.destroy(bodyError))
+          }
+          value = { ...rest, body: readable }
+        }
       }
-      const result = this.#inner.get(key)
-      if (!result || !this.#asStream) return result
-      const { body, ...rest } = result
-      const bodyError = this.#bodyError
-      const readable = Readable.from(body ?? [])
-      if (bodyError) {
-        readable.push = readable.push.bind(readable)
-        readable.once('data', () => readable.destroy(bodyError))
-      }
-      return { ...rest, body: readable }
+      return this.#asyncGet ? Promise.resolve(value) : value
     }
 
     createWriteStream (key, value) {
@@ -150,6 +178,12 @@ describe('cache interceptor with async store', () => {
       }
       if (this.writeStream === 'error') {
         return new Writable({ write (chunk, encoding, callback) { callback(new Error('write failed')) } })
+      }
+      if (this.writeStream === 'close') {
+        return new Writable({ highWaterMark: 1, write (chunk, encoding, callback) { this.destroy(); callback() } })
+      }
+      if (this.writeStream === 'throw') {
+        throw new Error('write failed')
       }
       return this.#inner.createWriteStream(key, value)
     }
@@ -198,6 +232,95 @@ describe('cache interceptor with async store', () => {
     const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
     strictEqual(response.statusCode, 304)
     strictEqual(await response.body.text(), 'cached body')
+  })
+
+  test('a synchronous store pauses the 304 until cached body replay completes', async () => {
+    const store = new MissThenHitStore({ asyncGet: false })
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'slow'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), 'cached body')
+  })
+
+  test('a downstream pause during replay holds the 304 end until it resumes', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    let controller
+    let body = ''
+    let ended = false
+    let resolvePaused
+    const paused = new Promise((resolve) => {
+      resolvePaused = resolve
+    })
+    let resolveEnd
+    const end = new Promise((resolve) => {
+      resolveEnd = resolve
+    })
+
+    client.dispatch({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      headers: { 'if-none-match': '"abc"' }
+    }, {
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData (downstreamController, chunk) {
+        body += chunk
+        if (!controller) {
+          controller = downstreamController
+          strictEqual(controller.paused, false)
+          controller.pause()
+          strictEqual(controller.paused, true)
+          resolvePaused()
+        }
+      },
+      onResponseEnd () {
+        ended = true
+        resolveEnd()
+      },
+      onResponseError (_, err) {
+        throw err
+      }
+    })
+
+    await paused
+    strictEqual(body, 'cached body')
+    strictEqual(ended, false)
+    controller.resume()
+    strictEqual(controller.paused, false)
+    await end
+  })
+
+  test('the replay of an array body continues if the write stream closes while full', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'close'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    strictEqual(await response.body.text(), 'cached body')
+  })
+
+  test('an error while handling an async 304 aborts the request', async () => {
+    const store = new MissThenHitStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    await (await client.request({ origin: 'http://localhost', method: 'GET', path: '/' })).body.text()
+
+    store.misses = 1
+    store.writeStream = 'throw'
+    const response = await client.request({ origin: 'http://localhost', method: 'GET', path: '/', headers: { 'if-none-match': '"abc"' } })
+    strictEqual(response.statusCode, 304)
+    await rejects(response.body.text(), { message: 'write failed' })
   })
 
   for (const [name, asStream] of [['an array of Buffers', false], ['a Readable', true]]) {
