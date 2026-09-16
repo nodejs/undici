@@ -86,6 +86,10 @@ describe('cache interceptor with async store', () => {
         }
       }
       handler.onRequestStart?.(controller, {})
+      if (opts.upgrade) {
+        handler.onRequestUpgrade?.(controller, 101, {}, {})
+        return true
+      }
       if (opts.headers?.['if-none-match'] === '"abc"') {
         handler.onResponseStart?.(controller, 304, this.headers304 ?? { etag: '"abc"', 'cache-control': 'public, max-age=60' }, 'Not Modified')
         const onResponseEnd = () => {
@@ -158,6 +162,29 @@ describe('cache interceptor with async store', () => {
           resolve()
         }
       })
+    })
+  })
+
+  test('an upgrade receives the downstream controller', () => {
+    const client = new SyncDispatcher().compose(interceptors.cache({ store: new AsyncCacheStore() }))
+    let requestController
+
+    client.dispatch({
+      origin: 'http://localhost',
+      method: 'GET',
+      path: '/',
+      upgrade: 'websocket'
+    }, {
+      onRequestStart (controller) {
+        requestController = controller
+      },
+      onRequestUpgrade (controller, statusCode) {
+        strictEqual(controller, requestController)
+        strictEqual(statusCode, 101)
+      },
+      onResponseError (_, err) {
+        throw err
+      }
     })
   })
 
