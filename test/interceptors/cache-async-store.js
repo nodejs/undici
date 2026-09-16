@@ -130,6 +130,36 @@ describe('cache interceptor with async store', () => {
     strictEqual(await response.body.text(), '')
   })
 
+  test('a downstream handler can abort a pending 304', async () => {
+    const store = new AsyncCacheStore()
+    const client = new SyncDispatcher().compose(interceptors.cache({ store }))
+    const expected = new Error('aborted by downstream')
+
+    await new Promise((resolve, reject) => {
+      client.dispatch({
+        origin: 'http://localhost',
+        method: 'GET',
+        path: '/',
+        headers: { 'if-none-match': '"abc"' }
+      }, {
+        onRequestStart () {},
+        onResponseStart (controller) {
+          controller.abort(expected)
+        },
+        onResponseData () {
+          reject(new Error('unexpected response data'))
+        },
+        onResponseEnd () {
+          reject(new Error('unexpected response end'))
+        },
+        onResponseError (_, err) {
+          strictEqual(err, expected)
+          resolve()
+        }
+      })
+    })
+  })
+
   // Misses on the interceptor's lookup and hits on the lookup CacheHandler
   // makes after the 304, so handle304 runs with a cached value to replay.
   class MissThenHitStore {
