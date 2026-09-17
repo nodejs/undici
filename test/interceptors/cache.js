@@ -54,6 +54,79 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  // https://github.com/nodejs/undici/issues/5818
+  test('successful cached response is not aborted', async () => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      res.setHeader('cache-control', 'max-age=60')
+      res.end('ok')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    await (await client.request(request)).body.dump()
+
+    const aborted = await new Promise((resolve, reject) => {
+      client.dispatch(request, {
+        onRequestStart () {},
+        onResponseEnd (controller) { resolve(controller.aborted) },
+        onResponseError (controller, error) { reject(error) }
+      })
+    })
+
+    strictEqual(aborted, false)
+  })
+
+  test('aborting a cached response reports aborted', async () => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      res.setHeader('cache-control', 'max-age=60')
+      res.end('ok')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    await (await client.request(request)).body.dump()
+
+    const aborted = await new Promise((resolve, reject) => {
+      client.dispatch(request, {
+        onRequestStart (controller) {
+          controller.abort()
+        },
+        onResponseEnd () { reject(new Error('expected abort')) },
+        onResponseError (controller) { resolve(controller.aborted) }
+      })
+    })
+
+    strictEqual(aborted, true)
+  })
+
   test('shared cache does not store responses with Set-Cookie', async () => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {

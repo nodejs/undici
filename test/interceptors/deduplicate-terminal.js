@@ -111,6 +111,30 @@ test('a paused waiting handler receives completion errors without being aborted'
   ])
 })
 
+test('a paused waiting handler defers completion even without buffered data', t => {
+  const events = []
+  const trailers = { checksum: 'value' }
+  const handler = new DeduplicationHandler({}, () => events.push('cleanup'))
+  let waitingController
+  handler.addWaitingHandler({
+    onRequestStart (controller) {
+      waitingController = controller
+      controller.pause()
+    },
+    onResponseEnd (controller, receivedTrailers) {
+      events.push(receivedTrailers)
+      controller.resume()
+    }
+  })
+
+  handler.onResponseEnd({}, trailers)
+  t.assert.deepStrictEqual(events, ['cleanup'])
+
+  waitingController.resume()
+  waitingController.resume()
+  t.assert.deepStrictEqual(events, ['cleanup', trailers])
+})
+
 test('a throwing primary error callback does not prevent cleanup or waiting errors', t => {
   const events = []
   const responseError = new Error('response failed')
