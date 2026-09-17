@@ -61,6 +61,52 @@ test('controller proxy returns safe defaults and is a no-op before a connection 
   })
 })
 
+test('controller proxy reapplies a persistent pause to a replacement connection', (t) => {
+  t = tspl(t, { plan: 6 })
+
+  const createController = () => {
+    const calls = []
+    let paused = false
+    return {
+      calls,
+      pause () {
+        paused = true
+        calls.push('pause')
+      },
+      resume () {
+        paused = false
+        calls.push('resume')
+      },
+      abort () {},
+      get paused () { return paused },
+      get aborted () { return false },
+      get reason () { return null }
+    }
+  }
+
+  const handler = new RetryHandler(baseOpts, {
+    dispatch: () => {},
+    handler: {}
+  })
+  const first = createController()
+  handler.onRequestStart(first, {})
+  const proxy = handler.controllerProxy
+
+  proxy.pause()
+  t.strictEqual(proxy.paused, true)
+  t.deepStrictEqual(first.calls, ['pause'])
+
+  handler.headersSent = true
+  const second = createController()
+  handler.onRequestStart(second, {})
+  t.strictEqual(proxy.paused, true)
+  t.deepStrictEqual(second.calls, ['pause'])
+
+  proxy.resume()
+  t.strictEqual(proxy.paused, false)
+  t.deepStrictEqual(second.calls, ['pause', 'resume'])
+})
+
 test('controller proxy forwards reads/writes to the active connection and stays stable across callbacks', (t) => {
   t = tspl(t, { plan: 11 })
 

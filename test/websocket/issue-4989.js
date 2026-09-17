@@ -6,8 +6,8 @@
 // Symbol.for('undici.globalDispatcher.1') used by Node.js's bundled undici).
 // The new Agent defaults allowH2 → true, so TLS ALPN negotiates h2.
 // Undici v8's own fetch has a dispatchWithProtocolPreference fallback that
-// retries with allowH2: false when Extended CONNECT is unavailable, but
-// Node.js's bundled undici fetch does NOT have this fallback.
+// retries with allowH2: false when Extended CONNECT is unavailable, but older
+// versions of Undici bundled in Node.js do not have this fallback.
 // As a result, globalThis.WebSocket (backed by the bundled undici) breaks
 // when connecting to servers that advertise h2 but don't support RFC 8441.
 
@@ -27,7 +27,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 require('../..')
 
 test('globalThis.WebSocket connects to h2+http1.1 server after undici import', async (t) => {
-  const planner = tspl(t, { plan: 2 })
+  const planner = tspl(t, { plan: 3 })
 
   // HTTP/2 server with HTTP/1.1 fallback.
   // Advertises h2 in ALPN but does NOT enable Extended CONNECT (RFC 8441).
@@ -36,6 +36,7 @@ test('globalThis.WebSocket connects to h2+http1.1 server after undici import', a
   const wsServer = new WebSocketServer({ noServer: true })
 
   server.on('upgrade', (req, socket, head) => {
+    planner.strictEqual(socket.alpnProtocol, 'http/1.1')
     wsServer.handleUpgrade(req, socket, head, (ws) => {
       wsServer.emit('connection', ws, req)
     })
