@@ -812,6 +812,38 @@ test('should redirect to relative URL according to RFC 7231', async t => {
   t.strictEqual(finalPath, '/absolute/b')
 })
 
+test('informational responses are not added to redirect history', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer((_req, res) => {
+    for (let i = 0; i < 20; i++) {
+      res.writeProcessing()
+    }
+    res.end('hello world!')
+  }).listen(0)
+
+  after(() => server.close())
+  await once(server, 'listening')
+
+  const dispatcher = new undici.Client(`http://localhost:${server.address().port}`)
+    .compose(redirect({ maxRedirections: 1, throwOnMaxRedirect: true }))
+  after(() => dispatcher.close())
+
+  const infos = []
+  const response = await dispatcher.request({
+    method: 'GET',
+    path: '/',
+    onInfo: info => infos.push(info)
+  })
+
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(await response.body.text(), 'hello world!')
+  t.strictEqual(infos.length, 20)
+  t.deepStrictEqual(response.context.history, [
+    new URL(`http://localhost:${server.address().port}/`)
+  ])
+})
+
 test('same-origin redirect preserves plain object headers with polluted Object.prototype[Symbol.iterator]', async (t) => {
   const { strictEqual } = tspl(t, { plan: 2 })
 
