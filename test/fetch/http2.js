@@ -123,6 +123,81 @@ test('[Fetch] Simple GET with h2', async (t) => {
   t.assert.strictEqual(response.statusText, '')
 })
 
+test('[Fetch] HTTP/2 response content-length mismatch rejects the body without closing the session', async (t) => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let sessions = 0
+
+  server.on('session', () => {
+    sessions++
+  })
+
+  server.on('stream', (stream, headers) => {
+    switch (headers[':path']) {
+      case '/truncated':
+        stream.respond({ ':status': 200, 'content-length': 10 })
+        stream.write('123', () => stream.destroy())
+        break
+      case '/oversized':
+        stream.respond({ ':status': 200, 'content-length': 3 })
+        stream.end('1234')
+        break
+      case '/head':
+        stream.respond({ ':status': 200, 'content-length': 10 })
+        stream.end()
+        break
+      case '/not-modified':
+        stream.respond({ ':status': 304, 'content-length': 10 })
+        stream.end()
+        break
+      default:
+        stream.respond({ ':status': 200, 'content-length': 2 })
+        stream.end('ok')
+    }
+  })
+
+  server.listen()
+  await once(server, 'listening')
+
+  const origin = `https://localhost:${server.address().port}`
+  const client = new Client(origin, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+
+  t.after(closeClientAndServerAsPromise(client, server))
+
+  const assertResponseContentLengthMismatch = async (path) => {
+    const response = await fetch(`${origin}${path}`, { dispatcher: client })
+
+    await t.assert.rejects(response.text(), (err) => {
+      t.assert.ok(err instanceof TypeError)
+      t.assert.strictEqual(err.cause?.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
+      return true
+    })
+  }
+
+  await assertResponseContentLengthMismatch('/truncated')
+
+  const headResponse = await fetch(`${origin}/head`, {
+    dispatcher: client,
+    method: 'HEAD'
+  })
+  t.assert.strictEqual(await headResponse.text(), '')
+
+  const notModifiedResponse = await fetch(`${origin}/not-modified`, { dispatcher: client })
+  t.assert.strictEqual(await notModifiedResponse.text(), '')
+
+  const validResponse = await fetch(`${origin}/valid`, { dispatcher: client })
+  t.assert.strictEqual(await validResponse.text(), 'ok')
+  t.assert.strictEqual(sessions, 1)
+
+  // Node's test server closes its session after sending more DATA than its own
+  // Content-Length, so exercise the oversized case after the reuse assertion.
+  await assertResponseContentLengthMismatch('/oversized')
+})
+
 test('[Fetch] Should handle h2 request with body (string or buffer)', async (t) => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
