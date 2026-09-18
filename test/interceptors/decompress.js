@@ -1177,15 +1177,18 @@ test('decompress backpressure bounds an initially unread request body', { timeou
     highWaterMark: 32 * 1024
   })
 
-  if (body.readableLength === 0) {
-    await once(body, 'readable')
-  }
   await responseFinished
-  for (let i = 0; i < 100 && body.readableLength < body.readableHighWaterMark; i++) {
-    await immediate()
-  }
+  await new Promise(resolve => {
+    const onReadable = () => {
+      if (body.readableLength >= body.readableHighWaterMark) {
+        body.off('readable', onReadable)
+        resolve()
+      }
+    }
+    body.on('readable', onReadable)
+    onReadable()
+  })
 
-  assert(body.readableLength >= body.readableHighWaterMark)
   assert(
     body.readableLength <= body.readableHighWaterMark + 16 * 1024,
     `buffered ${body.readableLength} bytes for HWM ${body.readableHighWaterMark}`
