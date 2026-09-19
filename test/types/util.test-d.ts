@@ -23,3 +23,11 @@ expectAssignable<Record<string, string | string[]>>(
 expectAssignable<string>(util.headerNameToString('content-type'))
 
 expectAssignable<string>(util.headerNameToString(Buffer.from('content-type')))
+
+expectAssignable<Record<string, number | string | string[]>>(
+  util.normalizeHeaders([['content-type', 'text/plain']])
+)
+
+expectAssignable<Record<string, number | string | string[]>>(
+  util.normalizeHeaders({ 'content-type': 'text/plain' })
+)
