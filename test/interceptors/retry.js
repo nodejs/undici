@@ -113,6 +113,43 @@ test('Should retry status code', async t => {
   t.equal(await response.body.text(), 'hello world!')
 })
 
+test('Should settle retries when the response closes the connection', async t => {
+  t = tspl(t, { plan: 2 })
+
+  let requestCount = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    requestCount++
+    res.statusCode = 500
+    res.shouldKeepAlive = false
+    res.end('failed')
+  })
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const baseClient = new Client(`http://localhost:${server.address().port}`)
+  const client = baseClient.compose(retry({
+    throwOnError: false,
+    maxRetries: 1,
+    minTimeout: 10
+  }))
+
+  after(async () => {
+    await baseClient.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const bodies = await Promise.all(Array.from({ length: 10 }, async () => {
+    const response = await client.request({ method: 'GET', path: '/' })
+    return response.body.text()
+  }))
+
+  t.deepStrictEqual(bodies, Array(10).fill('failed'))
+  t.strictEqual(requestCount, 20)
+})
+
 test('Should retry on error code', async t => {
   t = tspl(t, { plan: 2 })
 
