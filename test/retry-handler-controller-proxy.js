@@ -1,0 +1,195 @@
+'use strict'
+
+const { tspl } = require('@matteo.collina/tspl')
+const { test } = require('node:test')
+
+const { RetryHandler } = require('..')
+
+// These tests pin down the RetryController proxy contract introduced to keep
+// flow-control wired to the active connection across transparent retries/resumes.
+// Each retry/resume is a separate dispatch with its own connection controller;
+// the downstream handler is handed ONE stable proxy that always forwards to the
+// controller of the currently active connection. See lib/handler/retry-handler.js.
+
+const baseOpts = {
+  method: 'GET',
+  path: '/',
+  retryOptions: {}
+}
+
+// Stand-in for the per-dispatch RequestController of an active connection. It
+// records the flow-control calls the proxy forwards to it.
+function activeConnectionController () {
+  const calls = []
+  return {
+    calls,
+    paused: true,
+    aborted: true,
+    reason: new Error('boom'),
+    rawHeaders: ['content-length', '2'],
+    rawTrailers: ['x-trailer', 'value'],
+    pause () { calls.push('pause') },
+    resume () { calls.push('resume') },
+    abort (reason) { calls.push(['abort', reason]) }
+  }
+}
+
+test('controller proxy returns safe defaults and is a no-op before a connection is active', (t) => {
+  t = tspl(t, { plan: 6 })
+
+  const handler = new RetryHandler(baseOpts, {
+    dispatch: () => {},
+    handler: {}
+  })
+
+  // No dispatch has happened yet, so the proxy has no active connection to
+  // forward to. Reads must fall back to safe defaults instead of throwing.
+  const proxy = handler.controllerProxy
+  t.strictEqual(proxy.paused, false)
+  t.strictEqual(proxy.aborted, false)
+  t.strictEqual(proxy.reason, null)
+  t.strictEqual(proxy.rawHeaders, null)
+  t.strictEqual(proxy.rawTrailers, null)
+
+  // Methods must be inert (not throw) while there is nothing to forward to.
+  t.doesNotThrow(() => {
+    proxy.pause()
+    proxy.resume()
+    proxy.abort(new Error('ignored'))
+    proxy.rawHeaders = ['x', 'y']
+    proxy.rawTrailers = ['z', '1']
+  })
+})
+
+test('controller proxy reapplies a persistent pause to a replacement connection', (t) => {
+  t = tspl(t, { plan: 6 })
+
+  const createController = () => {
+    const calls = []
+    let paused = false
+    return {
+      calls,
+      pause () {
+        paused = true
+        calls.push('pause')
+      },
+      resume () {
+        paused = false
+        calls.push('resume')
+      },
+      abort () {},
+      get paused () { return paused },
+      get aborted () { return false },
+      get reason () { return null }
+    }
+  }
+
+  const handler = new RetryHandler(baseOpts, {
+    dispatch: () => {},
+    handler: {}
+  })
+  const first = createController()
+  handler.onRequestStart(first, {})
+  const proxy = handler.controllerProxy
+
+  proxy.pause()
+  t.strictEqual(proxy.paused, true)
+  t.deepStrictEqual(first.calls, ['pause'])
+
+  handler.headersSent = true
+  const second = createController()
+  handler.onRequestStart(second, {})
+  t.strictEqual(proxy.paused, true)
+  t.deepStrictEqual(second.calls, ['pause'])
+
+  proxy.resume()
+  t.strictEqual(proxy.paused, false)
+  t.deepStrictEqual(second.calls, ['pause', 'resume'])
+})
+
+test('controller proxy forwards reads/writes to the active connection and stays stable across callbacks', (t) => {
+  t = tspl(t, { plan: 11 })
+
+  let downstreamController = null
+  let upgradeController = null
+  const upgradeArgs = []
+
+  const handler = new RetryHandler(baseOpts, {
+    dispatch: () => {},
+    handler: {
+      onRequestStart (controller) {
+        downstreamController = controller
+      },
+      onRequestUpgrade (controller, statusCode, headers, socket) {
+        upgradeController = controller
+        upgradeArgs.push(statusCode, headers, socket)
+      }
+    }
+  })
+
+  const connection = activeConnectionController()
+
+  // onRequestStart is the first callback of a dispatch; it re-points the proxy
+  // at this connection's controller and hands the (stable) proxy downstream.
+  handler.onRequestStart(connection, {})
+
+  // The downstream handler must receive the proxy, never the raw per-connection
+  // controller, so flow-control survives the next resume.
+  t.notStrictEqual(downstreamController, connection)
+
+  // Reads forward to the active connection's controller.
+  t.deepStrictEqual(downstreamController.rawHeaders, ['content-length', '2'])
+  t.deepStrictEqual(downstreamController.rawTrailers, ['x-trailer', 'value'])
+  t.strictEqual(downstreamController.paused, true)
+  t.strictEqual(downstreamController.aborted, true)
+  t.strictEqual(downstreamController.reason, connection.reason)
+
+  // Writes forward to the active connection's controller too.
+  downstreamController.pause()
+  downstreamController.resume()
+  downstreamController.abort('stop')
+  t.deepStrictEqual(connection.calls, ['pause', 'resume', ['abort', 'stop']])
+
+  // Decompress (and other interceptors) rewrite rawHeaders/rawTrailers on the
+  // controller they were given. Those assignments must reach the active
+  // connection instead of throwing on a getter-only proxy.
+  downstreamController.rawHeaders = ['x-foo', 'bar']
+  downstreamController.rawTrailers = ['x-end', '1']
+  t.deepStrictEqual(connection.rawHeaders, ['x-foo', 'bar'])
+  t.deepStrictEqual(connection.rawTrailers, ['x-end', '1'])
+
+  // An upgrade on the same dispatch is forwarded through the very same proxy
+  // instance (not the raw controller), keeping the downstream wiring stable.
+  handler.onRequestUpgrade(connection, 101, { upgrade: 'websocket' }, 'SOCKET')
+  t.strictEqual(upgradeController, downstreamController)
+  t.deepStrictEqual(upgradeArgs, [101, { upgrade: 'websocket' }, 'SOCKET'])
+})
+
+test('controller proxy carries a synchronous dispatch failure to the downstream handler', (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const dispatchError = new Error('dispatch failed synchronously')
+  let errController = null
+  let receivedErr = null
+
+  const handler = new RetryHandler(baseOpts, {
+    dispatch: () => { throw dispatchError },
+    handler: {
+      onRequestStart () {},
+      onResponseError (controller, err) {
+        errController = controller
+        receivedErr = err
+      }
+    }
+  })
+
+  const connection = activeConnectionController()
+  handler.onRequestStart(connection, {})
+
+  // retry() re-dispatches; when that dispatch throws synchronously the error is
+  // surfaced to the downstream handler through the proxy.
+  handler.retry()
+
+  t.strictEqual(errController, handler.controllerProxy)
+  t.strictEqual(receivedErr, dispatchError)
+})
