@@ -334,9 +334,6 @@ async function runWithTestUtil (testFunction) {
 function runSingleTest (url, options, expectation, timeout = 10000) {
   const startTime = Date.now()
   const { promise, resolve, reject } = Promise.withResolvers()
-  // NODE_EXTRA_CA_CERTS is required for HTTPS/WSS pages, but it causes the
-  // WebSocket-over-HTTP/2 WPT variants to exit without emitting harness output.
-  const useExtraCACerts = !(url.pathname.startsWith('/websockets/') && url.searchParams.get('wpt_flags')?.includes('h2'))
 
   const proc = spawn('node', [
     '--expose-gc',
@@ -348,7 +345,7 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
     env: {
       ...process.env,
       NO_COLOR: '1',
-      ...(useExtraCACerts ? { NODE_EXTRA_CA_CERTS: CA_CERT_PATH } : {})
+      NODE_EXTRA_CA_CERTS: CA_CERT_PATH
     }
   })
 

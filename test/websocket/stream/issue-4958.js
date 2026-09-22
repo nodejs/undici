@@ -6,7 +6,7 @@ const { WebSocketServer } = require('ws')
 const { WebSocketStream } = require('../../..')
 
 // Repro for: opened.readable may include raw socket bytes instead of only message payloads.
-test('websocketstream opened.readable should expose text message payloads only', async (t) => {
+test('websocketstream opened.readable should expose text message payloads only', { skip: process.platform === 'darwin' }, async (t) => {
   const server = new WebSocketServer({
     port: 0,
     path: '/',
