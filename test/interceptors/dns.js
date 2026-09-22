@@ -71,7 +71,7 @@ test('Should reject literal IP origins blocked by the address filter', async t =
       path: '/',
       origin: 'http://127.0.0.1:1'
     }),
-    { code: 'UND_ERR_INFO' }
+    { code: 'UND_ERR_DNS_FILTER' }
   )
   t.ok(true)
 
@@ -81,7 +81,7 @@ test('Should reject literal IP origins blocked by the address filter', async t =
       path: '/',
       origin: 'http://[::1]:1'
     }),
-    { code: 'UND_ERR_INFO' }
+    { code: 'UND_ERR_DNS_FILTER' }
   )
   t.ok(true)
 
@@ -91,7 +91,7 @@ test('Should reject literal IP origins blocked by the address filter', async t =
       path: '/',
       origin: 'http://[::ffff:127.0.0.1]:1'
     }),
-    { code: 'UND_ERR_INFO' }
+    { code: 'UND_ERR_DNS_FILTER' }
   )
   t.ok(true)
 
@@ -147,6 +147,30 @@ test('Should filter resolved addresses before connecting', async t => {
   ])
 })
 
+test('Should only allow addresses when the filter returns true', async t => {
+  const client = new Agent().compose(dns({
+    lookup (_origin, _opts, cb) {
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
+    },
+    filter () {
+      return 'truthy'
+    }
+  }))
+
+  t.after(async () => {
+    await client.close()
+  })
+
+  await assert.rejects(
+    client.request({
+      method: 'GET',
+      path: '/',
+      origin: 'http://filtered.test'
+    }),
+    { code: 'UND_ERR_DNS_FILTER' }
+  )
+})
+
 test('Should apply the address filter to redirect targets', async t => {
   const redirectServer = createServer({ joinDuplicateHeaders: true })
   const blockedServer = createServer({ joinDuplicateHeaders: true })
@@ -193,7 +217,7 @@ test('Should apply the address filter to redirect targets', async t => {
       dispatcher: client
     }),
     error => {
-      assert.equal(error.cause?.code, 'UND_ERR_INFO')
+      assert.equal(error.cause?.code, 'UND_ERR_DNS_FILTER')
       return true
     }
   )
@@ -239,7 +263,7 @@ test('Should keep filtering when the DNS cache is full', async t => {
       path: '/',
       origin: `http://localhost:${server.address().port}`
     }),
-    { code: 'UND_ERR_INFO' }
+    { code: 'UND_ERR_DNS_FILTER' }
   )
   assert.equal(requests, 1)
 })

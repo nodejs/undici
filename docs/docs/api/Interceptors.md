@@ -337,16 +337,21 @@ origins and to redirect targets when the dispatcher is used with `fetch`.
 ```js
 import { Agent, interceptors } from 'undici'
 
-const agent = new Agent().compose(
+const agent = new Agent().compose([
   interceptors.dns({
     filter (origin, { address, family }) {
       return addressPolicy.allows({ origin, address, family })
     }
-  })
-)
+  }),
+  interceptors.redirect({ maxRedirections: 5 })
+])
 
 const response = await fetch(userControlledURL, { dispatcher: agent })
 ```
+
+When composing with `interceptors.redirect()`, list `dns()` before
+`redirect()`. The redirect interceptor then wraps DNS, so every redirected
+target is resolved and checked by the address policy before connecting.
 
 `filter` does not provide an address classification policy. Applications are
 responsible for rejecting every address range that is not permitted in their
