@@ -42872,8 +42872,7 @@
           },
           {
             "name": "Cache.keys with a HEAD Request",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: cache.keys(...).then is not a function\""
+            "success": true
           },
           {
             "name": "Cache.keys with a string that cannot construct a Request",
@@ -43087,13 +43086,11 @@
           },
           {
             "name": "Cache.put with synthetic 206 response",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got 206 status\""
+            "success": true
           },
           {
             "name": "Cache.put with HTTP 206 response",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got 206 status\""
+            "success": true
           },
           {
             "name": "Cache.put with opaque-filtered HTTP 206 response",
@@ -43122,8 +43119,7 @@
           },
           {
             "name": "Cache.put with a non-HTTP/HTTPS request",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Expected an http/s scheme when method is not GET\""
+            "success": true
           },
           {
             "name": "Cache.put with a relative URL",
@@ -43131,8 +43127,7 @@
           },
           {
             "name": "Cache.put with a non-GET request",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Expected an http/s scheme when method is not GET\""
+            "success": true
           },
           {
             "name": "Cache.put with a null response",
@@ -43140,13 +43135,11 @@
           },
           {
             "name": "Cache.put with a POST request",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Expected an http/s scheme when method is not GET\""
+            "success": true
           },
           {
             "name": "Cache.put with a used response body",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Response body is locked or disturbed\""
+            "success": true
           },
           {
             "name": "getReader() after Cache.put",
@@ -43154,13 +43147,11 @@
           },
           {
             "name": "Cache.put with a VARY:* Response",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got * vary field value\""
+            "success": true
           },
           {
             "name": "Cache.put with an embedded VARY:* Response",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got * vary field value\""
+            "success": true
           },
           {
             "name": "Cache.put with a VARY:* opaque response should not reject",
