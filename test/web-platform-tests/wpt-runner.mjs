@@ -506,6 +506,10 @@ function discoverTestsToRun (filter, expectation) {
           const filename = pathSegments[pathSegments.length - 1]
           const testExpectation = parentExpectation?.[filename]
 
+          if (testExpectation?.skip) {
+            continue
+          }
+
           tests.push({
             path: finalPath,
             url,

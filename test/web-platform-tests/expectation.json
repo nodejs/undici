@@ -34651,6 +34651,7 @@
         ]
       },
       "002.html?wpt_flags=h2": {
+        "skip": true,
         "success": false,
         "cases": []
       },
@@ -34673,6 +34674,7 @@
         ]
       },
       "004.html?wpt_flags=h2": {
+        "skip": true,
         "success": false,
         "cases": []
       },
@@ -35204,24 +35206,25 @@
       "success": true,
       "cases": [
         {
-          "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
-          "success": true
-        },
-        {
           "name": "Application data is 125 byte which means any 'Extended payload length' field isn't used at all.",
           "success": true
         },
         {
-          "name": "Application data is 0xFFFF byte which means the upper bound of the 16 bit 'Extended payload length' field.",
+          "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
           "success": true
         },
         {
           "name": "Application data is (0xFFFF + 1) byte which starts to use the 64 bit 'Extended payload length' field",
           "success": true
+        },
+        {
+          "name": "Application data is 0xFFFF byte which means the upper bound of the 16 bit 'Extended payload length' field.",
+          "success": true
         }
       ]
     },
     "extended-payload-length.html?wpt_flags=h2": {
+      "skip": true,
       "success": false,
       "cases": []
     },
@@ -37709,6 +37712,7 @@
       ]
     },
     "send-many-64K-messages-with-backpressure.any.html?wpt_flags=h2": {
+      "skip": true,
       "success": false,
       "cases": []
     },
@@ -37777,8 +37781,13 @@
           ]
         },
         "backpressure-send.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "backpressure should be applied to sent messages",
+              "success": true
+            }
+          ]
         },
         "backpressure-send.any.html?wss": {
           "success": true,
@@ -37786,7 +37795,7 @@
             {
               "name": "backpressure should be applied to sent messages",
               "success": false,
-              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 27.2817"
+              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 26.386200000000002"
             }
           ]
         },
@@ -37848,7 +37857,7 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.08950000000001523"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.0765999999999849"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
@@ -37966,7 +37975,7 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.10259999999999536"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.09429999999997563"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
@@ -38245,8 +38254,35 @@
           ]
         },
         "write.any.html?wpt_flags=h2": {
-          "success": false,
-          "cases": []
+          "success": true,
+          "cases": [
+            {
+              "name": "a write that was incomplete at close time should reject",
+              "success": false,
+              "message": "assert_unreached: closed promise should reject Reached unreachable code"
+            },
+            {
+              "name": "garbage collection after close with a pending write promise should not crash",
+              "success": false,
+              "message": "assert_unreached: closed promise should reject Reached unreachable code"
+            },
+            {
+              "name": "writing a value that cannot be stringified should cause a rejection",
+              "success": true
+            },
+            {
+              "name": "writing a resizable ArrayBuffer should be rejected",
+              "success": true
+            },
+            {
+              "name": "writing a view on a shared buffer should be rejected",
+              "success": true
+            },
+            {
+              "name": "Garbage collecting a WebSocket stream doesn't crash while write promise is pending",
+              "success": true
+            }
+          ]
         },
         "write.any.html?wss": {
           "success": true,
