@@ -46,3 +46,43 @@ test('a queued request keeps the process alive while the peer allows no new stre
   t.assert.strictEqual(code, 0)
   t.assert.deepStrictEqual(messages, ['warmed', 'queued', 'UND_ERR_HEADERS_TIMEOUT'])
 })
+
+test('a queued request keeps the process alive when the last stream closes', { timeout: 10000 }, async (t) => {
+  const server = createSecureServer({ key, cert })
+  t.after(() => server.close())
+
+  let activeStream
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+    stream.respond({ ':status': 200 })
+    activeStream = stream
+  })
+
+  let session
+  server.on('session', (s) => { session = s })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const child = fork(join(__dirname, 'fixtures/h2-last-stream-client.js'), [String(server.address().port)])
+  t.after(() => child.kill())
+
+  const messages = []
+  child.on('message', (message) => {
+    messages.push(message)
+
+    if (message === 'warmed') {
+      try {
+        session.settings({ maxConcurrentStreams: 0 }, () => child.send('drained', () => {}))
+      } catch {}
+    } else if (message === 'queued') {
+      activeStream.end('ok')
+    }
+  })
+
+  const [code, signal] = await once(child, 'close')
+
+  t.assert.strictEqual(signal, null)
+  t.assert.strictEqual(code, 0)
+  t.assert.deepStrictEqual(messages, ['warmed', 'queued', 'UND_ERR_HEADERS_TIMEOUT'])
+})
