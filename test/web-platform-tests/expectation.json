@@ -37874,8 +37874,7 @@
           "cases": [
             {
               "name": "backpressure should be applied to received messages",
-              "success": false,
-              "message": "assert_greater_than_equal: data send should have taken at least 2 seconds expected a number greater than or equal to 1.8 but got 0.026148080825805664"
+              "success": true
             }
           ]
         },
@@ -37895,7 +37894,7 @@
             {
               "name": "backpressure should be applied to sent messages",
               "success": false,
-              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 28.455600000000004"
+              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 27.929699999999997"
             }
           ]
         },
@@ -37957,12 +37956,11 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.07950000000002433"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.07689999999999486"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
-              "success": false,
-              "message": "assert_equals: close code should be Abnormal Closure expected 1006 but got 1005"
+              "success": true
             },
             {
               "name": "aborting the writable should result in a clean close",
@@ -38211,12 +38209,11 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.09199999999998454"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.09319999999996753"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
-              "success": false,
-              "message": "assert_equals: close code should be Abnormal Closure expected 1006 but got 1005"
+              "success": true
             },
             {
               "name": "aborting the writable should result in a clean close",
