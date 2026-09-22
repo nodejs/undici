@@ -114,17 +114,66 @@ describe('Cache Interceptor', () => {
 
     await (await client.request(request)).body.dump()
 
-    const aborted = await new Promise((resolve, reject) => {
+    const { controller, error } = await new Promise((resolve, reject) => {
       client.dispatch(request, {
         onRequestStart (controller) {
           controller.abort()
         },
         onResponseEnd () { reject(new Error('expected abort')) },
-        onResponseError (controller) { resolve(controller.aborted) }
+        onResponseError (controller, error) { resolve({ controller, error }) }
       })
     })
 
-    strictEqual(aborted, true)
+    strictEqual(controller.aborted, true)
+    strictEqual(controller.reason, error)
+    controller.abort(new Error('second abort'))
+    strictEqual(controller.reason, error)
+  })
+
+  test('aborting a completed cached response preserves the first reason', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 'max-age=60')
+      res.end('ok')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    await (await client.request(request)).body.dump()
+
+    const controller = await new Promise((resolve, reject) => {
+      client.dispatch(request, {
+        onResponseEnd (controller) { resolve(controller) },
+        onResponseError (controller, error) { reject(error) }
+      })
+    })
+
+    strictEqual(requestsToOrigin, 1)
+    strictEqual(controller.aborted, false)
+    strictEqual(controller.reason, null)
+
+    const reason = new Error('abort after completion')
+    controller.abort(reason)
+    strictEqual(controller.aborted, true)
+    strictEqual(controller.reason, reason)
+
+    controller.abort(new Error('second abort'))
+    strictEqual(controller.reason, reason)
   })
 
   test('shared cache does not store responses with Set-Cookie', async () => {
