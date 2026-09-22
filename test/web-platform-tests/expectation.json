@@ -42657,8 +42657,7 @@
           },
           {
             "name": "Cache.add called with non-HTTP/HTTPS URL",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "success": true
           },
           {
             "name": "Cache.add called with Request object",
@@ -42666,8 +42665,7 @@
           },
           {
             "name": "Cache.add called with POST request",
-            "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "success": true
           },
           {
             "name": "Cache.add called twice with the same Request object",
@@ -43090,12 +43088,12 @@
           {
             "name": "Cache.put with synthetic 206 response",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got 206 status\""
           },
           {
             "name": "Cache.put with HTTP 206 response",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got 206 status\""
           },
           {
             "name": "Cache.put with opaque-filtered HTTP 206 response",
@@ -43125,7 +43123,7 @@
           {
             "name": "Cache.put with a non-HTTP/HTTPS request",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Expected an http/s scheme when method is not GET\""
           },
           {
             "name": "Cache.put with a relative URL",
@@ -43134,7 +43132,7 @@
           {
             "name": "Cache.put with a non-GET request",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Expected an http/s scheme when method is not GET\""
           },
           {
             "name": "Cache.put with a null response",
@@ -43143,12 +43141,12 @@
           {
             "name": "Cache.put with a POST request",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Expected an http/s scheme when method is not GET\""
           },
           {
             "name": "Cache.put with a used response body",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Response body is locked or disturbed\""
           },
           {
             "name": "getReader() after Cache.put",
@@ -43157,12 +43155,12 @@
           {
             "name": "Cache.put with a VARY:* Response",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got * vary field value\""
           },
           {
             "name": "Cache.put with an embedded VARY:* Response",
             "success": false,
-            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: prefix is not defined\""
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cache.put: Got * vary field value\""
           },
           {
             "name": "Cache.put with a VARY:* opaque response should not reject",
@@ -45711,8 +45709,14 @@
         ]
       },
       "fetch-event-respond-with-response-body-with-invalid-chunk.https.html": {
-        "success": false,
-        "cases": []
+        "success": true,
+        "cases": [
+          {
+            "name": "Response with a ReadableStream having non-Uint8Array chunks should be transferred as errored",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: Cannot read properties of undefined (reading 'getRegistration')\""
+          }
+        ]
       },
       "fetch-event-respond-with-stops-propagation.https.html": {
         "success": true,
