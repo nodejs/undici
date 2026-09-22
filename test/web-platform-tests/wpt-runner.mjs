@@ -7,6 +7,7 @@ import { createInterface } from 'node:readline'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { debuglog } from 'node:util'
 import {
+  escapeControlCharacters,
   sanitizeUnpairedSurrogates
 } from './runner/utils.mjs'
 import * as jsondiffpatch from 'jsondiffpatch'
@@ -713,14 +714,14 @@ async function run (filters = []) {
       console.log(`${test.path}: ${result.cases.length} tests ran in ${result.duration}ms:`)
 
       if (result.cases.length === 0) {
-        console.log(`\t??. ❌ ${result.error?.message ?? 'N/A'}`)
+        console.log(`\t??. ❌ ${escapeControlCharacters(result.error?.message ?? 'N/A')}`)
       }
 
       for (const c of result.cases) {
-        console.log(`\t${c.index + 1}. "${c.name}": ${c.status === 0 ? '✅ PASS' : '❌ FAIL'}`)
+        console.log(`\t${c.index + 1}. "${escapeControlCharacters(c.name)}": ${c.status === 0 ? '✅ PASS' : '❌ FAIL'}`)
 
         if (c.status !== 0 && (c.message || c.stack)) {
-          log(`${c.message}:\n${c.stack.split('\n').slice(1).join('\n')}`)
+          log(`${escapeControlCharacters(String(c.message))}:\n${c.stack.split('\n').slice(1).join('\n')}`)
         }
       }
     }

@@ -28127,7 +28127,7 @@
           {
             "name": "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz/!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz=!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz (Request/Response)",
             "success": false,
-            "message": "assert_equals: expected \"!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz/!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz=!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\" but got \"\""
+            "message": "assert_equals: expected \"!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz/!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz=!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\" but got \"!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz/!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz;!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz=!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz\""
           },
           {
             "name": "x/x;x=\"\t !\\\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ\" (Request/Response)",
@@ -31997,6 +31997,40 @@
             "name": "HTML is not sniffed for a \"feed\": rss",
             "success": false,
             "message": "window.open is not a function"
+          }
+        ]
+      },
+      "html-comment.tentative.window.html": {
+        "success": true,
+        "cases": [
+          {
+            "name": "Content starting with <!-- without space or > is sniffed as HTML",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"TypeError: window.open is not a function\""
+          }
+        ]
+      },
+      "mislabeled-binary-resource.tentative.window.html": {
+        "success": true,
+        "cases": [
+          {
+            "name": "Navigation: binary data served as text/plain should trigger download",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Navigation: HTML served as text/plain must not be rendered as HTML",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Navigation: PNG served as text/plain must not be sniffed as image",
+            "success": false,
+            "message": "promise_test: Unhandled rejection with value: object \"ReferenceError: document is not defined\""
+          },
+          {
+            "name": "Fetch: binary data served as text/plain must not be sniffed into a privileged type",
+            "success": true
           }
         ]
       }

@@ -268,6 +268,24 @@ describe('no_proxy', () => {
     return dispatcher.close()
   })
 
+  test('wildcard * with surrounding whitespace matches all hosts', async (t) => {
+    t = tspl(t, { plan: 2 })
+    process.env.no_proxy = ' * '
+    const { dispatcher, doesNotProxy } = createEnvHttpProxyAgentWithMocks(2)
+    t.ok(await doesNotProxy('https://example.com'))
+    t.ok(await doesNotProxy('http://example.com'))
+    return dispatcher.close()
+  })
+
+  test('wildcard * among other entries matches all hosts', async (t) => {
+    t = tspl(t, { plan: 2 })
+    process.env.no_proxy = 'none.invalid,*'
+    const { dispatcher, doesNotProxy } = createEnvHttpProxyAgentWithMocks(2)
+    t.ok(await doesNotProxy('https://example.com'))
+    t.ok(await doesNotProxy('http://example.com'))
+    return dispatcher.close()
+  })
+
   test('set but empty', async (t) => {
     t = tspl(t, { plan: 1 })
     process.env.no_proxy = ''
@@ -382,13 +400,16 @@ describe('no_proxy', () => {
     return dispatcher.close()
   })
 
-  test('host suffix with *. - leading dot with asterisk stripped', async (t) => {
+  test('host suffix with *. - subdomain wildcard does NOT match the apex', async (t) => {
+    // `*.example` is a subdomain wildcard: it must bypass the proxy for
+    // `sub.example` and `a.b.example`, but NOT for the apex `example` itself.
+    // This matches node:http and the usual `*.domain` convention.
     t = tspl(t, { plan: 9 })
     process.env.no_proxy = '*.example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(9)
-    t.ok(await doesNotProxy('http://example'))
-    t.ok(await doesNotProxy('http://example:80'))
-    t.ok(await doesNotProxy('http://example:1337'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example:80'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example:1337'))
     t.ok(await doesNotProxy('http://sub.example'))
     t.ok(await doesNotProxy('http://sub.example:80'))
     t.ok(await doesNotProxy('http://sub.example:1337'))
