@@ -15,6 +15,14 @@ function runNode (source) {
   })
 }
 
+function runNodeFile (filename) {
+  return spawnSync(process.execPath, [join(cwd, filename)], {
+    cwd,
+    encoding: 'utf8',
+    timeout: 30_000
+  })
+}
+
 test('setGlobalDispatcher does not break Node.js global fetch', () => {
   const script = `
     const { Agent, setGlobalDispatcher } = require('./index.js')
@@ -96,6 +104,19 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
   assert.strictEqual(payload.body, 'ok')
   assert.strictEqual(payload.count, 1)
   assert.strictEqual(payload.mirroredV2, true)
+})
+
+// https://github.com/nodejs/undici/issues/5858
+test('importing Undici does not break redirects in Node.js global fetch', () => {
+  const result = runNodeFile('test/fixtures/global-fetch-redirect.js')
+  assert.strictEqual(result.status, 0, result.stderr)
+  assert.deepStrictEqual(JSON.parse(result.stdout), {
+    status: 200,
+    redirected: true,
+    finalPath: '/final',
+    finalHeader: 'true',
+    body: 'ok'
+  })
 })
 
 test('setGlobalDispatcher lets Node.js global fetch use a MockAgent interceptor', () => {
