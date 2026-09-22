@@ -37831,8 +37831,7 @@
             },
             {
               "name": "abort during handshake should work",
-              "success": false,
-              "message": "promise_rejects_dom: opened should reject function \"function() { throw e; }\" threw object \"WebSocketError: Socket never opened\" that is not a DOMException AbortError: property \"code\" is equal to 0, expected 20"
+              "success": true
             },
             {
               "name": "abort after connect should do nothing",
@@ -37850,8 +37849,7 @@
             },
             {
               "name": "abort during handshake should work",
-              "success": false,
-              "message": "promise_rejects_dom: opened should reject function \"function() { throw e; }\" threw object \"WebSocketError: Socket never opened\" that is not a DOMException AbortError: property \"code\" is equal to 0, expected 20"
+              "success": true
             },
             {
               "name": "abort after connect should do nothing",
@@ -37894,7 +37892,7 @@
             {
               "name": "backpressure should be applied to sent messages",
               "success": false,
-              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 27.929699999999997"
+              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 24.976500000000016"
             }
           ]
         },
@@ -37956,7 +37954,7 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.07689999999999486"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.07859999999999445"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
@@ -38209,7 +38207,7 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.09319999999996753"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.09489999999999554"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
