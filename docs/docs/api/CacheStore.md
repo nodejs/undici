@@ -42,7 +42,8 @@ added: v7.0.0
 Stores cached responses in memory. The store enforces upper bounds on the total
 number of responses, the total size of all responses, and the size of any single
 response. When a limit is exceeded, the store evicts approximately half of its
-entries and emits a [`'maxSizeExceeded'`](#event-maxsizeexceeded) event.
+entries, least recently used first, and emits a
+[`'maxSizeExceeded'`](#event-maxsizeexceeded) event.
 
 ```mjs
 import { interceptors, cacheStores, Agent, setGlobalDispatcher } from 'undici'
