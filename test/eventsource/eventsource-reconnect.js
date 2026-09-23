@@ -117,6 +117,67 @@ describe('EventSource - reconnect', () => {
     })
   })
 
+  for (const [name, retry, options] of [
+    ['retry field larger than 2^31-1', '2147483648', undefined],
+    ['retry field that parses to Infinity', '9'.repeat(400), undefined],
+    ['reconnectionTime option larger than 2^31-1', undefined, { node: { reconnectionTime: 2 ** 32 - 1 } }]
+  ]) {
+    test(`Should not reconnect immediately with a ${name}`, async (t) => {
+      let requestCount = 0
+
+      const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestCount++
+        res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+        res.end(retry === undefined ? '' : `retry: ${retry}\n\n`)
+      })
+      await once(server.listen(0), 'listening')
+
+      const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`, options)
+      t.after(() => {
+        eventSourceInstance.close()
+        server.close()
+      })
+
+      await once(eventSourceInstance, 'error')
+      // Without clamping, setTimeout fires after 1 ms and the client
+      // reconnects hundreds of times in this window.
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      t.assert.strictEqual(requestCount, 1)
+      t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CONNECTING)
+    })
+  }
+
+  test('Should schedule the reconnect at the maximum setTimeout delay with a retry field larger than 2^31-1', async (t) => {
+    // Advancing a fake clock by ~24 days would also fire undici's own
+    // connection timers, so record the reconnect delay instead.
+    const originalSetTimeout = globalThis.setTimeout
+    const longDelays = []
+    t.mock.method(globalThis, 'setTimeout', (callback, delay, ...args) => {
+      if (delay > 60_000) {
+        longDelays.push(delay)
+        return { unref () { return this } }
+      }
+      return originalSetTimeout(callback, delay, ...args)
+    })
+
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end('retry: 2147483648\n\n')
+    })
+    await once(server.listen(0), 'listening')
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`)
+    t.after(() => {
+      eventSourceInstance.close()
+      server.close()
+    })
+
+    await once(eventSourceInstance, 'error')
+
+    t.assert.deepStrictEqual(longDelays, [2 ** 31 - 1])
+  })
+
   test('Should reconnect without an invalid lastEventId', { timeout: 2000 }, async (t) => {
     let requestCount = 0
     let secondRequestHeader
