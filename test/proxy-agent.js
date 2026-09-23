@@ -1,6 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const assert = require('node:assert')
 const { test, after } = require('node:test')
 const diagnosticsChannel = require('node:diagnostics_channel')
 const { request, fetch, Headers, setGlobalDispatcher, getGlobalDispatcher } = require('..')
@@ -835,6 +836,64 @@ test('use proxy-agent with custom headers with tunneling enabled', async (t) => 
   proxy.close()
   proxyAgent.close()
 })
+
+for (const proxyTunnel of [false, true]) {
+  test(`use proxy-agent with a headers object reused across origins (proxyTunnel: ${proxyTunnel})`, async (t) => {
+    const serverA = await buildServer()
+    const serverB = await buildServer()
+    const proxy = await buildProxy()
+    const proxyAgent = new ProxyAgent({ uri: `http://localhost:${proxy.address().port}`, proxyTunnel })
+    t.after(() => {
+      serverA.close()
+      serverB.close()
+      proxy.close()
+      return proxyAgent.close()
+    })
+
+    const hosts = []
+    const onRequest = (req, res) => {
+      hosts.push(req.headers.host)
+      res.end()
+    }
+    serverA.on('request', onRequest)
+    serverB.on('request', onRequest)
+
+    const headers = { 'x-foo': 'bar' }
+    const hostA = `localhost:${serverA.address().port}`
+    const hostB = `localhost:${serverB.address().port}`
+
+    for (const host of [hostA, hostB]) {
+      const { body } = await request(`http://${host}/`, { dispatcher: proxyAgent, headers })
+      await body.dump()
+    }
+
+    assert.deepStrictEqual(hosts, [hostA, hostB])
+    assert.deepStrictEqual(headers, { 'x-foo': 'bar' })
+  })
+
+  test(`use proxy-agent with a Host header in any case (proxyTunnel: ${proxyTunnel})`, async (t) => {
+    const server = await buildServer()
+    const proxy = await buildProxy()
+    const proxyAgent = new ProxyAgent({ uri: `http://localhost:${proxy.address().port}`, proxyTunnel })
+    t.after(() => {
+      server.close()
+      proxy.close()
+      return proxyAgent.close()
+    })
+
+    const host = `localhost:${server.address().port}`
+    server.on('request', (req, res) => {
+      res.end(req.headers.host)
+    })
+
+    const { body } = await request(`http://${host}/`, {
+      dispatcher: proxyAgent,
+      headers: { HOST: 'custom.example' }
+    })
+
+    assert.strictEqual(await body.text(), 'custom.example')
+  })
+}
 
 test('use proxy-agent with repeated iterable headers', async (t) => {
   t = tspl(t, { plan: 1 })
