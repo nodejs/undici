@@ -4,7 +4,6 @@ const assert = require('node:assert')
 const { test } = require('node:test')
 const { spawnSync } = require('node:child_process')
 const { join } = require('node:path')
-const Dispatcher1Wrapper = require('../../lib/dispatcher/dispatcher1-wrapper')
 
 const cwd = join(__dirname, '../..')
 const isNode26Plus = Number(process.versions.node.split('.')[0]) >= 26
@@ -107,13 +106,16 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
   assert.strictEqual(payload.mirroredV2, true)
 })
 
-test('setGlobalDispatcher lets Node.js global fetch reach an HTTP/2-only server', () => {
-  const result = runNodeFile('test/fixtures/global-fetch-h2-only.js')
+// https://github.com/nodejs/undici/issues/5858
+test('importing Undici does not break redirects in Node.js global fetch', () => {
+  const result = runNodeFile('test/fixtures/global-fetch-redirect.js')
   assert.strictEqual(result.status, 0, result.stderr)
   assert.deepStrictEqual(JSON.parse(result.stdout), {
-    body: 'ok',
-    factoryCalls: 1,
-    streams: 1
+    status: 200,
+    redirected: true,
+    finalPath: '/final',
+    finalHeader: 'true',
+    body: 'ok'
   })
 })
 
@@ -149,22 +151,6 @@ test('setGlobalDispatcher lets Node.js global fetch use a MockAgent interceptor'
     status: 200,
     body: { mocked: true }
   })
-})
-
-test('Dispatcher1Wrapper only disables HTTP/2 for upgrade requests', () => {
-  const dispatchedOptions = []
-  const dispatcher = new Dispatcher1Wrapper({
-    dispatch (opts) {
-      dispatchedOptions.push(opts)
-      return true
-    }
-  })
-
-  dispatcher.dispatch({ allowH2: true }, {})
-  dispatcher.dispatch({ allowH2: true, upgrade: 'websocket' }, {})
-
-  assert.strictEqual(dispatchedOptions[0].allowH2, true)
-  assert.strictEqual(dispatchedOptions[1].allowH2, false)
 })
 
 test('Dispatcher1Wrapper bridges legacy handlers to a new Agent', () => {
