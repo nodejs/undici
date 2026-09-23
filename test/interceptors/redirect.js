@@ -486,6 +486,46 @@ for (const factory of [
     await t.completed
   })
 
+  for (const [finalStatus, finalBody] of [[200, 'final'], [404, 'missing'], [304, ''], [300, 'choices']]) {
+    test(`should not throw on a final ${finalStatus} after exactly maxRedirections redirects with throwOnMaxRedirect`, async t => {
+      // /<redirects left> redirects until 0, then answers with finalStatus
+      // (without a Location header).
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        const left = Number(req.url.slice(1))
+        if (left > 0) {
+          res.writeHead(302, { location: `/${left - 1}` })
+          res.end()
+          return
+        }
+        res.writeHead(finalStatus)
+        res.end(finalBody)
+      }).listen(0)
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const dispatcher = new undici.Agent().compose(
+        redirect({ maxRedirections: 2, throwOnMaxRedirect: true })
+      )
+      after(() => dispatcher.close())
+
+      const response = await undici.request(`${origin}/2`, { dispatcher })
+
+      t.assert.strictEqual(response.statusCode, finalStatus)
+      t.assert.strictEqual(await response.body.text(), finalBody)
+      t.assert.deepStrictEqual(response.context.history, [
+        new URL(`${origin}/2`),
+        new URL(`${origin}/1`),
+        new URL(`${origin}/0`)
+      ])
+
+      await t.assert.rejects(
+        undici.request(`${origin}/3`, { dispatcher }),
+        { message: 'max redirects' }
+      )
+    })
+  }
+
   test('should not allow invalid throwOnMaxRedirect arguments', async t => {
     t = tspl(t, { plan: 1 })
 

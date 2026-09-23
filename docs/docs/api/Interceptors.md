@@ -163,9 +163,10 @@ Follows HTTP redirects (3xx responses) automatically.
   * `maxRedirections` {number} Maximum number of redirects to follow. Passing
     `0` disables redirect following entirely. **Default:** `undefined`
     (inherits from the per-request `maxRedirections` option).
-  * `throwOnMaxRedirect` {boolean} When `true`, throws an error once the
-    redirect limit is reached instead of returning the final redirect response.
-    **Default:** `false`.
+  * `throwOnMaxRedirect` {boolean} When `true`, throws an error when a
+    redirect would be followed but the redirect limit has been reached, instead
+    of returning that redirect response. A non-redirect response after exactly
+    `maxRedirections` redirects is returned normally. **Default:** `false`.
   * `stripHeadersOnRedirect` {string[]} List of header names to remove from
     the request when following any redirect. **Default:** `[]`.
   * `stripHeadersOnCrossOriginRedirect` {string[]} List of header names to
