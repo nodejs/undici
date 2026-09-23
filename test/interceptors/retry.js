@@ -582,12 +582,13 @@ test('Should handle 206 partial content - bad-etag', async t => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'erwsd')
       res.statusCode = 206
@@ -830,6 +831,84 @@ test('Should not reject a HEAD response with content-length', async t => {
   t.strictEqual(response.statusCode, 200)
   t.strictEqual(response.headers['content-length'], '1234')
   t.strictEqual(await response.body.text(), '')
+})
+
+test('should not resume an exposed response without a known length', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let count = 0
+  const server = createServer((req, res) => {
+    count++
+    if (count === 1) {
+      res.write('AAAA', () => setTimeout(() => res.destroy(), 20))
+      return
+    }
+
+    res.writeHead(206, {
+      'content-range': 'bytes 4-7/8',
+      'content-length': '4'
+    })
+    res.end('EVIL')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+    .compose(retry({ minTimeout: 1, maxRetries: 1 }))
+
+  after(async () => {
+    await client.destroy()
+    server.closeAllConnections()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'GET', path: '/' })
+  t.strictEqual(response.statusCode, 200)
+  await t.rejects(response.body.text(), { code: 'UND_ERR_SOCKET' })
+  t.strictEqual(count, 1, 'no range request should be sent')
+})
+
+test('should reject a mismatched resumed range for a response with a known length', async t => {
+  t = tspl(t, { plan: 4 })
+
+  let count = 0
+  const server = createServer((req, res) => {
+    count++
+    if (count === 1) {
+      res.setHeader('content-length', '5')
+      res.write('AAAA', () => setTimeout(() => res.destroy(), 20))
+      return
+    }
+
+    t.strictEqual(req.headers.range, 'bytes=4-4')
+    res.writeHead(206, {
+      'content-range': 'bytes 4-7/8',
+      'content-length': '4'
+    })
+    res.end('EVIL')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+    .compose(retry({ minTimeout: 1 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'GET', path: '/' })
+  t.strictEqual(response.statusCode, 200)
+  await t.rejects(response.body.text(), {
+    code: 'UND_ERR_REQ_RETRY',
+    message: 'Content-Range mismatch'
+  })
+  t.strictEqual(count, 2)
 })
 
 test('retrying a request with a body', async t => {
