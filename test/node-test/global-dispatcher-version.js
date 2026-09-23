@@ -107,13 +107,13 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
   assert.strictEqual(payload.mirroredV2, true)
 })
 
-test('setGlobalDispatcher lets Node.js global fetch reach an HTTP/2-only server', () => {
+test('setGlobalDispatcher preserves native fetch headers and decoding on an HTTP/2-only server', () => {
   const result = runNodeFile('test/fixtures/global-fetch-h2-only.js')
   assert.strictEqual(result.status, 0, result.stderr)
   assert.deepStrictEqual(JSON.parse(result.stdout), {
-    body: 'ok',
+    bodies: ['ok', 'ok', 'ok', 'ok'],
     factoryCalls: 1,
-    streams: 1
+    streams: 4
   })
 })
 
