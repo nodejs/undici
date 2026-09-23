@@ -32051,8 +32051,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -32079,8 +32078,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000, reason) - event.code == 1000 and event.reason = 'Clean Close'",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32107,8 +32105,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1000) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -32135,8 +32132,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close() - return close code is 1005 - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32163,8 +32159,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(1005) - see '7.1.5.  The WebSocket Connection Close Code' in http://www.ietf.org/rfc/rfc6455.txt",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -32191,8 +32186,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(2999, reason) - INVALID_ACCESS_ERR is thrown",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -32219,8 +32213,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(3000, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32247,8 +32240,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(3000, reason) - verify return code is 3000 - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32275,8 +32267,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(4999, reason) - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32303,8 +32294,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(code, 'reason more than 123 bytes') - SYNTAX_ERR is thrown",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -32331,8 +32321,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close should not emit until handshake completes - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32359,8 +32348,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(only reason) - INVALID_ACCESS_ERR is thrown",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -32387,8 +32375,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32415,8 +32402,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - readyState should be in CLOSING state just before onclose is called",
-          "success": false,
-          "message": "assert_true: open must be called expected true got false"
+          "success": true
         }
       ]
     },
@@ -32443,8 +32429,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Close the Connection - close(reason with unpaired surrogates) - connection should get closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -32471,8 +32456,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Server initiated Close - Client sends back a CLOSE - readyState should be in CLOSED state and wasClean is TRUE - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -32499,8 +32483,7 @@
       "cases": [
         {
           "name": "Close-undefined",
-          "success": false,
-          "message": "assert_true: open event must fire expected true got false"
+          "success": true
         }
       ]
     },
@@ -33218,8 +33201,7 @@
         },
         {
           "name": "Basic check",
-          "success": false,
-          "message": "assert_unreached: Reached unreachable code"
+          "success": true
         }
       ]
     },
@@ -33578,8 +33560,7 @@
       "cases": [
         {
           "name": "Create WebSocket - wsocket.extensions should be set to '' after connection is established - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be closed expected true got false"
+          "success": true
         }
       ]
     },
@@ -33641,6 +33622,10 @@
     "Create-non-absolute-url.any.html": {
       "success": true,
       "cases": [
+        {
+          "name": "Create WebSocket - Pass a non absolute URL: ",
+          "success": true
+        },
         {
           "name": "Create WebSocket - Pass a non absolute URL: test",
           "success": true
@@ -33827,8 +33812,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and array of protocol strings - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -33855,8 +33839,7 @@
       "cases": [
         {
           "name": "Create WebSocket - wsocket.binaryType should be set to 'blob' after connection is established - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -33910,8 +33893,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and protocol string - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -33938,8 +33920,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and protocol string - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -33966,8 +33947,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL and a protocol string - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -33994,8 +33974,7 @@
       "cases": [
         {
           "name": "Create WebSocket - Pass a valid URL - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34022,8 +34001,7 @@
       "cases": [
         {
           "name": "Send 0 byte data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34050,8 +34028,7 @@
       "cases": [
         {
           "name": "Send 65K data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34105,8 +34082,7 @@
       "cases": [
         {
           "name": "Send 65K binary data on a WebSocket - ArrayBuffer - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34133,8 +34109,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBuffer - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34161,8 +34136,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Float16Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34189,8 +34163,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Float32Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34217,8 +34190,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Float64Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34245,8 +34217,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Int16Array with offset - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34273,8 +34244,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Int32Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34301,8 +34271,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Int8Array - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34329,8 +34298,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint16Array with offset and length - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34357,8 +34325,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint32Array with offset - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34385,8 +34352,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint8Array with offset and length - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34413,8 +34379,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - ArrayBufferView - Uint8Array with offset - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34441,8 +34406,7 @@
       "cases": [
         {
           "name": "Send binary data on a WebSocket - Blob - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34469,8 +34433,7 @@
       "cases": [
         {
           "name": "Send data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: message should be received expected true got false"
+          "success": true
         }
       ]
     },
@@ -34497,8 +34460,7 @@
       "cases": [
         {
           "name": "Send null data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34525,8 +34487,7 @@
       "cases": [
         {
           "name": "Send paired surrogates data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34553,8 +34514,7 @@
       "cases": [
         {
           "name": "Send unicode data on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34581,8 +34541,7 @@
       "cases": [
         {
           "name": "Send unpaired surrogates on a WebSocket - Connection should be closed",
-          "success": false,
-          "message": "assert_true: WebSocket connection should be open expected true got false"
+          "success": true
         }
       ]
     },
@@ -34669,8 +34628,7 @@
         "cases": [
           {
             "name": "001",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -34693,14 +34651,9 @@
         ]
       },
       "002.html?wpt_flags=h2": {
-        "success": true,
-        "cases": [
-          {
-            "name": "002",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
-          }
-        ]
+        "skip": true,
+        "success": false,
+        "cases": []
       },
       "002.html?wss": {
         "success": true,
@@ -34721,14 +34674,9 @@
         ]
       },
       "004.html?wpt_flags=h2": {
-        "success": true,
-        "cases": [
-          {
-            "name": "004",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
-          }
-        ]
+        "skip": true,
+        "success": false,
+        "cases": []
       },
       "004.html?wss": {
         "success": true,
@@ -34753,8 +34701,7 @@
         "cases": [
           {
             "name": "005",
-            "success": false,
-            "message": "assert_unreached: close event should not fire Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -34782,8 +34729,7 @@
       "cases": [
         {
           "name": "Create WebSocket - set binaryType to something other than blob or arraybuffer - SYNTAX_ERR is returned - Connection should be closed",
-          "success": false,
-          "message": "assert_true: connection should be opened expected true got false"
+          "success": true
         }
       ]
     },
@@ -34812,7 +34758,7 @@
         {
           "name": "bufferedAmount should not be updated during a sync XHR",
           "success": false,
-          "message": "assert_unreached: open should succeed Reached unreachable code"
+          "message": "XMLHttpRequest is not defined"
         }
       ]
     },
@@ -34928,8 +34874,7 @@
         "cases": [
           {
             "name": "002",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -34956,8 +34901,7 @@
         "cases": [
           {
             "name": "003",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -34984,8 +34928,7 @@
         "cases": [
           {
             "name": "004",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -35073,7 +35016,7 @@
           {
             "name": "002",
             "success": false,
-            "message": "assert_unreached: error Reached unreachable code"
+            "message": "document is not defined"
           }
         ]
       },
@@ -35263,47 +35206,27 @@
       "success": true,
       "cases": [
         {
-          "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
-          "success": true
-        },
-        {
           "name": "Application data is 125 byte which means any 'Extended payload length' field isn't used at all.",
           "success": true
         },
         {
-          "name": "Application data is 0xFFFF byte which means the upper bound of the 16 bit 'Extended payload length' field.",
+          "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
           "success": true
         },
         {
           "name": "Application data is (0xFFFF + 1) byte which starts to use the 64 bit 'Extended payload length' field",
+          "success": true
+        },
+        {
+          "name": "Application data is 0xFFFF byte which means the upper bound of the 16 bit 'Extended payload length' field.",
           "success": true
         }
       ]
     },
     "extended-payload-length.html?wpt_flags=h2": {
-      "success": true,
-      "cases": [
-        {
-          "name": "Application data is 125 byte which means any 'Extended payload length' field isn't used at all.",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
-        },
-        {
-          "name": "Application data is 126 byte which starts to use the 16 bit 'Extended payload length' field.",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
-        },
-        {
-          "name": "Application data is 0xFFFF byte which means the upper bound of the 16 bit 'Extended payload length' field.",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
-        },
-        {
-          "name": "Application data is (0xFFFF + 1) byte which starts to use the 64 bit 'Extended payload length' field",
-          "success": false,
-          "message": "assert_unreached: close event should not fire Reached unreachable code"
-        }
-      ]
+      "skip": true,
+      "success": false,
+      "cases": []
     },
     "extended-payload-length.html?wss": {
       "success": true,
@@ -35595,8 +35518,7 @@
           "cases": [
             {
               "name": "clean-close",
-              "success": false,
-              "message": "assert_equals: expected true but got false"
+              "success": true
             }
           ]
         },
@@ -35648,8 +35570,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-arraybuffer",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -35676,8 +35597,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-blob",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -35758,8 +35678,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-getting",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -35804,8 +35723,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-large",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -35850,8 +35768,7 @@
             "cases": [
               {
                 "name": "bufferedAmount-unicode",
-                "success": false,
-                "message": "assert_unreached: close event should not fire Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -36771,7 +36688,8 @@
             "cases": [
               {
                 "name": "015",
-                "success": true
+                "success": false,
+                "message": "assert_true: expected true got false"
               }
             ]
           },
@@ -36799,8 +36717,7 @@
             "cases": [
               {
                 "name": "016",
-                "success": false,
-                "message": "assert_equals: expected 7 but got 1"
+                "success": true
               }
             ]
           },
@@ -37246,8 +37163,7 @@
             "cases": [
               {
                 "name": "006",
-                "success": false,
-                "message": "assert_unreached: close event should not fire before message event Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37274,8 +37190,7 @@
             "cases": [
               {
                 "name": "007",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37320,8 +37235,7 @@
             "cases": [
               {
                 "name": "009",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37368,8 +37282,7 @@
             "cases": [
               {
                 "name": "011",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37396,8 +37309,7 @@
             "cases": [
               {
                 "name": "012",
-                "success": false,
-                "message": "assert_unreached: Reached unreachable code"
+                "success": true
               }
             ]
           },
@@ -37556,8 +37468,7 @@
         "cases": [
           {
             "name": "001",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -37635,8 +37546,7 @@
         "cases": [
           {
             "name": "002",
-            "success": false,
-            "message": "assert_unreached: Reached unreachable code"
+            "success": true
           }
         ]
       },
@@ -37802,14 +37712,9 @@
       ]
     },
     "send-many-64K-messages-with-backpressure.any.html?wpt_flags=h2": {
-      "success": true,
-      "cases": [
-        {
-          "name": "sending 50 messages of size 65536 with backpressure applied should not hang",
-          "success": false,
-          "message": "assert_true: connection should have been opened expected true got false"
-        }
-      ]
+      "skip": true,
+      "success": false,
+      "cases": []
     },
     "send-many-64K-messages-with-backpressure.any.html?wss": {
       "success": true,
@@ -37831,13 +37736,11 @@
             },
             {
               "name": "abort during handshake should work",
-              "success": false,
-              "message": "promise_rejects_dom: opened should reject function \"function() { throw e; }\" threw object \"WebSocketError: Socket never opened\" that is not a DOMException AbortError: property \"code\" is equal to 0, expected 20"
+              "success": true
             },
             {
               "name": "abort after connect should do nothing",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             }
           ]
         },
@@ -37850,8 +37753,7 @@
             },
             {
               "name": "abort during handshake should work",
-              "success": false,
-              "message": "promise_rejects_dom: opened should reject function \"function() { throw e; }\" threw object \"WebSocketError: Socket never opened\" that is not a DOMException AbortError: property \"code\" is equal to 0, expected 20"
+              "success": true
             },
             {
               "name": "abort after connect should do nothing",
@@ -37865,7 +37767,7 @@
             {
               "name": "backpressure should be applied to received messages",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
             }
           ]
         },
@@ -37874,8 +37776,7 @@
           "cases": [
             {
               "name": "backpressure should be applied to received messages",
-              "success": false,
-              "message": "assert_greater_than_equal: data send should have taken at least 2 seconds expected a number greater than or equal to 1.8 but got 0.07775568962097168"
+              "success": true
             }
           ]
         },
@@ -37884,8 +37785,7 @@
           "cases": [
             {
               "name": "backpressure should be applied to sent messages",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             }
           ]
         },
@@ -37894,7 +37794,8 @@
           "cases": [
             {
               "name": "backpressure should be applied to sent messages",
-              "success": true
+              "success": false,
+              "message": "assert_greater_than_equal: expected a number greater than or equal to 1800 but got 26.386200000000002"
             }
           ]
         },
@@ -37956,12 +37857,11 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.2510350000000017"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.0765999999999849"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
-              "success": false,
-              "message": "assert_equals: close code should be Abnormal Closure expected 1006 but got 1005"
+              "success": true
             },
             {
               "name": "aborting the writable should result in a clean close",
@@ -38014,143 +37914,8 @@
           ]
         },
         "close.any.html?wpt_flags=h2": {
-          "success": true,
-          "cases": [
-            {
-              "name": "close code should be sent to server and reflected back",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "no close argument should send empty Close frame",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "unspecified close code should send empty Close frame",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "unspecified close code with empty reason should send empty Close frame",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "unspecified close code with non-empty reason should set code to 1000",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "close(true) should throw a TypeError",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "close() with an overlong reason should throw",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "close during handshake should work",
-              "success": true
-            },
-            {
-              "name": "close() with invalid code 999 should throw",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "close() with invalid code 1001 should throw",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "close() with invalid code 2999 should throw",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "close() with invalid code 5000 should throw",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "closing the writable should result in a clean close",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "writer close() promise should not resolve until handshake completes",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "incomplete closing handshake should be considered unclean close",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "aborting the writable should result in a clean close",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "aborting the writable with attributes not wrapped in a WebSocketError should be ignored",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "aborting the writable with a code should send that code",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "aborting the writable with a code and reason should use them",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "aborting the writable with a reason but no code should default the close code",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "aborting the writable with a DOMException not set code or reason",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "canceling the readable should result in a clean close",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "canceling the readable with attributes not wrapped in a WebSocketError should be ignored",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "canceling the readable with a code should send that code",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "canceling the readable with a code and reason should use them",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "canceling the readable with a reason but no code should default the close code",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "canceling the readable with a DOMException not set code or reason",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "close.any.html?wss": {
           "success": true,
@@ -38210,12 +37975,11 @@
             {
               "name": "writer close() promise should not resolve until handshake completes",
               "success": false,
-              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.27419499999996333"
+              "message": "assert_greater_than_equal: one second should have elapsed expected a number greater than or equal to 900 but got 0.09429999999997563"
             },
             {
               "name": "incomplete closing handshake should be considered unclean close",
-              "success": false,
-              "message": "assert_equals: close code should be Abnormal Closure expected 1006 but got 1005"
+              "success": true
             },
             {
               "name": "aborting the writable should result in a clean close",
@@ -38288,13 +38052,11 @@
             },
             {
               "name": "constructing with a valid URL should work",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             },
             {
               "name": "setting a protocol in the constructor should work",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             },
             {
               "name": "connection failure should reject the promises",
@@ -38302,8 +38064,7 @@
             },
             {
               "name": "wss.opened should resolve to the right types",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             }
           ]
         },
@@ -38340,8 +38101,7 @@
             },
             {
               "name": "wss.opened should resolve to the right types",
-              "success": false,
-              "message": "assert_equals: extensions should be a string expected \"string\" but got \"object\""
+              "success": true
             }
           ]
         },
@@ -38380,44 +38140,8 @@
           ]
         },
         "remote-close.any.html?wpt_flags=h2": {
-          "success": true,
-          "cases": [
-            {
-              "name": "clean close should be clean",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "close frame with no body should result in status code 1005",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
-            },
-            {
-              "name": "reason should be passed through",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
-            },
-            {
-              "name": "UTF-8 reason should work",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: unclean close\""
-            },
-            {
-              "name": "close with unwritten data should not be considered clean",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "remote code and reason should be used",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            },
-            {
-              "name": "abrupt close should give an error",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
-            }
-          ]
+          "success": false,
+          "cases": []
         },
         "remote-close.any.html?wss": {
           "success": true,
@@ -38535,32 +38259,28 @@
             {
               "name": "a write that was incomplete at close time should reject",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "message": "assert_unreached: closed promise should reject Reached unreachable code"
             },
             {
               "name": "garbage collection after close with a pending write promise should not crash",
               "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "message": "assert_unreached: closed promise should reject Reached unreachable code"
             },
             {
               "name": "writing a value that cannot be stringified should cause a rejection",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             },
             {
               "name": "writing a resizable ArrayBuffer should be rejected",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             },
             {
               "name": "writing a view on a shared buffer should be rejected",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             },
             {
               "name": "Garbage collecting a WebSocket stream doesn't crash while write promise is pending",
-              "success": false,
-              "message": "promise_test: Unhandled rejection with value: object \"WebSocketError: Socket never opened\""
+              "success": true
             }
           ]
         },
@@ -38591,6 +38311,33 @@
             },
             {
               "name": "Garbage collecting a WebSocket stream doesn't crash while write promise is pending",
+              "success": true
+            }
+          ]
+        },
+        "read.any.html?default": {
+          "success": true,
+          "cases": [
+            {
+              "name": "read type for binary messages is Uint8Array",
+              "success": true
+            }
+          ]
+        },
+        "read.any.html?wpt_flags=h2": {
+          "success": true,
+          "cases": [
+            {
+              "name": "read type for binary messages is Uint8Array",
+              "success": true
+            }
+          ]
+        },
+        "read.any.html?wss": {
+          "success": true,
+          "cases": [
+            {
+              "name": "read type for binary messages is Uint8Array",
               "success": true
             }
           ]
@@ -38696,6 +38443,30 @@
           }
         ]
       }
+    },
+    "back-forward-cache-closes-open-websocket-connection.tentative.window.html": {
+      "success": true,
+      "cases": [
+        {
+          "name": "back-forward-cache-closes-open-websocket-connection",
+          "success": false,
+          "message": "promise_test: Unhandled rejection with value: object \"TypeError: window.open is not a function\""
+        }
+      ]
+    },
+    "back-forward-cache-with-open-websocket-connection-and-close-it-in-pagehide.window.html": {
+      "success": true,
+      "cases": [
+        {
+          "name": "back-forward-cache-with-open-websocket-connection-and-close-it-in-pagehide",
+          "success": false,
+          "message": "promise_test: Unhandled rejection with value: object \"TypeError: window.open is not a function\""
+        }
+      ]
+    },
+    "send-data-isolation.sub.html": {
+      "success": false,
+      "cases": []
     }
   },
   "xhr": {

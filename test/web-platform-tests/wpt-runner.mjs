@@ -16,7 +16,7 @@ const REPO_ROOT = join(import.meta.dirname, '..', '..')
 const WPT_DIR = join(import.meta.dirname, 'wpt')
 const WPT_SCRIPT_PATH = join(WPT_DIR, 'wpt')
 const EXPECTATION_PATH = join(import.meta.dirname, 'expectation.json')
-const CA_CERT_PATH = join(import.meta.dirname, 'runner/certs/cacert.pem')
+const CA_CERT_PATH = join(WPT_DIR, 'tools/certs/cacert.pem')
 
 const log = debuglog('UNDICI_WPT')
 const WPT_SERVER_URL = 'http://web-platform.test:8000'
@@ -334,9 +334,6 @@ async function runWithTestUtil (testFunction) {
 function runSingleTest (url, options, expectation, timeout = 10000) {
   const startTime = Date.now()
   const { promise, resolve, reject } = Promise.withResolvers()
-  // NODE_EXTRA_CA_CERTS is required for HTTPS/WSS pages, but it causes the
-  // WebSocket-over-HTTP/2 WPT variants to exit without emitting harness output.
-  const useExtraCACerts = !(url.pathname.startsWith('/websockets/') && url.searchParams.get('wpt_flags')?.includes('h2'))
 
   const proc = spawn('node', [
     '--expose-gc',
@@ -348,7 +345,7 @@ function runSingleTest (url, options, expectation, timeout = 10000) {
     env: {
       ...process.env,
       NO_COLOR: '1',
-      ...(useExtraCACerts ? { NODE_EXTRA_CA_CERTS: CA_CERT_PATH } : {})
+      NODE_EXTRA_CA_CERTS: CA_CERT_PATH
     }
   })
 
@@ -508,6 +505,10 @@ function discoverTestsToRun (filter, expectation) {
 
           const filename = pathSegments[pathSegments.length - 1]
           const testExpectation = parentExpectation?.[filename]
+
+          if (testExpectation?.skip) {
+            continue
+          }
 
           tests.push({
             path: finalPath,

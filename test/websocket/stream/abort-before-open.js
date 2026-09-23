@@ -29,15 +29,14 @@ test('WebSocketStream aborts before handshake completes', async (t) => {
     signal: ac.signal
   })
 
-  ac.abort(new Error('abort before open'))
+  const reason = new Error('abort before open')
+  ac.abort(reason)
 
   const [opened, closed] = await Promise.allSettled([wss.opened, wss.closed])
 
   t.assert.strictEqual(opened.status, 'rejected')
-  t.assert.strictEqual(opened.reason.name, 'WebSocketError')
-  t.assert.strictEqual(opened.reason.message, 'Socket never opened')
+  t.assert.strictEqual(opened.reason, reason)
 
   t.assert.strictEqual(closed.status, 'rejected')
-  t.assert.strictEqual(closed.reason.name, 'WebSocketError')
-  t.assert.strictEqual(closed.reason.message, 'unclean close')
+  t.assert.strictEqual(closed.reason, reason)
 })
