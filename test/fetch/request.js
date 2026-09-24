@@ -431,6 +431,31 @@ test('Clone the set-cookie header when Request is passed as the first parameter 
   t.assert.strictEqual(request2.headers.getSetCookie().join(', '), request2.headers.get('set-cookie'))
 })
 
+test('Request with a Request input and an init without headers keeps a copy of the headers', (t) => {
+  const request = new Request('http://localhost', {
+    headers: [['Set-Cookie', 'a=1'], ['X-B', '2'], ['set-cookie', 'c=3'], ['x-a', '1']]
+  })
+  const request2 = new Request(request, { method: 'PUT' })
+
+  t.assert.strictEqual(request2.method, 'PUT')
+  t.assert.deepStrictEqual([...request2.headers], [...request.headers])
+  t.assert.deepStrictEqual(request2.headers.getSetCookie(), ['a=1', 'c=3'])
+
+  request2.headers.append('set-cookie', 'd=4')
+  request.headers.append('x-c', '3')
+  t.assert.deepStrictEqual(request.headers.getSetCookie(), ['a=1', 'c=3'])
+  t.assert.deepStrictEqual(request2.headers.getSetCookie(), ['a=1', 'c=3', 'd=4'])
+  t.assert.strictEqual(request2.headers.get('x-c'), null)
+})
+
+test('Request with a Headers object in init keeps all of its entries', (t) => {
+  const headers = new Headers([['X-A', '1'], ['set-cookie', 'a=1'], ['set-cookie', 'b=2']])
+  const request = new Request('http://localhost', { headers: { 'x-old': '0' } })
+  const request2 = new Request(request, { headers })
+
+  t.assert.deepStrictEqual([...request2.headers], [['set-cookie', 'a=1'], ['set-cookie', 'b=2'], ['x-a', '1']])
+})
+
 // Tests for optimization introduced in https://github.com/nodejs/undici/pull/2456
 test('keys to object prototypes method', (t) => {
   const request = new Request('http://localhost', { method: 'hasOwnProperty' })
