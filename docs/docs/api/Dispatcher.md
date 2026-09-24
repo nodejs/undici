@@ -209,7 +209,9 @@ added: v4.0.0
   * `path` {string} The request path.
   * `method` {string} The HTTP method, e.g. `'GET'` or `'POST'`.
   * `body` {string|Buffer|Uint8Array|Readable|FormData|null} The request body.
-    **Default:** `null`.
+    A `FormData` body must be created with the `FormData` exported by undici;
+    any other `FormData`, such as the global one, throws an
+    `InvalidArgumentError`. **Default:** `null`.
   * `headers` {UndiciHeaders} Request headers. **Default:** `null`.
   * `query` {Object} Query string parameters embedded into the request URL. Both
     keys and values are encoded with `encodeURIComponent`. **Default:** `null`.

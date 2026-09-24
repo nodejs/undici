@@ -1200,6 +1200,49 @@ test('request with FormData body', async (t) => {
   await t.completed
 })
 
+// https://github.com/nodejs/undici/issues/5520
+test('request with a FormData body not created by this undici rejects instead of hanging', async (t) => {
+  class FormDataLike {
+    append () {}
+    delete () {}
+    get () {}
+    getAll () {}
+    has () {}
+    set () {}
+    get [Symbol.toStringTag] () { return 'FormData' }
+  }
+  const bodies = [new FormDataLike()]
+  if (globalThis.FormData !== require('../').FormData) {
+    bodies.push(new globalThis.FormData())
+  }
+
+  t = tspl(t, { plan: bodies.length })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    t.fail('the request should not be sent')
+    res.end()
+  })
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(() => client.destroy())
+
+    for (const body of bodies) {
+      await t.rejects(client.request({
+        path: '/',
+        method: 'POST',
+        body
+      }), new InvalidArgumentError('body must be a FormData created by this version of undici; FormData from other sources, such as the global FormData, is not supported'))
+    }
+  })
+
+  await t.completed
+})
+
 test('request post body Buffer from string', async (t) => {
   t = tspl(t, { plan: 2 })
   const requestBody = Buffer.from('abcdefghijklmnopqrstuvwxyz')
