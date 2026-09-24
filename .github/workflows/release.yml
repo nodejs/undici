@@ -78,7 +78,7 @@ jobs:
         id: install-dependencies
 
       - name: Publish undici on NPM
-        run: npm publish --access public
+        run: npm publish --provenance --access public
         id: npm-publish-undici
 
       - name: Generate Types Package
@@ -86,7 +86,7 @@ jobs:
         id: generate-types-package
 
       - name: Publish undici-types on NPM
-        run: npm publish
+        run: npm publish --provenance
         id: npm-publish-undici-types
         working-directory: './types'
 
