@@ -119,3 +119,85 @@ test('http2 stream timeout keeps open-stream counter non-negative', async t => {
 
   await t.completed
 })
+
+// bodyTimeout measures how long the peer takes to send the body. While the
+// consumer applies backpressure, the peer runs out of flow-control window and
+// can't send, so the timeout must not fire. HTTP/1.1 behaves the same way.
+// Once the consumer resumes, a fresh bodyTimeout applies.
+async function startBodyServer (t, respond) {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+    stream.respond({ ':status': 200 })
+    respond(stream)
+  })
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
+    allowH2: true,
+    bodyTimeout: 100
+  })
+  after(() => client.destroy())
+  return client
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+test('http2 bodyTimeout does not fire while the consumer applies backpressure', { timeout: 5000 }, async t => {
+  // More than the 64 KiB flow-control window, sent at once.
+  const size = 2 * 1024 * 1024
+  const client = await startBodyServer(t, (stream) => stream.end(Buffer.alloc(size, 'a')))
+
+  const res = await client.request({ path: '/', method: 'GET' })
+  // Don't read the body for several bodyTimeouts. The body stream fills up
+  // and pauses the HTTP/2 stream.
+  await sleep(400)
+
+  const body = await res.body.text()
+  t.assert.strictEqual(body.length, size)
+})
+
+test('http2 bodyTimeout does not fire while a controller-API handler is paused', { timeout: 5000 }, async t => {
+  const size = 2 * 1024 * 1024
+  const client = await startBodyServer(t, (stream) => stream.end(Buffer.alloc(size, 'a')))
+
+  const { promise, resolve, reject } = Promise.withResolvers()
+  let received = 0
+  let pausedOnce = false
+  client.dispatch({ path: '/', method: 'GET' }, {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData (controller, chunk) {
+      received += chunk.length
+      if (!pausedOnce) {
+        pausedOnce = true
+        controller.pause()
+        setTimeout(() => controller.resume(), 400)
+      }
+    },
+    onResponseEnd () { resolve(received) },
+    onResponseError (controller, err) { reject(err) }
+  })
+
+  t.assert.strictEqual(await promise, size)
+})
+
+test('http2 bodyTimeout applies again after the consumer resumes', { timeout: 5000 }, async t => {
+  // Fill the window, then stall without ending the stream.
+  const client = await startBodyServer(t, (stream) => stream.write(Buffer.alloc(1024 * 1024, 'a')))
+
+  const res = await client.request({ path: '/', method: 'GET' })
+  await sleep(400)
+
+  const readStart = Date.now()
+  await t.assert.rejects(res.body.text(), {
+    code: 'UND_ERR_BODY_TIMEOUT',
+    message: 'HTTP/2: "stream timeout after 100"'
+  })
+  // The timeout is measured from the resume, not from the pause: it must
+  // not have fired while paused (which rejects as soon as reading starts).
+  const elapsed = Date.now() - readStart
+  t.assert.ok(elapsed >= 50, `timed out ${elapsed}ms after resuming, expected about 100ms`)
+})
