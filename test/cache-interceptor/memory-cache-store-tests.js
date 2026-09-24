@@ -1,7 +1,7 @@
 'use strict'
 
 const { test } = require('node:test')
-const { equal } = require('node:assert')
+const { equal, deepStrictEqual } = require('node:assert')
 const MemoryCacheStore = require('../../lib/cache/memory-cache-store')
 const { cacheStoreTests } = require('./cache-store-test-utils.js')
 
@@ -203,4 +203,100 @@ test('emits maxSizeExceeded event when limits exceeded', async () => {
   equal(typeof eventPayload.maxSize, 'number', 'Payload should have maxSize')
   equal(typeof eventPayload.count, 'number', 'Payload should have count')
   equal(typeof eventPayload.maxCount, 'number', 'Payload should have maxCount')
+})
+
+function writeEntry (store, path, { body = 'x', ttl = 60000, vary } = {}) {
+  const now = Date.now()
+  const writeStream = store.createWriteStream(
+    { origin: 'test', path, method: 'GET', headers: vary },
+    {
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      vary,
+      cachedAt: now,
+      staleAt: now + ttl,
+      deleteAt: now + ttl
+    }
+  )
+  writeStream.end(body)
+}
+
+function hasEntry (store, path, headers = {}) {
+  return store.get({ origin: 'test', path, method: 'GET', headers }) !== undefined
+}
+
+test('eviction removes the oldest entries and keeps the newest', () => {
+  const store = new MemoryCacheStore({ maxCount: 10 })
+
+  for (let i = 0; i < 11; i++) {
+    writeEntry(store, `/${i}`)
+  }
+
+  const kept = []
+  for (let i = 0; i < 11; i++) {
+    if (hasEntry(store, `/${i}`)) kept.push(i)
+  }
+  deepStrictEqual(kept, [6, 7, 8, 9, 10])
+})
+
+test('eviction by maxSize removes the oldest entries and keeps the newest', () => {
+  const store = new MemoryCacheStore({ maxSize: 1000 })
+
+  for (let i = 0; i < 11; i++) {
+    writeEntry(store, `/${i}`, { body: 'x'.repeat(100) })
+  }
+
+  equal(store.size, 500)
+  equal(hasEntry(store, '/0'), false)
+  equal(hasEntry(store, '/10'), true)
+})
+
+test('eviction treats a rewritten entry as the newest', () => {
+  const store = new MemoryCacheStore({ maxCount: 4 })
+
+  for (let i = 0; i < 4; i++) {
+    writeEntry(store, `/${i}`)
+  }
+  writeEntry(store, '/0')
+  writeEntry(store, '/4')
+
+  deepStrictEqual([0, 1, 2, 3, 4].filter((i) => hasEntry(store, `/${i}`)), [0, 4])
+})
+
+test('eviction treats a read entry as the most recently used', () => {
+  const store = new MemoryCacheStore({ maxCount: 4 })
+
+  for (let i = 0; i < 4; i++) {
+    writeEntry(store, `/${i}`)
+  }
+  hasEntry(store, '/0')
+  writeEntry(store, '/4')
+
+  deepStrictEqual([0, 1, 2, 3, 4].filter((i) => hasEntry(store, `/${i}`)), [0, 4])
+})
+
+test('eviction keeps the entry just written', () => {
+  const store = new MemoryCacheStore({ maxSize: 300 })
+
+  writeEntry(store, '/', { body: 'x'.repeat(100), vary: { accept: 'a' } })
+  writeEntry(store, '/', { body: 'x'.repeat(100), vary: { accept: 'b' } })
+  writeEntry(store, '/other', { body: 'x'.repeat(100) })
+  writeEntry(store, '/', { body: 'x'.repeat(250), vary: { accept: 'a' } })
+
+  equal(hasEntry(store, '/', { accept: 'a' }), true)
+  equal(hasEntry(store, '/', { accept: 'b' }), false)
+  equal(hasEntry(store, '/other'), false)
+  equal(store.size, 250)
+})
+
+test('an expired entry is replaced rather than duplicated', async () => {
+  const store = new MemoryCacheStore()
+
+  for (let i = 0; i < 5; i++) {
+    writeEntry(store, '/', { body: 'x'.repeat(100), ttl: 5 })
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+
+  equal(store.size, 100)
 })
