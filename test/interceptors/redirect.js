@@ -467,7 +467,7 @@ for (const factory of [
   })
 
   test('should throw when max redirections is reached and throwOnMaxRedirect is set as interceptor default', async t => {
-    t = tspl(t, { plan: 1 })
+    t = tspl(t, { plan: 2 })
 
     const server = await startRedirectingServer()
 
@@ -481,6 +481,7 @@ for (const factory of [
       t.fail('Did not throw')
     } catch (error) {
       t.strictEqual(error.message, 'max redirects')
+      t.strictEqual(error.code, 'UND_ERR_REDIRECT_MAX')
     }
 
     await t.completed
@@ -521,7 +522,7 @@ for (const factory of [
 
       await t.assert.rejects(
         undici.request(`${origin}/3`, { dispatcher }),
-        { message: 'max redirects' }
+        { message: 'max redirects', code: 'UND_ERR_REDIRECT_MAX' }
       )
     })
   }

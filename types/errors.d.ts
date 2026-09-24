@@ -169,6 +169,12 @@ declare namespace Errors {
     code: 'UND_ERR_MAX_ORIGINS_REACHED'
   }
 
+  /** The maximum number of redirects has been reached. */
+  export class MaxRedirectsError extends UndiciError {
+    name: 'MaxRedirectsError'
+    code: 'UND_ERR_REDIRECT_MAX'
+  }
+
   /** SOCKS5 proxy related error. */
   export class Socks5ProxyError extends UndiciError {
     constructor (

@@ -429,7 +429,7 @@ for (const factory of [
   })
 
   test('should throw when max redirections is reached and throwOnMaxRedirect is enabled', async t => {
-    t = tspl(t, { plan: 1 })
+    t = tspl(t, { plan: 2 })
 
     const server = await startRedirectingServer()
 
@@ -444,6 +444,7 @@ for (const factory of [
       } else {
         t.fail(`Unexpected error: ${error.message}`)
       }
+      t.strictEqual(error.code, 'UND_ERR_REDIRECT_MAX')
     }
 
     await t.completed

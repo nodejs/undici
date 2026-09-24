@@ -120,6 +120,11 @@ expectAssignable<errors.MaxOriginsReachedError>(new errors.MaxOriginsReachedErro
 expectAssignable<'MaxOriginsReachedError'>(new errors.MaxOriginsReachedError().name)
 expectAssignable<'UND_ERR_MAX_ORIGINS_REACHED'>(new errors.MaxOriginsReachedError().code)
 
+expectAssignable<errors.UndiciError>(new errors.MaxRedirectsError())
+expectAssignable<errors.MaxRedirectsError>(new errors.MaxRedirectsError())
+expectAssignable<'MaxRedirectsError'>(new errors.MaxRedirectsError().name)
+expectAssignable<'UND_ERR_REDIRECT_MAX'>(new errors.MaxRedirectsError().code)
+
 {
   // @ts-ignore
   function f (): errors.HeadersTimeoutError | errors.ConnectTimeoutError { }
