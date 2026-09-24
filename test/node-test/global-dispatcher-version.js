@@ -119,6 +119,17 @@ test('importing Undici does not break redirects in Node.js global fetch', () => 
   })
 })
 
+// https://github.com/nodejs/undici/issues/5865
+test('Node.js global fetch preserves headers and decodes gzip through the legacy bridge', () => {
+  const result = runNodeFile('test/fixtures/global-fetch-h2-headers.js')
+  assert.strictEqual(result.status, 0, result.stderr)
+  assert.deepStrictEqual(JSON.parse(result.stdout), {
+    status: 200,
+    contentEncoding: 'gzip',
+    body: { ok: true }
+  })
+})
+
 test('setGlobalDispatcher lets Node.js global fetch use a MockAgent interceptor', () => {
   const script = `
     const { MockAgent, setGlobalDispatcher } = require('./index.js')
