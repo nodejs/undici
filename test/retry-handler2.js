@@ -665,12 +665,13 @@ test('Should handle 206 partial content | throwOnError: false', async t => {
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
@@ -762,12 +763,13 @@ test('Should handle 206 partial content - bad-etag | throwOnError: false', async
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'erwsd')
       res.statusCode = 206
@@ -1217,12 +1219,13 @@ test('Issue#2986 - Handle custom 206 | throwOnError: false', async t => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'asd')
       res.statusCode = 206
@@ -1316,12 +1319,13 @@ test('Issue#3128 - Support if-match | throwOnError: false', async t => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       t.deepStrictEqual(req.headers['if-match'], 'asd')
 
       res.setHeader('content-range', 'bytes 3-5/6')
@@ -1417,12 +1421,13 @@ test('Issue#3128 - Should ignore weak etags | throwOnError: false', async t => {
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'W/asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       t.equal(req.headers['if-match'], undefined)
 
       res.setHeader('content-range', 'bytes 3-5/6')
@@ -1518,12 +1523,13 @@ test('Weak etags are ignored on range-requests | throwOnError: false', async t =
     if (x === 0) {
       t.deepStrictEqual(req.headers.range, 'bytes=0-3')
       res.setHeader('etag', 'W/asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       t.equal(req.headers['if-match'], undefined)
 
       res.setHeader('content-range', 'bytes 3-5/6')
@@ -1618,12 +1624,13 @@ test('Should throw RequestRetryError when Content-Range mismatch | throwOnError:
     if (x === 0) {
       t.ok(true, 'pass')
       res.setHeader('etag', 'asd')
+      res.setHeader('content-length', '6')
       res.write('abc')
       setTimeout(() => {
         res.destroy()
       }, 1e2)
     } else if (x === 1) {
-      t.deepStrictEqual(req.headers.range, 'bytes=3-')
+      t.deepStrictEqual(req.headers.range, 'bytes=3-5')
       res.setHeader('content-range', 'bytes bad') // intentionally bad to trigger error
       res.setHeader('etag', 'asd')
       res.statusCode = 206
