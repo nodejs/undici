@@ -86,6 +86,33 @@ describe('EventSource - message', () => {
     })
   })
 
+  test('Should use the default message type when an empty event field replaces a custom type', async (t) => {
+    t.plan(3)
+
+    const server = http.createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end('event: custom\nevent:\ndata: payload\n\n')
+    })
+
+    await once(server.listen(0), 'listening')
+    const port = server.address().port
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+
+    t.after(async () => {
+      eventSourceInstance.close()
+      await new Promise(resolve => server.close(resolve))
+    })
+
+    const received = await Promise.race([
+      once(eventSourceInstance, 'message').then(([event]) => ({ listener: 'message', event })),
+      once(eventSourceInstance, 'custom').then(([event]) => ({ listener: 'custom', event }))
+    ])
+
+    t.assert.strictEqual(received.listener, 'message')
+    t.assert.strictEqual(received.event.type, 'message')
+    t.assert.strictEqual(received.event.data, 'payload')
+  })
+
   test('Should emit a message event if data is provided', (t, done) => {
     t.plan(1)
 
