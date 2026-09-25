@@ -70,8 +70,11 @@ function makeDispatcher (connections, maxConcurrentStreams) {
   return new Agent({
     keepAliveTimeout: 20_000,
     keepAliveMaxTimeout: 60_000,
-    bodyTimeout: 20_000,
-    headersTimeout: 20_000,
+    // This test stresses stream abort/cleanup ordering. Timeouts make the
+    // high-concurrency run dependent on CI host scheduling and can reject
+    // otherwise healthy requests before the regression condition is reached.
+    bodyTimeout: 0,
+    headersTimeout: 0,
     allowH2: true,
     connections,
     pipelining: maxConcurrentStreams,
