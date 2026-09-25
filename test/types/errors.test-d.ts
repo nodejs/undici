@@ -55,6 +55,11 @@ expectAssignable<errors.InformationalError>(new errors.InformationalError())
 expectAssignable<'InformationalError'>(new errors.InformationalError().name)
 expectAssignable<'UND_ERR_INFO'>(new errors.InformationalError().code)
 
+expectAssignable<errors.UndiciError>(new errors.DNSFilterError())
+expectAssignable<errors.DNSFilterError>(new errors.DNSFilterError())
+expectAssignable<'DNSFilterError'>(new errors.DNSFilterError().name)
+expectAssignable<'UND_ERR_DNS_FILTER'>(new errors.DNSFilterError().code)
+
 expectAssignable<errors.UndiciError>(new errors.RequestContentLengthMismatchError())
 expectAssignable<errors.RequestContentLengthMismatchError>(new errors.RequestContentLengthMismatchError())
 expectAssignable<'RequestContentLengthMismatchError'>(new errors.RequestContentLengthMismatchError().name)

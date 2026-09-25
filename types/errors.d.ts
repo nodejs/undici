@@ -73,6 +73,12 @@ declare namespace Errors {
     code: 'UND_ERR_INFO'
   }
 
+  /** Every address resolved for the request was rejected by the DNS filter. */
+  export class DNSFilterError extends UndiciError {
+    name: 'DNSFilterError'
+    code: 'UND_ERR_DNS_FILTER'
+  }
+
   /** Request body length does not match content-length header. */
   export class RequestContentLengthMismatchError extends UndiciError {
     name: 'RequestContentLengthMismatchError'

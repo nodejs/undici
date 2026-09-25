@@ -28,6 +28,10 @@ const pick: Interceptors.DNSInterceptorOpts['pick'] = (origin: URL, records: Int
   throw new Error('stub')
 }
 
+const filter: Interceptors.DNSInterceptorOpts['filter'] = (origin: URL, record: Interceptors.DNSInterceptorAddress): boolean => {
+  return origin.hostname === 'example.com' && record.address !== '127.0.0.1'
+}
+
 expectAssignable<Interceptors.DNSInterceptorOpts>({})
 expectAssignable<Interceptors.DNSInterceptorOpts>({ storage })
 expectAssignable<Interceptors.DNSInterceptorOpts>({ maxTTL: 1000 })
@@ -36,8 +40,10 @@ expectAssignable<Interceptors.DNSInterceptorOpts>({ dualStack: true })
 expectAssignable<Interceptors.DNSInterceptorOpts>({ affinity: 4 })
 expectAssignable<Interceptors.DNSInterceptorOpts>({ lookup })
 expectAssignable<Interceptors.DNSInterceptorOpts>({ pick })
+expectAssignable<Interceptors.DNSInterceptorOpts>({ filter })
 
 expectAssignable<Interceptors.DNSInterceptorRecord>({ address: '127.0.0.1', ttl: 300, family: 4 })
+expectAssignable<Interceptors.DNSInterceptorAddress>({ address: '127.0.0.1', family: 4 })
 
 expectAssignable<Interceptors.DNSInterceptorOriginRecords>({ records: { 4: { ips: [{ address: '127.0.0.1', ttl: 300, family: 4 }] }, 6: null } })
 
@@ -49,6 +55,11 @@ expectNotAssignable<Interceptors.DNSInterceptorOpts>({
 })
 expectNotAssignable<Interceptors.DNSInterceptorOpts>({
   pick: (origin: string) => {
+    throw new Error('stub')
+  }
+})
+expectNotAssignable<Interceptors.DNSInterceptorOpts>({
+  filter: (origin: string) => {
     throw new Error('stub')
   }
 })
