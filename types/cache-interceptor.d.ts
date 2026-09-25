@@ -117,17 +117,17 @@ declare namespace CacheHandler {
 
   export interface MemoryCacheStoreOpts {
     /**
-       * @default Infinity
-       */
+     * @default 1024
+     */
     maxCount?: number
 
     /**
-     * @default Infinity
+     * @default 104857600 (100 MiB)
      */
     maxSize?: number
 
     /**
-     * @default Infinity
+     * @default 5242880 (5 MiB)
      */
     maxEntrySize?: number
 
@@ -157,7 +157,7 @@ declare namespace CacheHandler {
     maxCount?: number
 
     /**
-     * @default Infinity
+     * @default 2000000000 (2 GB)
      */
     maxEntrySize?: number
   }
