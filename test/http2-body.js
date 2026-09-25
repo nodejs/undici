@@ -170,7 +170,7 @@ test('Should end h2 zero-length request bodies with headers', async t => {
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', async t => {
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 10 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
@@ -218,10 +218,17 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
         t.ifError(err)
       },
       onResponseStart (controller, statusCode) {
+        t.ok(Array.isArray(controller.rawHeadersH2))
         const rawHeaders = controller.rawHeaders
+        t.strictEqual(controller.rawHeadersH2, null)
+        t.strictEqual(controller.rawHeaders, rawHeaders)
         t.strictEqual(statusCode, 200)
-        t.strictEqual(rawHeaders['content-type'], 'text/plain; charset=utf-8')
-        t.strictEqual(rawHeaders['x-custom-h2'], 'foo')
+        const headers = {}
+        for (let i = 0; i < rawHeaders.length; i += 2) {
+          headers[rawHeaders[i].toString('latin1')] = rawHeaders[i + 1].toString('latin1')
+        }
+        t.strictEqual(headers['content-type'], 'text/plain; charset=utf-8')
+        t.strictEqual(headers['x-custom-h2'], 'foo')
       },
       onResponseData (_controller, chunk) {
         response.push(chunk)
