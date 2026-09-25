@@ -1,0 +1,4 @@
+# Tests intentionally exercise insecure scenarios (for example, self-signed certificates).
+# Keep scanning production code without reporting findings from test fixtures.
+paths-ignore:
+  - test/**
