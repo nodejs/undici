@@ -2397,3 +2397,103 @@ test('#4234 - Should pass Pool requests without origin through', async t => {
   t.equal(await response.body.text(), 'hello world!')
   t.equal(lookupCount, 1)
 })
+
+test('Should not fail over to a TTL-expired address (dual stack)', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const clock = FakeTimers.install()
+  const attempts = []
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Agent().compose([
+    dispatch => (opts, handler) => {
+      attempts.push(new URL(opts.origin).hostname)
+      return dispatch(opts, handler)
+    },
+    dns({
+      affinity: 4,
+      maxTTL: 100000,
+      lookup (origin, opts, cb) {
+        cb(null, [
+          { address: '127.0.0.1', family: 4, ttl: 100000 },
+          { address: '::1', family: 6, ttl: 10 }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    clock.uninstall()
+    await client.close()
+  })
+
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    origin: `http://localhost:${server.address().port}`
+  }
+
+  // Warm the cache while the server is still up.
+  const response = await client.request(requestOptions)
+  t.equal(await response.body.text(), 'hello world!')
+
+  // The IPv6 record goes stale; the IPv4 one this request will use stays fresh.
+  clock.tick(50)
+
+  // Take the server away, so the IPv4 attempt is refused and the dual-stack
+  // fail-over asks for the other family.
+  server.close()
+  await once(server, 'close')
+  attempts.length = 0
+
+  await t.rejects(client.request(requestOptions), { code: 'ECONNREFUSED' })
+
+  // Only the IPv4 attempt. pickFamily drops the expired IPv6 record, and a
+  // record it has just evicted as stale must not be handed back to retry with.
+  t.equal(attempts.length, 1)
+  t.equal(attempts[0], '127.0.0.1')
+})
+
+test('Should report an unusable lookup result instead of crashing (dual stack disabled)', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  // A host with no AAAA record, asked for over IPv6 only. pick() has nothing to
+  // return, and the fresh-lookup branch has to say so rather than dereference it.
+  const client = new Agent().compose(dns({
+    dualStack: false,
+    affinity: 6,
+    lookup (origin, opts, cb) {
+      cb(null, [{ address: '127.0.0.1', family: 4, ttl: 100000 }])
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  await t.rejects(client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://localhost:${server.address().port}`
+  }), { code: 'UND_ERR_INFO', message: 'No DNS entries found' })
+})
