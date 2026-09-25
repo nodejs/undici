@@ -27,7 +27,10 @@ describe('Interceptor should not break multi-value headers', () => {
     assert.deepStrictEqual(headers.getSetCookie(), ['a=1', 'b=2', 'c=3'])
   })
 
-  test('Interceptor should not break other multi-value header', async (t) => {
+  test('Interceptor should not break other multi-value header', {
+    // Milo intentionally does not support HTTP/1.0 responses.
+    skip: process.env.UNDICI_USE_MILO === 'true' && 'Milo does not support HTTP/1.0 responses'
+  }, async (t) => {
     const server = createSocketServer((socket) => {
       socket.write('HTTP/1.0 204 No Content\r\n')
       socket.write('X-Test-Header: 1\r\n')
