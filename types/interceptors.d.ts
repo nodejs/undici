@@ -79,4 +79,5 @@ declare namespace Interceptors {
   export function dns (opts?: DNSInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function cache (opts?: CacheInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
   export function deduplicate (opts?: DeduplicateInterceptorOpts): Dispatcher.DispatcherComposeInterceptor
+  export function signal (): Dispatcher.DispatcherComposeInterceptor
 }
