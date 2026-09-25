@@ -1425,4 +1425,8 @@ test('pool does not dispatch to clientTtl-evicted client when stale drain fires'
   // throwing ClientClosedError. With the fix it returns early for closed clients.
   c1.emit('drain', new URL('http://notahost'), [c1])
   t.ok(true, 'no ClientClosedError when evicted client emits drain')
+
+  // Let C2 consume the queued request before teardown. Destroying the pool
+  // rejects queued requests, and this handler deliberately throws on errors.
+  clients[1].emit('drain', new URL('http://notahost'), [clients[1]])
 })
