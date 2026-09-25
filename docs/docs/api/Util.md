@@ -14,13 +14,13 @@ and parse raw header lists exactly the way undici does.
 ```mjs
 import { util } from 'undici'
 
-const { parseHeaders, headerNameToString } = util
+const { parseHeaders, headerNameToString, normalizeHeaders } = util
 ```
 
 ```cjs
 const { util } = require('undici')
 
-const { parseHeaders, headerNameToString } = util
+const { parseHeaders, headerNameToString, normalizeHeaders } = util
 ```
 
 ## `parseHeaders(headers[, obj])`
@@ -76,6 +76,28 @@ console.log(util.headerNameToString('Content-Type'))
 
 console.log(util.headerNameToString(Buffer.from('X-Custom-Header')))
 // 'x-custom-header'
+```
+
+## `normalizeHeaders(headers)`
+
+* `headers` {Object|Array|Iterable|null|undefined} A supported request headers value.
+* Returns: {Object} An object keyed by lowercased header name.
+
+Normalizes request headers for dispatchers and interceptors that need to inspect
+them. Flat arrays, arrays of name/value pairs, `Headers` objects, custom
+iterables, and plain objects are accepted. Repeated names are collected into an
+array. The input is not modified.
+
+```mjs
+import { util } from 'undici'
+
+const headers = util.normalizeHeaders([
+  ['X-Trace-Id', 'one'],
+  ['x-trace-id', 'two']
+])
+
+console.log(headers)
+// { 'x-trace-id': [ 'one', 'two' ] }
 ```
 
 [`Dispatcher`]: Dispatcher.md#class-dispatcher
