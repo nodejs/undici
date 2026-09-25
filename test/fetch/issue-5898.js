@@ -18,18 +18,32 @@ for (const [protocol, createServer, options] of [
 ]) {
   test(`repeated response headers over ${protocol}`, async (t) => {
     const server = await createServer()
+    let supportsRepeatedSingleValueFields = true
+    function writeRepeatedHeaders (res, status, name, values) {
+      try {
+        res.writeHead(status, { [name]: values })
+      } catch (err) {
+        // Older Node HTTP/2 servers reject these arrays even with
+        // strictSingleValueFields: false. Keep testing the combined form.
+        if (protocol !== 'HTTP/2' || err.code !== 'ERR_HTTP2_HEADER_SINGLE_VALUE') {
+          throw err
+        }
+        supportsRepeatedSingleValueFields = false
+        res.writeHead(status, { [name]: values.join(', ') })
+      }
+    }
     server.on('request', (req, res) => {
       switch (req.url) {
         case '/encoding':
-          res.writeHead(200, { 'content-encoding': ['gzip', 'br'] })
+          writeRepeatedHeaders(res, 200, 'content-encoding', ['gzip', 'br'])
           res.end(compressed)
           break
         case '/type':
-          res.writeHead(200, { 'content-type': ['text/plain', 'invalid', 'text/html'] })
+          writeRepeatedHeaders(res, 200, 'content-type', ['text/plain', 'invalid', 'text/html'])
           res.end(plain)
           break
         case '/location':
-          res.writeHead(302, { location: ['/A', '/B'] })
+          writeRepeatedHeaders(res, 302, 'location', ['/A', '/B'])
           res.end()
           break
         case '/single-location':
@@ -61,8 +75,10 @@ for (const [protocol, createServer, options] of [
     assert.equal((await type.blob()).type, 'text/html')
     assert.equal(type.headers.get('content-type'), 'text/plain, invalid, text/html')
 
-    await assert.rejects(fetch(`${origin}/location`, { dispatcher: client }), TypeError)
     const manual = await fetch(`${origin}/location`, { dispatcher: client, redirect: 'manual' })
+    if (supportsRepeatedSingleValueFields) {
+      await assert.rejects(fetch(`${origin}/location`, { dispatcher: client }), TypeError)
+    }
     assert.equal(manual.headers.get('location'), '/A, /B')
     await manual.body?.cancel()
     assert.equal(await (await fetch(`${origin}/single-location`, { dispatcher: client })).text(), '/A')
@@ -76,7 +92,7 @@ for (const [protocol, createServer, options] of [
     await response.body.dump()
 
     const encoded = await client.request({ origin, path: '/encoding', method: 'GET' })
-    assert.deepEqual(encoded.headers['content-encoding'], ['gzip', 'br'])
+    assert.deepEqual(encoded.headers['content-encoding'], supportsRepeatedSingleValueFields ? ['gzip', 'br'] : 'gzip, br')
     await encoded.body.dump()
 
     const headers = await fetch(`${origin}/headers`, { dispatcher: client })
