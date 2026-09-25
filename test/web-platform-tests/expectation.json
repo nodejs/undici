@@ -42412,8 +42412,7 @@
   "service-workers": {
     "cache-storage": {
       "cache-abort.https.any.html": {
-        "success": false,
-        "cases": []
+        "skip": true
       },
       "cache-add.https.any.html": {
         "success": true,
