@@ -1494,6 +1494,39 @@ test('request multibyte text with setEncoding', async (t) => {
   await t.completed
 })
 
+test('request multibyte text with async iteration and setEncoding', async (t) => {
+  t = tspl(t, { plan: 1 })
+
+  const data = Buffer.from('abc傳def')
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.write(data.subarray(0, 5))
+    setTimeout(() => {
+      res.end(data.subarray(5))
+    }, 100)
+  })
+  after(server.close.bind(server))
+
+  server.listen(0, async () => {
+    const client = new Client(`http://localhost:${server.address().port}`)
+    after(client.destroy.bind(client))
+
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET'
+    })
+    body.setEncoding('utf8')
+
+    let text = ''
+    for await (const chunk of body) {
+      text += chunk
+    }
+
+    t.deepStrictEqual(text, data.toString('utf8'))
+  })
+
+  await t.completed
+})
+
 test('request multibyte text with setEncoding', async (t) => {
   t = tspl(t, { plan: 1 })
 
