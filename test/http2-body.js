@@ -170,7 +170,7 @@ test('Should end h2 zero-length request bodies with headers', async t => {
 })
 
 test('Should handle h2 request with body (string or buffer) - dispatch', async t => {
-  t = tspl(t, { plan: 7 })
+  t = tspl(t, { plan: 10 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   const expectedBody = 'hello from client!'
@@ -218,7 +218,10 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
         t.ifError(err)
       },
       onResponseStart (controller, statusCode) {
+        t.ok(Array.isArray(controller.rawHeadersH2))
         const rawHeaders = controller.rawHeaders
+        t.strictEqual(controller.rawHeadersH2, null)
+        t.strictEqual(controller.rawHeaders, rawHeaders)
         t.strictEqual(statusCode, 200)
         const headers = {}
         for (let i = 0; i < rawHeaders.length; i += 2) {

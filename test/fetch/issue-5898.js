@@ -7,7 +7,7 @@ const { createSecureServer: createHTTP2Server } = require('node:http2')
 const pem = require('@metcoder95/https-pem')
 const { once } = require('node:events')
 const { brotliCompressSync, gzipSync } = require('node:zlib')
-const { Client, fetch } = require('../..')
+const { Client, fetch, interceptors } = require('../..')
 
 const plain = 'some plain text'
 const compressed = brotliCompressSync(gzipSync(plain))
@@ -99,5 +99,11 @@ for (const [protocol, createServer, options] of [
     assert.equal(headers.headers.get('strict-transport-security'), 'max-age=100, max-age=200')
     assert.equal(headers.headers.get('x-repeated'), 'first, second')
     await headers.body?.cancel()
+
+    if (protocol === 'HTTP/2') {
+      const retried = await fetch(`${origin}/headers`, { dispatcher: client.compose(interceptors.retry()) })
+      assert.equal(retried.headers.get('x-repeated'), 'first, second')
+      await retried.body?.cancel()
+    }
   })
 }
