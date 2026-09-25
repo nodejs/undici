@@ -1,6 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const assert = require('node:assert')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -1005,3 +1006,58 @@ test('#3975 - keep event loop ticking', async t => {
   suite.ok(output.includes('UND_ERR_REQ_RETRY'))
   suite.ok(output.includes('RequestRetryError: Request failed'))
 })
+
+for (const [name, headers] of [
+  ['an object', { authorization: 'Bearer T', 'x-foo': 'bar' }],
+  ['an array', ['authorization', 'Bearer T', 'x-foo', 'bar']],
+  ['a Map', new Map([['authorization', 'Bearer T'], ['x-foo', 'bar']])],
+  ['an object with Range', { authorization: 'Bearer T', 'x-foo': 'bar', Range: 'bytes=0-' }],
+  ['an object with If-Match', { authorization: 'Bearer T', 'x-foo': 'bar', 'If-Match': '"old"' }]
+]) {
+  test(`Should keep request headers given as ${name} when resuming`, async (t) => {
+    const body = 'abcdefghij'
+    const requests = []
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requests.push(req.rawHeaders)
+      if (requests.length === 1) {
+        if (req.headers.range) {
+          res.writeHead(206, { 'content-range': `bytes 0-9/${body.length}`, 'content-length': body.length, etag: '"v1"' })
+        } else {
+          res.writeHead(200, { 'content-length': body.length, etag: '"v1"' })
+        }
+        res.write(body.slice(0, 4))
+        setTimeout(() => res.destroy(), 10)
+      } else {
+        res.writeHead(206, { 'content-range': `bytes 4-9/${body.length}`, 'content-length': 6, etag: '"v1"' })
+        res.end(body.slice(4))
+      }
+    })
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(retry({ minTimeout: 1, timeoutFactor: 1 }))
+    t.after(async () => {
+      await client.close()
+      server.close()
+    })
+
+    const response = await client.request({ method: 'GET', path: '/', headers })
+    assert.strictEqual(await response.body.text(), body)
+    assert.strictEqual(requests.length, 2)
+
+    const resumed = []
+    for (let i = 0; i < requests[1].length; i += 2) {
+      const key = requests[1][i].toLowerCase()
+      if (key !== 'host' && key !== 'connection') {
+        resumed.push([key, requests[1][i + 1]])
+      }
+    }
+    assert.deepStrictEqual(resumed.sort(), [
+      ['authorization', 'Bearer T'],
+      ['if-match', '"v1"'],
+      ['range', 'bytes=4-9'],
+      ['x-foo', 'bar']
+    ].sort())
+  })
+}
