@@ -166,8 +166,13 @@ jobs:
           cd ${{ github.workspace }}/test/web-platform-tests/wpt
           python3 wpt make-hosts-file | sudo tee -a /etc/hosts
 
-      - name: Run tests
+      - name: Run tests (excluding WPT)
         run: npm run test:javascript:without-intl
+
+      - name: Test WPT
+        run: npm run test:wpt
+        env:
+          CI: true
 
   test-without-ssl:
     name: Test with Node.js ${{ matrix.node-version }} compiled --without-ssl
