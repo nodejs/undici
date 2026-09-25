@@ -8,34 +8,33 @@ const pem = require('@metcoder95/https-pem')
 const { Client, RetryAgent, fetch } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 
-async function createGoawayServer () {
+async function createReplayServer (refuseFirstStream) {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
-  const sessionIds = new WeakMap()
   const requestBodies = []
   let sessions = 0
+  let streams = 0
 
   server.on('session', (session) => {
-    const sessionId = ++sessions
-    sessionIds.set(session, sessionId)
+    sessions++
     session.on('error', () => {})
-
-    if (sessionId === 1) {
-      session.goaway(constants.NGHTTP2_NO_ERROR, 0)
-    }
   })
 
   server.on('stream', (stream) => {
     stream.on('error', () => {})
+
+    if (++streams === 1) {
+      refuseFirstStream(stream)
+      stream.resume()
+      return
+    }
+
     let body = ''
     stream.setEncoding('utf8')
     stream.on('data', chunk => { body += chunk })
     stream.on('end', () => {
       requestBodies.push(body)
-
-      if (sessionIds.get(stream.session) > 1) {
-        stream.respond({ ':status': 200 })
-        stream.end('ok')
-      }
+      stream.respond({ ':status': 200 })
+      stream.end('ok')
     })
   })
 
@@ -46,8 +45,17 @@ async function createGoawayServer () {
     server,
     url: `https://localhost:${server.address().port}/`,
     requestBodies,
-    get sessions () { return sessions }
+    get sessions () { return sessions },
+    get streams () { return streams }
   }
+}
+
+function refuseWithGoaway (stream) {
+  stream.session.goaway(constants.NGHTTP2_NO_ERROR, 0)
+}
+
+function refuseWithReset (stream) {
+  stream.close(constants.NGHTTP2_REFUSED_STREAM)
 }
 
 for (const [name, body, expectedBody] of [
@@ -57,8 +65,8 @@ for (const [name, body, expectedBody] of [
   ['Blob', new Blob(['foo=bar&hello=world']), 'foo=bar&hello=world']
 ]) {
   test(`[Fetch] replays a ${name} body after an HTTP/2 GOAWAY`, async (t) => {
-    const goawayServer = await createGoawayServer()
-    const { server, url, requestBodies } = goawayServer
+    const replayServer = await createReplayServer(refuseWithGoaway)
+    const { server, url, requestBodies } = replayServer
     const client = new Client(url, {
       allowH2: true,
       connect: { rejectUnauthorized: false }
@@ -79,14 +87,43 @@ for (const [name, body, expectedBody] of [
 
     t.assert.strictEqual(response.status, 200)
     t.assert.strictEqual(await response.text(), 'ok')
-    t.assert.strictEqual(goawayServer.sessions, 2)
-    t.assert.strictEqual(requestBodies[requestBodies.length - 1], expectedBody)
+    t.assert.strictEqual(replayServer.sessions, 2)
+    t.assert.strictEqual(replayServer.streams, 2)
+    t.assert.deepStrictEqual(requestBodies, [expectedBody])
   })
 }
 
+test('[Fetch] replays a body after an HTTP/2 REFUSED_STREAM', async (t) => {
+  const replayServer = await createReplayServer(refuseWithReset)
+  const { server, url, requestBodies } = replayServer
+  const client = new Client(url, {
+    allowH2: true,
+    connect: { rejectUnauthorized: false }
+  })
+  const dispatcher = new RetryAgent(client)
+
+  t.after(async () => {
+    await dispatcher.destroy()
+    await closeServerAsPromise(server)()
+  })
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: 'foo=bar&hello=world',
+    dispatcher,
+    signal: AbortSignal.timeout(5000)
+  })
+
+  t.assert.strictEqual(response.status, 200)
+  t.assert.strictEqual(await response.text(), 'ok')
+  t.assert.strictEqual(replayServer.sessions, 1)
+  t.assert.strictEqual(replayServer.streams, 2)
+  t.assert.deepStrictEqual(requestBodies, ['foo=bar&hello=world'])
+})
+
 test('[Fetch] does not replay a ReadableStream body after an HTTP/2 GOAWAY', async (t) => {
-  const goawayServer = await createGoawayServer()
-  const { server, url } = goawayServer
+  const replayServer = await createReplayServer(refuseWithGoaway)
+  const { server, url } = replayServer
   const client = new Client(url, {
     allowH2: true,
     connect: { rejectUnauthorized: false }
@@ -113,5 +150,6 @@ test('[Fetch] does not replay a ReadableStream body after an HTTP/2 GOAWAY', asy
     error => error.cause?.code === 'UND_ERR_INFO'
   )
 
-  t.assert.strictEqual(goawayServer.sessions, 1)
+  t.assert.strictEqual(replayServer.sessions, 1)
+  t.assert.strictEqual(replayServer.streams, 1)
 })
