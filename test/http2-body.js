@@ -220,8 +220,8 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
       onResponseStart (controller, statusCode) {
         const rawHeaders = controller.rawHeaders
         t.strictEqual(statusCode, 200)
-        t.strictEqual(rawHeaders['content-type'], 'text/plain; charset=utf-8')
-        t.strictEqual(rawHeaders['x-custom-h2'], 'foo')
+        t.strictEqual(rawHeaders[rawHeaders.indexOf('content-type') + 1], 'text/plain; charset=utf-8')
+        t.strictEqual(rawHeaders[rawHeaders.indexOf('x-custom-h2') + 1], 'foo')
       },
       onResponseData (_controller, chunk) {
         response.push(chunk)
