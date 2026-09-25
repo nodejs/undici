@@ -512,6 +512,19 @@ The maximum number of allowed origins has been reached.
 * `name` {string} Always `'MaxOriginsReachedError'`.
 * `code` {string} Always `'UND_ERR_MAX_ORIGINS_REACHED'`.
 
+## Class: `MaxRedirectsError`
+
+<!-- YAML
+added: v8.12.0
+-->
+
+* Extends: {UndiciError}
+
+The maximum number of redirects has been reached.
+
+* `name` {string} Always `'MaxRedirectsError'`.
+* `code` {string} Always `'UND_ERR_REDIRECT_MAX'`.
+
 ## Class: `Socks5ProxyError`
 
 <!-- YAML
