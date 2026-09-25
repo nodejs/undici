@@ -56,6 +56,9 @@ module.exports.createFastMessageEvent = createFastMessageEvent
 
 module.exports.EventSource = require('./lib/web/eventsource/eventsource').EventSource
 
+// Exposed only through Node.js' internal Undici bundle for HTTP server use.
+module.exports.serverKit = require('./lib/web/fetch/server-kit')
+
 const api = require('./lib/api')
 const Dispatcher = require('./lib/dispatcher/dispatcher')
 Object.assign(Dispatcher.prototype, api)
