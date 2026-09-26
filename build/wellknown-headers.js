@@ -1,13 +1,12 @@
 'use strict'
 
 // Generates deps/llhttp/src/undici_wellknown_headers.h from wellknownHeaderNames
-// in lib/core/constants.js. The WASM glue uses it to report a header name's
-// 1-based index in that list, compared case-insensitively, so the client can
-// key the parsed header map with a preallocated string instead of looking the
-// name up in JavaScript.
+// in lib/core/constants.js. The WASM glue uses it to report a lowercased header
+// name's 1-based index in that list, so the client can reuse a preallocated
+// string for a well-known name instead of decoding a new one.
 //
-// `npm run build:wasm` runs this first; test/wellknown-headers.js fails when
-// the committed header is stale.
+// `npm run build:wasm` runs this first; test/node-test/wellknown-headers.js
+// fails when the committed header is stale.
 
 const { writeFileSync } = require('node:fs')
 const { join } = require('node:path')
@@ -28,11 +27,8 @@ function literal (bytes) {
 }
 
 /**
- * Compares `at[0, length)` with the lowercase `name`, ignoring ASCII case, using
- * word loads. Setting bit 0x20 of every byte maps 'A'-'Z' onto 'a'-'z' and
- * leaves 'a'-'z' and '-' alone; of the bytes that map onto 'a'-'z' or '-', the
- * only others are CR, which llhttp never lets into a field name. Overlapping
- * loads cover a tail, so a name costs at most ceil(length / 8) + 1 compares.
+ * Compares `at[0, length)` with `name` using word loads. Overlapping loads
+ * cover a tail, so a name costs at most ceil(length / 8) + 1 compares.
  *
  * @param {string} name
  * @returns {string}
@@ -42,8 +38,7 @@ function compare (name) {
   const n = bytes.length
   const terms = []
   const load = (offset, size) => {
-    const fold = literal(Buffer.alloc(size, 0x20))
-    terms.push(`(undici_load${size * 8}(at + ${offset}) | ${fold}) == ${literal(bytes.subarray(offset, offset + size))}`)
+    terms.push(`undici_load${size * 8}(at + ${offset}) == ${literal(bytes.subarray(offset, offset + size))}`)
   }
 
   if (n >= 8) {
@@ -75,9 +70,8 @@ function generate () {
   const seen = new Set()
   wellknownHeaderNames.forEach((header, i) => {
     const name = header.toLowerCase()
-    // The case-folding compare above is only exact for these bytes.
-    if (seen.has(name) || !/^[a-z-]+$/.test(name)) {
-      throw new Error(`unsupported well-known header name: ${header}`)
+    if (seen.has(name) || !/^[!#$%&'*+\-.^_`|~0-9a-z]+$/.test(name)) {
+      throw new Error(`invalid well-known header name: ${header}`)
     }
     seen.add(name)
     if (!byLength.has(name.length)) {
@@ -127,8 +121,8 @@ static uint64_t undici_load64(const char* p) {
   return v;
 }
 
-/* Returns the 1-based index of a header name in wellknownHeaderNames,
- * ignoring ASCII case, or 0 when it is not one of them. Loads are
+/* Returns the 1-based index of a lowercased header name in
+ * wellknownHeaderNames, or 0 when it is not one of them. Loads are
  * little-endian, as in WebAssembly. */
 static int undici_wellknown_header(const char* at, size_t length) {
   switch (length) {

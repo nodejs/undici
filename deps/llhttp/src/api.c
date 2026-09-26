@@ -41,6 +41,10 @@ void llhttp_init(llhttp_t* parser, llhttp_type_t type,
 
 #if defined(__wasm__)
 
+#if defined(__wasm_simd128__)
+#include <wasm_simd128.h>
+#endif  /* defined(__wasm_simd128__) */
+
 #include "undici_wellknown_headers.h"
 
 extern int wasm_on_message_begin(llhttp_t * p);
@@ -59,13 +63,67 @@ static int wasm_on_headers_complete_wrap(llhttp_t* p) {
                                   llhttp_should_keep_alive(p));
 }
 
-/* undici: hand JS the name's 1-based index in wellknownHeaderNames, ignoring
- * case (0 for any other name), so it can key the parsed header map with a
- * preallocated string. The span itself is passed on unchanged. A span cut at
- * the end of the input can match a shorter well-known name; JS then discards
- * the index once the next fragment arrives. */
+/* undici: field names are case-insensitive, so they reach JS lowercased, with
+ * their 1-based index in wellknownHeaderNames (0 for any other name) so JS can
+ * key the parsed header map with a preallocated string instead of decoding
+ * one. A span cut at the end of the input can match a shorter well-known name;
+ * JS appends the next fragment to that string just as it would to a decoded
+ * one.
+ *
+ * Only ASCII 'A'-'Z' change; other bytes, obs-text included, are left alone.
+ * The span is lowercased in place in the copy of the input JS made in linear
+ * memory. llhttp has already consumed it, so the parser never sees the change,
+ * and JS hands out raw headers from its own buffer, so they keep their case.
+ * Every load and store stays inside the span. Lowercasing is idempotent, so a
+ * tail overlaps the previous block instead of falling back to a scalar loop. */
+#if defined(__wasm_simd128__)
+static v128_t wasm_lowercase_v128(v128_t v) {
+  /* After subtracting 'A', exactly 'A'-'Z' map to 0-25 (unsigned). */
+  v128_t upper = wasm_u8x16_lt(wasm_i8x16_sub(v, wasm_i8x16_splat('A')),
+                               wasm_i8x16_splat(26));
+  return wasm_v128_or(v, wasm_v128_and(upper, wasm_i8x16_splat(0x20)));
+}
+#endif  /* defined(__wasm_simd128__) */
+
+static void wasm_lowercase(char* at, size_t length) {
+#if defined(__wasm_simd128__)
+  if (length >= 16) {
+    size_t i;
+    for (i = 0; i + 16 < length; i += 16) {
+      wasm_v128_store(at + i, wasm_lowercase_v128(wasm_v128_load(at + i)));
+    }
+    at += length - 16;
+    wasm_v128_store(at, wasm_lowercase_v128(wasm_v128_load(at)));
+    return;
+  }
+  if (length >= 8) {
+    char* tail = at + length - 8;
+    v128_t head = wasm_lowercase_v128(wasm_v128_load64_zero(at));
+    v128_t last = wasm_lowercase_v128(wasm_v128_load64_zero(tail));
+    wasm_v128_store64_lane(at, head, 0);
+    wasm_v128_store64_lane(tail, last, 0);
+    return;
+  }
+  if (length >= 4) {
+    char* tail = at + length - 4;
+    v128_t head = wasm_lowercase_v128(wasm_v128_load32_zero(at));
+    v128_t last = wasm_lowercase_v128(wasm_v128_load32_zero(tail));
+    wasm_v128_store32_lane(at, head, 0);
+    wasm_v128_store32_lane(tail, last, 0);
+    return;
+  }
+#endif  /* defined(__wasm_simd128__) */
+  for (size_t i = 0; i < length; i++) {
+    unsigned char c = (unsigned char) at[i];
+    if ((unsigned char) (c - 'A') < 26) {
+      at[i] = (char) (c | 0x20);
+    }
+  }
+}
+
 static int wasm_on_header_field_wrap(llhttp_t* p, const char* at,
                                      size_t length) {
+  wasm_lowercase((char*) at, length);
   return wasm_on_header_field(p, at, length,
                               undici_wellknown_header(at, length));
 }
