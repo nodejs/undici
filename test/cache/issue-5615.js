@@ -64,3 +64,27 @@ test('cache.match and cache.matchAll work after cache.add and cache.addAll', asy
     t.assert.strictEqual(await r.text(), 'hello')
   }
 })
+
+test('cache.add and cache.addAll reject when the body can not be read', async (t) => {
+  const server = createServer((req, res) => {
+    // Send only part of the body, then cut the connection
+    res.writeHead(200, { 'content-type': 'text/plain', 'content-length': '10' })
+    res.write('hel')
+    setImmediate(() => res.destroy())
+  }).listen(0, '127.0.0.1')
+
+  t.after(closeServerAsPromise(server))
+  await once(server, 'listening')
+
+  const base = `http://127.0.0.1:${server.address().port}`
+  const cache = await caches.open('issue-5859-failure')
+
+  t.after(async () => {
+    await caches.delete('issue-5859-failure')
+  })
+
+  await t.assert.rejects(cache.add(`${base}/add`), TypeError)
+  await t.assert.rejects(cache.addAll([`${base}/addAll`]), TypeError)
+
+  t.assert.strictEqual((await cache.keys()).length, 0)
+})
