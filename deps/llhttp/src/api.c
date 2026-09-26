@@ -41,10 +41,13 @@ void llhttp_init(llhttp_t* parser, llhttp_type_t type,
 
 #if defined(__wasm__)
 
+#include "undici_wellknown_headers.h"
+
 extern int wasm_on_message_begin(llhttp_t * p);
 extern int wasm_on_url(llhttp_t* p, const char* at, size_t length);
 extern int wasm_on_status(llhttp_t* p, const char* at, size_t length);
-extern int wasm_on_header_field(llhttp_t* p, const char* at, size_t length);
+extern int wasm_on_header_field(llhttp_t* p, const char* at, size_t length,
+                                int wellknown);
 extern int wasm_on_header_value(llhttp_t* p, const char* at, size_t length);
 extern int wasm_on_headers_complete(llhttp_t * p, int status_code,
                                     uint8_t upgrade, int should_keep_alive);
@@ -56,11 +59,22 @@ static int wasm_on_headers_complete_wrap(llhttp_t* p) {
                                   llhttp_should_keep_alive(p));
 }
 
+/* undici: hand JS the name's 1-based index in wellknownHeaderNames, ignoring
+ * case (0 for any other name), so it can key the parsed header map with a
+ * preallocated string. The span itself is passed on unchanged. A span cut at
+ * the end of the input can match a shorter well-known name; JS then discards
+ * the index once the next fragment arrives. */
+static int wasm_on_header_field_wrap(llhttp_t* p, const char* at,
+                                     size_t length) {
+  return wasm_on_header_field(p, at, length,
+                              undici_wellknown_header(at, length));
+}
+
 const llhttp_settings_t wasm_settings = {
   .on_message_begin = wasm_on_message_begin,
   .on_url = wasm_on_url,
   .on_status = wasm_on_status,
-  .on_header_field = wasm_on_header_field,
+  .on_header_field = wasm_on_header_field_wrap,
   .on_header_value = wasm_on_header_value,
   .on_headers_complete = wasm_on_headers_complete_wrap,
   .on_body = wasm_on_body,
