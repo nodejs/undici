@@ -1200,6 +1200,41 @@ test('request with FormData body', async (t) => {
   await t.completed
 })
 
+// https://github.com/nodejs/undici/issues/5520
+test('request rejects FormData bodies from another implementation', async (t) => {
+  class FormDataLike {
+    append () {}
+    delete () {}
+    get () {}
+    getAll () {}
+    has () {}
+    set () {}
+    get [Symbol.toStringTag] () { return 'FormData' }
+  }
+
+  let connections = 0
+  const client = new Client('http://localhost', {
+    connect (_, callback) {
+      connections++
+      callback(new Error('unexpected connection'))
+    }
+  })
+  t.after(() => client.destroy())
+
+  const expectedError = new InvalidArgumentError('body must be a FormData created by this undici package instance; FormData from other sources, such as the built-in FormData provided by Node.js, is not supported')
+  const bodies = [new globalThis.FormData(), new FormDataLike()]
+
+  for (const body of bodies) {
+    await t.assert.rejects(client.request({
+      path: '/',
+      method: 'POST',
+      body
+    }), expectedError)
+  }
+
+  t.assert.strictEqual(connections, 0)
+})
+
 test('request post body Buffer from string', async (t) => {
   t = tspl(t, { plan: 2 })
   const requestBody = Buffer.from('abcdefghijklmnopqrstuvwxyz')
