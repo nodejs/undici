@@ -102,6 +102,36 @@ test('Should reject literal IP origins blocked by the address filter', async t =
   ])
 })
 
+test('Should allow literal IP origins accepted by the address filter', async t => {
+  const server = createServer((_req, res) => res.end('hello world!'))
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const checked = []
+  const client = new Agent().compose(dns({
+    filter (origin, record) {
+      checked.push({ hostname: origin.hostname, ...record })
+      return true
+    }
+  }))
+
+  t.after(async () => {
+    await client.close()
+    await new Promise(resolve => server.close(resolve))
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://127.0.0.1:${server.address().port}`
+  })
+
+  assert.equal(await response.body.text(), 'hello world!')
+  assert.deepEqual(checked, [
+    { hostname: '127.0.0.1', address: '127.0.0.1', family: 4 }
+  ])
+})
+
 test('Should filter resolved addresses before connecting', async t => {
   t = tspl(t, { plan: 4 })
 
@@ -169,6 +199,29 @@ test('Should only allow addresses when the filter returns true', async t => {
     }),
     { code: 'UND_ERR_DNS_FILTER' }
   )
+})
+
+test('Should propagate address filter errors for hostnames and literal IPs', async t => {
+  const filterError = new Error('filter failed')
+  const client = new Agent().compose(dns({
+    lookup (_origin, _opts, cb) {
+      cb(null, [{ address: '127.0.0.1', family: 4 }])
+    },
+    filter () {
+      throw filterError
+    }
+  }))
+
+  t.after(async () => {
+    await client.close()
+  })
+
+  for (const origin of ['http://filtered.test', 'http://127.0.0.1']) {
+    await assert.rejects(
+      client.request({ method: 'GET', path: '/', origin }),
+      err => err === filterError
+    )
+  }
 })
 
 test('Should apply the address filter to redirect targets', async t => {
@@ -257,6 +310,13 @@ test('Should keep filtering when the DNS cache is full', async t => {
   })
   assert.equal(await response.body.text(), 'hello world!')
 
+  const secondResponse = await client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://also-allowed.test:${server.address().port}`
+  })
+  assert.equal(await secondResponse.body.text(), 'hello world!')
+
   await assert.rejects(
     client.request({
       method: 'GET',
@@ -265,7 +325,7 @@ test('Should keep filtering when the DNS cache is full', async t => {
     }),
     { code: 'UND_ERR_DNS_FILTER' }
   )
-  assert.equal(requests, 1)
+  assert.equal(requests, 2)
 })
 
 test('Should automatically resolve IPs (dual stack)', async t => {

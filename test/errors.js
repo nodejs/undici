@@ -66,6 +66,12 @@ scenarios.forEach(scenario => {
   })
 })
 
+test('DNSFilterError supports instanceof', t => {
+  t = tspl(t, { plan: 2 })
+  t.ok(new errors.DNSFilterError() instanceof errors.DNSFilterError)
+  t.strictEqual(null instanceof errors.DNSFilterError, false)
+})
+
 describe('Default HTTPParseError Codes', () => {
   test('code and data should be undefined when not set', t => {
     t = tspl(t, { plan: 2 })
