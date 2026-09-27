@@ -10,7 +10,7 @@ import {
   escapeControlCharacters,
   sanitizeUnpairedSurrogates
 } from './runner/utils.mjs'
-import * as jsondiffpatch from 'jsondiffpatch'
+import { diffExpectations } from './runner/compare-expectations.mjs'
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..')
 const WPT_DIR = join(import.meta.dirname, 'wpt')
@@ -762,16 +762,10 @@ async function run (filters = []) {
     const oldExpectations = getExpectation()
     updateExpectations(results)
 
-    const jsondiff = jsondiffpatch.create({
-      propertyFilter: (name) => {
-        return name === 'success'
-      }
-    })
-
-    const diff = jsondiff.diff(oldExpectations, getExpectation())
-    process.exitCode = diff === undefined ? 0 : 1
+    const diff = diffExpectations(oldExpectations, getExpectation())
 
     if (diff !== undefined) {
+      process.exitCode ||= 1
       console.dir(diff, { depth: Infinity })
     }
   }
