@@ -406,3 +406,42 @@ test('.formData() rejects malformed multipart header line ending with bare CR', 
 
   await t.assert.rejects(request.formData(), TypeError)
 })
+
+// https://github.com/nodejs/undici/issues/5923
+test('FormData body is read on demand, not buffered whole', async (t) => {
+  const totalChunks = 100
+  let pulled = 0
+
+  const fd = new FormData()
+  fd.append('file', new Blob(['x']), 'file.bin')
+
+  // Replace the stored file's stream with one that counts how often it is read.
+  fd.get('file').stream = () => new ReadableStream({
+    pull (controller) {
+      pulled++
+      controller.enqueue(new Uint8Array(1024))
+      if (pulled === totalChunks) {
+        controller.close()
+      }
+    }
+  }, { highWaterMark: 0 })
+
+  const reader = new Response(fd).body.getReader()
+
+  await reader.read()
+  for (let i = 0; i < 10; i++) {
+    await new Promise((resolve) => setImmediate(resolve))
+  }
+
+  t.assert.ok(pulled < totalChunks, `expected lazy reads, but ${pulled} chunks were pulled`)
+
+  let received = 0
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    received += value.byteLength
+  }
+
+  t.assert.strictEqual(pulled, totalChunks)
+  t.assert.ok(received >= totalChunks * 1024)
+})
