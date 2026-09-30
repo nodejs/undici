@@ -418,6 +418,29 @@ describe('MockInterceptor - asynchronous reply options callback', () => {
   })
 })
 
+describe('MockInterceptor - reply with an asynchronous data function', () => {
+  test('should reject with the reason of a rejected asynchronous data function', async t => {
+    t.plan(1)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(200, async () => {
+      throw new Error('kaboom')
+    })
+
+    // Before, the rejection was unhandled and the request never settled.
+    await t.assert.rejects(request(`${baseUrl}/test`, { dispatcher: mockAgent }), new Error('kaboom'))
+  })
+})
+
 describe('MockInterceptor - replyWithError', () => {
   test('should return MockScope', t => {
     t.plan(1)
