@@ -689,8 +689,7 @@
           "cases": [
             {
               "name": "origin-when-cross-origin policy on a same-origin URL",
-              "success": false,
-              "message": "assert_equals: Request's referrer is correct expected \"http://web-platform.test:8000/fetch/api/basic/referrer.any.html\" but got \"http://web-platform.test:8000/\""
+              "success": true
             },
             {
               "name": "origin-when-cross-origin policy on a cross-origin URL",
