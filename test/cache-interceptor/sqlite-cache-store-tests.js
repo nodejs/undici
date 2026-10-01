@@ -370,3 +370,100 @@ test('SqliteCacheStore updates vary when overwriting an existing row', { skip: r
     }
   }), undefined)
 })
+
+let hasZstd = false
+try {
+  hasZstd = typeof require('node:zlib').zstdCompressSync === 'function'
+} catch {
+  // zstd may be unavailable on older Node versions
+}
+
+const skipCompression = runtimeFeatures.has('sqlite') === false || hasZstd === false
+
+test('SqliteCacheStore compresses big files with zstd', { skip: skipCompression }, async (t) => {
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+  const sqliteLocation = 'cache-interceptor-compressed.sqlite'
+
+  const store = new SqliteCacheStore({
+    location: sqliteLocation,
+    compressThreshold: 1024
+  })
+
+  let storeClosed = false
+  t.after(async () => {
+    if (!storeClosed) {
+      store.close()
+    }
+    await rm(sqliteLocation)
+  })
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+   */
+  const key = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+   */
+  const value = {
+    statusCode: 200,
+    statusMessage: '',
+    headers: { foo: 'bar' },
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 10000,
+    deleteAt: Date.now() + 20000
+  }
+
+  // A body larger than compressThreshold must be stored compressed and
+  // decompressed when read back.
+  const bigBody = Buffer.from('a'.repeat(10_000))
+  store.set({ ...key, path: '/big' }, { ...value, body: bigBody })
+
+  {
+    const result = store.get(structuredClone({ ...key, path: '/big' }))
+    notEqual(result, undefined)
+    deepStrictEqual(result.body, bigBody)
+  }
+
+  // A body smaller than compressThreshold must be stored uncompressed.
+  const smallBody = Buffer.from('small')
+  store.set({ ...key, path: '/small' }, { ...value, body: smallBody })
+
+  {
+    const result = store.get(structuredClone({ ...key, path: '/small' }))
+    notEqual(result, undefined)
+    deepStrictEqual(result.body, smallBody)
+  }
+
+  // A compressible mime type (application/json) must be compressed even when
+  // the body is below compressThreshold.
+  const jsonBody = Buffer.from('{"key":"value"}'.repeat(20))
+  store.set({ ...key, path: '/json' }, { ...value, headers: { 'content-type': 'application/json' }, body: jsonBody })
+
+  {
+    const result = store.get(structuredClone({ ...key, path: '/json' }))
+    notEqual(result, undefined)
+    deepStrictEqual(result.body, jsonBody)
+  }
+
+  // Inspect the raw rows to make sure compression actually happened.
+  store.close()
+  storeClosed = true
+  const DatabaseSync = require('node:sqlite').DatabaseSync
+  const db = new DatabaseSync(sqliteLocation)
+  const rows = db.prepare('SELECT compressed, body FROM cacheInterceptorV4 ORDER BY id').all()
+  db.close()
+
+  strictEqual(rows.length, 3)
+  strictEqual(rows[0].compressed, 'zstd')
+  strictEqual(rows[0].body.byteLength < bigBody.byteLength, true)
+  strictEqual(rows[1].compressed, null)
+  strictEqual(Buffer.from(rows[1].body).equals(smallBody), true)
+  strictEqual(rows[2].compressed, 'zstd')
+  strictEqual(rows[2].body.byteLength < jsonBody.byteLength, true)
+})
