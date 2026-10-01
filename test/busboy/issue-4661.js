@@ -100,3 +100,36 @@ test('filename* with percent-encoded UTF-8 bytes is decoded', async (t) => {
   t.assert.ok(file instanceof File)
   t.assert.strictEqual(file.name, '\u20AC rates.txt')
 })
+
+test('filename* with a language tag is parsed correctly', async (t) => {
+  for (const [filename, expectedName] of [
+    ["UTF-8'en'%E2%82%AC.txt", '\u20AC.txt'],
+    ["utf-8'de'%C3%A4.txt", '\u00E4.txt']
+  ]) {
+    const request = createFilenameRequest(filename)
+    const fd = await request.formData()
+    const file = fd.get('Abc')
+    t.assert.ok(file instanceof File)
+    t.assert.strictEqual(file.name, expectedName)
+  }
+})
+
+test('filename* without both separators is rejected', async (t) => {
+  for (const filename of ['UTF-8file.txt', "UTF-8'en.txt"]) {
+    const request = createFilenameRequest(filename)
+    await t.assert.rejects(request.formData(), TypeError)
+  }
+})
+
+function createFilenameRequest (filename) {
+  return new Request('http://localhost', {
+    method: 'POST',
+    headers: { 'Content-Type': contentType },
+    body:
+      `--${boundary}\r\n` +
+      `Content-Disposition: form-data; name="Abc"; filename*=${filename}\r\n` +
+      '\r\n' +
+      'Hello\r\n' +
+      `--${boundary}--`
+  })
+}

@@ -8,13 +8,16 @@ const http = require('node:http')
 const EE = require('node:events')
 const { kBusy } = require('../lib/core/symbols')
 
+// RFC 9112 requires a space after the status code even when the reason phrase is empty.
+const SWITCHING_PROTOCOLS = 'HTTP/1.1 101 Switching Protocols\r\n'
+
 test('basic upgrade', async (t) => {
   t = tspl(t, { plan: 6 })
 
   const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
       t.ok(/upgrade: websocket/i.test(d))
-      c.write('HTTP/1.1 101\r\n')
+      c.write(SWITCHING_PROTOCOLS)
       c.write('hello: world\r\n')
       c.write('connection: upgrade\r\n')
       c.write('upgrade: websocket\r\n')
@@ -72,7 +75,7 @@ test('basic upgrade promise', async (t) => {
 
   const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
-      c.write('HTTP/1.1 101\r\n')
+      c.write(SWITCHING_PROTOCOLS)
       c.write('hello: world\r\n')
       c.write('connection: upgrade\r\n')
       c.write('upgrade: websocket\r\n')
@@ -121,7 +124,7 @@ test('upgrade error', async (t) => {
 
   const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
-      c.write('HTTP/1.1 101\r\n')
+      c.write(SWITCHING_PROTOCOLS)
       c.write('hello: world\r\n')
       c.write('connection: upgrade\r\n')
       c.write('\r\n')
@@ -184,7 +187,7 @@ test('basic upgrade2', async (t) => {
 
   const server = http.createServer({ joinDuplicateHeaders: true })
   server.on('upgrade', (req, c, head) => {
-    c.write('HTTP/1.1 101\r\n')
+    c.write(SWITCHING_PROTOCOLS)
     c.write('hello: world\r\n')
     c.write('connection: upgrade\r\n')
     c.write('upgrade: websocket\r\n')
@@ -238,7 +241,7 @@ test('upgrade wait for empty pipeline', async (t) => {
   })
   server.on('upgrade', (req, c, firstBodyChunk) => {
     t.strictEqual(canConnect, true)
-    c.write('HTTP/1.1 101\r\n')
+    c.write(SWITCHING_PROTOCOLS)
     c.write('hello: world\r\n')
     c.write('connection: upgrade\r\n')
     c.write('upgrade: websocket\r\n')
@@ -341,7 +344,7 @@ test('basic aborted after res', async (t) => {
   const signal = new EE()
   const server = http.createServer({ joinDuplicateHeaders: true })
   server.on('upgrade', (req, c, head) => {
-    c.write('HTTP/1.1 101\r\n')
+    c.write(SWITCHING_PROTOCOLS)
     c.write('hello: world\r\n')
     c.write('connection: upgrade\r\n')
     c.write('upgrade: websocket\r\n')
@@ -377,7 +380,7 @@ test('basic upgrade error', async (t) => {
 
   const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
-      c.write('HTTP/1.1 101\r\n')
+      c.write(SWITCHING_PROTOCOLS)
       c.write('hello: world\r\n')
       c.write('connection: upgrade\r\n')
       c.write('upgrade: websocket\r\n')

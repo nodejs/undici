@@ -24,6 +24,9 @@ const {
   errors
 } = require('..')
 
+// RFC 9112 requires a space after the status code even when the reason phrase is empty.
+const SWITCHING_PROTOCOLS = 'HTTP/1.1 101 Switching Protocols\r\n'
+
 test('throws when connection is infinite', async (t) => {
   t = tspl(t, { plan: 2 })
 
@@ -514,7 +517,7 @@ test('pool upgrade promise', async (t) => {
 
   const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
-      c.write('HTTP/1.1 101\r\n')
+      c.write(SWITCHING_PROTOCOLS)
       c.write('hello: world\r\n')
       c.write('connection: upgrade\r\n')
       c.write('upgrade: websocket\r\n')
@@ -861,7 +864,7 @@ test('pool upgrade error', async (t) => {
 
   const server = net.createServer({ joinDuplicateHeaders: true }, (c) => {
     c.on('data', (d) => {
-      c.write('HTTP/1.1 101\r\n')
+      c.write(SWITCHING_PROTOCOLS)
       c.write('hello: world\r\n')
       c.write('connection: upgrade\r\n')
       c.write('\r\n')
