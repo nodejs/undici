@@ -119,8 +119,6 @@ export declare namespace Client {
      * @description HTTP/2 configuration options
      */
     h2Options?: Client.H2Options;
-    /** @experimental Enables the experimental Milo HTTP/1 parser for this client. Defaults to the `UNDICI_USE_MILO` environment variable. */
-    useMilo?: boolean;
   }
   export interface SocketInfo {
     localAddress?: string

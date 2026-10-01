@@ -20,8 +20,7 @@ const { promisify } = require('node:util')
 const request = promisify(require('request'))
 
 const iterations = (parseInt(process.env.SAMPLES, 10) || 10) + 1
-const parsedErrorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10)
-const errorThreshold = Number.isNaN(parsedErrorThreshold) ? 3 : parsedErrorThreshold
+const errorThreshold = parseInt(process.env.ERROR_THRESHOLD, 10) || 3
 const connections = parseInt(process.env.CONNECTIONS, 10) || 50
 const pipelining = parseInt(process.env.PIPELINING, 10) || 10
 const headersTimeout = parseInt(process.env.HEADERS_TIMEOUT, 10) || 0
@@ -126,7 +125,10 @@ async function cleanup () {
   requestAgent.destroy()
   superagentAgent.destroy()
 
-  await Promise.allSettled([dispatcher.destroy(), globalDispatcher.destroy()])
+  await Promise.allSettled([
+    dispatcher.destroy(),
+    globalDispatcher.destroy()
+  ])
 }
 
 class SimpleRequest {
@@ -248,36 +250,21 @@ if (process.env.PORT) {
   // fetch does not support the socket
   experiments['undici - fetch'] = () => {
     return makeParallelRequests(resolve => {
-      fetch(dest.url)
-        .then(res => {
-          res.body.pipeTo(
-            new WritableStream({
-              write () {},
-              close () {
-                resolve()
-              }
-            })
-          )
-        })
-        .catch(console.log)
+      fetch(dest.url).then(res => {
+        res.body.pipeTo(new WritableStream({ write () { }, close () { resolve() } }))
+      }).catch(console.log)
     })
   }
 
   experiments['node-fetch'] = () => {
     return makeParallelRequests(resolve => {
-      nodeFetch(dest.url, { agent: fetchAgent })
-        .then(res => {
-          res.body
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-        .catch(console.log)
+      nodeFetch(dest.url, { agent: fetchAgent }).then(res => {
+        res.body.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
     })
   }
 
@@ -289,20 +276,13 @@ if (process.env.PORT) {
   }
   experiments.axios = () => {
     return makeParallelRequests(resolve => {
-      axios
-        .request(axiosOptions)
-        .then(res => {
-          res.data
-            .pipe(
-              new Writable({
-                write (chunk, encoding, callback) {
-                  callback()
-                }
-              })
-            )
-            .on('finish', resolve)
-        })
-        .catch(console.log)
+      axios.request(axiosOptions).then(res => {
+        res.data.pipe(new Writable({
+          write (chunk, encoding, callback) {
+            callback()
+          }
+        })).on('finish', resolve)
+      }).catch(console.log)
     })
   }
 
@@ -331,27 +311,20 @@ if (process.env.PORT) {
   }
   experiments.request = () => {
     return makeParallelRequests(resolve => {
-      request(requestOptions)
-        .then(() => {
-          // already body consumed
-          resolve()
-        })
-        .catch(console.log)
+      request(requestOptions).then(() => {
+        // already body consumed
+        resolve()
+      }).catch(console.log)
     })
   }
 
   experiments.superagent = () => {
     return makeParallelRequests(resolve => {
-      superagent
-        .get(dest.url)
-        .pipe(
-          new Writable({
-            write (chunk, encoding, callback) {
-              callback()
-            }
-          })
-        )
-        .on('finish', resolve)
+      superagent.get(dest.url).pipe(new Writable({
+        write (chunk, encoding, callback) {
+          callback()
+        }
+      })).on('finish', resolve)
     })
   }
 }
