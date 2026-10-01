@@ -127,13 +127,13 @@ test('basic dispatch get', async (t) => {
       onResponseStart (controller, statusCode) {
         const rawHeaders = controller.rawHeaders
         p.strictEqual(statusCode, 200)
-        p.strictEqual(Array.isArray(rawHeaders), true)
+        p.strictEqual(Array.isArray(rawHeaders), false)
       },
       onResponseData (_controller, buf) {
         bufs.push(buf)
       },
       onResponseEnd (controller) {
-        p.deepStrictEqual(controller.rawTrailers, [])
+        p.deepStrictEqual(controller.rawTrailers, {})
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onResponseError () {
@@ -182,22 +182,16 @@ test('trailers dispatch get', async (t) => {
       onResponseStart (controller, statusCode) {
         const rawHeaders = controller.rawHeaders
         p.strictEqual(statusCode, 200)
-        p.strictEqual(Array.isArray(rawHeaders), true)
-        {
-          const contentTypeIdx = rawHeaders.findIndex(x => x.toString() === 'Content-Type')
-          p.strictEqual(rawHeaders[contentTypeIdx + 1].toString(), 'text/plain')
-        }
+        p.strictEqual(Array.isArray(rawHeaders), false)
+        p.strictEqual(rawHeaders['content-type'], 'text/plain')
       },
       onResponseData (_controller, buf) {
         bufs.push(buf)
       },
       onResponseEnd (controller) {
         const rawTrailers = controller.rawTrailers
-        p.strictEqual(Array.isArray(rawTrailers), true)
-        {
-          const contentMD5Idx = rawTrailers.findIndex(x => x.toString() === 'Content-MD5')
-          p.strictEqual(rawTrailers[contentMD5Idx + 1].toString(), 'test')
-        }
+        p.strictEqual(Array.isArray(rawTrailers), false)
+        p.strictEqual(rawTrailers['content-md5'], 'test')
         p.strictEqual('hello', Buffer.concat(bufs).toString('utf8'))
       },
       onResponseError () {

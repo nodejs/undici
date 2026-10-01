@@ -289,9 +289,12 @@ following shape:
 * `aborted` {boolean} Whether the request has been aborted.
 * `paused` {boolean} Whether the request is paused.
 * `reason` {Error|null} The reason the request was aborted, if any.
-* `rawHeaders` {Buffer[]|string[]|Object|null} The raw response headers,
-  preserving duplicates and casing.
-* `rawTrailers` {Buffer[]|string[]|Object|null} The raw response trailers.
+* `rawHeaders` {Buffer[]|string[]|Object|null} Built-in HTTP parsers provide a map
+  with lowercased names, Latin-1 string values and arrays for duplicate field lines.
+  It is the same mutable map passed to the handler. Custom dispatchers may provide
+  raw arrays instead.
+* `rawTrailers` {Buffer[]|string[]|Object|null} The response trailer map, with the
+  same representation as `rawHeaders`.
 * `abort(reason)` Aborts the request with the given `reason`.
 * `pause()` Pauses the response stream.
 * `resume()` Resumes the response stream.
