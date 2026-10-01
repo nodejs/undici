@@ -46,7 +46,7 @@ declare namespace DiagnosticsChannel {
   }
   export interface RequestTrailersMessage {
     request: Request;
-    trailers: Array<Buffer>;
+    trailers: Array<Buffer> | IncomingHttpHeaders;
   }
   export interface RequestErrorMessage {
     request: Request;

@@ -129,9 +129,8 @@ successful CONNECT or protocol upgrade response.
   * `response` {Object} The response being received.
     * `statusCode` {number} The HTTP status code.
     * `statusText` {string} The HTTP status message.
-    * `headers` {Buffer[]|Object} HTTP/1.1 response headers are an array of
-      buffers alternating between header name and value. HTTP/2 response
-      headers are an object.
+    * `headers` {Object} Response headers keyed by lowercased name. Values
+      are Latin-1 strings, or arrays of strings for duplicate field lines.
 
 ```mjs
 import diagnosticsChannel from 'node:diagnostics_channel'
@@ -177,15 +176,15 @@ been passed to the request handler, this event is published with an empty
 * `message` {Object}
   * `request` {Object} The same object published by
     [`'undici:request:create'`][]. `request.completed` is now `true`.
-  * `trailers` {Buffer[]} The raw response trailers as an array of buffers,
-    alternating between header name and value.
+  * `trailers` {Object} The response trailer map, using lowercased names and
+    string or array values. Upgrade responses publish an empty array.
 
 ```mjs
 import diagnosticsChannel from 'node:diagnostics_channel'
 
 diagnosticsChannel.channel('undici:request:trailers').subscribe(({ request, trailers }) => {
   console.log('completed', request.completed)
-  console.log(trailers.map((x) => x.toString()))
+  console.log(trailers)
 })
 ```
 

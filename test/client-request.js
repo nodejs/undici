@@ -1075,8 +1075,8 @@ test('request raw responseHeaders', async (t) => {
   })
   await body.dump()
   t.strictEqual(infos.length, 1)
-  t.deepStrictEqual(infos[0].headers, ['Link', '</style.css>; rel=preload; as=style'])
-  t.deepStrictEqual(headers, ['Date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'Connection', 'close'])
+  t.deepStrictEqual(infos[0].headers, ['link', '</style.css>; rel=preload; as=style'])
+  t.deepStrictEqual(headers, ['date', 'Sat, 09 Oct 2010 14:28:02 GMT', 'connection', 'close'])
   t.ok(true, 'pass')
 })
 
