@@ -1,6 +1,6 @@
 // Header name Buffer -> lowercased string: stringifyHTTPHeader against the
 // ternary search tree (util.bufferToLowerCasedHeaderName) and a plain decode.
-// node --expose-gc micro.mjs <undici root>
+// node --expose-gc benchmarks/core/header-name-hash.mjs <candidate root> <upstream root>
 import { createRequire } from 'node:module'
 import { bench, do_not_optimize as doNotOptimize, run, summary } from 'mitata'
 

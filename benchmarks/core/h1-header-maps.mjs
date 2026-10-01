@@ -1,6 +1,6 @@
 // In-memory end-to-end h1 response parsing benchmark: a Client whose connect
 // returns a Duplex that answers every request with a canned response.
-// node --expose-gc bench.mjs <undici root> [case]
+// node --expose-gc benchmarks/core/h1-header-maps.mjs <undici root> [case]
 import { createRequire } from 'node:module'
 import { Duplex } from 'node:stream'
 import { bench, run, summary } from 'mitata'
