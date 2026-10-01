@@ -34,6 +34,7 @@ expectAssignable<'UND_ERR_RESPONSE'>(new errors.ResponseError('', 0, {}).code)
 expectAssignable<number>(new errors.ResponseError('', 0, {}).statusCode)
 expectAssignable<IncomingHttpHeaders | string[] | null>(new errors.ResponseError('', 0, {}).headers)
 expectAssignable<null | Record<string, any> | string>(new errors.ResponseError('', 0, {}).body)
+expectAssignable<boolean>(new errors.ResponseError('', 0, { bodyTruncated: true }).bodyTruncated)
 
 expectAssignable<errors.UndiciError>(new errors.InvalidArgumentError())
 expectAssignable<errors.InvalidArgumentError>(new errors.InvalidArgumentError())
