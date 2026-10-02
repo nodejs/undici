@@ -116,8 +116,8 @@ added: v1.0.0
   * `maxConcurrentStreams` {number} _Deprecated: use h2Options.useH2c instead_ The maximum number of concurrent HTTP/2
     streams for a single session. Once h2 is negotiated this — not `pipelining`,
     which is HTTP/1.1 only — is the ceiling used to dispatch in-flight requests.
-    It may be overridden by the server's `SETTINGS_MAX_CONCURRENT_STREAMS`
-    frame. **Default:** `100`.
+    The server's `SETTINGS_MAX_CONCURRENT_STREAMS` can lower this limit, but
+    not raise it. **Default:** `100`.
   * `connectionWindowSize` {number} _Deprecated: use h2Options.connectionWindowSize instead_ The HTTP/2 connection-level flow-control
     window size set via `ClientHttp2Session.setLocalWindowSize()`. Must be a
     positive integer. **Default:** `524288`.
@@ -130,8 +130,8 @@ added: v1.0.0
     * `maxConcurrentStreams` {number} The maximum number of concurrent HTTP/2
       streams for a single session. Once h2 is negotiated this — not `pipelining`,
       which is HTTP/1.1 only — is the ceiling used to dispatch in-flight requests.
-      It may be overridden by the server's `SETTINGS_MAX_CONCURRENT_STREAMS`
-      frame. **Default:** `100`.
+      The server's `SETTINGS_MAX_CONCURRENT_STREAMS` can lower this limit, but
+      not raise it. **Default:** `100`.
     * `connectionWindowSize` {number} The HTTP/2 connection-level flow-control
       window size set via `ClientHttp2Session.setLocalWindowSize()`. Must be a
       positive integer. **Default:** `524288`.
