@@ -241,22 +241,16 @@ If you want to build it locally, you need the following tools:
 - Rust toolchain - You can install it via [rustup].
 - [rust-cbindgen](https://github.com/mozilla/cbindgen)
 
-Make sure you have the `nightly` toolchain installed locally:
+Make sure you have the pinned nightly toolchain installed locally:
 
 ```bash
-rustup toolchain install nightly
+rustup toolchain install nightly-2026-07-29
 ```
 
 Make sure you have the `wasm32-unknown-unknown` target:
 
 ```bash
 rustup target add wasm32-unknown-unknown
-```
-
-Install npm dependencies
-
-```bash
-pnpm install
 ```
 
 After all the requirements are met, you can then run:
@@ -266,6 +260,10 @@ makers
 ```
 
 The command above will produce debug and release builds for each language in the top-level `dist` folder.
+
+Build tooling is compiled from `scripts` into standalone Rust binaries. Node.js and npm dependencies are not required to build the parser or generate its C++ and WebAssembly packages.
+
+For JavaScript linting and formatting, install the development dependencies with `pnpm install`.
 
 The WebAssembly release build uses immediate-abort panics to keep the artifact smaller. Panics trap without unwinding or rich panic messages.
 
@@ -360,6 +358,21 @@ To see the rationale behind the replacement of llhttp, check Paolo's talk at [Va
 
 To see the initial disclosure of milo, check Paolo's talk at [NodeConf EU 2023][nodeconf-talk] in November 2023 ([slides][slides]).
 
+## Building WebAssembly with Docker
+
+The repository includes a Docker image for building the WebAssembly packages without changing the working tree. Build the image from the repository root, then mount the sources read-only and choose a host directory for the generated artifacts:
+
+```sh
+docker build -t milo-wasm .
+mkdir -p /path/to/milo-wasm-output
+docker run --rm \
+  -v "$PWD:/src:ro" \
+  -v "/path/to/milo-wasm-output:/output" \
+  milo-wasm
+```
+
+The container builds both the debug and release profiles in its temporary workspace. The output directory receives the resulting `debug` and `release` packages; the mounted source tree remains read-only.
+
 ## Sponsored by
 
 [![NearForm](https://raw.githubusercontent.com/ShogunPanda/milo/main/docs/nearform.jpg)][nearform]
@@ -397,3 +410,4 @@ Licensed under the ISC license, which can be found at https://choosealicense.com
 [cargo-make]: https://github.com/sagiegurari/cargo-make
 [rustup]: https://rustup.rs/
 [Clang]: https://clang.llvm.org/
+
