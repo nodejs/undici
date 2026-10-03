@@ -122,8 +122,12 @@ cp parser/*.toml parser/*.lock parser/*.md <your-path-to-undici>/deps/milo/parse
 cp -R parser/src <your-path-to-undici>/deps/milo/parser/
 ```
 
-Keep the Cargo manifests and lockfiles, cargo-make tasks, Rust binding generators
-and JavaScript template unchanged. Do not copy `parser/tests`, `parser/examples`, `.git`, upstream workflows,
+Keep the Cargo manifests and all three lockfiles (`macros/Cargo.lock`,
+`parser/Cargo.lock` and `scripts/Cargo.lock`), Rust binding generators and JavaScript
+template. Preserve Undici's build adjustments: the Docker image digest, pinned
+cargo-make version, Binaryen checksums and `--locked` Cargo builds. Update the
+checksums for both Linux architectures whenever Binaryen is updated.
+Do not copy `parser/tests`, `parser/examples`, `.git`, upstream workflows,
 `target`, `dist`, or prebuilt npm packages. Use a clean checkout so no local build
 outputs are included. When selecting a newer release, update the version and
 full commit recorded above.
@@ -155,6 +159,11 @@ files, unbundled modules, debug packages and package metadata are not copied.
 Temporary Docker outputs are removed when the script finishes. The script does
 not download or update milo's sources; Docker still downloads the image and build
 dependencies as needed.
+
+The shared-builtin CI job removes the bundled Milo modules and rebuilds them
+before compiling Node.js, so that it cannot silently reuse prebuilt artifacts.
+The npm package contains only the license and the two bundled JavaScript modules;
+`lib/milo/binary`, `lib/milo/src` and separate WASM files are excluded.
 
 #### Submit the update
 
