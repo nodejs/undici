@@ -246,8 +246,11 @@ The error body is automatically decoded for `application/json` and
 
 **Parameters**
 
-* `opts` {Object} (optional) — currently reserved for future use; may be
-  omitted.
+* `opts` {Object} (optional)
+  * `maxSize` {number} Maximum number of response body bytes to include in the
+    error. If the body exceeds this limit, the resulting `ResponseError`
+    contains the retained prefix with `bodyTruncated` set to `true`. Set to `0`
+    to disable the limit. **Default:** `1048576` (1 MiB).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
