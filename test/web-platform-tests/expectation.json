@@ -11047,8 +11047,7 @@
           "cases": [
             {
               "name": "Consuming the body of a resource with too large of a zstd window size should reject",
-              "success": false,
-              "message": "assert_unreached: Should have rejected: undefined Reached unreachable code"
+              "success": true
             }
           ]
         },
