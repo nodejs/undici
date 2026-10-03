@@ -48,7 +48,7 @@ jobs:
           export WASM_CFLAGS='--target=wasm32-wasi --sysroot=/usr'
           export WASM_LDFLAGS='-nodefaultlibs'
           export WASM_LDLIBS='-lc'
-          node build/wasm.js
+          node build/llhttp.js
 
       - name: Determine latest release for Node.js ${{ inputs.node-version }}
         id: release
