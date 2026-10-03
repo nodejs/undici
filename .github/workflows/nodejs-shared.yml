@@ -40,7 +40,7 @@ jobs:
       - name: Install wasi-libc
         run: sudo apt-get install -y wasi-libc binaryen
 
-      - name: Build WASM
+      - name: Rebuild llhttp WASM from vendored sources
         working-directory: ./undici
         run: |
           export EXTERNAL_PATH=${{ github.workspace }}/undici
@@ -49,6 +49,13 @@ jobs:
           export WASM_LDFLAGS='-nodefaultlibs'
           export WASM_LDLIBS='-lc'
           node build/llhttp.js
+
+      - name: Rebuild Milo WASM from vendored sources
+        working-directory: ./undici
+        run: |
+          # Removing bundled artifacts ensures this job cannot reuse prebuilt Milo.
+          rm lib/milo
+          node build/milo.js
 
       - name: Determine latest release for Node.js ${{ inputs.node-version }}
         id: release
