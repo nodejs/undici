@@ -1,6 +1,6 @@
 {
-  "name": "@perseveranza-pets/milo-cjs",
-  "version": "0.8.0",
+  "name": "@perseveranza-pets/milo",
+  "version": "0.8.5",
   "description": "A fast and embeddable HTTP/1.1 parser.",
   "homepage": "https://sw.cowtech.it/milo",
   "repository": {
@@ -17,7 +17,7 @@
   "author": "Shogun <shogun@cowtech.it>",
   "license": "ISC",
   "private": false,
-  "type": "commonjs",
+  "type": "module",
   "files": [
     "binary",
     "src",
