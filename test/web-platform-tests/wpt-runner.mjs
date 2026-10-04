@@ -495,8 +495,27 @@ function updateExpectations (results) {
     }
   }
 
-  writeFileSync(EXPECTATION_PATH, JSON.stringify(expectations, null, 2) + '\n')
+  writeFileSync(EXPECTATION_PATH, JSON.stringify(sortExpectations(expectations), null, 2) + '\n')
   console.log(`✅ Updated expectations file: ${EXPECTATION_PATH}`)
+}
+
+function sortExpectations (node) {
+  if (Array.isArray(node.cases)) {
+    node.cases.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
+    return node
+  }
+
+  const sorted = {}
+
+  for (const key of Object.keys(node).sort()) {
+    const value = node[key]
+
+    sorted[key] = typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? sortExpectations(value)
+      : value
+  }
+
+  return sorted
 }
 
 function getManifest () {
