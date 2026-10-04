@@ -1947,13 +1947,11 @@
             },
             {
               "name": "Fetch with POST with empty ReadableStream",
-              "success": false,
-              "message": "assert_equals: expected \"\" but got \"{\\\"error\\\": {\\\"code\\\": 500, \\\"message\\\": \\\"Internal server error loading http://web-platform.test:8000/fetch/api/resources/echo-content.h2.py:\\\\n  Traceback (most recent call last):\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/server.py\\\\\\\", line 373, in finish_handling\\\\n    handler(request, response)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 334, in __call__\\\\n    self._load_file(request, response, func)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 320, in _load_file\\\\n    return func(request, response, environ, path)\\\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 332, in func\\\\n    raise HTTPException(500, \\\\\\\"No main function in script %s\\\\\\\" % path)\\\\n  HTTPException: (500, 'No main function in script /home/matteo/repositories/undici/test/web-platform-tests/wpt/fetch/api/resources/echo-content.h2.py')\\\\n\\\"}}\""
+              "success": true
             },
             {
               "name": "Fetch with POST with ReadableStream",
-              "success": false,
-              "message": "assert_equals: expected \"Test\" but got \"{\\\"error\\\": {\\\"code\\\": 500, \\\"message\\\": \\\"Internal server error loading http://web-platform.test:8000/fetch/api/resources/echo-content.h2.py:\\\\n  Traceback (most recent call last):\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/server.py\\\\\\\", line 373, in finish_handling\\\\n    handler(request, response)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 334, in __call__\\\\n    self._load_file(request, response, func)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 320, in _load_file\\\\n    return func(request, response, environ, path)\\\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 332, in func\\\\n    raise HTTPException(500, \\\\\\\"No main function in script %s\\\\\\\" % path)\\\\n  HTTPException: (500, 'No main function in script /home/matteo/repositories/undici/test/web-platform-tests/wpt/fetch/api/resources/echo-content.h2.py')\\\\n\\\"}}\""
+              "success": true
             },
             {
               "name": "Fetch with POST with ReadableStream on 421 response should return the response and not retry.",
@@ -1969,8 +1967,7 @@
             },
             {
               "name": "Synchronous feature detect fails if feature unsupported",
-              "success": false,
-              "message": "assert_equals: expected \"Test\" but got \"{\\\"error\\\": {\\\"code\\\": 500, \\\"message\\\": \\\"Internal server error loading http://web-platform.test:8000/fetch/api/resources/echo-content.h2.py:\\\\n  Traceback (most recent call last):\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/server.py\\\\\\\", line 373, in finish_handling\\\\n    handler(request, response)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 334, in __call__\\\\n    self._load_file(request, response, func)\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 320, in _load_file\\\\n    return func(request, response, environ, path)\\\\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\\\n\\\\n    File \\\\\\\"/home/matteo/repositories/undici/test/web-platform-tests/wpt/tools/wptserve/wptserve/handlers.py\\\\\\\", line 332, in func\\\\n    raise HTTPException(500, \\\\\\\"No main function in script %s\\\\\\\" % path)\\\\n  HTTPException: (500, 'No main function in script /home/matteo/repositories/undici/test/web-platform-tests/wpt/fetch/api/resources/echo-content.h2.py')\\\\n\\\"}}\""
+              "success": true
             },
             {
               "name": "Streaming upload with body containing a String",
