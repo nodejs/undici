@@ -1,8 +1,11 @@
 'use strict'
 
 const { test } = require('node:test')
+const { once } = require('node:events')
+const { createServer } = require('node:http')
 const { Cache } = require('../../lib/web/cache/cache')
 const { caches, Response } = require('../../')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 test('constructor', (t) => {
   t.assert.throws(() => new Cache(null), {
@@ -50,4 +53,57 @@ test('cache.match should work after garbage collection', async (t) => {
     const result = await match.json()
     t.assert.deepStrictEqual(result, testData, `Iteration ${i}: response body should match`)
   }
+})
+
+// https://github.com/nodejs/undici/issues/5859
+test('cache.match and cache.matchAll work after cache.add and cache.addAll', async (t) => {
+  const server = createServer((req, res) => {
+    if (req.url === '/empty') {
+      res.writeHead(204)
+      res.end()
+      return
+    }
+    if (req.url === '/json') {
+      res.writeHead(200, { 'content-type': 'application/json' })
+      res.end(JSON.stringify({ key: 'val' }))
+      return
+    }
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('cached text body')
+  }).listen(0, '127.0.0.1')
+
+  t.after(closeServerAsPromise(server))
+  await once(server, 'listening')
+
+  const base = `http://127.0.0.1:${server.address().port}`
+  const cacheName = 'test-add-match'
+  const cache = await caches.open(cacheName)
+
+  t.after(async () => {
+    await caches.delete(cacheName)
+  })
+
+  await cache.add(`${base}/text`)
+
+  const firstMatch = await cache.match(`${base}/text`)
+  t.assert.ok(firstMatch)
+  t.assert.strictEqual(await firstMatch.text(), 'cached text body')
+
+  const secondMatch = await cache.match(`${base}/text`)
+  t.assert.ok(secondMatch)
+  t.assert.strictEqual(await secondMatch.text(), 'cached text body')
+
+  await cache.addAll([`${base}/json`, `${base}/empty`])
+
+  const jsonMatch = await cache.match(`${base}/json`)
+  t.assert.ok(jsonMatch)
+  t.assert.deepStrictEqual(await jsonMatch.json(), { key: 'val' })
+
+  const emptyMatch = await cache.match(`${base}/empty`)
+  t.assert.ok(emptyMatch)
+  t.assert.strictEqual(emptyMatch.status, 204)
+  t.assert.strictEqual(await emptyMatch.text(), '')
+
+  const allMatches = await cache.matchAll()
+  t.assert.strictEqual(allMatches.length, 3)
 })
