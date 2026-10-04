@@ -36674,8 +36674,7 @@
             "cases": [
               {
                 "name": "015",
-                "success": false,
-                "message": "assert_true: expected true got false"
+                "success": true
               }
             ]
           },
@@ -36684,8 +36683,7 @@
             "cases": [
               {
                 "name": "015",
-                "success": false,
-                "message": "assert_true: expected true got false"
+                "success": true
               }
             ]
           },
@@ -36694,8 +36692,7 @@
             "cases": [
               {
                 "name": "015",
-                "success": false,
-                "message": "assert_true: expected true got false"
+                "success": true
               }
             ]
           },
