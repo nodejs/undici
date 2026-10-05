@@ -9,7 +9,7 @@ use std::{
 use regex::{Captures, Regex};
 
 fn main() -> Result<(), Box<dyn Error>> {
-  let folders = ["macros", "parser", "references/rust", "parser/src/wasm"];
+  let folders = ["macros", "parser", "references/rust", "parser/wasm/src"];
   let version = env::args().nth(1).ok_or("Usage: sync-versions <version>")?;
   let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
 

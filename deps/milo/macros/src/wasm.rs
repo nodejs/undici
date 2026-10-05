@@ -29,7 +29,7 @@ pub fn generate_callbacks(callbacks: &[String]) -> TokenStream {
           if self.active_callbacks & #active_const != 0 {
             unsafe { #callback(self.ptr, at, len); }
           }
-          cursor += 9usize;
+          cursor += EVENT_RANGE_SIZE;
         }
       }
     });
@@ -78,7 +78,7 @@ pub fn generate_callbacks(callbacks: &[String]) -> TokenStream {
               if self.active_callbacks & CALLBACK_ACTIVE_ON_ERROR != 0 {
                 unsafe { on_error(self.ptr, at, 0); }
               }
-              cursor += 6usize;
+              cursor += EVENT_ERROR_SIZE;
             }
             EVENT_HEADERS => {
               let at = unsafe { core::ptr::read_unaligned(self.events.add(cursor + 1) as *const u32) }.to_le() as usize;
@@ -103,7 +103,7 @@ pub fn generate_callbacks(callbacks: &[String]) -> TokenStream {
                   );
                 }
               }
-              cursor += 19usize;
+              cursor += EVENT_METADATA_SIZE;
             }
             #(#replay_arms)*
             _ => break,

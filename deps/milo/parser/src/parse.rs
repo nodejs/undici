@@ -26,11 +26,19 @@ impl Parser {
   /// It returns the number of consumed characters.
   pub fn parse(&mut self, input: *const c_uchar, limit: usize) -> usize {
     let mut event_cursor = 0usize;
+    let mut failed = false;
     let active_events = self.active_events | self.active_callbacks;
 
-    // If the self.is paused, this is a no-op
-    if self.paused {
+    // Error states cannot resume without reset. Do not aggregate or retain new
+    // input on retries, which would otherwise grow the pending buffer forever.
+    if self.state == STATE_ERROR {
+      self.position = 0;
+    }
+
+    // Paused and failed parsers consume nothing and produce an empty event batch.
+    if self.paused || self.state == STATE_ERROR {
       if active_events != 0 {
+        // SAFETY: The live parser owns the event buffer and its first byte.
         unsafe {
           *self.events = EVENT_END;
         }
@@ -949,6 +957,10 @@ impl Parser {
               self.remaining_content_length -= to_consume;
               advance!(to_consume_usize);
             } else {
+              // Suspend before emitting or consuming any part of the final body segment.
+              if event_cursor + EVENT_BODY_COMPLETION_SIZE + EVENT_ERROR_RESERVE > EVENTS_BUFFER_SIZE {
+                suspend!();
+              }
               event_with_range!(on_data, 0, to_consume_usize);
               event_with_range!(on_body, to_consume_usize, 0);
 
@@ -1293,6 +1305,10 @@ impl Parser {
 
                 // No more trailers or no trailers at all, message completed
                 if cr == 0 {
+                  // Keep the trailer notification and completion in the same batch.
+                  if event_cursor + EVENT_TRAILER_COMPLETION_SIZE + EVENT_ERROR_RESERVE > EVENTS_BUFFER_SIZE {
+                    suspend!();
+                  }
                   event_with_range!(on_trailers, 2, 0);
                   self.continue_without_data = true;
                   if !self.complete_message(
@@ -1435,23 +1451,14 @@ impl Parser {
     self.parsed += consumed as u64;
 
     if self.manage_unconsumed {
-      unsafe {
-        // Drop any previous retained data
-        if unconsumed_len > 0 {
-          let _ = from_raw_parts(self.unconsumed, unconsumed_len);
-        }
+      self.clear_unconsumed();
 
-        // If less bytes were consumed than requested, copy the unconsumed portion in
-        // the self.for the next iteration
-        if consumed < limit {
-          let (ptr, len, _) = data.to_vec().into_raw_parts();
-
-          self.unconsumed = ptr;
-          self.unconsumed_len = len;
-        } else {
-          self.unconsumed = ptr::null();
-          self.unconsumed_len = 0;
-        }
+      // Use a boxed slice so the length also determines the allocation layout
+      // when releasing retained input; Vec capacity is not stored in the ABI.
+      if consumed < limit {
+        let retained = data.to_vec().into_boxed_slice();
+        self.unconsumed_len = retained.len();
+        self.unconsumed = Box::into_raw(retained) as *const c_uchar;
       }
     }
 
@@ -1468,6 +1475,11 @@ impl Parser {
           duration
         );
       }
+    }
+
+    // Append only errors raised by this call, after all preceding events.
+    if failed && active_events & EVENT_ACTIVE_ON_ERROR != 0 {
+      self.try_emit_event_error(&mut event_cursor);
     }
 
     if has_active_events {
@@ -1533,6 +1545,10 @@ impl Parser {
     has_finish_event: bool,
     event_cursor: &mut usize,
   ) -> bool {
+    // Never publish a partial completion group that would be replayed on retry.
+    if *event_cursor + EVENT_COMPLETION_SIZE + EVENT_ERROR_RESERVE > EVENTS_BUFFER_SIZE {
+      return false;
+    }
     if has_complete_events {
       if (active_events & EVENT_ACTIVE_ON_MESSAGE_COMPLETE != 0
         && !self.try_emit_event_range(event_cursor, EVENT_MESSAGE_COMPLETE, self.position + offset, 0))

@@ -22,7 +22,7 @@ pub fn generate_callbacks(callbacks: &[String]) -> TokenStream {
           if self.active_callbacks & #active_const != 0 {
             (self.callbacks.#callback)(self, at, 0);
           }
-          cursor += 6usize;
+          cursor += EVENT_ERROR_SIZE;
         }
       }
     } else if callback_name == "on_headers" {
@@ -32,7 +32,7 @@ pub fn generate_callbacks(callbacks: &[String]) -> TokenStream {
           if self.active_callbacks & #active_const != 0 {
             (self.callbacks.#callback)(self, at, 0);
           }
-          cursor += 19usize;
+          cursor += EVENT_METADATA_SIZE;
         }
       }
     } else {
@@ -43,7 +43,7 @@ pub fn generate_callbacks(callbacks: &[String]) -> TokenStream {
           if self.active_callbacks & #active_const != 0 {
             (self.callbacks.#callback)(self, at, len);
           }
-          cursor += 9usize;
+          cursor += EVENT_RANGE_SIZE;
         }
       }
     }

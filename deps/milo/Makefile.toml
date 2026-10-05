@@ -8,7 +8,13 @@
   script = ["cd parser", "makers build"]
 
 [tasks.test]
+  dependencies = ["test:rust", "test:wasm"]
+
+[tasks."test:rust"]
   script = ["cd parser", "cargo test"]
+
+[tasks."test:wasm"]
+  script = ["cd parser", "makers test:wasm"]
 
 [tasks.format]
   dependencies = ["format:rust", "format:js", "format:cpp"]

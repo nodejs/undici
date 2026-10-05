@@ -216,7 +216,7 @@ fn generate_simple_callbacks(info: &BuildInfo) -> String {
 }
 
 fn generate_module(profile: &str, info: &BuildInfo, loader: &str, commonjs: bool) -> Result<String, Box<dyn Error>> {
-  let template = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../parser/src/wasm/template.js"))?;
+  let template = fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../parser/wasm/src/template.js"))?;
   let version = &info.version;
   let mut output = String::new();
 
@@ -351,7 +351,7 @@ fn main() -> Result<(), Box<dyn Error>> {
   let profile = env::args().nth(1).ok_or("Usage: postbuild-wasm <profile>")?;
   let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
   // Open the package.json and update the version.
-  let mut package_json: Value = serde_json::from_str(&fs::read_to_string(root.join("parser/src/wasm/package.json"))?)?;
+  let mut package_json: Value = serde_json::from_str(&fs::read_to_string(root.join("parser/wasm/src/package.json"))?)?;
   let profile_root = root.join("dist/wasm").join(&profile);
   let root_folder = profile_root.join("package");
   let cjs_root_folder = profile_root.join("package-cjs");

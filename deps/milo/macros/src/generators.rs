@@ -140,6 +140,17 @@ fn generate_constants(methods: &[String], errors: &[String], callbacks: &[String
     #parser_field_offsets
 
     const EVENTS_BUFFER_SIZE: usize = 64 * 1024;
+    const EVENT_RANGE_SIZE: usize = 9;
+    const EVENT_METADATA_SIZE: usize = 19;
+    const EVENT_ERROR_SIZE: usize = 6;
+    const EVENT_END_SIZE: usize = 1;
+    const EVENT_ERROR_RESERVE: usize = EVENT_ERROR_SIZE + EVENT_END_SIZE;
+    // Reserve MESSAGE_COMPLETE, RESET and FINISH, regardless of which events are enabled.
+    const EVENT_COMPLETION_SIZE: usize = 3 * EVENT_RANGE_SIZE;
+    // Include DATA and BODY before the completion group.
+    const EVENT_BODY_COMPLETION_SIZE: usize = 2 * EVENT_RANGE_SIZE + EVENT_COMPLETION_SIZE;
+    // Include TRAILERS before the completion group.
+    const EVENT_TRAILER_COMPLETION_SIZE: usize = EVENT_RANGE_SIZE + EVENT_COMPLETION_SIZE;
 
     /// cbindgen:ignore
     static TOKEN_TABLE: [bool; 256] = [#(#token_table),*];

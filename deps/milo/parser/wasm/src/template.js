@@ -14,8 +14,8 @@ function alloc (len) {
   return this.alloc(len) >>> 0
 }
 
-function dealloc (ptr) {
-  return this.dealloc(ptr)
+function dealloc (ptr, len) {
+  return this.dealloc(ptr, len)
 }
 
 function create () {
