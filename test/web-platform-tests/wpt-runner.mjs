@@ -19,8 +19,40 @@ const EXPECTATION_PATH = join(import.meta.dirname, 'expectation.json')
 const CA_CERT_PATH = join(WPT_DIR, 'tools/certs/cacert.pem')
 
 const log = debuglog('UNDICI_WPT')
-const WPT_SERVER_URL = 'http://web-platform.test:8000'
+const WPT_SERVER_HOST = 'web-platform.test'
+const WPT_SERVER_PORTS = { http: 8000, https: 8443, h2: 9000 }
+const WPT_SERVER_URL = serverUrl('http', false)
 const PYTHON_CANDIDATES = ['python3', 'python']
+
+// https://github.com/web-platform-tests/wpt/blob/250a471e25/tools/manifest/item.py#L104-L105
+function getFlags (url) {
+  return new Set([
+    ...url.pathname.split('/').pop().split('.').slice(1, -1),
+    ...url.searchParams.getAll('wpt_flags')
+  ])
+}
+
+// https://github.com/web-platform-tests/wpt/blob/250a471e25/tools/wptrunner/wptrunner/wpttest.py#L216-L221
+function serverProtocol (flags) {
+  if (flags.has('h2')) {
+    return 'h2'
+  }
+  if (flags.has('https') || flags.has('serviceworker') || flags.has('serviceworker-module')) {
+    return 'https'
+  }
+  return 'http'
+}
+
+// https://github.com/web-platform-tests/wpt/blob/250a471e25/tools/wptrunner/wptrunner/executors/base.py#L79-L86
+function serverUrl (protocol, subdomain) {
+  const scheme = protocol === 'h2' ? 'https' : protocol
+  let host = WPT_SERVER_HOST
+  if (subdomain) {
+    // The only supported subdomain filename flag is "www".
+    host = `www.${host}`
+  }
+  return `${scheme}://${host}:${WPT_SERVER_PORTS[protocol]}`
+}
 
 let pythonInfoPromise
 
@@ -463,8 +495,27 @@ function updateExpectations (results) {
     }
   }
 
-  writeFileSync(EXPECTATION_PATH, JSON.stringify(expectations, null, 2) + '\n')
+  writeFileSync(EXPECTATION_PATH, JSON.stringify(sortExpectations(expectations), null, 2) + '\n')
   console.log(`✅ Updated expectations file: ${EXPECTATION_PATH}`)
+}
+
+function sortExpectations (node) {
+  if (Array.isArray(node.cases)) {
+    node.cases.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
+    return node
+  }
+
+  const sorted = {}
+
+  for (const key of Object.keys(node).sort()) {
+    const value = node[key]
+
+    sorted[key] = typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? sortExpectations(value)
+      : value
+  }
+
+  return sorted
 }
 
 function getManifest () {
@@ -487,7 +538,9 @@ function discoverTestsToRun (filter, expectation) {
           if (!key.endsWith('.html') && !key.endsWith('.js')) continue
 
           const testPath = path || `${prefix}/${key}`
-          const url = new URL(testPath, WPT_SERVER_URL)
+          const flags = getFlags(new URL(testPath, WPT_SERVER_URL))
+          // https://github.com/web-platform-tests/wpt/blob/250a471e25/tools/wptrunner/wptrunner/executors/base.py#L349-L351
+          const url = new URL(testPath, serverUrl(serverProtocol(flags), flags.has('www')))
 
           if (url.pathname.includes('.worker.') ||
               url.pathname.includes('serviceworker') ||
