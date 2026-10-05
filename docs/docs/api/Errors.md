@@ -18,7 +18,7 @@ if (err instanceof errors.ConnectTimeoutError) {
 }
 ```
 
-All errors, except [`HTTPParserError`][], extend [`UndiciError`][]. Each error
+All errors, except [`HTTPParserError`][] and `WebAssemblyNotSupportedError`, extend [`UndiciError`][]. Each error
 carries a stable `code` string (for example `UND_ERR_CONNECT_TIMEOUT`) and a
 `name`.
 
@@ -51,6 +51,35 @@ on a well-known symbol rather than the prototype chain.
 
 * `name` {string} Always `'UndiciError'`.
 * `code` {string} Always `'UND_ERR'`.
+
+## Class: `WebAssemblyNotSupportedError`
+
+* Extends: {Error}
+
+WebAssembly is unavailable when Undici initializes its HTTP/1 parser. Undici does
+not provide an alternative parser for environments without WebAssembly, including
+Node.js configurations where `--jitless` disables it. The check is performed when
+the parser is needed, not when importing Undici or accessing `fetch`.
+
+* `name` {string} Always `'Error'`.
+* `code` {string} Always `'ERR_WEBASSEMBLY_NOT_SUPPORTED'`.
+* `message` {string} By default `'WebAssembly is not supported in this environment, but is required for HTTP/1 parsing'`.
+
+Client and dispatcher requests report this error directly. `fetch` rejects with
+a `TypeError` whose `cause` is this error:
+
+```js
+try {
+  await fetch('http://localhost:3000')
+} catch (error) {
+  if (error.cause?.code === 'ERR_WEBASSEMBLY_NOT_SUPPORTED') {
+    // HTTP/1 parsing requires WebAssembly in this environment.
+  }
+}
+```
+
+`Headers`, `FormData`, `Request`, `Response`, and other operations that do not need
+the HTTP/1 parser remain usable without WebAssembly.
 
 ## Class: `ConnectTimeoutError`
 
