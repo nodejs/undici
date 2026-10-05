@@ -164,6 +164,11 @@ export declare namespace Client {
     */
     maxConcurrentStreams?: number;
     /**
+     * @description Upper bound on concurrent streams for a single H2 session that a SETTINGS remote frame cannot raise. A lower value from the server still applies.
+     * @default null
+    */
+    maxConcurrentStreamsCap?: number;
+    /**
      * @description Enable support for H2C (plain text)
      * @default false
      */
