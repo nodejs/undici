@@ -121,6 +121,13 @@ declare namespace Errors {
     code: string
   }
 
+  /** WebAssembly is unavailable when initializing the HTTP/1 parser. */
+  export class WebAssemblyNotSupportedError extends Error {
+    constructor (message?: string)
+    name: 'Error'
+    code: 'ERR_WEBASSEMBLY_NOT_SUPPORTED'
+  }
+
   /** The response exceed the length allowed. */
   export class ResponseExceededMaxSizeError extends UndiciError {
     name: 'ResponseExceededMaxSizeError'

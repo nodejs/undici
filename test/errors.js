@@ -13,6 +13,7 @@ const createScenario = (ErrorClass, defaultMessage, name, code) => ({
 })
 
 const scenarios = [
+  createScenario(errors.WebAssemblyNotSupportedError, 'WebAssembly is not supported in this environment, but is required for HTTP/1 parsing', 'Error', 'ERR_WEBASSEMBLY_NOT_SUPPORTED'),
   createScenario(errors.UndiciError, '', 'UndiciError', 'UND_ERR'),
   createScenario(errors.ConnectTimeoutError, 'Connect Timeout Error', 'ConnectTimeoutError', 'UND_ERR_CONNECT_TIMEOUT'),
   createScenario(errors.HeadersTimeoutError, 'Headers Timeout Error', 'HeadersTimeoutError', 'UND_ERR_HEADERS_TIMEOUT'),

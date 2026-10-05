@@ -7,6 +7,11 @@ expectAssignable<errors.UndiciError>(new errors.UndiciError())
 expectAssignable<string>(new errors.UndiciError().name)
 expectAssignable<string>(new errors.UndiciError().code)
 
+expectAssignable<Error>(new errors.WebAssemblyNotSupportedError())
+expectAssignable<errors.WebAssemblyNotSupportedError>(new errors.WebAssemblyNotSupportedError())
+expectAssignable<'Error'>(new errors.WebAssemblyNotSupportedError().name)
+expectAssignable<'ERR_WEBASSEMBLY_NOT_SUPPORTED'>(new errors.WebAssemblyNotSupportedError().code)
+
 expectAssignable<errors.UndiciError>(new errors.ConnectTimeoutError())
 expectAssignable<errors.ConnectTimeoutError>(new errors.ConnectTimeoutError())
 expectAssignable<'ConnectTimeoutError'>(new errors.ConnectTimeoutError().name)
