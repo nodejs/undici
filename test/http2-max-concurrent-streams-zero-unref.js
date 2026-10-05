@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const { fork } = require('node:child_process')
 const { once } = require('node:events')
-const { createSecureServer } = require('node:http2')
+const { createSecureServer, constants } = require('node:http2')
 const { join } = require('node:path')
 const { key, cert } = require('@metcoder95/https-pem')
 
@@ -85,4 +85,45 @@ test('a queued request keeps the process alive when the last stream closes', { t
   t.assert.strictEqual(signal, null)
   t.assert.strictEqual(code, 0)
   t.assert.deepStrictEqual(messages, ['warmed', 'queued', 'UND_ERR_HEADERS_TIMEOUT'])
+})
+
+// When the peer advertises SETTINGS_MAX_CONCURRENT_STREAMS = 0, requests are queued without a stream.
+// When the peer sends GOAWAY, the detached session must be unref'd for the child to exit.
+test('a session detached by GOAWAY while requests are queued does not keep the process alive', { timeout: 10000 }, async (t) => {
+  const server = createSecureServer({ key, cert })
+  t.after(() => server.close())
+
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  let session
+  server.on('session', (s) => { session = s })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const child = fork(join(__dirname, 'fixtures/h2-no-streams-client.js'), [String(server.address().port)])
+  t.after(() => child.kill())
+
+  const messages = []
+  child.on('message', (message) => {
+    messages.push(message)
+
+    if (message === 'warmed') {
+      try {
+        session.settings({ maxConcurrentStreams: 0 }, () => child.send('drained', () => {}))
+      } catch {}
+    } else if (message === 'queued') {
+      session.goaway(constants.NGHTTP2_NO_ERROR, 1)
+    }
+  })
+
+  const [code, signal] = await once(child, 'close')
+
+  t.assert.strictEqual(signal, null)
+  t.assert.strictEqual(code, 0)
+  t.assert.deepStrictEqual(messages, ['warmed', 'queued', 'settled'])
 })
