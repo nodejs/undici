@@ -11,10 +11,17 @@ const pem = require('@metcoder95/https-pem')
 const { Agent } = require('..')
 
 const nodeMajor = Number(process.versions.node.split('.')[0])
+const nodeMinor = Number(process.versions.node.split('.')[1])
 const skipForMemoryCorruption =
   (process.platform === 'linux' && nodeMajor === 24) ||
   nodeMajor === 25
-const skipForOnreadAssertion = nodeMajor === 26
+// nodejs/node#64850 (onread->IsFunction() assertion during session teardown)
+// was fixed by nodejs/node#65116, which first shipped in Node.js v26.10.0.
+// The v22.x backport (nodejs/node#66515) has not been released yet, so add a
+// version gate here once a Node.js 22.x release carries the fix.
+const skipForOnreadAssertion =
+  nodeMajor === 22 ||
+  (nodeMajor === 26 && nodeMinor < 10)
 
 // completeRequestStream() runs on an h2 stream's 'close':
 //
@@ -133,8 +140,9 @@ async function churningServer (rnd) {
 
 for (const seed of SEEDS) {
   test(`every h2 request settles under connection churn (seed ${seed})`, {
-    // https://github.com/nodejs/node/issues/64841
-    // https://github.com/nodejs/node/issues/64850
+    // https://github.com/nodejs/node/issues/64841 (still open, Node.js 24/25)
+    // nodejs/node#64850 was fixed in Node.js v26.10.0; the v22.x backport is
+    // still unreleased, so Node.js 22 and pre-fix 26.x keep skipping
     skip: (skipForMemoryCorruption || skipForOnreadAssertion) && 'Node.js has HTTP/2 session teardown crashes'
   }, async (t) => {
     const timer = setInterval(() => {}, 1000)
