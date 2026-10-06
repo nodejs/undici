@@ -8,6 +8,7 @@ const assert = require('node:assert')
 const pem = require('@metcoder95/https-pem')
 
 const { Client } = require('..')
+const { guardAgainstUnexpectedDisconnect } = require('./utils/h2-disconnect-guard')
 
 test('Should handle h2 DELETE request with body', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
@@ -44,6 +45,8 @@ test('Should handle h2 DELETE request with body', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  guardAgainstUnexpectedDisconnect(assert, client)
 
   const response = await client.request({
     path: '/',
@@ -89,6 +92,8 @@ test('Should not send Content-Length for h2 DELETE without body', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  guardAgainstUnexpectedDisconnect(assert, client)
 
   const response = await client.request({
     path: '/',
