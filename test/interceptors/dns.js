@@ -2497,3 +2497,178 @@ test('Should report an unusable lookup result instead of crashing (dual stack di
     origin: `http://localhost:${server.address().port}`
   }), { code: 'UND_ERR_INFO', message: 'No DNS entries found' })
 })
+
+// https://github.com/nodejs/undici/issues/5974
+test('DNS interceptor should share concurrent lookups', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => res.end('ok'))
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const origin = `http://dns-cache-test.invalid:${server.address().port}`
+  let lookupCount = 0
+
+  const dispatcher = new Agent().compose(
+    dns({
+      maxTTL: 60000,
+      lookup (lookupOrigin, options, callback) {
+        lookupCount++
+
+        // Simulate asynchronous DNS resolution without an external DNS server.
+        setTimeout(() => {
+          callback(null, [
+            { address: '127.0.0.1', family: 4, ttl: 60000 }
+          ])
+        }, 30)
+      }
+    })
+  )
+
+  after(async () => {
+    await dispatcher.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  async function runBatch () {
+    await Promise.all(Array.from({ length: 100 }, async () => {
+      const { body } = await dispatcher.request({
+        origin,
+        path: '/',
+        method: 'GET'
+      })
+
+      await body.text()
+    }))
+  }
+
+  await runBatch()
+  const coldCacheLookups = lookupCount
+
+  await runBatch()
+  const warmCacheLookups = lookupCount - coldCacheLookups
+
+  t.equal(warmCacheLookups, 0, 'Completed DNS results should be cached')
+  t.equal(coldCacheLookups, 1, 'Concurrent requests should share one DNS lookup')
+})
+
+test('DNS interceptor should not cache a failed in-flight lookup', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer((req, res) => res.end('ok'))
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const origin = `http://dns-cache-test.invalid:${server.address().port}`
+  let lookupCount = 0
+
+  const dispatcher = new Agent().compose(
+    dns({
+      maxTTL: 60000,
+      lookup (lookupOrigin, options, callback) {
+        lookupCount++
+        const attempt = lookupCount
+
+        setTimeout(() => {
+          if (attempt === 1) {
+            const err = new Error('temporary failure')
+            err.code = 'ENOTFOUND'
+            callback(err)
+            return
+          }
+
+          callback(null, [
+            { address: '127.0.0.1', family: 4, ttl: 60000 }
+          ])
+        }, 30)
+      }
+    })
+  )
+
+  after(async () => {
+    await dispatcher.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const failures = await Promise.all(Array.from({ length: 20 }, async () => {
+    try {
+      const { body } = await dispatcher.request({
+        origin,
+        path: '/',
+        method: 'GET'
+      })
+      await body.text()
+      return null
+    } catch (err) {
+      return err
+    }
+  }))
+
+  t.equal(lookupCount, 1)
+  t.equal(failures.every(err => err?.code === 'ENOTFOUND'), true)
+
+  const { body } = await dispatcher.request({
+    origin,
+    path: '/',
+    method: 'GET'
+  })
+  t.equal(await body.text(), 'ok')
+  t.equal(lookupCount, 2)
+})
+
+test('DNS interceptor should not coalesce different hostnames or lookup options', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const server = createServer((req, res) => res.end('ok'))
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const port = server.address().port
+  let lookupCount = 0
+
+  const dispatcher = new Agent().compose(
+    dns({
+      maxTTL: 60000,
+      lookup (lookupOrigin, options, callback) {
+        lookupCount++
+        setTimeout(() => {
+          callback(null, [
+            { address: '127.0.0.1', family: 4, ttl: 60000 }
+          ])
+        }, 30)
+      }
+    })
+  )
+
+  after(async () => {
+    await dispatcher.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  async function request (hostname, family) {
+    const { body } = await dispatcher.request({
+      origin: `http://${hostname}:${port}`,
+      path: '/',
+      method: 'GET',
+      dns: family === undefined ? undefined : { family }
+    })
+    await body.text()
+  }
+
+  await Promise.all([
+    request('a.dns-cache-test.invalid'),
+    request('a.dns-cache-test.invalid'),
+    request('b.dns-cache-test.invalid'),
+    request('b.dns-cache-test.invalid'),
+    request('a.dns-cache-test.invalid', 4),
+    request('a.dns-cache-test.invalid', 4),
+    request('a.dns-cache-test.invalid', 6),
+    request('a.dns-cache-test.invalid', 6)
+  ])
+
+  // Two hostnames, plus the same hostname looked up for two different families.
+  t.equal(lookupCount, 4)
+})
