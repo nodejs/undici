@@ -401,13 +401,11 @@
             },
             {
               "name": "Already aborted signal rejects immediately",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"fetch-reject\" but got \"next-microtask\" (expected array [\"fetch-reject\", \"next-microtask\"] got [\"next-microtask\", \"fetch-reject\"])"
+              "success": true
             },
             {
               "name": "Call text() twice on aborted response",
-              "success": false,
-              "message": "promise_rejects_dom: function \"function() { throw e; }\" threw object \"TypeError: Body is unusable: Body has already been read\" that is not a DOMException AbortError: property \"code\" is equal to undefined, expected 20"
+              "success": true
             },
             {
               "name": "Clone aborts with original controller",
@@ -575,8 +573,7 @@
             },
             {
               "name": "response.arrayBuffer() rejects if already aborted",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"arrayBuffer-reject\" but got \"next-microtask\" (expected array [\"arrayBuffer-reject\", \"next-microtask\"] got [\"next-microtask\", \"arrayBuffer-reject\"])"
+              "success": true
             },
             {
               "name": "response.arrayBuffer() rejects with abort reason if already aborted",
@@ -584,8 +581,7 @@
             },
             {
               "name": "response.blob() rejects if already aborted",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"blob-reject\" but got \"next-microtask\" (expected array [\"blob-reject\", \"next-microtask\"] got [\"next-microtask\", \"blob-reject\"])"
+              "success": true
             },
             {
               "name": "response.blob() rejects with abort reason if already aborted",
@@ -593,8 +589,7 @@
             },
             {
               "name": "response.bytes() rejects if already aborted",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"bytes-reject\" but got \"next-microtask\" (expected array [\"bytes-reject\", \"next-microtask\"] got [\"next-microtask\", \"bytes-reject\"])"
+              "success": true
             },
             {
               "name": "response.bytes() rejects with abort reason if already aborted",
@@ -602,8 +597,7 @@
             },
             {
               "name": "response.formData() rejects if already aborted",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"formData-reject\" but got \"next-microtask\" (expected array [\"formData-reject\", \"next-microtask\"] got [\"next-microtask\", \"formData-reject\"])"
+              "success": true
             },
             {
               "name": "response.formData() rejects with abort reason if already aborted",
@@ -611,8 +605,7 @@
             },
             {
               "name": "response.json() rejects if already aborted",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"json-reject\" but got \"next-microtask\" (expected array [\"json-reject\", \"next-microtask\"] got [\"next-microtask\", \"json-reject\"])"
+              "success": true
             },
             {
               "name": "response.json() rejects with abort reason if already aborted",
@@ -620,8 +613,7 @@
             },
             {
               "name": "response.text() rejects if already aborted",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"text-reject\" but got \"next-microtask\" (expected array [\"text-reject\", \"next-microtask\"] got [\"next-microtask\", \"text-reject\"])"
+              "success": true
             },
             {
               "name": "response.text() rejects with abort reason if already aborted",

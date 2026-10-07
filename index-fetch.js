@@ -32,13 +32,35 @@ function appendFetchStackTrace (err, filename) {
   err.stack = stack ? `${stack}\n${captureLines}` : capture.stack
 }
 
+function processFetchError (err) {
+  if (currentFilename) {
+    appendFetchStackTrace(err, currentFilename)
+  } else if (err && typeof err === 'object') {
+    Error.captureStackTrace(err, module.exports.fetch)
+  }
+}
+
 module.exports.fetch = function fetch (init, options = undefined) {
-  return fetchImpl(init, options).catch(err => {
-    if (currentFilename) {
-      appendFetchStackTrace(err, currentFilename)
-    } else if (err && typeof err === 'object') {
-      Error.captureStackTrace(err, module.exports.fetch)
+  let isSynchronous = true
+  let synchronousError = false
+  const promise = fetchImpl(init, options, err => {
+    if (!isSynchronous) {
+      return
     }
+
+    synchronousError = true
+    processFetchError(err)
+  })
+  isSynchronous = false
+
+  // Return the original promise when fetch rejected before returning so its
+  // rejection is observable in the first promise microtask checkpoint.
+  if (synchronousError) {
+    return promise
+  }
+
+  return promise.catch(err => {
+    processFetchError(err)
     throw err
   })
 }
