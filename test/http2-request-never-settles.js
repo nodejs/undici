@@ -97,9 +97,15 @@ async function churningServer (rnd) {
         case 'goaway-refuse':
           stream.session.goaway(constants.NGHTTP2_NO_ERROR, 0)
           break
-        case 'kill-session':
-          stream.session.destroy()
+        case 'kill-session': {
+          // nodejs/node#64850 / #64841: destroy() inside this handler runs
+          // during nghttp2 mem_recv and aborts the process.
+          const session = stream.session
+          setImmediate(() => {
+            try { session.destroy() } catch {}
+          })
           break
+        }
         case 'no-answer':
           break
       }
