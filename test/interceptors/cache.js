@@ -756,6 +756,63 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('stores response with max-age=0 and etag, revalidates it on reuse within the same millisecond', async () => {
+    // Freeze the clock on a whole second so the Date header carries no apparent
+    //  age and both requests observe now === staleAt
+    const clock = FakeTimers.install({
+      now: 1000,
+      toFake: ['Date']
+    })
+    after(() => clock.uninstall())
+
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.sendDate = false
+      res.setHeader('date', new Date().toUTCString())
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'max-age=0')
+        res.setHeader('etag', '"asd123"')
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
+  })
+
   test('stores response with no-cache directive, etag and last-modified, revalidates it on reuse', async () => {
     let requestsToOrigin = 0
     let revalidationRequests = 0
