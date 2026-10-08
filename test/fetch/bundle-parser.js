@@ -33,8 +33,8 @@ test('ordinary esbuild bundles retain experimental Milo', (t) => {
   const inputs = Object.keys(metafile.inputs)
 
   t.assert.ok(inputs.includes('lib/dispatcher/parser-h1.js'))
-  t.assert.ok(inputs.includes('lib/milo/src/simd/index.js'))
-  t.assert.ok(inputs.includes('lib/milo/src/no-simd/index.js'))
+  t.assert.ok(inputs.includes('lib/milo/simd.js'))
+  t.assert.ok(inputs.includes('lib/milo/no-simd.js'))
 })
 
 for (const simd of ['0', '1']) {
