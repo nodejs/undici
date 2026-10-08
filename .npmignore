@@ -7,10 +7,6 @@
 lib/llhttp/llhttp_simd.wasm
 lib/llhttp/llhttp.wasm
 
-# Milo uses bundled JS builds that embed wasm, not the standalone builds
-lib/milo/binary/**
-lib/milo/src/*/unbundled.js
-
 !types/**/*
 !index.d.ts
 !docs/docs/**/*
