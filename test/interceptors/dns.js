@@ -2497,3 +2497,107 @@ test('Should report an unusable lookup result instead of crashing (dual stack di
     origin: `http://localhost:${server.address().port}`
   }), { code: 'UND_ERR_INFO', message: 'No DNS entries found' })
 })
+
+test('Should share in-flight lookups across concurrent requests for the same hostname', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('ok')
+  })
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const origin = `http://dns-cache-test.invalid:${server.address().port}`
+  let lookupCount = 0
+
+  const dispatcher = new Agent().compose(
+    dns({
+      maxTTL: 60000,
+      lookup (origin, options, callback) {
+        lookupCount++
+        setTimeout(() => {
+          callback(null, [
+            { address: '127.0.0.1', family: 4, ttl: 60000 }
+          ])
+        }, 30)
+      }
+    })
+  )
+
+  after(async () => {
+    await dispatcher.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  async function runBatch () {
+    await Promise.all(Array.from({ length: 50 }, async () => {
+      const { body } = await dispatcher.request({
+        origin,
+        path: '/',
+        method: 'GET'
+      })
+      await body.text()
+    }))
+  }
+
+  await runBatch()
+  t.equal(lookupCount, 1, 'Concurrent requests share one DNS lookup')
+
+  await runBatch()
+  t.equal(lookupCount, 1, 'Completed DNS results are cached and no new lookup is made')
+})
+
+test('Should clear in-flight state and fail all waiting callers when lookup errors', async t => {
+  t = tspl(t, { plan: 9 })
+
+  let lookupCount = 0
+  const dispatcher = new Agent().compose(
+    dns({
+      lookup (origin, options, callback) {
+        lookupCount++
+        setTimeout(() => {
+          if (lookupCount === 1) {
+            callback(new Error('DNS lookup failed'))
+          } else {
+            callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
+          }
+        }, 20)
+      }
+    })
+  )
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('ok')
+  })
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  after(async () => {
+    await dispatcher.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const origin = `http://retry-test.invalid:${server.address().port}`
+
+  // Batch 1: concurrent requests that fail
+  const results = await Promise.allSettled(Array.from({ length: 5 }, () =>
+    dispatcher.request({ origin, path: '/', method: 'GET' })
+  ))
+
+  t.equal(lookupCount, 1)
+  t.equal(results.filter(r => r.status === 'rejected').length, 5)
+  for (const r of results) {
+    t.equal(r.reason.message, 'DNS lookup failed')
+  }
+
+  // Batch 2: subsequent request retries and succeeds because in-flight state was cleared
+  const { body } = await dispatcher.request({ origin, path: '/', method: 'GET' })
+  t.equal(await body.text(), 'ok')
+  t.equal(lookupCount, 2)
+})
