@@ -514,40 +514,71 @@ function dispatchPaused (client) {
   })
 }
 
-for (const statusCode of [204, 304]) {
-  test(`response ${statusCode} with content-length is not a mismatch but closes the connection`, async (t) => {
-    let connections = 0
-    const server = createRawServer(t, (socket) => {
-      connections++
-      socket.on('data', () => {
-        // A Content-Length on a 204/304 describes the representation,
-        // not bytes on the wire (RFC 9110 §8.6).
-        socket.write(`HTTP/1.1 ${statusCode} X\r\ncontent-length: 100\r\n\r\n`)
-      })
+test('response 204 with content-length is not a mismatch but closes the connection', async (t) => {
+  let connections = 0
+  const server = createRawServer(t, (socket) => {
+    connections++
+    socket.on('data', () => {
+      // A Content-Length on a 204 is forbidden by RFC 9110 §8.6.
+      socket.write('HTTP/1.1 204 X\r\ncontent-length: 100\r\n\r\n')
     })
-    server.listen(0)
-    await once(server, 'listening')
-
-    const client = new Client(`http://localhost:${server.address().port}`)
-    t.after(() => client.destroy())
-
-    const disconnects = []
-    client.on('disconnect', (origin, targets, err) => { disconnects.push(err.code) })
-
-    for (let i = 0; i < 2; i++) {
-      const { statusCode: status, headers, body } = await client.request({ path: '/', method: 'GET' })
-      assert.strictEqual(status, statusCode)
-      assert.strictEqual(headers['content-length'], '100')
-      assert.strictEqual(await body.text(), '')
-    }
-
-    // The server may have sent content that would be parsed as the next
-    // response, so the connection must not be reused.
-    assert.strictEqual(connections, 2)
-    assert.ok(disconnects.length >= 1)
-    assert.ok(disconnects.every((code) => code === 'UND_ERR_INFO'))
   })
+  server.listen(0)
+  await once(server, 'listening')
 
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.after(() => client.destroy())
+
+  const disconnects = []
+  client.on('disconnect', (origin, targets, err) => { disconnects.push(err.code) })
+
+  for (let i = 0; i < 2; i++) {
+    const { statusCode: status, headers, body } = await client.request({ path: '/', method: 'GET' })
+    assert.strictEqual(status, 204)
+    assert.strictEqual(headers['content-length'], '100')
+    assert.strictEqual(await body.text(), '')
+  }
+
+  // The server violated RFC 9110 §8.6 and may have sent content that would be parsed
+  // as the next response, so the connection must not be reused.
+  assert.strictEqual(connections, 2)
+  assert.ok(disconnects.length >= 1)
+  assert.ok(disconnects.every((code) => code === 'UND_ERR_INFO'))
+})
+
+test('response 304 with content-length is not a mismatch and keeps the connection', async (t) => {
+  let connections = 0
+  const server = createRawServer(t, (socket) => {
+    connections++
+    socket.on('data', () => {
+      // A Content-Length on a 304 describes the representation that would have
+      // been sent in a 200 response (RFC 9110 §8.6). It does not carry payload
+      // bytes (RFC 9112 §6.3), so keepalive is preserved.
+      socket.write('HTTP/1.1 304 Not Modified\r\ncontent-length: 100\r\netag: "foo"\r\n\r\n')
+    })
+  })
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.after(() => client.destroy())
+
+  let disconnects = 0
+  client.on('disconnect', () => { disconnects++ })
+
+  for (let i = 0; i < 2; i++) {
+    const { statusCode: status, headers, body } = await client.request({ path: '/', method: 'GET' })
+    assert.strictEqual(status, 304)
+    assert.strictEqual(headers['content-length'], '100')
+    assert.strictEqual(headers.etag, '"foo"')
+    assert.strictEqual(await body.text(), '')
+  }
+
+  assert.strictEqual(connections, 1)
+  assert.strictEqual(disconnects, 0)
+})
+
+for (const statusCode of [204, 304]) {
   test(`response ${statusCode} with content-length: 0 keeps the connection`, async (t) => {
     let connections = 0
     const server = createRawServer(t, (socket) => {
@@ -574,45 +605,78 @@ for (const statusCode of [204, 304]) {
     assert.strictEqual(connections, 1)
     assert.strictEqual(disconnects, 0)
   })
+}
 
-  for (const blocking of [true, false]) {
-    test(`response ${statusCode} with content-length does not let its content become a pipelined response (blocking: ${blocking})`, async (t) => {
-      const forged = 'HTTP/1.1 200 OK\r\ncontent-length: 6\r\n\r\nFORGED'
-      let connections = 0
-      const server = createRawServer(t, (socket) => {
-        const first = connections++ === 0
-        let received = ''
-        socket.on('data', (chunk) => {
-          received += chunk
-          if (first) {
-            if (!blocking && received.split('\r\n\r\n').length - 1 < 2) return
-            if (socket.replied) return
-            socket.replied = true
-            socket.write(`HTTP/1.1 ${statusCode} X\r\ncontent-length: ${forged.length}\r\n\r\n${forged}`)
-          } else {
-            socket.write('HTTP/1.1 200 OK\r\ncontent-length: 4\r\n\r\nREAL')
-          }
-        })
+for (const blocking of [true, false]) {
+  test(`response 204 with content-length does not let its content become a pipelined response (blocking: ${blocking})`, async (t) => {
+    const forged = 'HTTP/1.1 200 OK\r\ncontent-length: 6\r\n\r\nFORGED'
+    let connections = 0
+    const server = createRawServer(t, (socket) => {
+      const first = connections++ === 0
+      let received = ''
+      socket.on('data', (chunk) => {
+        received += chunk
+        if (first) {
+          if (!blocking && received.split('\r\n\r\n').length - 1 < 2) return
+          if (socket.replied) return
+          socket.replied = true
+          socket.write(`HTTP/1.1 204 X\r\ncontent-length: ${forged.length}\r\n\r\n${forged}`)
+        } else {
+          socket.write('HTTP/1.1 200 OK\r\ncontent-length: 4\r\n\r\nREAL')
+        }
       })
-      server.listen(0)
-      await once(server, 'listening')
-
-      const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
-      t.after(() => client.destroy())
-
-      const [r1, r2] = await Promise.all([
-        client.request({ path: '/1', method: 'GET', blocking }),
-        client.request({ path: '/2', method: 'GET', blocking })
-      ])
-
-      assert.strictEqual(r1.statusCode, statusCode)
-      assert.strictEqual(await r1.body.text(), '')
-      // The second request is sent on a new connection.
-      assert.strictEqual(await r2.body.text(), 'REAL')
-      assert.strictEqual(connections, 2)
     })
-  }
+    server.listen(0)
+    await once(server, 'listening')
 
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
+    t.after(() => client.destroy())
+
+    const [r1, r2] = await Promise.all([
+      client.request({ path: '/1', method: 'GET', blocking }),
+      client.request({ path: '/2', method: 'GET', blocking })
+    ])
+
+    assert.strictEqual(r1.statusCode, 204)
+    assert.strictEqual(await r1.body.text(), '')
+    // The second request is sent on a new connection.
+    assert.strictEqual(await r2.body.text(), 'REAL')
+    assert.strictEqual(connections, 2)
+  })
+
+  test(`response 304 with content-length allows pipelined responses on the same connection (blocking: ${blocking})`, async (t) => {
+    let connections = 0
+    const server = createRawServer(t, (socket) => {
+      connections++
+      let received = ''
+      socket.on('data', (chunk) => {
+        received += chunk
+        if (!blocking && received.split('\r\n\r\n').length - 1 < 2) return
+        if (socket.replied) return
+        socket.replied = true
+        socket.write('HTTP/1.1 304 Not Modified\r\ncontent-length: 100\r\n\r\nHTTP/1.1 200 OK\r\ncontent-length: 4\r\n\r\nREAL')
+      })
+    })
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
+    t.after(() => client.destroy())
+
+    const [r1, r2] = await Promise.all([
+      client.request({ path: '/1', method: 'GET', blocking }),
+      client.request({ path: '/2', method: 'GET', blocking })
+    ])
+
+    assert.strictEqual(r1.statusCode, 304)
+    assert.strictEqual(await r1.body.text(), '')
+    assert.strictEqual(r2.statusCode, 200)
+    assert.strictEqual(await r2.body.text(), 'REAL')
+    assert.strictEqual(connections, 1)
+  })
+}
+
+for (const statusCode of [204, 304]) {
   test(`response ${statusCode} with content-length completes when the connection closes while paused`, async (t) => {
     const server = createRawServer(t, (socket) => {
       socket.once('data', () => {
@@ -646,4 +710,43 @@ test('response 200 with short body still errors when the connection closes while
 
   const result = await dispatchPaused(client)
   assert.strictEqual(result.error?.code, 'UND_ERR_RES_CONTENT_LENGTH_MISMATCH')
+})
+
+test('issue 5900 - 304 with Content-Length keeps connection alive across requests', async (t) => {
+  let reqCount = 0
+  const server = createServer((req, res) => {
+    reqCount++
+    res.writeHead(304, { 'content-length': '123', etag: '"foo"' })
+    res.end()
+  })
+  t.after(() => server.close())
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.after(() => client.destroy())
+
+  let disconnects = 0
+  client.on('disconnect', () => { disconnects++ })
+
+  const res1 = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: { 'if-none-match': '"foo"' }
+  })
+  assert.strictEqual(res1.statusCode, 304)
+  assert.strictEqual(res1.headers['content-length'], '123')
+  assert.strictEqual(await res1.body.text(), '')
+
+  const res2 = await client.request({
+    path: '/',
+    method: 'GET',
+    headers: { 'if-none-match': '"foo"' }
+  })
+  assert.strictEqual(res2.statusCode, 304)
+  assert.strictEqual(res2.headers['content-length'], '123')
+  assert.strictEqual(await res2.body.text(), '')
+
+  assert.strictEqual(reqCount, 2)
+  assert.strictEqual(disconnects, 0)
 })
