@@ -29,6 +29,11 @@ test('pipeline get', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     {
       const bufs = []
@@ -83,6 +88,11 @@ test('pipeline echo', async (t) => {
   server.listen(0, () => {
     const client = new Client(`http://localhost:${server.address().port}`)
     after(() => client.close())
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     let res = ''
     const buf1 = Buffer.alloc(1e3).toString()
