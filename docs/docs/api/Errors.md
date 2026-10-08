@@ -496,6 +496,7 @@ The response returned an error status code. This is raised, for example, when th
 * `code` {string} Always `'UND_ERR_RESPONSE'`.
 * `statusCode` {number} The HTTP status code of the response.
 * `body` {Object|string|null} The response body.
+* `bodyTruncated` {boolean} Whether `body` was truncated by a configured limit.
 * `headers` {Object|string[]|null} The response headers.
 
 ### `new ResponseError(message, code, options)`
@@ -505,6 +506,7 @@ The response returned an error status code. This is raised, for example, when th
 * `options` {Object}
   * `headers` {Object|string[]|null} The response headers. (optional)
   * `body` {Object|string|null} The response body. (optional)
+  * `bodyTruncated` {boolean} Whether `body` was truncated. **Default:** `false`.
 
 ## Class: `ProxyConnectionError`
 
