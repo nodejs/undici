@@ -88,7 +88,6 @@ test('Issue #5936 - HTTP/2 idle reaper does not crash on lingering aborted strea
   await disconnected
 })
 
-
 test('Issue #5936 - Stream error and severing retains persistent error sink on session teardown', async (t) => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
