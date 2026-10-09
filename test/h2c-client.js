@@ -194,7 +194,11 @@ test('Connect to h2c server over a unix domain socket', { skip: process.platform
   const { join } = require('node:path')
   const { tmpdir } = require('node:os')
 
-  const tmpDir = await mkdtemp(join(tmpdir(), 'h2c-client-'))
+  // Unix socket paths are limited to 104 bytes on macOS (108 on Linux), and
+  // Node.js >= 24 rejects longer ones with EINVAL instead of truncating them.
+  // os.tmpdir() can be long (e.g. under CITGM on macOS), so fall back to /tmp.
+  const base = join(tmpdir(), 'h2c-client-XXXXXX', 'server.sock').length < 104 ? tmpdir() : '/tmp'
+  const tmpDir = await mkdtemp(join(base, 'h2c-client-'))
   const socketPath = join(tmpDir, 'server.sock')
   const authority = 'localhost'
 

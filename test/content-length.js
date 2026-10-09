@@ -575,42 +575,45 @@ for (const statusCode of [204, 304]) {
     assert.strictEqual(disconnects, 0)
   })
 
-  for (const blocking of [true, false]) {
-    test(`response ${statusCode} with content-length does not let its content become a pipelined response (blocking: ${blocking})`, async (t) => {
-      const forged = 'HTTP/1.1 200 OK\r\ncontent-length: 6\r\n\r\nFORGED'
-      let connections = 0
-      const server = createRawServer(t, (socket) => {
-        const first = connections++ === 0
-        let received = ''
-        socket.on('data', (chunk) => {
-          received += chunk
-          if (first) {
-            if (!blocking && received.split('\r\n\r\n').length - 1 < 2) return
-            if (socket.replied) return
-            socket.replied = true
-            socket.write(`HTTP/1.1 ${statusCode} X\r\ncontent-length: ${forged.length}\r\n\r\n${forged}`)
-          } else {
-            socket.write('HTTP/1.1 200 OK\r\ncontent-length: 4\r\n\r\nREAL')
-          }
+  for (const framing of ['content-length', 'transfer-encoding']) {
+    for (const blocking of [true, false]) {
+      test(`response ${statusCode} with ${framing} does not let its content become a pipelined response (blocking: ${blocking})`, async (t) => {
+        const forged = 'HTTP/1.1 200 OK\r\ncontent-length: 6\r\n\r\nFORGED'
+        let connections = 0
+        const server = createRawServer(t, (socket) => {
+          const first = connections++ === 0
+          let received = ''
+          socket.on('data', (chunk) => {
+            received += chunk
+            if (first) {
+              if (!blocking && received.split('\r\n\r\n').length - 1 < 2) return
+              if (socket.replied) return
+              socket.replied = true
+              const framingValue = framing === 'content-length' ? forged.length : 'chunked'
+              socket.write(`HTTP/1.1 ${statusCode} X\r\n${framing}: ${framingValue}\r\n\r\n${forged}`)
+            } else {
+              socket.write('HTTP/1.1 200 OK\r\ncontent-length: 4\r\n\r\nREAL')
+            }
+          })
         })
+        server.listen(0)
+        await once(server, 'listening')
+
+        const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
+        t.after(() => client.destroy())
+
+        const [r1, r2] = await Promise.all([
+          client.request({ path: '/1', method: 'GET', blocking }),
+          client.request({ path: '/2', method: 'GET', blocking })
+        ])
+
+        assert.strictEqual(r1.statusCode, statusCode)
+        assert.strictEqual(await r1.body.text(), '')
+        // The second request is sent on a new connection.
+        assert.strictEqual(await r2.body.text(), 'REAL')
+        assert.strictEqual(connections, 2)
       })
-      server.listen(0)
-      await once(server, 'listening')
-
-      const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
-      t.after(() => client.destroy())
-
-      const [r1, r2] = await Promise.all([
-        client.request({ path: '/1', method: 'GET', blocking }),
-        client.request({ path: '/2', method: 'GET', blocking })
-      ])
-
-      assert.strictEqual(r1.statusCode, statusCode)
-      assert.strictEqual(await r1.body.text(), '')
-      // The second request is sent on a new connection.
-      assert.strictEqual(await r2.body.text(), 'REAL')
-      assert.strictEqual(connections, 2)
-    })
+    }
   }
 
   test(`response ${statusCode} with content-length completes when the connection closes while paused`, async (t) => {

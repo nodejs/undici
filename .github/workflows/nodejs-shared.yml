@@ -22,7 +22,7 @@ jobs:
     steps:
       # Checkout into a subdirectory otherwise Node.js tests will break due to finding Undici's package.json in a parent directory.
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: ./undici
           persist-credentials: false
@@ -40,7 +40,7 @@ jobs:
       - name: Install wasi-libc
         run: sudo apt-get install -y wasi-libc binaryen
 
-      - name: Build WASM
+      - name: Rebuild llhttp WASM from vendored sources
         working-directory: ./undici
         run: |
           export EXTERNAL_PATH=${{ github.workspace }}/undici
@@ -48,7 +48,14 @@ jobs:
           export WASM_CFLAGS='--target=wasm32-wasi --sysroot=/usr'
           export WASM_LDFLAGS='-nodefaultlibs'
           export WASM_LDLIBS='-lc'
-          node build/wasm.js
+          node build/llhttp.js
+
+      - name: Rebuild Milo WASM from vendored sources
+        working-directory: ./undici
+        run: |
+          # Removing bundled artifacts ensures this job cannot reuse prebuilt Milo.
+          rm lib/milo
+          node build/milo.js
 
       - name: Determine latest release for Node.js ${{ inputs.node-version }}
         id: release
@@ -76,7 +83,7 @@ jobs:
 
       - name: ccache
         if: steps.release.outputs.result != ''
-        uses: hendrikmuhs/ccache-action@d62db5f07c26379fc4b4e0916f098a92573c3b03 #v1.2.23
+        uses: hendrikmuhs/ccache-action@f09c25b45002a07be2955cbe52e8cee55643f89d #v1.2.24
         with:
           key: node(external_undici)${{ inputs.node-version }}
 
