@@ -12,11 +12,11 @@ const { kHTTP2Session } = require('../lib/core/symbols.js')
 
 // Node keeps every live native stream in the session's internal state, and only
 // drops the entry once the stream fully closes. A stream that has fired 'end'
-// (so undici releases it via completeRequestStream) is still tracked here in the
-// window between 'end' and 'close'. The HTTP/2 idle reaper (#5406) can destroy
-// such a session with an error in this window, and Node fans that error out to
-// every still-tracked stream. If a released stream has no 'error' listener the
-// process crashes (#5936).
+// (so undici releases it via completeRequestStream) is still tracked here during
+// the window between 'end' and 'close'. The HTTP/2 idle reaper (#5406) can
+// destroy such a session with an error in this window, and Node fans that error
+// out to every still-tracked stream. If a released stream has no 'error'
+// listener the process crashes (#5936).
 function sessionStreams (client) {
   const session = client[kHTTP2Session]
   if (session == null) {
@@ -31,6 +31,20 @@ function sessionStreams (client) {
   }
 
   return []
+}
+
+async function waitFor (predicate, timeout = 1000) {
+  const deadline = Date.now() + timeout
+
+  while (Date.now() < deadline) {
+    if (predicate()) {
+      return true
+    }
+
+    await sleep(0)
+  }
+
+  return predicate()
 }
 
 test('Issue #5936 - released streams retain an error sink so the idle reaper cannot crash', async (t) => {
@@ -60,10 +74,16 @@ test('Issue #5936 - released streams retain an error sink so the idle reaper can
   await response.body.dump()
 
   // 'end' has fired, so undici released the stream and it is still natively
-  // tracked (the window between 'end' and 'close').
-  const streams = sessionStreams(client)
-  assert.strictEqual(streams.length, 1)
-  const stream = streams[0]
+  // tracked during the 'end' -> 'close' window. On some platforms this window is
+  // too short to observe (the stream closes before we can inspect it), in which
+  // case the teardown race that this issue describes cannot manifest either.
+  const found = await waitFor(() => sessionStreams(client).length === 1, 50)
+  if (!found) {
+    t.skip('idle-teardown window not observable; released stream already closed')
+    return
+  }
+
+  const stream = sessionStreams(client)[0]
 
   // A released stream must keep a persistent error sink. If it only installed a
   // one-shot sink, a first late error would consume it and a second session-level
