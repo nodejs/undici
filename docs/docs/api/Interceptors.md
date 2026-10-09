@@ -277,8 +277,10 @@ try {
 ## `interceptors.dns([opts])`
 
 Caches DNS lookups so that repeated requests to the same origin reuse the
-resolved IP address instead of performing a fresh lookup every time. Supports
-dual-stack (IPv4 + IPv6) and custom lookup/storage implementations.
+resolved IP address instead of performing a fresh lookup every time. Requests
+for the same hostname that arrive while a lookup is still in flight share its
+result instead of starting their own. Supports dual-stack (IPv4 + IPv6) and
+custom lookup/storage implementations.
 
 **Parameters**
 
