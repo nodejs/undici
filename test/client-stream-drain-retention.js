@@ -66,6 +66,8 @@ test('api-stream.js / stream should release unread H2 buffers when a retained Se
   const downstream = createServer((request, response) => {
     // The response deliberately outlives the request, as an application owner may.
     heldResponse = response
+    // Force backpressure independently of the platform's socket buffer capacity.
+    response.cork()
     response.on('drain', userDrain)
     client.stream({ path: '/cancel', method: 'GET' }, () => response)
       .then(() => terminal.resolve(null), error => terminal.resolve(error.code))
