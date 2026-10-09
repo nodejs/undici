@@ -144,6 +144,7 @@ expectAssignable<Client>(
       pingInterval: 60e3,
       connectionWindowSize: 524288,
       maxConcurrentStreams: 100,
+      maxConcurrentStreamsCap: 10,
       settings: {
         initialWindowSize: 262144
       }

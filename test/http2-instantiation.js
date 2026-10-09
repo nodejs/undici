@@ -51,8 +51,34 @@ test('Should throw if bad maxConcurrentStreams has been passed', async t => {
   await t.completed
 })
 
+test('Should throw if bad h2Options.maxConcurrentStreamsCap has been passed', async t => {
+  t = tspl(t, { plan: 2 })
+
+  t.throws(() => {
+    // eslint-disable-next-line
+    new Client('https://localhost:1000', {
+      allowH2: true,
+      h2Options: { maxConcurrentStreamsCap: 0 }
+    })
+  }, {
+    message: 'h2Options.maxConcurrentStreamsCap must be a positive integer, greater than 0'
+  })
+
+  t.throws(() => {
+    // eslint-disable-next-line
+    new Client('https://localhost:1000', {
+      allowH2: true,
+      h2Options: { maxConcurrentStreamsCap: 1.5 }
+    })
+  }, {
+    message: 'h2Options.maxConcurrentStreamsCap must be a positive integer, greater than 0'
+  })
+
+  await t.completed
+})
+
 test('Should accept each h2Options field on its own', async t => {
-  const p = tspl(t, { plan: 3 })
+  const p = tspl(t, { plan: 4 })
 
   const maxConcurrentStreams = new Client('https://localhost:1000', { allowH2: true, h2Options: { maxConcurrentStreams: 10 } })
   t.after(() => maxConcurrentStreams.close())
@@ -65,6 +91,10 @@ test('Should accept each h2Options field on its own', async t => {
   const pingInterval = new Client('https://localhost:1000', { allowH2: true, h2Options: { pingInterval: 1000 } })
   t.after(() => pingInterval.close())
   p.strictEqual(pingInterval[kHTTP2Options].pingInterval, 1000)
+
+  const maxConcurrentStreamsCap = new Client('https://localhost:1000', { allowH2: true, h2Options: { maxConcurrentStreamsCap: 5 } })
+  t.after(() => maxConcurrentStreamsCap.close())
+  p.strictEqual(maxConcurrentStreamsCap[kHTTP2Options].maxConcurrentStreamsCap, 5)
 
   await p.completed
 })

@@ -132,6 +132,12 @@ added: v1.0.0
       which is HTTP/1.1 only — is the ceiling used to dispatch in-flight requests.
       It may be overridden by the server's `SETTINGS_MAX_CONCURRENT_STREAMS`
       frame. **Default:** `100`.
+    * `maxConcurrentStreamsCap` {number|null} An upper bound on concurrent HTTP/2
+      streams for a single session that the server's
+      `SETTINGS_MAX_CONCURRENT_STREAMS` frame cannot raise. The session uses the
+      lower of the two values. With a `Pool` or `Agent`, a session at its cap
+      counts as busy, so further requests go to another connection, up to
+      `connections`. **Default:** `null` (no cap).
     * `connectionWindowSize` {number} The HTTP/2 connection-level flow-control
       window size set via `ClientHttp2Session.setLocalWindowSize()`. Must be a
       positive integer. **Default:** `524288`.
