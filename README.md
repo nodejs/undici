@@ -791,14 +791,18 @@ and `undici.Agent`) which will enable the family autoselection algorithm when es
 
 ## Collaborators
 
-* [__Daniele Belardi__](https://github.com/dnlup), <https://www.npmjs.com/~dnlup>
-* [__Ethan Arrowood__](https://github.com/ethan-arrowood), <https://www.npmjs.com/~ethan_arrowood>
+* [__Aras Abbasi__](https://github.com/Uzlopak)
+* [__Carlos Fuentes__](https://github.com/metcoder95), <https://www.npmjs.com/~metcoder95>
+* [__Ethan Arrowood__](https://github.com/Ethan-Arrowood), <https://www.npmjs.com/~ethan_arrowood>
 * [__Matteo Collina__](https://github.com/mcollina), <https://www.npmjs.com/~matteo.collina>
 * [__Matthew Aitken__](https://github.com/KhafraDev), <https://www.npmjs.com/~khaf>
+* [__Mert Can Altin__](https://github.com/mertcanaltin), <https://www.npmjs.com/~mertcanaltin>
 * [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>
-* [__Szymon Marczak__](https://github.com/szmarczak), <https://www.npmjs.com/~szmarczak>
+* [__Trivikram Kamat__](https://github.com/trivikr), <https://www.npmjs.com/~trivikr>
+* [__tsctx__](https://github.com/tsctx)
 
 ## Past Collaborators
+* [__Szymon Marczak__](https://github.com/szmarczak), <https://www.npmjs.com/~szmarczak>
 * [__Tomas Della Vedova__](https://github.com/delvedor), <https://www.npmjs.com/~delvedor>
 
 ### Releasers
