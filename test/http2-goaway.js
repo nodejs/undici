@@ -2,12 +2,12 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { createSecureServer } = require('node:http2')
-const { once } = require('node:events')
+const { constants, createSecureServer } = require('node:http2')
+const { once, EventEmitter } = require('node:events')
 
 const pem = require('@metcoder95/https-pem')
 
-const { Client } = require('..')
+const { Agent, Client, Pool, fetch } = require('..')
 
 test('#3046 - GOAWAY Frame', async t => {
   t = tspl(t, { plan: 8 })
@@ -145,6 +145,151 @@ test('#3753 - Handle GOAWAY Gracefully', async (t) => {
   await t.completed
 })
 
+test('#5468 - requeue multiplexed requests after mid-burst GOAWAY', async (t) => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let firstStream = false
+  let streams = 0
+
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+    streams++
+
+    if (!firstStream) {
+      firstStream = true
+      stream.session?.goaway(constants.NGHTTP2_INTERNAL_ERROR, 0)
+      return
+    }
+
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const pool = new Pool(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connections: 10,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  after(async () => pool.close())
+
+  const requests = 40
+  const codes = {}
+  let ok = 0
+
+  await Promise.all(Array.from({ length: requests }, async () => {
+    try {
+      const response = await pool.request({ path: '/', method: 'GET' })
+      await response.body.dump()
+
+      if (response.statusCode === 200) {
+        ok++
+      }
+    } catch (err) {
+      const code = err?.code || err?.cause?.code || err?.name || 'unknown'
+      codes[code] = (codes[code] || 0) + 1
+    }
+  }))
+
+  t.strictEqual(codes.UND_ERR_INFO, undefined)
+  t.ok((codes.ERR_HTTP2_SESSION_ERROR || 0) <= 2)
+  t.ok(ok >= requests - 2)
+  t.ok(streams >= requests - 1)
+
+  await t.completed
+})
+
+test('Agent keeps a Pool with requests requeued after GOAWAY', async (t) => {
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let firstSession = null
+  const sessionCounts = new Map()
+
+  server.on('session', (session) => {
+    sessionCounts.set(session, 0)
+    firstSession ??= session
+  })
+
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+
+    const count = sessionCounts.get(stream.session) + 1
+    sessionCounts.set(stream.session, count)
+
+    // The first request warms the session. Accept two requests from the burst,
+    // then refuse the remaining streams so the Client has to requeue them.
+    if (stream.session === firstSession && count === 3) {
+      firstSession.goaway(constants.NGHTTP2_NO_ERROR, stream.id)
+    }
+
+    stream.respond({ ':status': 200 })
+    setTimeout(() => {
+      if (!stream.destroyed) {
+        stream.end('ok')
+      }
+    }, 150)
+  })
+
+  await once(server.listen(0), 'listening')
+
+  let pool = null
+  const agent = new Agent({
+    factory (origin) {
+      pool = new Pool(origin, {
+        connections: 1,
+        connect: {
+          rejectUnauthorized: false
+        }
+      })
+      return pool
+    }
+  })
+  const disconnectErrors = []
+  agent.on('disconnect', (_origin, _targets, err) => {
+    disconnectErrors.push(err)
+  })
+
+  t.after(async () => {
+    agent.removeAllListeners('disconnect')
+    await agent.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const url = `https://localhost:${server.address().port}`
+  const warmup = await fetch(url, { dispatcher: agent })
+  await warmup.text()
+
+  const disconnected = once(agent, 'disconnect')
+  const requests = Array.from({ length: 6 }, async () => {
+    const response = await fetch(url, {
+      dispatcher: agent,
+      signal: AbortSignal.timeout(3000)
+    })
+
+    return `${response.status}:${await response.text()}`
+  })
+
+  await disconnected
+  const poolWasClosed = pool.closed
+  const results = await Promise.allSettled(requests)
+  await new Promise(resolve => setTimeout(resolve, 100))
+
+  // GOAWAY detaches the session before the refused requests are replayed. The
+  // Pool must remain open while those requests are pending; otherwise its
+  // replacement Client is destroyed as soon as the replay finishes.
+  t.assert.deepStrictEqual(results, Array(6).fill(null).map(() => ({
+    status: 'fulfilled',
+    value: '200:ok'
+  })))
+  t.assert.deepStrictEqual(disconnectErrors.map(err => err.code), ['UND_ERR_INFO'])
+  t.assert.strictEqual(poolWasClosed, false)
+})
+
 test('#5089 - Handle GOAWAY Gracefully', async (t) => {
   t = tspl(t, { plan: 7 })
 
@@ -230,4 +375,126 @@ test('#5089 - Handle GOAWAY Gracefully', async (t) => {
   t.deepStrictEqual(results.map((result) => result.body), Array(6).fill('hello world'))
 
   await t.completed
+})
+
+test('#5453 - request onto a GOAWAY-rejected session is requeued on a fresh session', async (t) => {
+  t = tspl(t, { plan: 5 })
+
+  const http2 = require('node:http2')
+  const originalConnect = http2.connect
+
+  // A session that has received GOAWAY rejects new streams synchronously.
+  class FakeSession extends EventEmitter {
+    constructor () {
+      super()
+      this.closed = false
+      this.destroyed = false
+    }
+
+    request () {
+      const err = new Error('New streams cannot be created after receiving a GOAWAY')
+      err.code = 'ERR_HTTP2_GOAWAY_SESSION'
+      throw err
+    }
+
+    destroy () {
+      if (this.destroyed) return
+      this.destroyed = true
+      this.emit('close')
+    }
+
+    ref () {}
+    unref () {}
+  }
+
+  const session = new FakeSession()
+  let connectCalls = 0
+  let streams = 0
+
+  http2.connect = function connectStub (...args) {
+    connectCalls++
+    return connectCalls === 1 ? session : originalConnect.apply(this, args)
+  }
+  after(() => { http2.connect = originalConnect })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.on('stream', (stream) => {
+    streams++
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connect: { rejectUnauthorized: false }
+  })
+  after(() => client.close())
+
+  const response = await client.request({ path: '/', method: 'GET' })
+  const chunks = []
+  response.body.on('data', chunk => chunks.push(chunk))
+  await once(response.body, 'end')
+
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(Buffer.concat(chunks).toString(), 'ok')
+  t.strictEqual(streams, 1)
+  t.strictEqual(connectCalls, 2)
+  t.strictEqual(session.destroyed, true)
+
+  await t.completed
+})
+
+test('a request whose response already started fails instead of being replayed after GOAWAY', { timeout: 10000 }, async (t) => {
+  const p = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let secondStream = null
+  let secondRequests = 0
+
+  server.on('stream', (stream, headers) => {
+    stream.on('error', () => {})
+
+    if (headers[':path'] === '/second') {
+      secondRequests++
+      secondStream = stream
+      // Respond without ending, so the GOAWAY below arrives mid-response.
+      stream.respond({ ':status': 200 })
+      return
+    }
+
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  t.after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connect: { rejectUnauthorized: false }
+  })
+  t.after(() => client.close())
+
+  // Stream 1 completes, so the GOAWAY below can name a lower stream id.
+  const first = await client.request({ path: '/first', method: 'GET' })
+  p.strictEqual(await first.body.text(), 'ok')
+
+  // Stream 3 has received its response headers when this resolves.
+  const second = await client.request({ path: '/second', method: 'GET' })
+
+  // A misbehaving peer names stream 1 as the last processed, even though it
+  // already responded on stream 3. undici must fail the request with the
+  // GOAWAY error rather than replay a response it has already started.
+  secondStream.session.goaway(constants.NGHTTP2_NO_ERROR, 1)
+
+  await p.rejects(second.body.text(), { code: 'UND_ERR_INFO' })
+  p.strictEqual(secondRequests, 1)
+
+  // After the GOAWAY, a new request still succeeds on a fresh connection.
+  const third = await client.request({ path: '/third', method: 'GET' })
+  p.strictEqual(await third.body.text(), 'ok')
+
+  await p.completed
 })

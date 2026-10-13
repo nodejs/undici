@@ -10,6 +10,7 @@ const FOO_BAR = 'foo/bar'
 
 const INIT_TESTS = [
   [undefined, 200, '', APPLICATION_JSON, {}],
+  [null, 200, '', APPLICATION_JSON, {}],
   [{ status: 400 }, 400, '', APPLICATION_JSON, {}],
   [{ statusText: 'foo' }, 200, 'foo', APPLICATION_JSON, {}],
   [{ headers: {} }, 200, '', APPLICATION_JSON, {}],

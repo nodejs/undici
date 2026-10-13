@@ -1168,6 +1168,33 @@ describe('Deduplicate Interceptor', () => {
     strictEqual(body2, 'response 2')
   })
 
+  test('does not deduplicate upgrade requests', () => {
+    let dispatchCount = 0
+    const dispatchedHandlers = []
+    const dispatch = (_opts, handler) => {
+      dispatchCount++
+      dispatchedHandlers.push(handler)
+      return true
+    }
+    const deduplicate = interceptors.deduplicate()(dispatch)
+    const opts = {
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: {}
+    }
+    const handler = {}
+
+    try {
+      deduplicate(opts, handler)
+      deduplicate({ ...opts, upgrade: 'websocket' }, handler)
+
+      strictEqual(dispatchCount, 2)
+    } finally {
+      dispatchedHandlers[0]?.onResponseEnd?.(null, {})
+    }
+  })
+
   test('does not deduplicate requests that arrive after body streaming starts', async () => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
@@ -1311,6 +1338,26 @@ describe('Deduplicate Interceptor', () => {
     notStrictEqual(key1, key2)
   })
 
+  test('makeDeduplicationKey does not collide on a header named __proto__', () => {
+    const withProto = JSON.parse('{"__proto__":"a","x-real":"same"}')
+
+    const key1 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: withProto
+    })
+
+    const key2 = makeDeduplicationKey({
+      origin: 'https://example.com',
+      method: 'GET',
+      path: '/',
+      headers: { 'x-real': 'same' }
+    })
+
+    notStrictEqual(key1, key2)
+  })
+
   test('makeDeduplicationKey produces same key for identical headers', () => {
     const key1 = makeDeduplicationKey({
       origin: 'https://example.com',
@@ -1347,5 +1394,74 @@ describe('Deduplicate Interceptor', () => {
     }, excludeHeaders)
 
     strictEqual(key1, key2)
+  })
+
+  test('aborting a deduplicated request settles it with an AbortError', async () => {
+    const server = createServer(async (req, res) => {
+      await sleep(100)
+      res.end('response-body')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const abortController = new AbortController()
+
+    const primary = client.request({ origin: 'localhost', method: 'GET', path: '/' })
+    const deduplicated = client.request({ origin: 'localhost', method: 'GET', path: '/', signal: abortController.signal })
+
+    abortController.abort()
+
+    // The deduplicated request must settle; without a fix it never does
+    const outcome = await Promise.race([
+      deduplicated.then(() => 'resolved', err => err),
+      sleep(1000).then(() => 'timed-out')
+    ])
+    strictEqual(outcome?.name, 'AbortError')
+
+    // The primary request is unaffected
+    const res = await primary
+    strictEqual(await res.body.text(), 'response-body')
+  })
+
+  test('a deduplicated request with an already aborted signal rejects with an AbortError', async () => {
+    const server = createServer(async (req, res) => {
+      await sleep(100)
+      res.end('response-body')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const abortController = new AbortController()
+    abortController.abort()
+
+    const primary = client.request({ origin: 'localhost', method: 'GET', path: '/' })
+    const deduplicated = client.request({ origin: 'localhost', method: 'GET', path: '/', signal: abortController.signal })
+
+    // The deduplicated request must settle; without a fix it never does
+    const outcome = await Promise.race([
+      deduplicated.then(() => 'resolved', err => err),
+      sleep(1000).then(() => 'timed-out')
+    ])
+    strictEqual(outcome?.name, 'AbortError')
+
+    // The primary request is unaffected
+    const res = await primary
+    strictEqual(await res.body.text(), 'response-body')
   })
 })

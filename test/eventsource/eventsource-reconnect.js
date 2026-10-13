@@ -117,7 +117,111 @@ describe('EventSource - reconnect', () => {
     })
   })
 
-  test('Should reconnect and send lastEventId', async (t) => {
+  for (const [name, retry, options] of [
+    ['retry field larger than 2^31-1', '2147483648', undefined],
+    ['retry field that parses to Infinity', '9'.repeat(400), undefined],
+    ['reconnectionTime option larger than 2^31-1', undefined, { node: { reconnectionTime: 2 ** 32 - 1 } }]
+  ]) {
+    test(`Should not reconnect immediately with a ${name}`, async (t) => {
+      let requestCount = 0
+
+      const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestCount++
+        res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+        res.end(retry === undefined ? '' : `retry: ${retry}\n\n`)
+      })
+      await once(server.listen(0), 'listening')
+
+      const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`, options)
+      t.after(() => {
+        eventSourceInstance.close()
+        server.close()
+      })
+
+      await once(eventSourceInstance, 'error')
+      // Without clamping, setTimeout fires after 1 ms and the client
+      // reconnects hundreds of times in this window.
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      t.assert.strictEqual(requestCount, 1)
+      t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CONNECTING)
+    })
+  }
+
+  test('Should schedule the reconnect at the maximum setTimeout delay with a retry field larger than 2^31-1', async (t) => {
+    // Advancing a fake clock by ~24 days would also fire undici's own
+    // connection timers, so record the reconnect delay instead.
+    const originalSetTimeout = globalThis.setTimeout
+    const longDelays = []
+    t.mock.method(globalThis, 'setTimeout', (callback, delay, ...args) => {
+      if (delay > 60_000) {
+        longDelays.push(delay)
+        return { unref () { return this } }
+      }
+      return originalSetTimeout(callback, delay, ...args)
+    })
+
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end('retry: 2147483648\n\n')
+    })
+    await once(server.listen(0), 'listening')
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`)
+    t.after(() => {
+      eventSourceInstance.close()
+      server.close()
+    })
+
+    await once(eventSourceInstance, 'error')
+
+    t.assert.deepStrictEqual(longDelays, [2 ** 31 - 1])
+  })
+
+  test('Should reconnect without an invalid lastEventId', { timeout: 2000 }, async (t) => {
+    let requestCount = 0
+    let secondRequestHeader
+    let resolveSecondRequest
+    let rejectSecondRequest
+    const secondRequest = new Promise((resolve, reject) => {
+      resolveSecondRequest = resolve
+      rejectSecondRequest = reject
+    })
+
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestCount++
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+
+      if (requestCount === 1) {
+        res.end('id: \x01poison\nretry: 0\n\n')
+      } else {
+        secondRequestHeader = req.headers['last-event-id']
+        res.end()
+        resolveSecondRequest()
+      }
+    })
+    await once(server.listen(0), 'listening')
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`)
+    t.after(() => {
+      eventSourceInstance.close()
+      server.close()
+    })
+
+    let errorCount = 0
+    eventSourceInstance.onerror = () => {
+      if (++errorCount === 5) {
+        rejectSecondRequest(new Error('EventSource repeatedly failed before reconnecting'))
+      }
+    }
+
+    await secondRequest
+
+    t.assert.strictEqual(requestCount, 2)
+    t.assert.strictEqual(secondRequestHeader, undefined)
+  })
+
+  test('Should reconnect and UTF-8 encode lastEventId', async (t) => {
     t.plan(1)
     const clock = FakeTimers.install()
     after(() => clock.uninstall())
@@ -126,9 +230,9 @@ describe('EventSource - reconnect', () => {
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
-      res.write('id: 1337\n\n')
+      res.write('id: …\n\n')
       if (++requestCount === 2) {
-        t.assert.strictEqual(req.headers['last-event-id'], '1337')
+        t.assert.strictEqual(req.headers['last-event-id'], Buffer.from('…').toString('latin1'))
       }
       res.end()
     })
@@ -137,6 +241,7 @@ describe('EventSource - reconnect', () => {
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    t.after(() => eventSourceInstance.close())
 
     await once(eventSourceInstance, 'open')
 

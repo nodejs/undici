@@ -5,7 +5,9 @@ const { MockInterceptor, MockScope } = require('../lib/mock/mock-interceptor')
 const MockAgent = require('../lib/mock/mock-agent')
 const { kDispatchKey } = require('../lib/mock/mock-symbols')
 const { InvalidArgumentError } = require('../lib/core/errors')
+const { MockNotMatchedError } = require('../lib/mock/mock-errors')
 const { fetch } = require('../lib/web/fetch/index')
+const { request } = require('../index')
 
 describe('MockInterceptor - path', () => {
   test('should remove hash fragment from paths', t => {
@@ -230,6 +232,190 @@ describe('MockInterceptor - reply options callback', () => {
       onResponseError: () => {}
     }), new InvalidArgumentError('statusCode must be defined'))
   })
+
+  test('should re-invoke the callback for every persistent reply', async t => {
+    t.plan(7)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    let calls = 0
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(() => ({
+      statusCode: 200,
+      data: `call ${++calls}`
+    })).persist()
+
+    for (let i = 1; i <= 3; i++) {
+      const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(await body.text(), `call ${i}`)
+    }
+
+    t.assert.strictEqual(calls, 3)
+  })
+})
+
+describe('MockInterceptor - asynchronous reply options callback', () => {
+  test('should resolve the reply from an asynchronous callback', async t => {
+    t.plan(3)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async (options) => {
+      t.assert.strictEqual(options.path, '/test')
+      await new Promise((resolve) => setImmediate(resolve))
+      return { statusCode: 201, data: 'hello' }
+    })
+
+    const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+    t.assert.strictEqual(statusCode, 201)
+    t.assert.strictEqual(await body.text(), 'hello')
+  })
+
+  test('should apply default headers and content length after resolution', async t => {
+    t.plan(4)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).defaultReplyHeaders({ foo: 'bar' }).replyContentLength().reply(async () => ({
+      statusCode: 200,
+      data: 'hello'
+    }))
+
+    const { statusCode, headers, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(headers.foo, 'bar')
+    t.assert.strictEqual(headers['content-length'], '5')
+    t.assert.strictEqual(await body.text(), 'hello')
+  })
+
+  test('should support times() with an asynchronous callback', async t => {
+    t.plan(3)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async () => ({ statusCode: 200, data: 'hello' })).times(2)
+
+    for (let i = 0; i < 2; i++) {
+      const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+      t.assert.strictEqual(statusCode, 200)
+      await body.text()
+    }
+
+    await t.assert.rejects(request(`${baseUrl}/test`, { dispatcher: mockAgent }), MockNotMatchedError)
+  })
+
+  test('should re-invoke an asynchronous callback for every persistent reply', async t => {
+    t.plan(5)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    let calls = 0
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async () => ({
+      statusCode: 200,
+      data: `async call ${++calls}`
+    })).persist()
+
+    for (let i = 1; i <= 2; i++) {
+      const { statusCode, body } = await request(`${baseUrl}/test`, { dispatcher: mockAgent })
+      t.assert.strictEqual(statusCode, 200)
+      t.assert.strictEqual(await body.text(), `async call ${i}`)
+    }
+
+    t.assert.strictEqual(calls, 2)
+  })
+
+  test('should reject if an asynchronous callback resolves to an invalid format', async t => {
+    t.plan(2)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test-resolve-null',
+      method: 'GET'
+    }).reply(async () => null)
+
+    mockPool.intercept({
+      path: '/test-no-status-code',
+      method: 'GET'
+    }).reply(async () => ({ data: 'hello' }))
+
+    await t.assert.rejects(
+      request(`${baseUrl}/test-resolve-null`, { dispatcher: mockAgent }),
+      new InvalidArgumentError('reply options callback must return an object')
+    )
+
+    await t.assert.rejects(
+      request(`${baseUrl}/test-no-status-code`, { dispatcher: mockAgent }),
+      new InvalidArgumentError('statusCode must be defined')
+    )
+  })
+
+  test('should reject with the reason of a rejected asynchronous callback', async t => {
+    t.plan(1)
+
+    const baseUrl = 'http://localhost:9999'
+    const mockAgent = new MockAgent()
+    mockAgent.disableNetConnect()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+
+    mockPool.intercept({
+      path: '/test',
+      method: 'GET'
+    }).reply(async () => {
+      throw new Error('kaboom')
+    })
+
+    await t.assert.rejects(request(`${baseUrl}/test`, { dispatcher: mockAgent }), new Error('kaboom'))
+  })
 })
 
 describe('MockInterceptor - replyWithError', () => {
@@ -383,6 +569,61 @@ describe('https://github.com/nodejs/undici/issues/3649', () => {
   })
 })
 
+describe('MockInterceptor - ignoreTrailingSlash with non-string path matchers', () => {
+  [
+    ['RegExp', /^\/api\/some-path$/],
+    ['Function', (path) => path === '/api/some-path']
+  ].forEach(([matcherType, path]) => {
+    ['/api/some-path', '/api/some-path/', '/api/some-path///'].forEach((fetchedPath) => {
+      test(`a ${matcherType} path matcher matches '${fetchedPath}' as a MockAgent option`, async (t) => {
+        t.plan(1)
+
+        const mockAgent = new MockAgent({ ignoreTrailingSlash: true })
+        mockAgent.disableNetConnect()
+        t.after(() => mockAgent.close())
+        mockAgent
+          .get('https://localhost')
+          .intercept({ path }).reply(200, { ok: true })
+
+        const res = await fetch(new URL(fetchedPath, 'https://localhost'), { dispatcher: mockAgent })
+
+        t.assert.deepStrictEqual(await res.json(), { ok: true })
+      })
+
+      test(`a ${matcherType} path matcher matches '${fetchedPath}' as an intercept option`, async (t) => {
+        t.plan(1)
+
+        const mockAgent = new MockAgent()
+        mockAgent.disableNetConnect()
+        t.after(() => mockAgent.close())
+        mockAgent
+          .get('https://localhost')
+          .intercept({ path, ignoreTrailingSlash: true }).reply(200, { ok: true })
+
+        const res = await fetch(new URL(fetchedPath, 'https://localhost'), { dispatcher: mockAgent })
+
+        t.assert.deepStrictEqual(await res.json(), { ok: true })
+      })
+    })
+
+    test(`a ${matcherType} path matcher still rejects a non-matching path`, async (t) => {
+      t.plan(1)
+
+      const mockAgent = new MockAgent({ ignoreTrailingSlash: true })
+      mockAgent.disableNetConnect()
+      t.after(() => mockAgent.close())
+      mockAgent
+        .get('https://localhost')
+        .intercept({ path }).reply(200, { ok: true })
+
+      await t.assert.rejects(
+        fetch(new URL('/api/other-path', 'https://localhost'), { dispatcher: mockAgent }),
+        (err) => err.cause instanceof MockNotMatchedError
+      )
+    })
+  })
+})
+
 describe('MockInterceptor - different payloads', () => {
   [
     // Buffer
@@ -408,6 +649,15 @@ describe('MockInterceptor - different payloads', () => {
     ['json', 'string', 'Object', '{"test":true}', { test: true }],
     ['bytes', 'string', 'Uint8Array', '{"test":true}', new TextEncoder().encode('{"test":true}')],
     ['text', 'string', 'string', '{"test":true}', '{"test":true}'],
+
+    // DataView
+    ['arrayBuffer', 'DataView', 'ArrayBuffer', new DataView(new TextEncoder().encode('{"test":true}').buffer), new TextEncoder().encode('{"test":true}').buffer],
+    ['json', 'DataView', 'Object', new DataView(new TextEncoder().encode('{"test":true}').buffer), { test: true }],
+    ['bytes', 'DataView', 'Uint8Array', new DataView(new TextEncoder().encode('{"test":true}').buffer), new TextEncoder().encode('{"test":true}')],
+    ['text', 'DataView', 'string', new DataView(new TextEncoder().encode('{"test":true}').buffer), '{"test":true}'],
+
+    // DataView covering only part of its backing ArrayBuffer
+    ['text', 'DataView with an offset', 'string', new DataView(new TextEncoder().encode('xx{"test":true}yy').buffer, 2, 13), '{"test":true}'],
 
     // object
     ['arrayBuffer', 'Object', 'ArrayBuffer', { test: true }, new TextEncoder().encode('{"test":true}').buffer],

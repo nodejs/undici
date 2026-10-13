@@ -3,7 +3,7 @@
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { randomFillSync } = require('node:crypto')
-const { deflateRawSync } = require('node:zlib')
+const { deflateRawSync, createDeflateRaw, constants } = require('node:zlib')
 const { setTimeout: sleep } = require('node:timers/promises')
 const { WebSocketServer } = require('ws')
 const { WebSocket, Agent } = require('../..')
@@ -464,4 +464,63 @@ test('cumulative payload size', (t, done) => {
     t.assert.ok(event)
     done()
   })
+})
+
+test('Malformed over-limit compressed payload closes connection without unhandled error', async (t) => {
+  const limit = 1 * 1024 * 1024 // 1 MB
+  const server = new WebSocketServer({
+    port: 0,
+    perMessageDeflate: true
+  })
+
+  t.after(() => server.close())
+  await once(server, 'listening')
+
+  server.on('connection', (ws) => {
+    const socket = ws._socket
+
+    // Craft a non-final DEFLATE stream that decompresses beyond the size limit,
+    // followed by a malformed stored block (BTYPE=00 stored with LEN != ~NLEN) so
+    // the inflater would emit Z_DATA_ERROR after the size-limit cleanup runs.
+    const def = createDeflateRaw()
+    const out = []
+    def.on('data', (data) => out.push(data))
+    def.write(Buffer.alloc(limit + 64 * 1024))
+    def.flush(constants.Z_SYNC_FLUSH, () => {
+      const stream = Buffer.concat(out)
+      const bad = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff])
+      const payload = Buffer.concat([stream, bad])
+
+      // Server -> client binary frame, FIN=1, RSV1=1 (compressed), 64-bit length
+      const header = Buffer.alloc(10)
+      header[0] = 0xC2
+      header[1] = 0x7f
+      header.writeUInt32BE(0, 2)
+      header.writeUInt32BE(payload.length, 6)
+      socket.write(Buffer.concat([header, payload]))
+    })
+  })
+
+  const agent = new Agent({
+    webSocket: {
+      maxPayloadSize: limit
+    }
+  })
+
+  t.after(() => agent.close())
+
+  const client = new WebSocket(`ws://127.0.0.1:${server.address().port}`, { dispatcher: agent })
+
+  let messageReceived = false
+  client.addEventListener('message', () => {
+    messageReceived = true
+  })
+
+  const closePromise = once(client, 'close')
+  const timeoutPromise = sleep(5000)
+
+  await Promise.race([closePromise, timeoutPromise])
+
+  t.assert.strictEqual(messageReceived, false, 'Malformed over-limit payload should be rejected')
+  t.assert.strictEqual(client.readyState, WebSocket.CLOSED, 'Connection should be closed without crashing the process')
 })

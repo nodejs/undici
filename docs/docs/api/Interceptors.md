@@ -32,6 +32,65 @@ const client = new Client('https://example.com').compose(
 
 ---
 
+## Custom interceptors
+
+Custom interceptors use the same shape as
+[`dispatcher.compose()`](./Dispatcher.md#dispatchercomposeinterceptors-interceptor):
+an interceptor takes a `dispatch` function and returns another dispatch-like
+function with the same `(options, handler)` signature.
+
+When an interceptor wraps the handler, forward the callbacks that it does not
+handle itself. The complete handler callback list is documented under
+[`dispatcher.dispatch(options, handler)`](./Dispatcher.md#dispatcherdispatchoptions-handler).
+
+```js
+import { Agent } from 'undici'
+
+const timingInterceptor = dispatch => {
+  return (options, handler) => {
+    const started = performance.now()
+
+    return dispatch(options, {
+      ...handler,
+      onResponseStart (controller, statusCode, headers, statusMessage) {
+        const duration = Math.round(performance.now() - started)
+        const method = options.method ?? 'GET'
+        const origin = options.origin ?? ''
+
+        console.log(`${method} ${origin}${options.path} -> ${statusCode} in ${duration}ms`)
+
+        return handler.onResponseStart?.(
+          controller,
+          statusCode,
+          headers,
+          statusMessage
+        )
+      },
+      onResponseError (controller, error) {
+        const duration = Math.round(performance.now() - started)
+
+        console.error(`request failed after ${duration}ms`, error)
+
+        return handler.onResponseError?.(controller, error)
+      }
+    })
+  }
+}
+
+const dispatcher = new Agent().compose(timingInterceptor)
+
+const { body } = await dispatcher.request({
+  origin: 'https://example.com',
+  path: '/',
+  method: 'GET'
+})
+
+await body.dump()
+await dispatcher.close()
+```
+
+---
+
 ## `interceptors.dump([opts])`
 
 Reads and discards the response body up to a configurable size limit. Useful
@@ -42,8 +101,8 @@ body yourself.
 
 * `opts` {Object} (optional)
   * `maxSize` {number} Maximum number of bytes to read and discard. Responses
-    whose `Content-Length` exceeds this value are aborted. **Default:**
-    `1_048_576` (1 MiB).
+    whose declared or received body size exceeds this value are aborted.
+    **Default:** `1_048_576` (1 MiB).
 
 Per-request override: set `dumpMaxSize` on the dispatch options to override
 the global `maxSize` for a specific request.
@@ -104,9 +163,10 @@ Follows HTTP redirects (3xx responses) automatically.
   * `maxRedirections` {number} Maximum number of redirects to follow. Passing
     `0` disables redirect following entirely. **Default:** `undefined`
     (inherits from the per-request `maxRedirections` option).
-  * `throwOnMaxRedirect` {boolean} When `true`, throws an error once the
-    redirect limit is reached instead of returning the final redirect response.
-    **Default:** `false`.
+  * `throwOnMaxRedirect` {boolean} When `true`, throws an error when a
+    redirect would be followed but the redirect limit has been reached, instead
+    of returning that redirect response. A non-redirect response after exactly
+    `maxRedirections` redirects is returned normally. **Default:** `false`.
   * `stripHeadersOnRedirect` {string[]} List of header names to remove from
     the request when following any redirect. **Default:** `[]`.
   * `stripHeadersOnCrossOriginRedirect` {string[]} List of header names to
@@ -139,7 +199,10 @@ const agent = new Agent().compose(
 ## `interceptors.decompress([opts])`
 
 Automatically decompresses response bodies encoded with `gzip`, `x-gzip`,
-`br` (Brotli), `deflate`, `compress`, `x-compress`, or `zstd`.
+`br` (Brotli), `deflate`, or `zstd`. Any other coding, including `compress`
+and `x-compress`, is left untouched, matching `fetch()`. As required by
+[RFC 9659](https://www.rfc-editor.org/rfc/rfc9659.html), a `zstd` frame that
+requires a window size larger than 8 MB fails to decode.
 
 > **Experimental:** This interceptor is experimental and subject to change.
 > A one-time `ExperimentalWarning` is emitted on first use.
@@ -151,6 +214,10 @@ Automatically decompresses response bodies encoded with `gzip`, `x-gzip`,
     skipped. **Default:** `[204, 304]`.
   * `skipErrorResponses` {boolean} When `true`, responses with a status code
     >= 400 are not decompressed. **Default:** `true`.
+  * `maxSize` {number} Maximum decompressed response size in bytes for each
+    decompression stage. The request fails with a
+    `ResponseExceededMaxSizeError` if a stage exceeds this limit. Set to `0` to
+    disable the limit. **Default:** `0`.
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
@@ -162,7 +229,8 @@ import { Agent, interceptors } from 'undici'
 const agent = new Agent().compose(
   interceptors.decompress({
     skipStatusCodes: [204, 304],
-    skipErrorResponses: false // decompress error bodies too
+    skipErrorResponses: false, // decompress error bodies too
+    maxSize: 16 * 1024 * 1024 // limit decoded bodies to 16 MiB
   })
 )
 ```
@@ -180,8 +248,11 @@ The error body is automatically decoded for `application/json` and
 
 **Parameters**
 
-* `opts` {Object} (optional) — currently reserved for future use; may be
-  omitted.
+* `opts` {Object} (optional)
+  * `maxSize` {number} Maximum number of response body bytes to include in the
+    error. If the body exceeds this limit, the resulting `ResponseError`
+    contains the retained prefix with `bodyTruncated` set to `true`. Set to `0`
+    to disable the limit. **Default:** `1048576` (1 MiB).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 

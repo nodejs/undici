@@ -49,6 +49,12 @@ test('Should handle h2 request without body', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     path: '/',
     method: 'POST',
@@ -200,6 +206,12 @@ test('Should handle h2 request with body (string or buffer) - dispatch', async t
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   client.dispatch(
     {
       path: '/',
@@ -268,6 +280,12 @@ test('Should handle h2 request raw response headers', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const { statusCode, headers, body } = await client.request({
     path: '/',
     method: 'GET',
@@ -329,6 +347,12 @@ test('Should handle h2 request with body (stream)', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const response = await client.request({
     path: '/',
@@ -472,6 +496,12 @@ test('Should handle h2 request with body (iterable)', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     path: '/',
     method: 'POST',
@@ -533,6 +563,12 @@ test('Should handle h2 request with body (Blob)', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const response = await client.request({
     path: '/',
@@ -597,6 +633,12 @@ test('Should handle h2 request with body (Blob:ArrayBuffer)',
       allowH2: true
     })
     after(() => client.close())
+
+    client.on('disconnect', () => {
+      if (!client.closed && !client.destroyed) {
+        t.fail('unexpected disconnect')
+      }
+    })
 
     const response = await client.request({
       path: '/',

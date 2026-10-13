@@ -15,6 +15,14 @@ function runNode (source) {
   })
 }
 
+function runNodeFile (filename) {
+  return spawnSync(process.execPath, [join(cwd, filename)], {
+    cwd,
+    encoding: 'utf8',
+    timeout: 30_000
+  })
+}
+
 test('setGlobalDispatcher does not break Node.js global fetch', () => {
   const script = `
     const { Agent, setGlobalDispatcher } = require('./index.js')
@@ -96,6 +104,64 @@ test('setGlobalDispatcher mirrors a v1-compatible dispatcher that Node.js global
   assert.strictEqual(payload.body, 'ok')
   assert.strictEqual(payload.count, 1)
   assert.strictEqual(payload.mirroredV2, true)
+})
+
+// https://github.com/nodejs/undici/issues/5858
+test('importing Undici does not break redirects in Node.js global fetch', () => {
+  const result = runNodeFile('test/fixtures/global-fetch-redirect.js')
+  assert.strictEqual(result.status, 0, result.stderr)
+  assert.deepStrictEqual(JSON.parse(result.stdout), {
+    status: 200,
+    redirected: true,
+    finalPath: '/final',
+    finalHeader: 'true',
+    body: 'ok'
+  })
+})
+
+// https://github.com/nodejs/undici/issues/5865
+test('Node.js global fetch preserves headers and decodes gzip through the legacy bridge', () => {
+  const result = runNodeFile('test/fixtures/global-fetch-h2-headers.js')
+  assert.strictEqual(result.status, 0, result.stderr)
+  assert.deepStrictEqual(JSON.parse(result.stdout), {
+    status: 200,
+    contentEncoding: 'gzip',
+    body: { ok: true }
+  })
+})
+
+test('setGlobalDispatcher lets Node.js global fetch use a MockAgent interceptor', () => {
+  const script = `
+    const { MockAgent, setGlobalDispatcher } = require('./index.js')
+
+    ;(async () => {
+      const agent = new MockAgent()
+      agent.disableNetConnect()
+      agent
+        .get('https://example.com')
+        .intercept({ path: '/v1/test' })
+        .reply(200, { mocked: true })
+
+      setGlobalDispatcher(agent)
+      const response = await fetch('https://example.com/v1/test')
+      process.stdout.write(JSON.stringify({
+        status: response.status,
+        body: await response.json()
+      }))
+
+      await agent.close()
+    })().catch((err) => {
+      console.error(err?.cause?.stack || err?.stack || err)
+      process.exit(1)
+    })
+  `
+
+  const result = runNode(script)
+  assert.strictEqual(result.status, 0, result.stderr)
+  assert.deepStrictEqual(JSON.parse(result.stdout), {
+    status: 200,
+    body: { mocked: true }
+  })
 })
 
 test('Dispatcher1Wrapper bridges legacy handlers to a new Agent', () => {

@@ -81,6 +81,86 @@ describe('EventSource - redirecting', () => {
     }
   })
 
+  test('Should reconnect to the original URL after a redirect', async (t) => {
+    const requests = []
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requests.push([req.url, req.headers['last-event-id']])
+      if (req.url === '/redirect') {
+        res.writeHead(307, undefined, { Location: '/target' })
+        res.end()
+      } else {
+        res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+        res.end(`id: ${requests.length}\nretry: 0\ndata: x\n\n`)
+      }
+    })
+    await once(server.listen(0), 'listening')
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}/redirect`)
+    t.after(() => {
+      eventSourceInstance.close()
+      server.close()
+    })
+
+    let opens = 0
+    await new Promise((resolve) => {
+      eventSourceInstance.onopen = () => {
+        if (++opens === 3) resolve()
+      }
+    })
+    eventSourceInstance.close()
+
+    t.assert.deepStrictEqual(requests, [
+      ['/redirect', undefined],
+      ['/target', undefined],
+      ['/redirect', '2'],
+      ['/target', '2'],
+      ['/redirect', '4'],
+      ['/target', '4']
+    ])
+  })
+
+  test('Should keep reconnecting after more than 20 redirects in total', async (t) => {
+    // Every URL serves the stream once and redirects to a new URL afterwards,
+    // so each reconnect follows exactly one redirect.
+    const served = new Set()
+    let next = 0
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (served.has(req.url)) {
+        res.writeHead(307, undefined, { Location: `/node/${++next}` })
+        res.end()
+        return
+      }
+      served.add(req.url)
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.end('retry: 0\ndata: x\n\n')
+    })
+    await once(server.listen(0), 'listening')
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}/events`)
+    t.after(() => {
+      eventSourceInstance.close()
+      server.close()
+    })
+
+    let opens = 0
+    let errors = 0
+    await new Promise((resolve, reject) => {
+      eventSourceInstance.onopen = () => {
+        if (++opens === 25) resolve()
+      }
+      eventSourceInstance.onerror = () => {
+        // Each connection ends with one error before reconnecting. More
+        // errors than opens means reconnects are failing without opening.
+        if (++errors > opens + 2) {
+          reject(new Error(`reconnects stopped opening after ${opens} connections`))
+        }
+      }
+    })
+
+    t.assert.strictEqual(opens, 25)
+    t.assert.strictEqual(eventSourceInstance.readyState, EventSource.OPEN)
+  })
+
   test('Should set origin attribute of messages after redirecting', async (t) => {
     const targetServer = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       if (res.req.url === '/target') {

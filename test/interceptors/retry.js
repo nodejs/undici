@@ -1,6 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const assert = require('node:assert')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -8,6 +9,44 @@ const { spawnSync } = require('node:child_process')
 
 const { Client, interceptors } = require('../..')
 const { retry, redirect, dns } = interceptors
+
+test('Should handle informational responses', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeEarlyHints({ link: '</style.css>; rel=preload; as=style' })
+    res.end('hello world!')
+  })
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const infos = []
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    onInfo: info => infos.push(info)
+  })
+
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(await response.body.text(), 'hello world!')
+  t.strictEqual(infos.length, 1)
+  t.deepStrictEqual(infos[0], {
+    statusCode: 103,
+    headers: { link: '</style.css>; rel=preload; as=style' }
+  })
+})
 
 test('Should retry status code', async t => {
   t = tspl(t, { plan: 4 })
@@ -73,6 +112,43 @@ test('Should retry status code', async t => {
 
   t.equal(response.statusCode, 200)
   t.equal(await response.body.text(), 'hello world!')
+})
+
+test('Should settle retries when the response closes the connection', async t => {
+  t = tspl(t, { plan: 2 })
+
+  let requestCount = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    requestCount++
+    res.statusCode = 500
+    res.shouldKeepAlive = false
+    res.end('failed')
+  })
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const baseClient = new Client(`http://localhost:${server.address().port}`)
+  const client = baseClient.compose(retry({
+    throwOnError: false,
+    maxRetries: 1,
+    minTimeout: 10
+  }))
+
+  after(async () => {
+    await baseClient.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const bodies = await Promise.all(Array.from({ length: 10 }, async () => {
+    const response = await client.request({ method: 'GET', path: '/' })
+    return response.body.text()
+  }))
+
+  t.deepStrictEqual(bodies, Array(10).fill('failed'))
+  t.strictEqual(requestCount, 20)
 })
 
 test('Should retry on error code', async t => {
@@ -319,7 +395,7 @@ test('Should pass context from other interceptors', async t => {
   const response = await client.request(requestOptions)
 
   t.equal(response.statusCode, 200)
-  t.deepStrictEqual(response.context, { history: [] })
+  t.deepStrictEqual(response.context, { history: [new URL(requestOptions.path, `http://localhost:${server.address().port}`)] })
 })
 
 test('Should handle 206 partial content', async t => {
@@ -392,6 +468,112 @@ test('Should handle 206 partial content', async t => {
   t.strictEqual(counter, 1)
 })
 
+test('Should reject initial 206 partial content with mismatched content-length', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let x = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    if (x === 0) {
+      t.strictEqual(req.headers.range, 'bytes=0-99')
+      res.statusCode = 206
+      res.setHeader('content-range', 'bytes 0-99/300')
+      res.setHeader('content-length', '300')
+      res.end('1'.repeat(99))
+      res.socket?.destroy()
+    } else if (x === 1) {
+      res.statusCode = 206
+      res.setHeader('content-range', 'bytes 99-99/300')
+      res.setHeader('content-length', '1')
+      res.end('1')
+    }
+    x++
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  await t.rejects(async () => {
+    const response = await client.request({
+      method: 'GET',
+      path: '/',
+      headers: {
+        range: 'bytes=0-99'
+      }
+    })
+    await response.body.text()
+  }, {
+    name: 'RequestRetryError',
+    code: 'UND_ERR_REQ_RETRY',
+    message: 'Content-Length mismatch'
+  })
+  t.strictEqual(x, 1)
+})
+
+test('Should forward a multipart/byteranges 206 without content-range', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const body = [
+    '--THIS_STRING_SEPARATES',
+    'content-type: text/plain',
+    'content-range: bytes 0-3/25',
+    '',
+    'abcd',
+    '--THIS_STRING_SEPARATES',
+    'content-type: text/plain',
+    'content-range: bytes 10-14/25',
+    '',
+    'klmno',
+    '--THIS_STRING_SEPARATES--',
+    ''
+  ].join('\r\n')
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    t.strictEqual(req.headers.range, 'bytes=0-3,10-14')
+    res.statusCode = 206
+    res.setHeader('content-type', 'multipart/byteranges; boundary=THIS_STRING_SEPARATES')
+    res.end(body)
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry({ maxRetries: 0 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    headers: {
+      range: 'bytes=0-3,10-14'
+    }
+  })
+
+  t.strictEqual(response.statusCode, 206)
+  t.strictEqual(response.headers['content-type'], 'multipart/byteranges; boundary=THIS_STRING_SEPARATES')
+  t.strictEqual(await response.body.text(), body)
+})
+
 test('Should handle 206 partial content - bad-etag', async t => {
   t = tspl(t, { plan: 5 })
 
@@ -407,7 +589,7 @@ test('Should handle 206 partial content - bad-etag', async t => {
       }, 1e2)
     } else if (x === 1) {
       t.deepStrictEqual(req.headers.range, 'bytes=3-')
-      res.setHeader('content-range', 'bytes 3-6/6')
+      res.setHeader('content-range', 'bytes 3-5/6')
       res.setHeader('etag', 'erwsd')
       res.statusCode = 206
       res.end('def')
@@ -521,8 +703,134 @@ test('#4970 - Should reject resumed partial content when body exceeds Content-Ra
   await t.rejects(response.body.text(), {
     name: 'RequestRetryError',
     code: 'UND_ERR_REQ_RETRY',
+    message: 'Content-Length mismatch'
+  })
+})
+
+test('#3900615 - Should reject a resumed response that exceeds an error response content-length', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let x = 0
+  let retries = 0
+  const injectedResponse = 'HTTP/1.1 302 Found\r\nLocation: http://evil.com\r\nContent-Length: 0\r\n\r\n'
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    if (x === 0) {
+      res.statusCode = 404
+      res.setHeader('content-length', '2')
+      res.end('1', () => res.destroy())
+    } else if (x === 1) {
+      t.strictEqual(req.headers.range, 'bytes=1-1')
+      res.statusCode = 206
+      res.setHeader('connection', 'close')
+      res.setHeader('content-range', `bytes 1-${injectedResponse.length + 1}/${injectedResponse.length + 2}`)
+      res.end(`2${injectedResponse}`)
+    }
+    x++
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.destroy()
+    server.closeAllConnections()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    retryOptions: {
+      retry: (err, _context, done) => {
+        if (err.message.includes('other side closed') && retries++ === 0) {
+          done(null)
+          return
+        }
+
+        done(err)
+      }
+    }
+  })
+  t.strictEqual(response.statusCode, 404)
+  await t.rejects(response.body.text(), {
+    name: 'RequestRetryError',
+    code: 'UND_ERR_REQ_RETRY',
     message: 'Content-Range mismatch'
   })
+})
+
+test('#3900104 - Should not resume a 206 response without a usable content-range', async t => {
+  t = tspl(t, { plan: 4 })
+
+  let x = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    t.strictEqual(x, 0, 'must not retry an uncheckpointed partial response')
+    res.statusCode = 206
+    res.setHeader('content-length', '2')
+    res.setHeader('content-range', 'bytes 0-999')
+    res.write('1', () => res.destroy())
+    x++
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.destroy()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'GET', path: '/' })
+  t.strictEqual(response.statusCode, 206)
+  await t.rejects(response.body.text(), {
+    name: 'SocketError',
+    code: 'UND_ERR_SOCKET',
+    message: 'other side closed'
+  })
+  t.strictEqual(x, 1)
+})
+
+test('Should not reject a HEAD response with content-length', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.setHeader('content-length', '1234')
+    res.end()
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(retry())
+
+  after(async () => {
+    await client.close()
+    server.close()
+
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'HEAD', path: '/' })
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(response.headers['content-length'], '1234')
+  t.strictEqual(await response.body.text(), '')
 })
 
 test('retrying a request with a body', async t => {
@@ -626,6 +934,67 @@ test('should not error if request is not meant to be retried', async t => {
   t.equal(await response.body.text(), 'Bad request')
 })
 
+test('should reject the original response body when a retry returns a non-retryable status', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let count = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    count++
+
+    if (count === 1) {
+      res.setHeader('content-length', '5')
+      res.write('123', () => res.destroy())
+      return
+    }
+
+    if (count === 2) {
+      res.writeHead(400)
+      res.end()
+      return
+    }
+
+    t.fail('unexpected request')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`,
+    { bodyTimeout: 100 }
+  ).compose(retry({ minTimeout: 10 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.strictEqual(response.statusCode, 200)
+
+  let timer
+  let bodyError
+  try {
+    bodyError = await Promise.race([
+      response.body.text().then(() => null, err => err),
+      new Promise(resolve => {
+        timer = setTimeout(() => resolve(new Error('response body timed out')), 2e3)
+      })
+    ])
+  } finally {
+    clearTimeout(timer)
+    response.body.destroy()
+  }
+
+  t.strictEqual(bodyError?.code, 'UND_ERR_REQ_RETRY')
+  t.strictEqual(count, 2)
+})
+
 test('#3975 - keep event loop ticking', async t => {
   const suite = tspl(t, { plan: 2 })
 
@@ -637,3 +1006,58 @@ test('#3975 - keep event loop ticking', async t => {
   suite.ok(output.includes('UND_ERR_REQ_RETRY'))
   suite.ok(output.includes('RequestRetryError: Request failed'))
 })
+
+for (const [name, headers] of [
+  ['an object', { authorization: 'Bearer T', 'x-foo': 'bar' }],
+  ['an array', ['authorization', 'Bearer T', 'x-foo', 'bar']],
+  ['a Map', new Map([['authorization', 'Bearer T'], ['x-foo', 'bar']])],
+  ['an object with Range', { authorization: 'Bearer T', 'x-foo': 'bar', Range: 'bytes=0-' }],
+  ['an object with If-Match', { authorization: 'Bearer T', 'x-foo': 'bar', 'If-Match': '"old"' }]
+]) {
+  test(`Should keep request headers given as ${name} when resuming`, async (t) => {
+    const body = 'abcdefghij'
+    const requests = []
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requests.push(req.rawHeaders)
+      if (requests.length === 1) {
+        if (req.headers.range) {
+          res.writeHead(206, { 'content-range': `bytes 0-9/${body.length}`, 'content-length': body.length, etag: '"v1"' })
+        } else {
+          res.writeHead(200, { 'content-length': body.length, etag: '"v1"' })
+        }
+        res.write(body.slice(0, 4))
+        setTimeout(() => res.destroy(), 10)
+      } else {
+        res.writeHead(206, { 'content-range': `bytes 4-9/${body.length}`, 'content-length': 6, etag: '"v1"' })
+        res.end(body.slice(4))
+      }
+    })
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(retry({ minTimeout: 1, timeoutFactor: 1 }))
+    t.after(async () => {
+      await client.close()
+      server.close()
+    })
+
+    const response = await client.request({ method: 'GET', path: '/', headers })
+    assert.strictEqual(await response.body.text(), body)
+    assert.strictEqual(requests.length, 2)
+
+    const resumed = []
+    for (let i = 0; i < requests[1].length; i += 2) {
+      const key = requests[1][i].toLowerCase()
+      if (key !== 'host' && key !== 'connection') {
+        resumed.push([key, requests[1][i + 1]])
+      }
+    }
+    assert.deepStrictEqual(resumed.sort(), [
+      ['authorization', 'Bearer T'],
+      ['if-match', '"v1"'],
+      ['range', 'bytes=4-9'],
+      ['x-foo', 'bar']
+    ].sort())
+  })
+}

@@ -7,6 +7,11 @@ expectAssignable<errors.UndiciError>(new errors.UndiciError())
 expectAssignable<string>(new errors.UndiciError().name)
 expectAssignable<string>(new errors.UndiciError().code)
 
+expectAssignable<Error>(new errors.WebAssemblyNotSupportedError())
+expectAssignable<errors.WebAssemblyNotSupportedError>(new errors.WebAssemblyNotSupportedError())
+expectAssignable<'Error'>(new errors.WebAssemblyNotSupportedError().name)
+expectAssignable<'ERR_WEBASSEMBLY_NOT_SUPPORTED'>(new errors.WebAssemblyNotSupportedError().code)
+
 expectAssignable<errors.UndiciError>(new errors.ConnectTimeoutError())
 expectAssignable<errors.ConnectTimeoutError>(new errors.ConnectTimeoutError())
 expectAssignable<'ConnectTimeoutError'>(new errors.ConnectTimeoutError().name)
@@ -34,6 +39,7 @@ expectAssignable<'UND_ERR_RESPONSE'>(new errors.ResponseError('', 0, {}).code)
 expectAssignable<number>(new errors.ResponseError('', 0, {}).statusCode)
 expectAssignable<IncomingHttpHeaders | string[] | null>(new errors.ResponseError('', 0, {}).headers)
 expectAssignable<null | Record<string, any> | string>(new errors.ResponseError('', 0, {}).body)
+expectAssignable<boolean>(new errors.ResponseError('', 0, { bodyTruncated: true }).bodyTruncated)
 
 expectAssignable<errors.UndiciError>(new errors.InvalidArgumentError())
 expectAssignable<errors.InvalidArgumentError>(new errors.InvalidArgumentError())
@@ -119,6 +125,11 @@ expectAssignable<errors.UndiciError>(new errors.MaxOriginsReachedError())
 expectAssignable<errors.MaxOriginsReachedError>(new errors.MaxOriginsReachedError())
 expectAssignable<'MaxOriginsReachedError'>(new errors.MaxOriginsReachedError().name)
 expectAssignable<'UND_ERR_MAX_ORIGINS_REACHED'>(new errors.MaxOriginsReachedError().code)
+
+expectAssignable<errors.UndiciError>(new errors.MaxRedirectsError())
+expectAssignable<errors.MaxRedirectsError>(new errors.MaxRedirectsError())
+expectAssignable<'MaxRedirectsError'>(new errors.MaxRedirectsError().name)
+expectAssignable<'UND_ERR_REDIRECT_MAX'>(new errors.MaxRedirectsError().code)
 
 {
   // @ts-ignore

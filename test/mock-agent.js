@@ -229,6 +229,594 @@ describe('MockAgent - dispatch', () => {
       onResponseError () {}
     }))
   })
+
+  test('should call request body lifecycle hooks', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: 'hello'
+      }, {
+        onRequestStart () {
+          events.push('start')
+        },
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData () {},
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          reject(error)
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['start', 'body:hello', 'sent'])
+  })
+
+  test('should call request sent lifecycle hook for null bodies', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+    const chunks = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('mock response did not complete'))
+      }, 1000)
+
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: null
+      }, {
+        onRequestStart () {
+          events.push('start')
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData (_controller, chunk) {
+          chunks.push(chunk)
+        },
+        onResponseEnd () {
+          clearTimeout(timeout)
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          clearTimeout(timeout)
+          reject(error)
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['start', 'sent'])
+    t.assert.strictEqual(Buffer.concat(chunks).toString(), 'hello')
+  })
+
+  test('should call request body lifecycle hooks for async iterable bodies', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    async function * body () {
+      yield Buffer.from('he')
+      yield Buffer.from('llo')
+    }
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: body()
+      }, {
+        onRequestStart () {
+          events.push('start')
+        },
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData () {},
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          reject(error)
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['start', 'body:he', 'body:llo', 'sent'])
+  })
+
+  test('should call request sent hook for requests without a body', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'GET'
+    }).reply(200, 'hello')
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'GET'
+      }, {
+        onRequestStart () {
+          events.push('start')
+        },
+        onBodySent () {
+          events.push('body')
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData () {},
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          reject(error)
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['start', 'sent'])
+  })
+
+  test('should report async iterable request body errors', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const expected = new Error('fail')
+    const events = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    async function * body () {
+      yield Buffer.from('he')
+      throw expected
+    }
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: body()
+      }, {
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          reject(new Error('request should not be marked sent'))
+        },
+        onResponseStart () {
+          reject(new Error('response should not start'))
+        },
+        onResponseData () {},
+        onResponseEnd () {},
+        onResponseError (_controller, error) {
+          try {
+            t.assert.strictEqual(error, expected)
+            resolve()
+          } catch (assertionError) {
+            reject(assertionError)
+          }
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['body:he'])
+  })
+
+  test('should pass replayed async iterable bodies to reply option callbacks', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+    let callbackBody
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(({ body }) => {
+      events.push('callback')
+      callbackBody = body
+      return { statusCode: 200, data: 'hello' }
+    })
+
+    async function * body () {
+      yield Buffer.from('he')
+      yield Buffer.from('llo')
+    }
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: body()
+      }, {
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData () {},
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          reject(error)
+        }
+      })
+    })
+
+    const chunks = []
+    for await (const chunk of callbackBody) {
+      chunks.push(chunk)
+    }
+
+    t.assert.deepStrictEqual(events, ['body:he', 'body:llo', 'sent', 'callback'])
+    t.assert.strictEqual(Buffer.concat(chunks).toString(), 'hello')
+  })
+
+  test('should match request bodies when lifecycle hooks are present', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST',
+      body: /hello/
+    }).reply(200, 'matched')
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: 'hello=there'
+      }, {
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData (_controller, chunk) {
+          events.push(`response:${chunk.toString()}`)
+        },
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          reject(error)
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['body:hello=there', 'sent', 'response:matched'])
+  })
+
+  test('should replay async iterable request bodies to reply callbacks after lifecycle hooks', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const events = []
+    const response = []
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, async ({ body }) => {
+      const chunks = []
+
+      for await (const chunk of body) {
+        chunks.push(chunk)
+      }
+
+      return Buffer.concat(chunks).toString()
+    })
+
+    async function * body () {
+      yield Buffer.from('he')
+      yield Buffer.from('llo')
+    }
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: body()
+      }, {
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          events.push('sent')
+        },
+        onResponseStart () {},
+        onResponseData (_controller, chunk) {
+          response.push(chunk)
+        },
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (_controller, error) {
+          reject(error)
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['body:he', 'body:llo', 'sent'])
+    t.assert.strictEqual(Buffer.concat(response).toString(), 'hello')
+  })
+
+  test('should report request body lifecycle hook errors', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const expected = new Error('fail')
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: 'hello'
+      }, {
+        onBodySent () {
+          throw expected
+        },
+        onRequestSent () {
+          reject(new Error('request should not be marked sent'))
+        },
+        onResponseStart () {
+          reject(new Error('response should not start'))
+        },
+        onResponseData () {},
+        onResponseEnd () {},
+        onResponseError (_controller, error) {
+          try {
+            t.assert.strictEqual(error, expected)
+            resolve()
+          } catch (assertionError) {
+            reject(assertionError)
+          }
+        }
+      })
+    })
+  })
+
+  test('should not send delayed replies after request sent aborts', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const expected = new Error('fail')
+    const events = []
+    let requestController
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello').delay(20)
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: 'hello'
+      }, {
+        onRequestStart (controller) {
+          requestController = controller
+        },
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+        },
+        onRequestSent () {
+          events.push('sent')
+          requestController.abort(expected)
+        },
+        onResponseStart () {
+          reject(new Error('response should not start'))
+        },
+        onResponseData () {},
+        onResponseEnd () {},
+        onResponseError (_controller, error) {
+          try {
+            t.assert.strictEqual(error, expected)
+            setTimeout(resolve, 40)
+          } catch (assertionError) {
+            reject(assertionError)
+          }
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['body:hello', 'sent'])
+  })
+
+  test('should stop reading async iterable request bodies after body hook aborts', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const expected = new Error('fail')
+    const events = []
+    let requestController
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    async function * body () {
+      events.push('pull:he')
+      yield Buffer.from('he')
+      events.push('pull:llo')
+      yield Buffer.from('llo')
+    }
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: body()
+      }, {
+        onRequestStart (controller) {
+          requestController = controller
+        },
+        onBodySent (chunk) {
+          events.push(`body:${chunk.toString()}`)
+          requestController.abort(expected)
+        },
+        onRequestSent () {
+          reject(new Error('request should not be marked sent'))
+        },
+        onResponseStart () {
+          reject(new Error('response should not start'))
+        },
+        onResponseData () {},
+        onResponseEnd () {},
+        onResponseError (_controller, error) {
+          try {
+            t.assert.strictEqual(error, expected)
+            resolve()
+          } catch (assertionError) {
+            reject(assertionError)
+          }
+        }
+      })
+    })
+
+    t.assert.deepStrictEqual(events, ['pull:he', 'body:he'])
+  })
+
+  test('should not send request body lifecycle hooks after request start aborts', async (t) => {
+    const baseUrl = 'http://localhost:9999'
+    const expected = new Error('fail')
+
+    const mockAgent = new MockAgent()
+    after(() => mockAgent.close())
+
+    const mockPool = mockAgent.get(baseUrl)
+    mockPool.intercept({
+      path: '/foo',
+      method: 'POST'
+    }).reply(200, 'hello')
+
+    await new Promise((resolve, reject) => {
+      mockAgent.dispatch({
+        origin: baseUrl,
+        path: '/foo',
+        method: 'POST',
+        body: 'hello'
+      }, {
+        onRequestStart (controller) {
+          controller.abort(expected)
+        },
+        onBodySent () {
+          reject(new Error('body should not be sent'))
+        },
+        onRequestSent () {
+          reject(new Error('request should not be sent'))
+        },
+        onResponseStart () {
+          reject(new Error('response should not start'))
+        },
+        onResponseData () {},
+        onResponseEnd () {},
+        onResponseError (_controller, error) {
+          try {
+            t.assert.strictEqual(error, expected)
+            resolve()
+          } catch (assertionError) {
+            reject(assertionError)
+          }
+        }
+      })
+    })
+  })
 })
 
 test('MockAgent - .close should clean up registered pools', async (t) => {

@@ -179,6 +179,54 @@ test('WebSocket connecting to server that isn\'t a Websocket server (h2 - suppor
   }
 })
 
+// A regression here hangs rather than fails, so bound the test.
+test('WebSocket over H2 fails the handshake when the extended CONNECT response is not 200', { timeout: 10000 }, async (t) => {
+  const planner = tspl(t, { plan: 3 })
+  const sessions = new Set()
+  const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: true } })
+    .on('session', (session) => {
+      sessions.add(session)
+      session.on('close', () => sessions.delete(session))
+    })
+    .on('stream', (stream) => {
+      stream.respond({ ':status': 401 })
+      stream.end()
+    })
+    .listen(0)
+
+  await once(h2Server, 'listening')
+
+  const dispatcher = new Agent({
+    allowH2: true,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  const ws = new WebSocket(`wss://localhost:${h2Server.address().port}`, { dispatcher })
+
+  t.after(async () => {
+    for (const session of sessions) {
+      session.close()
+    }
+
+    await new Promise((resolve) => h2Server.close(resolve))
+    await dispatcher.close()
+  })
+
+  ws.onmessage = ws.onopen = () => planner.fail('should not open')
+
+  ws.addEventListener('error', ({ error }) => {
+    planner.ok(error)
+  })
+
+  ws.addEventListener('close', ({ code, wasClean }) => {
+    planner.equal(code, 1006)
+    planner.equal(wasClean, false)
+  })
+
+  await planner.completed
+})
+
 test('WebSocket on H2 with a server that does not support extended CONNECT protocol', async (t) => {
   const planner = tspl(t, { plan: 1 })
   const h2Server = createSecureServer({ cert, key, settings: { enableConnectProtocol: false } })
@@ -457,6 +505,39 @@ test('Server sends invalid Sec-WebSocket-Extensions header', { skip: runtimeFeat
       res.end()
     }).listen(0, () => {
       const ws = new WebSocket(`ws://localhost:${server.address().port}`, 'chat')
+
+      ws.onopen = reject
+
+      ws.addEventListener('error', ({ error }) => {
+        t.assert.ok(error)
+        server.close()
+        resolve()
+      })
+    })
+  })
+})
+
+test('Server sends Sec-WebSocket-Protocol header when no protocols were requested', { skip: runtimeFeatures.has('crypto') === false }, (t) => {
+  const uid = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+
+  return new Promise((resolve, reject) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      const key = req.headers['sec-websocket-key']
+      t.assert.ok(key)
+      t.assert.strictEqual(req.headers['sec-websocket-protocol'], undefined)
+
+      const accept = require('node:crypto').hash('sha1', key + uid, 'base64')
+
+      res.setHeader('Upgrade', 'websocket')
+      res.setHeader('Connection', 'upgrade')
+      res.setHeader('Sec-WebSocket-Accept', accept)
+      res.setHeader('Sec-WebSocket-Protocol', 'chat') // <-- never requested
+      res.statusCode = 101
+
+      res.end()
+    }).listen(0, () => {
+      // No subprotocols requested, so the request omits Sec-WebSocket-Protocol.
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
 
       ws.onopen = reject
 

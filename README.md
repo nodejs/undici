@@ -86,6 +86,24 @@ Using [benchmark-http2.js](https://github.com/nodejs/undici/blob/main/benchmarks
 
 Node.js includes a built-in `fetch()` implementation powered by undici starting from Node.js v18. However, there are important differences between using the built-in fetch and installing undici as a separate module.
 
+### WebAssembly requirement
+
+Undici's HTTP/1 parser requires WebAssembly. There is no alternative parser when
+WebAssembly is unavailable, for example in Node.js configurations where
+`--jitless` disables it. The existence of `fetch` does not imply that it can make
+HTTP/1 requests in that environment.
+
+When the HTTP/1 parser is needed without WebAssembly, Client and dispatcher
+requests fail with an `Error` whose code is `ERR_WEBASSEMBLY_NOT_SUPPORTED`.
+`fetch` rejects with a `TypeError` carrying that error in `error.cause`. Importing
+Undici, accessing `fetch`, and using `Headers`, `FormData`, `Request`, or `Response`
+do not themselves require the HTTP/1 parser.
+
+The error is defined locally in Undici and does not depend on Node.js providing
+that error code. For built-in fetch, this behavior depends on the bundled Undici
+version. Node.js receives upstream fixes through its normal vendored Undici
+update, rather than changes to the generated bundle alone.
+
 ### Built-in Fetch (Node.js v18+)
 
 Node.js's built-in fetch is powered by a bundled version of undici:
@@ -378,7 +396,16 @@ The `body` mixins are the most common way to format the request/response body. M
 > The body returned from `undici.request` does not implement `.formData()`.
 
 > [!WARNING]
-> Calling `body.formData()` on a fetch response causes undici to buffer and parse the entire body. Since this is dictated by the spec, `body.formData()` must only be called on responses from trusted servers.
+> The body mixins `.arrayBuffer()`, `.blob()`, `.bytes()`, `.json()`, `.text()`,
+> and `.formData()` buffer the entire body in memory before returning. Where
+> applicable, they also decode or parse the payload and retain that
+> representation in memory. Calling these methods therefore means trusting that
+> the response body is small enough to fit in the available memory. Do not use
+> them for responses from untrusted or user-controlled sources. Instead, consume
+> the response body as a stream and enforce an application-specific size limit:
+> use `response.body` for fetch responses or the `body` returned by
+> `undici.request()`. For streaming decoded text, use `body.textStream()` on a
+> fetch `Request` or `Response`.
 
 Example usage:
 
@@ -407,6 +434,11 @@ For more information about their behavior, please reference the body mixin from 
 ## Common API Methods
 
 This section documents our most commonly used API methods. Additional APIs are documented in their own files within the [docs](./docs/) folder and are accessible via the navigation list on the left side of the docs site.
+
+For the top-level APIs below, the `url` argument supplies the request origin and
+path. Do not pass `origin` or `path` in the second `options` argument. The linked
+`Dispatcher` option types include those fields because dispatcher methods are
+lower-level APIs that do not receive a separate `url` argument.
 
 ### `undici.request([url, options]): Promise`
 
@@ -759,14 +791,18 @@ and `undici.Agent`) which will enable the family autoselection algorithm when es
 
 ## Collaborators
 
-* [__Daniele Belardi__](https://github.com/dnlup), <https://www.npmjs.com/~dnlup>
-* [__Ethan Arrowood__](https://github.com/ethan-arrowood), <https://www.npmjs.com/~ethan_arrowood>
+* [__Aras Abbasi__](https://github.com/Uzlopak)
+* [__Carlos Fuentes__](https://github.com/metcoder95), <https://www.npmjs.com/~metcoder95>
+* [__Ethan Arrowood__](https://github.com/Ethan-Arrowood), <https://www.npmjs.com/~ethan_arrowood>
 * [__Matteo Collina__](https://github.com/mcollina), <https://www.npmjs.com/~matteo.collina>
 * [__Matthew Aitken__](https://github.com/KhafraDev), <https://www.npmjs.com/~khaf>
+* [__Mert Can Altin__](https://github.com/mertcanaltin), <https://www.npmjs.com/~mertcanaltin>
 * [__Robert Nagy__](https://github.com/ronag), <https://www.npmjs.com/~ronag>
-* [__Szymon Marczak__](https://github.com/szmarczak), <https://www.npmjs.com/~szmarczak>
+* [__Trivikram Kamat__](https://github.com/trivikr), <https://www.npmjs.com/~trivikr>
+* [__tsctx__](https://github.com/tsctx)
 
 ## Past Collaborators
+* [__Szymon Marczak__](https://github.com/szmarczak), <https://www.npmjs.com/~szmarczak>
 * [__Tomas Della Vedova__](https://github.com/delvedor), <https://www.npmjs.com/~delvedor>
 
 ### Releasers

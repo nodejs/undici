@@ -467,7 +467,7 @@ for (const factory of [
   })
 
   test('should throw when max redirections is reached and throwOnMaxRedirect is set as interceptor default', async t => {
-    t = tspl(t, { plan: 1 })
+    t = tspl(t, { plan: 2 })
 
     const server = await startRedirectingServer()
 
@@ -481,10 +481,51 @@ for (const factory of [
       t.fail('Did not throw')
     } catch (error) {
       t.strictEqual(error.message, 'max redirects')
+      t.strictEqual(error.code, 'UND_ERR_REDIRECT_MAX')
     }
 
     await t.completed
   })
+
+  for (const [finalStatus, finalBody] of [[200, 'final'], [404, 'missing'], [304, ''], [300, 'choices']]) {
+    test(`should not throw on a final ${finalStatus} after exactly maxRedirections redirects with throwOnMaxRedirect`, async t => {
+      // /<redirects left> redirects until 0, then answers with finalStatus
+      // (without a Location header).
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        const left = Number(req.url.slice(1))
+        if (left > 0) {
+          res.writeHead(302, { location: `/${left - 1}` })
+          res.end()
+          return
+        }
+        res.writeHead(finalStatus)
+        res.end(finalBody)
+      }).listen(0)
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const dispatcher = new undici.Agent().compose(
+        redirect({ maxRedirections: 2, throwOnMaxRedirect: true })
+      )
+      after(() => dispatcher.close())
+
+      const response = await undici.request(`${origin}/2`, { dispatcher })
+
+      t.assert.strictEqual(response.statusCode, finalStatus)
+      t.assert.strictEqual(await response.body.text(), finalBody)
+      t.assert.deepStrictEqual(response.context.history, [
+        new URL(`${origin}/2`),
+        new URL(`${origin}/1`),
+        new URL(`${origin}/0`)
+      ])
+
+      await t.assert.rejects(
+        undici.request(`${origin}/3`, { dispatcher }),
+        { message: 'max redirects', code: 'UND_ERR_REDIRECT_MAX' }
+      )
+    })
+  }
 
   test('should not allow invalid throwOnMaxRedirect arguments', async t => {
     t = tspl(t, { plan: 1 })
@@ -810,6 +851,38 @@ test('should redirect to relative URL according to RFC 7231', async t => {
 
   t.strictEqual(statusCode, 200)
   t.strictEqual(finalPath, '/absolute/b')
+})
+
+test('informational responses are not added to redirect history', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer((_req, res) => {
+    for (let i = 0; i < 20; i++) {
+      res.writeProcessing()
+    }
+    res.end('hello world!')
+  }).listen(0)
+
+  after(() => server.close())
+  await once(server, 'listening')
+
+  const dispatcher = new undici.Client(`http://localhost:${server.address().port}`)
+    .compose(redirect({ maxRedirections: 1, throwOnMaxRedirect: true }))
+  after(() => dispatcher.close())
+
+  const infos = []
+  const response = await dispatcher.request({
+    method: 'GET',
+    path: '/',
+    onInfo: info => infos.push(info)
+  })
+
+  t.strictEqual(response.statusCode, 200)
+  t.strictEqual(await response.body.text(), 'hello world!')
+  t.strictEqual(infos.length, 20)
+  t.deepStrictEqual(response.context.history, [
+    new URL(`http://localhost:${server.address().port}/`)
+  ])
 })
 
 test('same-origin redirect preserves plain object headers with polluted Object.prototype[Symbol.iterator]', async (t) => {

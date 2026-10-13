@@ -54,6 +54,14 @@ expectAssignable<BodyInit | Dispatcher.DispatchOptions['body']>(mockResponseCall
     expectAssignable<MockInterceptor.MockResponseCallbackOptions['body']>(options.body)
     return { statusCode: 200, data: { foo: 'bar' } }
   })
+  expectAssignable<MockScope>(mockInterceptor.reply(async () => ({ statusCode: 200, data: { foo: 'bar' } })))
+  expectAssignable<MockScope>(mockInterceptor.reply(async () => ({
+    statusCode: 200,
+    data: { foo: 'bar' },
+    responseOptions: {
+      headers: { foo: 'bar' }
+    }
+  })))
 
   // replyWithError
   class CustomError extends Error {

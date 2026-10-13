@@ -43,6 +43,12 @@ test('Should handle h2 continue', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     path: '/',
     method: 'POST',
@@ -91,6 +97,12 @@ test('Should deliver an early final response to an Expect: 100-continue request 
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const response = await client.request({
     path: '/',

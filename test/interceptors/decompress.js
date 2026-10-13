@@ -1,13 +1,64 @@
 'use strict'
 
 const { test, after } = require('node:test')
+const assert = require('node:assert/strict')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
-const { createGzip, createDeflate, createBrotliCompress, createZstdCompress } = require('node:zlib')
+const { createGzip, createDeflate, createBrotliCompress, createZstdCompress, deflateSync, gzipSync } = require('node:zlib')
 const { tspl } = require('@matteo.collina/tspl')
 
-const { Client, getGlobalDispatcher, setGlobalDispatcher, request } = require('../..')
+const { Client, errors, getGlobalDispatcher, setGlobalDispatcher, request, interceptors } = require('../..')
 const createDecompressInterceptor = require('../../lib/interceptor/decompress')
+
+const immediate = () => new Promise(resolve => setImmediate(resolve))
+
+function createControlledDispatch (handler, options, { forwardAbort = true } = {}) {
+  let sourceHandler
+  let abortReason = null
+  const events = []
+  const state = {
+    paused: false,
+    aborted: false,
+    pauseCalls: 0,
+    resumeCalls: 0
+  }
+  const controller = {
+    rawHeaders: ['Content-Encoding', 'gzip'],
+    rawTrailers: null,
+    pause () {
+      state.paused = true
+      state.pauseCalls++
+      events.push('controller-pause')
+    },
+    resume () {
+      state.paused = false
+      state.resumeCalls++
+      events.push('controller-resume')
+    },
+    abort (reason) {
+      if (state.aborted) {
+        return
+      }
+      state.aborted = true
+      abortReason = reason
+      if (forwardAbort) {
+        sourceHandler.onResponseError(controller, reason)
+      }
+    },
+    get paused () { return state.paused },
+    get aborted () { return state.aborted },
+    get reason () { return abortReason }
+  }
+
+  const dispatch = createDecompressInterceptor(options)((opts, wrappedHandler) => {
+    sourceHandler = wrappedHandler
+    return true
+  })
+  dispatch({ method: 'GET' }, handler)
+  sourceHandler.onRequestStart(controller, {})
+
+  return { controller, events, sourceHandler, state }
+}
 
 test('should decompress gzip response', async t => {
   t = tspl(t, { plan: 3 })
@@ -47,6 +98,127 @@ test('should decompress gzip response', async t => {
   t.equal(response.statusCode, 200)
   t.equal(response.headers['content-encoding'], undefined)
   t.equal(body, data)
+
+  await t.completed
+})
+
+test('retry composed before decompress can rewrite rawHeaders', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const data = 'ok'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'content-encoding': 'gzip',
+      'content-length': String(compressed.length)
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose([
+    interceptors.retry({ maxRetries: 0 }),
+    interceptors.decompress()
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    headers: { 'accept-encoding': 'gzip' }
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
+
+test('should preserve trailers when decompressing response', async t => {
+  const data = 'Response with trailers'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      Trailer: 'X-Checksum'
+    })
+    res.addTrailers({ 'X-Checksum': 'verified' })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  t = tspl(t, { plan: 2 })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    headers: { TE: 'trailers' }
+  })
+  const body = await response.body.text()
+
+  t.equal(body, data)
+  t.deepEqual(response.trailers, { 'x-checksum': 'verified' })
+
+  await t.completed
+})
+
+test('should preserve representation headers and empty body for HEAD responses', async t => {
+  const compressedRepresentation = gzipSync('HEAD response representation')
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/plain',
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressedRepresentation.length
+    })
+    res.end()
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  t = tspl(t, { plan: 4 })
+
+  const response = await client.request({
+    method: 'HEAD',
+    path: '/'
+  })
+  const body = await response.body.text()
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], 'gzip')
+  t.equal(response.headers['content-length'], `${compressedRepresentation.length}`)
+  t.equal(body, '')
 
   await t.completed
 })
@@ -251,6 +423,49 @@ test('should pass through unsupported encoding', async t => {
 
   await t.completed
 })
+
+// `constructor` and `__proto__` are the only Object.prototype member names that
+// survive the toLowerCase() in onResponseStart, so they are the two an origin
+// can actually put on the wire.
+for (const encoding of ['constructor', '__proto__', 'gzip, constructor']) {
+  test(`should pass through an Object.prototype name as an encoding: ${encoding}`, async t => {
+    t = tspl(t, { plan: 3 })
+
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Content-Encoding': encoding
+      })
+      res.end('This has unsupported encoding')
+    })
+
+    server.listen(0)
+    await once(server, 'listening')
+
+    const client = new Client(
+      `http://localhost:${server.address().port}`
+    ).compose(createDecompressInterceptor())
+
+    after(async () => {
+      await client.close()
+      server.close()
+      await once(server, 'close')
+    })
+
+    const response = await client.request({
+      method: 'GET',
+      path: '/'
+    })
+
+    const body = await response.body.text()
+
+    t.equal(response.statusCode, 200)
+    t.equal(response.headers['content-encoding'], encoding)
+    t.equal(body, 'This has unsupported encoding')
+
+    await t.completed
+  })
+}
 
 test('should pass through error responses (4xx, 5xx)', async t => {
   t = tspl(t, { plan: 3 })
@@ -574,7 +789,7 @@ test('should allow custom skipStatusCodes', async t => {
 })
 
 test('should decompress multiple encodings in correct order', async t => {
-  t = tspl(t, { plan: 3 })
+  t = tspl(t, { plan: 4 })
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
     // First compress with gzip, then with deflate (gzip, deflate)
@@ -583,7 +798,8 @@ test('should decompress multiple encodings in correct order', async t => {
 
     res.writeHead(200, {
       'Content-Type': 'text/plain',
-      'Content-Encoding': 'gzip, deflate' // Applied in this order
+      'Content-Encoding': 'gzip, deflate', // Applied in this order
+      Trailer: 'X-Checksum'
     })
 
     const data = 'Multiple encoding test message'
@@ -591,6 +807,7 @@ test('should decompress multiple encodings in correct order', async t => {
     // Pipe: data → gzip → deflate → response
     gzip.pipe(deflate)
     deflate.pipe(res)
+    res.addTrailers({ 'X-Checksum': 'verified' })
     gzip.end(data)
   })
 
@@ -609,7 +826,8 @@ test('should decompress multiple encodings in correct order', async t => {
 
   const response = await client.request({
     method: 'GET',
-    path: '/'
+    path: '/',
+    headers: { TE: 'trailers' }
   })
 
   const body = await response.body.text()
@@ -617,6 +835,7 @@ test('should decompress multiple encodings in correct order', async t => {
   t.equal(response.statusCode, 200)
   t.equal(response.headers['content-encoding'], undefined) // Should be removed
   t.equal(body, 'Multiple encoding test message') // Should be fully decompressed
+  t.deepEqual(response.trailers, { 'x-checksum': 'verified' })
 
   await t.completed
 })
@@ -741,6 +960,587 @@ test('should handle empty encoding values', async t => {
   t.equal(body, 'Empty encoding value test')
 
   await t.completed
+})
+
+test('decompress backpressure pauses on the first decoded chunk', { timeout: 5000 }, async () => {
+  const payload = Buffer.alloc(1024 * 1024, 0x61)
+  const compressed = gzipSync(payload)
+  assert(compressed.length < 16 * 1024)
+
+  let responseController
+  let endController
+  let endTrailers
+  let endCalls = 0
+  let errorCalls = 0
+  const chunks = []
+  let firstDataResolve
+  const firstData = new Promise(resolve => { firstDataResolve = resolve })
+  let endResolve
+  const ended = new Promise(resolve => { endResolve = resolve })
+
+  const handler = {
+    onRequestStart (controller) {
+      responseController = controller
+    },
+    onResponseStart (controller) {
+      assert.strictEqual(controller, responseController)
+    },
+    onResponseData (controller, chunk) {
+      assert.strictEqual(controller, responseController)
+      chunks.push(chunk)
+      if (chunks.length === 1) {
+        controller.pause()
+        firstDataResolve()
+      }
+    },
+    onResponseEnd (controller, trailers) {
+      endController = controller
+      endTrailers = trailers
+      endCalls++
+      endResolve()
+    },
+    onResponseError () {
+      errorCalls++
+      endResolve()
+    }
+  }
+
+  const { controller, sourceHandler, state } = createControlledDispatch(handler)
+  sourceHandler.onResponseStart(controller, 200, { 'content-encoding': 'gzip' }, 'OK')
+  sourceHandler.onResponseData(controller, compressed)
+  controller.rawTrailers = ['X-Trailer', 'raw-value']
+  const trailers = { 'x-trailer': 'value' }
+  sourceHandler.onResponseEnd(controller, trailers)
+
+  await firstData
+  await immediate()
+  assert.equal(responseController.paused, true)
+  assert.equal(state.pauseCalls, 1)
+  assert.equal(chunks.length, 1)
+  assert(chunks[0].length < payload.length)
+  assert.equal(endCalls, 0)
+  assert.equal(errorCalls, 0)
+
+  responseController.resume()
+  await ended
+  assert.strictEqual(endController, responseController)
+  assert.deepEqual(endTrailers, trailers)
+  assert.deepEqual(responseController.rawTrailers, controller.rawTrailers)
+  assert.deepEqual(Buffer.concat(chunks), payload)
+  assert(chunks.length > 1)
+  assert.equal(endCalls, 1)
+  assert.equal(errorCalls, 0)
+})
+
+for (const { name, contentEncoding, compress } of [
+  {
+    name: 'single decoder',
+    contentEncoding: 'gzip',
+    compress: gzipSync
+  },
+  {
+    name: 'chained decoders',
+    contentEncoding: 'gzip, deflate',
+    compress: payload => deflateSync(gzipSync(payload))
+  }
+]) {
+  test(`decompress backpressure delays ${name} completion after the final chunk`, { timeout: 5000 }, async () => {
+    const payload = Buffer.from('the only decoded chunk')
+    const compressed = compress(payload)
+    const chunks = []
+    let responseController
+    let endCalls = 0
+    let errorCalls = 0
+    let firstDataResolve
+    const firstData = new Promise(resolve => { firstDataResolve = resolve })
+    let endResolve
+    const ended = new Promise(resolve => { endResolve = resolve })
+    const handler = {
+      onRequestStart (controller) {
+        responseController = controller
+      },
+      onResponseStart () {},
+      onResponseData (controller, chunk) {
+        chunks.push(chunk)
+        if (chunks.length === 1) {
+          controller.pause()
+          firstDataResolve()
+        }
+      },
+      onResponseEnd () {
+        endCalls++
+        endResolve()
+      },
+      onResponseError () {
+        errorCalls++
+        endResolve()
+      }
+    }
+
+    const { controller, sourceHandler } = createControlledDispatch(handler)
+    sourceHandler.onResponseStart(controller, 200, { 'content-encoding': contentEncoding }, 'OK')
+    sourceHandler.onResponseData(controller, compressed)
+    sourceHandler.onResponseEnd(controller, { final: 'trailer' })
+
+    await firstData
+    await immediate()
+    assert.equal(chunks.length, 1)
+    assert.deepEqual(chunks[0], payload)
+    assert.equal(endCalls, 0)
+    assert.equal(errorCalls, 0)
+
+    responseController.resume()
+    await ended
+    assert.equal(endCalls, 1)
+    assert.equal(errorCalls, 0)
+  })
+}
+
+test('decompress backpressure delays empty response completion while paused', { timeout: 5000 }, async () => {
+  const compressed = gzipSync(Buffer.alloc(0))
+  let responseController
+  let dataCalls = 0
+  let endCalls = 0
+  let errorCalls = 0
+  let endResolve
+  const ended = new Promise(resolve => { endResolve = resolve })
+  const handler = {
+    onRequestStart (controller) {
+      responseController = controller
+    },
+    onResponseStart (controller) {
+      controller.pause()
+    },
+    onResponseData () {
+      dataCalls++
+    },
+    onResponseEnd () {
+      endCalls++
+      endResolve()
+    },
+    onResponseError () {
+      errorCalls++
+      endResolve()
+    }
+  }
+
+  const { controller, sourceHandler } = createControlledDispatch(handler)
+  sourceHandler.onResponseStart(controller, 200, { 'content-encoding': 'gzip' }, 'OK')
+  sourceHandler.onResponseData(controller, compressed)
+  sourceHandler.onResponseEnd(controller, {})
+
+  for (let i = 0; i < 5; i++) {
+    await immediate()
+  }
+  assert.equal(dataCalls, 0)
+  assert.equal(endCalls, 0)
+  assert.equal(errorCalls, 0)
+
+  responseController.resume()
+  await ended
+  assert.equal(dataCalls, 0)
+  assert.equal(endCalls, 1)
+  assert.equal(errorCalls, 0)
+})
+
+test('decompress backpressure bounds an initially unread request body', { timeout: 5000 }, async t => {
+  const payload = Buffer.alloc(2 * 1024 * 1024, 0x62)
+  const compressed = gzipSync(payload)
+  let finishResolve
+  const responseFinished = new Promise(resolve => { finishResolve = resolve })
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.once('finish', finishResolve)
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+  const client = new Client(`http://localhost:${server.address().port}`)
+    .compose(interceptors.decompress())
+
+  t.after(async () => {
+    await client.destroy()
+    server.closeAllConnections?.()
+    if (server.listening) {
+      server.close()
+      await once(server, 'close')
+    }
+  })
+
+  const { body } = await client.request({
+    method: 'GET',
+    path: '/',
+    highWaterMark: 32 * 1024
+  })
+
+  await responseFinished
+  await new Promise(resolve => {
+    const onReadable = () => {
+      if (body.readableLength >= body.readableHighWaterMark) {
+        body.off('readable', onReadable)
+        resolve()
+      }
+    }
+    body.on('readable', onReadable)
+    onReadable()
+  })
+
+  assert(
+    body.readableLength <= body.readableHighWaterMark + 16 * 1024,
+    `buffered ${body.readableLength} bytes for HWM ${body.readableHighWaterMark}`
+  )
+  assert(body.readableLength < payload.length / 4)
+  assert.deepEqual(Buffer.from(await body.arrayBuffer()), payload)
+})
+
+test('decompress backpressure honors the first decoder write result', { timeout: 5000 }, async () => {
+  const payload = Buffer.allocUnsafe(256 * 1024)
+  let random = 0x12345678
+  for (let i = 0; i < payload.length; i++) {
+    random ^= random << 13
+    random ^= random >>> 17
+    random ^= random << 5
+    payload[i] = random & 0xff
+  }
+  const compressed = gzipSync(payload)
+  assert(compressed.length > 64 * 1024)
+
+  const chunks = []
+  let endCalls = 0
+  let receivedError
+  let terminalResolve
+  const terminal = new Promise(resolve => { terminalResolve = resolve })
+  const handler = {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData (controller, chunk) {
+      chunks.push(chunk)
+    },
+    onResponseEnd () {
+      endCalls++
+      terminalResolve()
+    },
+    onResponseError (controller, error) {
+      receivedError = error
+      terminalResolve()
+    }
+  }
+
+  const { controller, events, sourceHandler, state } = createControlledDispatch(handler)
+  sourceHandler.onResponseStart(controller, 200, { 'content-encoding': 'gzip' }, 'OK')
+  events.push('source-data')
+  sourceHandler.onResponseData(controller, compressed)
+
+  assert.equal(state.paused, true)
+  assert.equal(state.pauseCalls, 1)
+  while (state.resumeCalls === 0) {
+    await immediate()
+  }
+  assert.equal(state.resumeCalls, 1)
+  events.push('source-end')
+  sourceHandler.onResponseEnd(controller, {})
+  await terminal
+
+  assert.equal(receivedError, undefined)
+  assert.equal(endCalls, 1)
+  assert.deepEqual(Buffer.concat(chunks), payload)
+  assert(events.indexOf('controller-pause') > events.indexOf('source-data'))
+  assert(events.indexOf('controller-resume') > events.indexOf('controller-pause'))
+  assert(events.indexOf('source-end') > events.indexOf('controller-resume'))
+})
+
+test('decompress backpressure keeps input and downstream pause reasons independent', { timeout: 5000 }, async () => {
+  const payload = Buffer.allocUnsafe(128 * 1024)
+  let random = 0x87654321
+  for (let i = 0; i < payload.length; i++) {
+    random ^= random << 13
+    random ^= random >>> 17
+    random ^= random << 5
+    payload[i] = random & 0xff
+  }
+  const compressed = gzipSync(payload)
+  assert(compressed.length > 64 * 1024)
+
+  let responseController
+  const chunks = []
+  let terminalResolve
+  let terminalReject
+  const terminal = new Promise((resolve, reject) => {
+    terminalResolve = resolve
+    terminalReject = reject
+  })
+  const handler = {
+    onRequestStart (controller) {
+      responseController = controller
+    },
+    onResponseStart (controller) {
+      controller.pause()
+    },
+    onResponseData (controller, chunk) {
+      chunks.push(chunk)
+    },
+    onResponseEnd () {
+      terminalResolve()
+    },
+    onResponseError (controller, error) {
+      terminalReject(error)
+    }
+  }
+
+  const { controller, sourceHandler, state } = createControlledDispatch(handler)
+  sourceHandler.onResponseStart(controller, 200, { 'content-encoding': 'gzip' }, 'OK')
+  assert.equal(state.paused, true)
+  assert.equal(state.pauseCalls, 1)
+
+  sourceHandler.onResponseData(controller, compressed)
+  assert.equal(chunks.length, 0)
+
+  responseController.resume()
+  assert.equal(state.paused, true)
+  assert.equal(state.resumeCalls, 0)
+
+  while (state.resumeCalls === 0) {
+    await immediate()
+  }
+  sourceHandler.onResponseEnd(controller, {})
+  await terminal
+  assert.equal(state.pauseCalls, 1)
+  assert.equal(state.resumeCalls, 1)
+  assert.deepEqual(Buffer.concat(chunks), payload)
+})
+
+test('decompress backpressure pauses chained output through encoded end', { timeout: 5000 }, async () => {
+  const payload = Buffer.alloc(512 * 1024, 0x63)
+  const compressed = deflateSync(gzipSync(payload))
+  const chunks = []
+  let responseController
+  let endCalls = 0
+  let errorCalls = 0
+  let firstDataResolve
+  const firstData = new Promise(resolve => { firstDataResolve = resolve })
+  let endResolve
+  const ended = new Promise(resolve => { endResolve = resolve })
+  const handler = {
+    onRequestStart (controller) {
+      responseController = controller
+    },
+    onResponseStart () {},
+    onResponseData (controller, chunk) {
+      chunks.push(chunk)
+      if (chunks.length === 1) {
+        controller.pause()
+        firstDataResolve()
+      }
+    },
+    onResponseEnd () {
+      endCalls++
+      endResolve()
+    },
+    onResponseError () {
+      errorCalls++
+      endResolve()
+    }
+  }
+
+  const { controller, sourceHandler } = createControlledDispatch(handler)
+  sourceHandler.onResponseStart(controller, 200, { 'content-encoding': 'gzip, deflate' }, 'OK')
+  sourceHandler.onResponseData(controller, compressed)
+  sourceHandler.onResponseEnd(controller, { chained: 'trailer' })
+
+  await firstData
+  await immediate()
+  assert.equal(chunks.length, 1)
+  assert.equal(endCalls, 0)
+  assert.equal(errorCalls, 0)
+
+  responseController.resume()
+  await ended
+  assert.deepEqual(Buffer.concat(chunks), payload)
+  assert(chunks.length > 1)
+  assert.equal(endCalls, 1)
+  assert.equal(errorCalls, 0)
+})
+
+test('decompress backpressure remains paused when retry replaces the transport controller', { timeout: 5000 }, async () => {
+  const payload = Buffer.alloc(512 * 1024, 0x65)
+  const compressed = gzipSync(payload)
+  const split = compressed.length - 8
+  assert(split > 0)
+  assert(compressed.length < 16 * 1024)
+
+  const attempts = []
+  const baseDispatch = (opts, sourceHandler) => {
+    const state = {
+      paused: false,
+      pauseCalls: 0,
+      resumeCalls: 0
+    }
+    let abortReason = null
+    const controller = {
+      rawHeaders: null,
+      rawTrailers: null,
+      pause () {
+        state.paused = true
+        state.pauseCalls++
+      },
+      resume () {
+        state.paused = false
+        state.resumeCalls++
+      },
+      abort (reason) {
+        abortReason = reason
+      },
+      get paused () { return state.paused },
+      get aborted () { return abortReason !== null },
+      get reason () { return abortReason }
+    }
+
+    attempts.push({ controller, opts, sourceHandler, state })
+    sourceHandler.onRequestStart(controller, {})
+    return true
+  }
+
+  const retryDispatch = interceptors.retry({
+    maxRetries: 1,
+    retry (_ignoredError, _context, callback) {
+      callback(null)
+    }
+  })(baseDispatch)
+  const dispatch = createDecompressInterceptor()(retryDispatch)
+
+  let responseController
+  const chunks = []
+  let firstDataResolve
+  const firstData = new Promise(resolve => { firstDataResolve = resolve })
+  let terminalResolve
+  let terminalReject
+  const terminal = new Promise((resolve, reject) => {
+    terminalResolve = resolve
+    terminalReject = reject
+  })
+  const handler = {
+    onRequestStart (controller) {
+      responseController = controller
+    },
+    onResponseStart () {},
+    onResponseData (controller, chunk) {
+      chunks.push(chunk)
+      if (chunks.length === 1) {
+        controller.pause()
+        firstDataResolve()
+      }
+    },
+    onResponseEnd () {
+      terminalResolve()
+    },
+    onResponseError (controller, error) {
+      terminalReject(error)
+    }
+  }
+
+  dispatch({ method: 'GET', path: '/' }, handler)
+  assert.equal(attempts.length, 1)
+  const first = attempts[0]
+  first.controller.rawHeaders = ['Content-Encoding', 'gzip', 'Content-Length', String(compressed.length)]
+  first.sourceHandler.onResponseStart(first.controller, 200, {
+    'content-encoding': 'gzip',
+    'content-length': String(compressed.length)
+  }, 'OK')
+  first.sourceHandler.onResponseData(first.controller, compressed.subarray(0, split))
+
+  await firstData
+  assert.equal(first.state.paused, true)
+  assert.equal(first.state.pauseCalls, 1)
+
+  const connectionError = new Error('connection reset during encoded response')
+  connectionError.code = 'ECONNRESET'
+  first.sourceHandler.onResponseError(first.controller, connectionError)
+
+  assert.equal(attempts.length, 2)
+  const second = attempts[1]
+  assert.equal(second.opts.headers.range, `bytes=${split}-${compressed.length - 1}`)
+  assert.equal(second.state.paused, true)
+  assert.equal(second.state.pauseCalls, 1)
+
+  second.controller.rawHeaders = [
+    'Content-Encoding', 'gzip',
+    'Content-Range', `bytes ${split}-${compressed.length - 1}/${compressed.length}`,
+    'Content-Length', String(compressed.length - split)
+  ]
+  second.sourceHandler.onResponseStart(second.controller, 206, {
+    'content-encoding': 'gzip',
+    'content-range': `bytes ${split}-${compressed.length - 1}/${compressed.length}`,
+    'content-length': String(compressed.length - split)
+  }, 'Partial Content')
+
+  responseController.resume()
+  assert.equal(second.state.paused, false)
+  assert.equal(second.state.resumeCalls, 1)
+
+  second.sourceHandler.onResponseData(second.controller, compressed.subarray(split))
+  second.sourceHandler.onResponseEnd(second.controller, { retried: 'trailer' })
+  await terminal
+  assert.deepEqual(Buffer.concat(chunks), payload)
+})
+
+test('decompress abort while decoded output is paused errors exactly once', { timeout: 5000 }, async () => {
+  const payload = Buffer.alloc(512 * 1024, 0x64)
+  const compressed = gzipSync(payload)
+  const abortReason = new Error('abort paused decompression')
+  let responseController
+  let dataCalls = 0
+  let endCalls = 0
+  const errors = []
+  const errorControllers = []
+  let firstDataResolve
+  const firstData = new Promise(resolve => { firstDataResolve = resolve })
+  let errorResolve
+  const errored = new Promise(resolve => { errorResolve = resolve })
+  const handler = {
+    onRequestStart (controller) {
+      responseController = controller
+    },
+    onResponseStart () {},
+    onResponseData (controller) {
+      dataCalls++
+      if (dataCalls === 1) {
+        controller.pause()
+        firstDataResolve()
+      }
+    },
+    onResponseEnd () {
+      endCalls++
+    },
+    onResponseError (controller, error) {
+      errorControllers.push(controller)
+      errors.push(error)
+      errorResolve()
+    }
+  }
+
+  const { controller, sourceHandler } = createControlledDispatch(handler, undefined, { forwardAbort: false })
+  sourceHandler.onResponseStart(controller, 200, { 'content-encoding': 'gzip' }, 'OK')
+  sourceHandler.onResponseData(controller, compressed)
+  sourceHandler.onResponseEnd(controller, {})
+
+  await firstData
+  await immediate()
+  assert.equal(dataCalls, 1)
+  assert.equal(endCalls, 0)
+
+  responseController.abort(abortReason)
+  await errored
+  await immediate()
+  assert.equal(dataCalls, 1)
+  assert.equal(endCalls, 0)
+  assert.deepEqual(errors, [abortReason])
+  assert.deepEqual(errorControllers, [responseController])
+  assert.equal(responseController.aborted, true)
+  assert.strictEqual(responseController.reason, abortReason)
 })
 
 test('should handle multiple pause/resume cycles during decompression', async t => {
@@ -882,6 +1682,296 @@ test('should handle controller pause with chained decompression', async t => {
     method: 'GET',
     path: '/'
   }, handler)
+
+  await t.completed
+})
+
+test('should disable the decompressed size limit by default', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const decompressedSize = 64 * 1024 * 1024 + 1
+  const compressed = gzipSync(Buffer.alloc(decompressedSize, 0x61))
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  let received = 0
+  for await (const chunk of response.body) {
+    received += chunk.length
+  }
+
+  t.equal(received, decompressedSize)
+
+  await t.completed
+})
+
+test('should reject a response that exceeds maxSize after decompression', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const data = 'a'.repeat(1024 * 1024)
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: 1024 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  await t.rejects(response.body.text(), {
+    name: 'ResponseExceededMaxSizeError',
+    code: 'UND_ERR_RES_EXCEEDED_MAX_SIZE'
+  })
+
+  await t.completed
+})
+
+test('should enforce maxSize on intermediate output of a decompression chain', async t => {
+  t = tspl(t, { plan: 1 })
+
+  // The outer deflate layer expands to many concatenated empty gzip members.
+  // The final gunzip output is empty, so only an intermediate-stage limit
+  // catches the amplification.
+  const gzipMembers = Buffer.concat(Array(100).fill(gzipSync('')))
+  const compressed = deflateSync(gzipMembers)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip, deflate'
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: 1024 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  await t.rejects(response.body.text(), {
+    name: 'ResponseExceededMaxSizeError',
+    code: 'UND_ERR_RES_EXCEEDED_MAX_SIZE'
+  })
+
+  await t.completed
+})
+
+test('should enforce maxSize on the final output of a decompression chain', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const data = 'chained decompression limit'.repeat(100)
+  const compressed = deflateSync(gzipSync(data))
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip, deflate'
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: data.length - 1 }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  await t.rejects(response.body.text(), err => {
+    t.ok(err instanceof errors.ResponseExceededMaxSizeError)
+    return true
+  })
+
+  await t.completed
+})
+
+test('should apply maxSize independently to every decompression stage', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const data = Buffer.from(Array.from({ length: 1024 }, (_, index) => index % 251))
+  const intermediate = gzipSync(data)
+  const compressed = deflateSync(intermediate)
+  const maxSize = Math.max(data.length, intermediate.length)
+  t.ok(data.length + intermediate.length > maxSize)
+
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip, deflate'
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.deepStrictEqual(Buffer.from(await response.body.arrayBuffer()), data)
+
+  await t.completed
+})
+
+test('should work when composed after the retry interceptor', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const data = 'retry composition response'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose([
+    interceptors.retry(),
+    interceptors.decompress({ maxSize: Buffer.byteLength(data) })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
+
+test('should allow a decompressed response exactly equal to maxSize', async t => {
+  t = tspl(t, { plan: 1 })
+
+  const data = 'maximum size response'
+  const compressed = gzipSync(data)
+  const server = createServer({ joinDuplicateHeaders: true }, (_req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip'
+    })
+    res.end(compressed)
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(interceptors.decompress({ maxSize: Buffer.byteLength(data) }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
+
+test('should reject invalid maxSize values', async t => {
+  t = tspl(t, { plan: 5 })
+
+  const unlimitedDispatch = createDecompressInterceptor({ maxSize: 0 })(() => true)
+  t.doesNotThrow(() => unlimitedDispatch({ method: 'GET' }, {}))
+
+  for (const maxSize of [-1, 1.5, Infinity, '1024']) {
+    const dispatch = createDecompressInterceptor({ maxSize })(() => true)
+    t.throws(() => dispatch({ method: 'GET' }, {}), {
+      name: 'InvalidArgumentError',
+      code: 'UND_ERR_INVALID_ARG',
+      message: 'maxSize must be a non-negative integer'
+    })
+  }
 
   await t.completed
 })
@@ -1119,6 +2209,101 @@ test('should work with global dispatcher for both fetch() and request()', async 
   t.equal(requestResponse.headers['content-length'], undefined, 'request content-length header should be removed with global interceptor')
   t.equal(fetchResponse.headers.get('content-length'), undefined, 'content-length header should be removed with fetch due to global interceptor')
   t.equal(fetchResponse.headers.get('content-encoding'), undefined, 'content-encoding header should be removed with fetch due to global interceptor')
+
+  await t.completed
+})
+
+test('should decompress a response whose content-encoding arrives as repeated header lines', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const net = require('node:net')
+
+  const data = 'Repeated Content-Encoding field lines, joined per RFC 9110 section 5.3.'
+  const body = gzipSync(gzipSync(data))
+
+  const server = net.createServer(socket => {
+    socket.once('data', () => {
+      socket.write(
+        'HTTP/1.1 200 OK\r\n' +
+        'Content-Type: text/plain\r\n' +
+        'Content-Encoding: gzip\r\n' +
+        'Content-Encoding: gzip\r\n' +
+        `Content-Length: ${body.length}\r\n` +
+        'Connection: close\r\n' +
+        '\r\n'
+      )
+      socket.end(body)
+    })
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), data)
+
+  await t.completed
+})
+
+test('should pass through a compress-encoded response instead of inflating it', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const net = require('node:net')
+
+  // Content-Encoding: compress is the UNIX compress (LZW) format per RFC 9110
+  // section 8.4.1.1, not zlib, so this body is not inflatable.
+  const payload = Buffer.from('this body is not deflate data')
+
+  const server = net.createServer(socket => {
+    socket.once('data', () => {
+      socket.write(
+        'HTTP/1.1 200 OK\r\n' +
+        'Content-Type: text/plain\r\n' +
+        'Content-Encoding: compress\r\n' +
+        `Content-Length: ${payload.length}\r\n` +
+        'Connection: close\r\n' +
+        '\r\n'
+      )
+      socket.end(payload)
+    })
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(createDecompressInterceptor())
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/'
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(response.headers['content-encoding'], 'compress', 'the encoding is left on the response since nothing was decoded')
+  t.equal(await response.body.text(), payload.toString())
 
   await t.completed
 })

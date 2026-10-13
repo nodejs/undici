@@ -1,14 +1,16 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const assert = require('node:assert')
 const { test, after } = require('node:test')
 const diagnosticsChannel = require('node:diagnostics_channel')
-const { request, fetch, setGlobalDispatcher, getGlobalDispatcher } = require('..')
+const { request, fetch, Headers, setGlobalDispatcher, getGlobalDispatcher } = require('..')
 const { InvalidArgumentError, ConnectTimeoutError, SecureProxyConnectionError } = require('../lib/core/errors')
 const ProxyAgent = require('../lib/dispatcher/proxy-agent')
 const Pool = require('../lib/dispatcher/pool')
 const { createServer } = require('node:http')
 const https = require('node:https')
+const http2 = require('node:http2')
 const net = require('node:net')
 const { Socket } = require('node:net')
 const { createProxy } = require('proxy')
@@ -835,8 +837,94 @@ test('use proxy-agent with custom headers with tunneling enabled', async (t) => 
   proxyAgent.close()
 })
 
+for (const proxyTunnel of [false, true]) {
+  test(`use proxy-agent with a headers object reused across origins (proxyTunnel: ${proxyTunnel})`, async (t) => {
+    const serverA = await buildServer()
+    const serverB = await buildServer()
+    const proxy = await buildProxy()
+    const proxyAgent = new ProxyAgent({ uri: `http://localhost:${proxy.address().port}`, proxyTunnel })
+    t.after(() => {
+      serverA.close()
+      serverB.close()
+      proxy.close()
+      return proxyAgent.close()
+    })
+
+    const hosts = []
+    const onRequest = (req, res) => {
+      hosts.push(req.headers.host)
+      res.end()
+    }
+    serverA.on('request', onRequest)
+    serverB.on('request', onRequest)
+
+    const headers = { 'x-foo': 'bar' }
+    const hostA = `localhost:${serverA.address().port}`
+    const hostB = `localhost:${serverB.address().port}`
+
+    for (const host of [hostA, hostB]) {
+      const { body } = await request(`http://${host}/`, { dispatcher: proxyAgent, headers })
+      await body.dump()
+    }
+
+    assert.deepStrictEqual(hosts, [hostA, hostB])
+    assert.deepStrictEqual(headers, { 'x-foo': 'bar' })
+  })
+
+  test(`use proxy-agent with a Host header in any case (proxyTunnel: ${proxyTunnel})`, async (t) => {
+    const server = await buildServer()
+    const proxy = await buildProxy()
+    const proxyAgent = new ProxyAgent({ uri: `http://localhost:${proxy.address().port}`, proxyTunnel })
+    t.after(() => {
+      server.close()
+      proxy.close()
+      return proxyAgent.close()
+    })
+
+    const host = `localhost:${server.address().port}`
+    server.on('request', (req, res) => {
+      res.end(req.headers.host)
+    })
+
+    const { body } = await request(`http://${host}/`, {
+      dispatcher: proxyAgent,
+      headers: { HOST: 'custom.example' }
+    })
+
+    assert.strictEqual(await body.text(), 'custom.example')
+  })
+}
+
+test('use proxy-agent with repeated iterable headers', async (t) => {
+  t = tspl(t, { plan: 1 })
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `http://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent(proxyUrl)
+
+  server.on('request', (req, res) => {
+    t.strictEqual(req.headers['x-duplicate'], 'first, second')
+    res.end()
+  })
+
+  const headers = {
+    * [Symbol.iterator] () {
+      yield ['x-duplicate', 'first']
+      yield ['x-duplicate', 'second']
+    }
+  }
+
+  await request(serverUrl, { dispatcher: proxyAgent, headers })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 test('sending proxy-authorization in request headers should throw', async (t) => {
-  t = tspl(t, { plan: 3 })
+  t = tspl(t, { plan: 5 })
   const server = await buildServer()
   const proxy = await buildProxy()
 
@@ -887,6 +975,29 @@ test('sending proxy-authorization in request headers should throw', async (t) =>
     'Proxy-Authorization should be sent in ProxyAgent'
   )
 
+  // Iterable containers (Map/Headers) must not bypass the guard (GHSA-6cv7-626c-qhqw)
+  await t.rejects(
+    request(
+      serverUrl + '/hello?foo=bar',
+      {
+        dispatcher: proxyAgent,
+        headers: new Map([['proxy-authorization', Buffer.from('user:pass').toString('base64')]])
+      }
+    ),
+    'Proxy-Authorization should be sent in ProxyAgent'
+  )
+
+  await t.rejects(
+    request(
+      serverUrl + '/hello?foo=bar',
+      {
+        dispatcher: proxyAgent,
+        headers: new Headers({ 'proxy-authorization': Buffer.from('user:pass').toString('base64') })
+      }
+    ),
+    'Proxy-Authorization should be sent in ProxyAgent'
+  )
+
   server.close()
   proxy.close()
   proxyAgent.close()
@@ -901,7 +1012,7 @@ test('use proxy-agent with setGlobalDispatcher', async (t) => {
 
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   const parsedOrigin = new URL(serverUrl)
   setGlobalDispatcher(proxyAgent)
 
@@ -985,7 +1096,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
   const serverUrl = `http://localhost:${server.address().port}`
   const proxyUrl = `http://localhost:${proxy.address().port}`
 
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   setGlobalDispatcher(proxyAgent)
 
   after(() => setGlobalDispatcher(defaultDispatcher))
@@ -1095,7 +1206,7 @@ test('should throw when proxy does not return 200', async (t) => {
     return false
   }
 
-  const proxyAgent = new ProxyAgent({ uri: proxyUrl, proxyTunnel: false })
+  const proxyAgent = new ProxyAgent({ uri: proxyUrl })
   try {
     await request(serverUrl, { dispatcher: proxyAgent })
     t.fail()
@@ -1269,6 +1380,96 @@ test('Proxy via HTTPS to HTTPS endpoint', async (t) => {
   })
 
   server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('Proxy via HTTPS to HTTP endpoint forwards without tunneling by default', async (t) => {
+  t = tspl(t, { plan: 4 })
+  const server = await buildServer()
+  const proxy = await buildSSLProxy()
+
+  const serverUrl = `http://localhost:${server.address().port}`
+  const proxyUrl = `https://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    proxyTls: {
+      ca: [
+        certs.root.crt
+      ],
+      servername: 'proxy'
+    }
+  })
+
+  server.on('request', function (req, res) {
+    t.ok(!req.connection.encrypted)
+    const headers = { host: req.headers.host, connection: req.headers.connection }
+    res.end(JSON.stringify(headers))
+  })
+
+  server.on('secureConnection', () => {
+    t.fail('server is http')
+  })
+
+  proxy.on('secureConnection', () => {
+    t.ok(true, 'TLS handshake to the proxy must still happen')
+  })
+
+  proxy.on('connect', () => {
+    t.fail('should not tunnel plain HTTP through an HTTPS proxy by default')
+  })
+
+  proxy.on('request', function (req) {
+    const bits = { method: req.method, url: req.url }
+    t.deepStrictEqual(bits, {
+      method: 'GET',
+      url: `${serverUrl}/`
+    })
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  const json = await data.body.json()
+  t.deepStrictEqual(json, {
+    host: `localhost:${server.address().port}`,
+    connection: 'keep-alive'
+  })
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
+test('Proxy via HTTPS to HTTP endpoint uses HTTP/1.1 when proxy also supports HTTP/2', async (t) => {
+  t = tspl(t, { plan: 4 })
+  const proxy = await buildH2CapableSSLProxy()
+
+  const serverUrl = 'http://example.com/'
+  const proxyUrl = `https://localhost:${proxy.address().port}`
+  const proxyAgent = new ProxyAgent({
+    uri: proxyUrl,
+    proxyTls: {
+      ca: [
+        certs.root.crt
+      ],
+      servername: 'proxy'
+    }
+  })
+
+  proxy.on('stream', (stream) => {
+    t.fail('non-tunneled HTTP forwarding must not negotiate HTTP/2')
+    stream.close()
+  })
+
+  proxy.on('request', function (req, res) {
+    t.strictEqual(req.httpVersion, '1.1')
+    t.strictEqual(req.method, 'GET')
+    t.strictEqual(req.url, serverUrl)
+    res.end('ok')
+  })
+
+  const data = await request(serverUrl, { dispatcher: proxyAgent })
+  t.strictEqual(await data.body.text(), 'ok')
+
   proxy.close()
   proxyAgent.close()
 })
@@ -1574,6 +1775,23 @@ function buildSSLProxy () {
 
   return new Promise((resolve) => {
     const server = createProxy(https.createServer(serverOptions))
+    server.listen(0, () => resolve(server))
+  })
+}
+
+function buildH2CapableSSLProxy () {
+  const serverOptions = {
+    ca: [
+      certs.root.crt
+    ],
+    key: certs.proxy.key,
+    cert: certs.proxy.crt,
+    allowHTTP1: true,
+    joinDuplicateHeaders: true
+  }
+
+  return new Promise((resolve) => {
+    const server = http2.createSecureServer(serverOptions)
     server.listen(0, () => resolve(server))
   })
 }

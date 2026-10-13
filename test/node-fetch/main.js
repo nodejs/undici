@@ -1504,8 +1504,7 @@ describe('node-fetch', () => {
     ).not.to.timeout
   })
 
-  // TODO: fix test.
-  it.skip('should allow get all responses of a header', () => {
+  it('should allow get all responses of a header', () => {
     const url = `${base}cookie`
     return fetch(url).then(res => {
       const expected = 'a=1, b=1'

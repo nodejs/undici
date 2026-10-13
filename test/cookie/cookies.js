@@ -59,6 +59,24 @@ test('Cookie parser', () => {
   })
 })
 
+test('Cookie parser keeps a cookie named __proto__', () => {
+  const headers = new Headers()
+  headers.set('Cookie', '__proto__=foo; bar=baz')
+
+  const cookies = getCookies(headers)
+
+  assert.deepStrictEqual(Object.keys(cookies).sort(), ['__proto__', 'bar'])
+  assert.strictEqual(
+    Object.getOwnPropertyDescriptor(cookies, '__proto__').value,
+    'foo'
+  )
+  assert.strictEqual(cookies.bar, 'baz')
+
+  for (const value of Object.values(cookies)) {
+    assert.strictEqual(typeof value, 'string')
+  }
+})
+
 test('Cookie Name Validation', () => {
   const tokens = [
     '"id"',
@@ -172,6 +190,22 @@ test('Cookie Domain Validation', () => {
       'Invalid first/last char in cookie domain: ' + domain
     )
   })
+})
+
+test('Cookie Unparsed Validation', () => {
+  const parts = [
+    'X-Custom=val; HttpOnly',
+    'Purpose=tracking; SameSite=None; Secure',
+    'HttpOnly; X-Custom=val'
+  ]
+
+  for (const part of parts) {
+    assert.throws(() => setCookie(new Headers(), {
+      name: 'Space',
+      value: 'Cat',
+      unparsed: [part]
+    }))
+  }
 })
 
 test('Cookie Delete', () => {
@@ -363,6 +397,68 @@ test('Cookie Set', () => {
     'Space=Cat; Expires=Fri, 07 Jan 1983 15:32:00 GMT'
   )
 
+  // A numeric 0 is the Unix epoch, the canonical "expire now" value, not an
+  // absent option.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: 0
+  })
+  assert.equal(
+    headers.get('Set-Cookie'),
+    'Space=Cat; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  )
+
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: null
+  })
+  assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+
+  // A numeric expires outside the range representable by Date must not be
+  // serialized. Before this was guarded, the numeric form skipped the
+  // "Invalid Date" check and toIMFDate spliced undefined/NaN into the header.
+  for (const expires of [8640000000000001, 1e16, Number.MAX_SAFE_INTEGER]) {
+    headers = new Headers()
+    setCookie(headers, { name: 'Space', value: 'Cat', expires })
+    assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+  }
+
+  // The maximum representable time value is still serialized.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: 8640000000000000
+  })
+  assert.equal(
+    headers.get('Set-Cookie'),
+    'Space=Cat; Expires=Sat, 13 Sep 275760 00:00:00 GMT'
+  )
+
+  // A non-finite number is coerced to 0 by the WebIDL converter before it
+  // reaches serialization, so it still serializes as the epoch.
+  for (const expires of [Infinity, -Infinity, NaN]) {
+    headers = new Headers()
+    setCookie(headers, { name: 'Space', value: 'Cat', expires })
+    assert.equal(
+      headers.get('Set-Cookie'),
+      'Space=Cat; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    )
+  }
+
+  // An invalid Date is ignored, consistent with the out-of-range numeric cases.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: new Date(NaN)
+  })
+  assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+
   headers = new Headers()
   setCookie(headers, { name: '__Secure-Kitty', value: 'Meow' })
   assert.equal(headers.get('Set-Cookie'), '__Secure-Kitty=Meow; Secure')
@@ -449,8 +545,21 @@ test('Set-Cookie parser', () => {
     name: 'Space',
     value: 'Cat',
     secure: true,
-    httpOnly: true
+    httpOnly: true,
+    maxAge: -1
   }])
+
+  for (const maxAge of ['-', '--1', '-1a', '+1', '']) {
+    headers = new Headers({
+      'set-cookie': `Space=Cat; Secure; HttpOnly; Max-Age=${maxAge}`
+    })
+    assert.deepEqual(getSetCookies(headers), [{
+      name: 'Space',
+      value: 'Cat',
+      secure: true,
+      httpOnly: true
+    }])
+  }
 
   headers = new Headers({
     'set-cookie': 'Space=Cat; Secure; HttpOnly; Max-Age=2; Domain=deno.land'
@@ -601,6 +710,21 @@ test('Set-Cookie parser', () => {
   assert.deepEqual(getSetCookies(headers), [])
 })
 
+test('Set-Cookie parser does not recurse unboundedly on many empty attributes', () => {
+  // Regression test for GHSA-pf6r-83r6-f2x8: a header of the form
+  // `a=b;;;;...` previously recursed once per attribute and overflowed
+  // the stack. It must now parse iteratively without throwing.
+  const headers = new Headers()
+  headers.append('set-cookie', 'a=b' + ';'.repeat(5000))
+
+  const cookies = getSetCookies(headers)
+  assert.strictEqual(cookies.length, 1)
+  assert.strictEqual(cookies[0].name, 'a')
+  assert.strictEqual(cookies[0].value, 'b')
+  assert.strictEqual(cookies[0].unparsed.length, 5000)
+  assert.ok(cookies[0].unparsed.every((entry) => entry === '='))
+})
+
 test('Set-Cookie parser does not percent-decode cookie values', () => {
   assert.deepEqual(
     parseCookie(
@@ -744,4 +868,12 @@ test('Cookie deleteCookie does not throw if headers is an instance of undici own
 test('Cookie getCookie does not throw if headers is an instance of the global Headers class', { skip: !globalThis.Headers }, () => {
   const headers = new globalThis.Headers()
   deleteCookie(headers, 'deno')
+})
+
+test('Set-Cookie parser ignores an unparseable Expires', () => {
+  const headers = new Headers({ 'set-cookie': 'id=a3fWa; Expires=not-a-date' })
+  assert.deepEqual(getSetCookies(headers), [{
+    name: 'id',
+    value: 'a3fWa'
+  }])
 })

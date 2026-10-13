@@ -3,6 +3,8 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
+const assert = require('node:assert/strict')
+const { setImmediate: waitImmediate } = require('node:timers/promises')
 const { Client } = require('..')
 const { kConnect } = require('../lib/core/symbols')
 const { createServer } = require('node:net')
@@ -430,4 +432,61 @@ test('Disable keep alive', async (t) => {
     }).resume()
   })
   await t.completed
+})
+
+test('HEAD connection tokens preserve reuse and respect close', { timeout: 10000 }, async (t) => {
+  const useMilo = ['1', 'true'].includes(process.env.UNDICI_USE_MILO)
+  for (const [name, fields, expectedConnections] of [
+    ['repeated fragmented keep-alive', ['x-token', 'keep-alive'], 1],
+    ['keep-alive before another field', ['keep-alive', 'x-token'], 1],
+    ['comma-separated tokens and whitespace', ['x-token, \tKEEP-ALIVE\t '], 1],
+    ['close before keep-alive', ['close', 'keep-alive'], 2],
+    ['close after keep-alive', ['keep-alive', 'close'], 2],
+    ['close in a comma-separated list', ['keep-alive, CLOSE'], 2],
+    ['a longer token does not match', ['x-keep-alive'], 2]
+  ]) {
+    await t.test(name, async (t) => {
+      let connections = 0
+      const server = createServer(socket => {
+        connections++
+        let pending = ''
+        let responses = Promise.resolve()
+        socket.on('data', chunk => {
+          pending += chunk.toString()
+          while (pending.includes('\r\n\r\n')) {
+            pending = pending.slice(pending.indexOf('\r\n\r\n') + 4)
+            responses = responses.then(async () => {
+              const response = 'HTTP/1.1 200 OK\r\n' +
+                (useMilo ? 'Content-Length: 0\r\n' : '') +
+                fields.map(value => `Connection: ${value}\r\n`).join('') + '\r\n'
+              if (useMilo) {
+                socket.write(response)
+                return
+              }
+              // Split the final field value so token parsing also covers fragments.
+              const split = response.length - 7
+              socket.write(response.slice(0, split))
+              await waitImmediate()
+              socket.write(response.slice(split))
+            })
+          }
+        })
+      })
+      t.after(() => server.close())
+      server.listen(0)
+      await once(server, 'listening')
+      const client = new Client(`http://localhost:${server.address().port}`, { useMilo })
+      t.after(() => client.destroy())
+      for (let i = 0; i < 2; i++) {
+        const response = await client.request({ path: '/', method: 'HEAD', reset: false })
+        await response.body.dump()
+      }
+      // A framed HTTP/1.1 response stays persistent without any keep-alive token.
+      const expected = ['1', 'true'].includes(process.env.UNDICI_USE_MILO) &&
+        name === 'a longer token does not match'
+        ? 1
+        : expectedConnections
+      assert.equal(connections, expected)
+    })
+  }
 })

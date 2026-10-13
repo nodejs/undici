@@ -4,7 +4,10 @@ const { describe, test } = require('node:test')
 const assert = require('node:assert/strict')
 const { BalancedPool, Pool, Client, errors } = require('../..')
 const { EventEmitter } = require('node:events')
+const fs = require('node:fs')
 const { createServer } = require('node:http')
+const https = require('node:https')
+const path = require('node:path')
 const { promisify } = require('node:util')
 const { tspl } = require('@matteo.collina/tspl')
 const { kUrl } = require('../../lib/core/symbols')
@@ -351,6 +354,50 @@ test('getUpstream returns undefined for closed/destroyed upstream', (t) => {
   p.strictEqual(result, undefined)
 })
 
+function getErrorPort (err) {
+  if (err?.socket?.remotePort !== undefined) {
+    return err.socket.remotePort
+  }
+
+  if (err?.port !== undefined) {
+    return err.port
+  }
+
+  // The upstreams below are built on `localhost`, which resolves to both ::1 and
+  // 127.0.0.1, so a connection failure arrives as an AggregateError from the
+  // happy eyeballs attempt. The port is only on the individual causes.
+  if (Array.isArray(err?.errors)) {
+    for (const cause of err.errors) {
+      const port = getErrorPort(cause)
+      if (port !== undefined) {
+        return port
+      }
+    }
+  }
+
+  return undefined
+}
+
+test('getErrorPort resolves the port of an aggregated connection error', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  // Nothing listens on port 1. Because the upstream is `localhost`, both ::1 and
+  // 127.0.0.1 are attempted and the refusals arrive wrapped in an AggregateError
+  // that carries no port of its own.
+  const pool = new BalancedPool('http://localhost:1')
+  t.after(() => pool.close())
+
+  try {
+    await pool.request({ path: '/', method: 'GET' })
+    p.fail('request should have been refused')
+  } catch (err) {
+    p.strictEqual(err.code, 'ECONNREFUSED')
+    p.strictEqual(getErrorPort(err), 1)
+  }
+
+  await p.completed
+})
+
 class TestServer {
   constructor ({ config: { server, socketHangup, downOnRequests, socketHangupOnRequests }, onRequest }) {
     this.config = {
@@ -604,15 +651,21 @@ describe('weighted round robin', () => {
         try {
           await client.request({ path: '/', method: 'GET' })
         } catch (e) {
-          const serverWithError =
-          servers.find(server => server.port === e.port) ||
-          servers.find(server => {
-            if (typeof AggregateError === 'function' && e instanceof AggregateError) {
-              return e.errors.some(e => server.port === (e.socket?.remotePort ?? e.port))
+          const serverWithError = servers.find(server => {
+            if (server.port === getErrorPort(e)) {
+              return true
             }
 
-            return server.port === e.socket.remotePort
+            if (typeof AggregateError === 'function' && e instanceof AggregateError) {
+              return e.errors.some(err => server.port === getErrorPort(err))
+            }
+
+            return false
           })
+
+          if (serverWithError === undefined) {
+            throw e
+          }
 
           serverWithError.requestsCount++
 
@@ -653,6 +706,61 @@ describe('weighted round robin', () => {
       await client.close()
     })
   }
+})
+
+test('forwards TLS certificate validation callbacks', async (t) => {
+  const server = https.createServer({
+    key: fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'cert.pem'))
+  }, (req, res) => {
+    res.end('ok')
+  })
+  t.after(server.close.bind(server))
+  await promisify(server.listen).call(server, 0)
+
+  const expectedError = new Error('rejected by custom checkServerIdentity')
+  let identityChecks = 0
+  const pool = new BalancedPool(`https://localhost:${server.address().port}`, {
+    connect: {
+      ca: fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'ca.pem'), 'utf8'),
+      servername: 'agent1',
+      checkServerIdentity () {
+        identityChecks++
+        return expectedError
+      }
+    }
+  })
+  t.after(() => pool.close())
+
+  await assert.rejects(
+    pool.request({ path: '/', method: 'GET' }),
+    /rejected by custom checkServerIdentity/
+  )
+  assert.strictEqual(identityChecks, 1)
+})
+
+test('copies connect and tls options before storing them', (t) => {
+  const connect = { timeout: 100 }
+  const tls = { servername: 'agent1' }
+  let capturedOptions
+  const pool = new BalancedPool([], {
+    connect,
+    tls,
+    factory (origin, options) {
+      capturedOptions = options
+      return new Pool(origin, options)
+    }
+  })
+  t.after(() => pool.close())
+
+  connect.timeout = 200
+  tls.servername = 'agent2'
+  pool.addUpstream('https://localhost:3000')
+
+  assert.notStrictEqual(capturedOptions.connect, connect)
+  assert.notStrictEqual(capturedOptions.tls, tls)
+  assert.deepStrictEqual(capturedOptions.connect, { timeout: 100 })
+  assert.deepStrictEqual(capturedOptions.tls, { servername: 'agent1' })
 })
 
 test('should not be vulnerable to __proto__ pollution via options', async (t) => {

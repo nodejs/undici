@@ -1,7 +1,7 @@
 import { URL } from 'node:url'
 import { expectType, expectAssignable } from 'tsd'
 
-import { EventSource, EventSourceInit, Dispatcher } from '../../'
+import { Agent, EventSource, EventSourceInit, Dispatcher } from '../../'
 
 declare const eventSource: EventSource
 declare const agent: Dispatcher
@@ -21,3 +21,5 @@ expectType<EventSource>(new EventSource('https://example.com', {
 expectAssignable<EventSourceInit>({ dispatcher: agent })
 expectAssignable<EventSourceInit>({ withCredentials: true })
 expectAssignable<EventSourceInit>({})
+
+expectType<Agent>(new Agent({ eventSource: { maxEventSize: 1024 } }))

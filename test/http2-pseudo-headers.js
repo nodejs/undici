@@ -44,6 +44,12 @@ test('Should provide pseudo-headers in proper order', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     path: '/',
     method: 'GET'
@@ -78,6 +84,12 @@ test('The h2 pseudo-headers is not included in the headers', async t => {
     allowH2: true
   })
   after(() => client.close())
+
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
 
   const response = await client.request({
     path: '/',

@@ -4,6 +4,8 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after, beforeEach } = require('node:test')
 const { EnvHttpProxyAgent, ProxyAgent, Agent, fetch, MockAgent } = require('..')
 const { kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent, kClosed, kDestroyed, kProxy } = require('../lib/core/symbols')
+const { createServer } = require('node:http')
+const { createProxy } = require('proxy')
 
 const env = { ...process.env }
 
@@ -158,6 +160,54 @@ test('destroys all agents', async (t) => {
   t.ok(dispatcher[kHttpsProxyAgent][kDestroyed])
 })
 
+test('defaults to non-tunneled HTTP proxying for HTTP endpoints - #5093', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = await buildServer()
+  const proxy = await buildProxy()
+
+  process.env.http_proxy = `http://localhost:${proxy.address().port}`
+
+  const dispatcher = new EnvHttpProxyAgent()
+  const serverUrl = `http://localhost:${server.address().port}`
+
+  try {
+    proxy.on('connect', () => {
+      t.fail('should not tunnel plain HTTP over an HTTP proxy by default')
+    })
+
+    proxy.on('request', (req) => {
+      t.strictEqual(req.url, `${serverUrl}/`)
+    })
+
+    server.on('request', (req, res) => {
+      t.strictEqual(req.url, '/')
+      res.end('ok')
+    })
+
+    const response = await fetch(serverUrl, { dispatcher })
+    t.strictEqual(await response.text(), 'ok')
+  } finally {
+    await new Promise((resolve) => proxy.close(resolve))
+    await new Promise((resolve) => server.close(resolve))
+    await dispatcher.close()
+  }
+})
+
+function buildServer () {
+  return new Promise((resolve) => {
+    const server = createServer({ joinDuplicateHeaders: true })
+    server.listen(0, () => resolve(server))
+  })
+}
+
+function buildProxy () {
+  return new Promise((resolve) => {
+    const server = createProxy(createServer({ joinDuplicateHeaders: true }))
+    server.listen(0, () => resolve(server))
+  })
+}
+
 const createEnvHttpProxyAgentWithMocks = (plan = 1, opts = {}) => {
   const factory = (origin) => {
     const mockAgent = new MockAgent()
@@ -171,7 +221,7 @@ const createEnvHttpProxyAgentWithMocks = (plan = 1, opts = {}) => {
   }
   process.env.http_proxy = 'http://localhost:8080'
   process.env.https_proxy = 'http://localhost:8443'
-  const dispatcher = new EnvHttpProxyAgent({ ...opts, factory })
+  const dispatcher = new EnvHttpProxyAgent({ proxyTunnel: true, ...opts, factory })
   const agentSymbols = [kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent]
   agentSymbols.forEach((agentSymbol) => {
     const originalDispatch = dispatcher[agentSymbol].dispatch
@@ -212,6 +262,24 @@ describe('no_proxy', () => {
   test('set to *', async (t) => {
     t = tspl(t, { plan: 2 })
     process.env.no_proxy = '*'
+    const { dispatcher, doesNotProxy } = createEnvHttpProxyAgentWithMocks(2)
+    t.ok(await doesNotProxy('https://example.com'))
+    t.ok(await doesNotProxy('http://example.com'))
+    return dispatcher.close()
+  })
+
+  test('wildcard * with surrounding whitespace matches all hosts', async (t) => {
+    t = tspl(t, { plan: 2 })
+    process.env.no_proxy = ' * '
+    const { dispatcher, doesNotProxy } = createEnvHttpProxyAgentWithMocks(2)
+    t.ok(await doesNotProxy('https://example.com'))
+    t.ok(await doesNotProxy('http://example.com'))
+    return dispatcher.close()
+  })
+
+  test('wildcard * among other entries matches all hosts', async (t) => {
+    t = tspl(t, { plan: 2 })
+    process.env.no_proxy = 'none.invalid,*'
     const { dispatcher, doesNotProxy } = createEnvHttpProxyAgentWithMocks(2)
     t.ok(await doesNotProxy('https://example.com'))
     t.ok(await doesNotProxy('http://example.com'))
@@ -332,19 +400,39 @@ describe('no_proxy', () => {
     return dispatcher.close()
   })
 
-  test('host suffix with *. - leading dot with asterisk stripped', async (t) => {
+  test('host suffix with *. - subdomain wildcard does NOT match the apex', async (t) => {
+    // `*.example` is a subdomain wildcard: it must bypass the proxy for
+    // `sub.example` and `a.b.example`, but NOT for the apex `example` itself.
+    // This matches node:http and the usual `*.domain` convention.
     t = tspl(t, { plan: 9 })
     process.env.no_proxy = '*.example'
     const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(9)
-    t.ok(await doesNotProxy('http://example'))
-    t.ok(await doesNotProxy('http://example:80'))
-    t.ok(await doesNotProxy('http://example:1337'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example:80'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example:1337'))
     t.ok(await doesNotProxy('http://sub.example'))
     t.ok(await doesNotProxy('http://sub.example:80'))
     t.ok(await doesNotProxy('http://sub.example:1337'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://prefexample'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://example.no'))
     t.ok(await doesNotProxy('http://a.b.example'))
+    return dispatcher.close()
+  })
+
+  test('trailing dot is ignored on both sides', async (t) => {
+    // `example.com.` is the fully qualified form of `example.com` (the RFC 1034
+    // root label). curl ignores a trailing dot on the request host and on the
+    // no_proxy entry alike (lib/proxy.c).
+    t = tspl(t, { plan: 7 })
+    process.env.no_proxy = 'example.com,other.com.'
+    const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(7)
+    t.ok(await doesNotProxy('http://example.com./'))
+    t.ok(await doesNotProxy('https://example.com./'))
+    t.ok(await doesNotProxy('http://example.com.:1337/'))
+    t.ok(await doesNotProxy('http://sub.example.com./'))
+    t.ok(await doesNotProxy('http://other.com/'))
+    t.ok(await doesNotProxy('http://other.com./'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://notexample.com./'))
     return dispatcher.close()
   })
 
@@ -390,6 +478,27 @@ describe('no_proxy', () => {
     t.ok(await doesNotProxy('http://10.0.0.2/'))
     t.ok(await doesNotProxy('http://10.0.0.2:80/'))
     t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://10.0.0.2:1337/'))
+    return dispatcher.close()
+  })
+
+  test('bare IPv6 addresses in no_proxy are matched (issue #5616)', async (t) => {
+    // A bare IPv6 address like ::1 is valid in no_proxy (curl and most tools
+    // accept it), but the old regex confused the last colon as a port separator.
+    t = tspl(t, { plan: 8 })
+    process.env.no_proxy = '::1,[::2]:80,::3'
+    const { dispatcher, doesNotProxy, usesProxyAgent } = createEnvHttpProxyAgentWithMocks(8)
+    // ::1 without brackets – must be matched
+    t.ok(await doesNotProxy('http://[::1]/'))
+    t.ok(await doesNotProxy('http://[::1]:80/'))
+    t.ok(await doesNotProxy('http://[::1]:1337/'))
+    // [::2]:80 – only port 80 bypasses proxy
+    t.ok(await doesNotProxy('http://[::2]:80/'))
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://[::2]:1337/'))
+    // ::3 without brackets – must be matched
+    t.ok(await doesNotProxy('http://[::3]/'))
+    t.ok(await doesNotProxy('http://[::3]:443/'))
+    // unrelated address must still proxy
+    t.ok(await usesProxyAgent(kHttpProxyAgent, 'http://[::4]/'))
     return dispatcher.close()
   })
 

@@ -2,13 +2,65 @@
 
 const net = require('node:net')
 const https = require('node:https')
+const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { request, ProxyAgent } = require('..')
-const { InvalidArgumentError } = require('../lib/core/errors')
+const { ConnectTimeoutError, InvalidArgumentError } = require('../lib/core/errors')
 const Socks5ProxyAgent = require('../lib/dispatcher/socks5-proxy-agent')
 const { createServer } = require('node:http')
 const { TestSocks5Server } = require('./fixtures/socks5-test-server')
+
+function getPools (agent) {
+  const poolsSymbol = Object.getOwnPropertySymbols(agent).find(symbol => symbol.description === 'pools')
+  return agent[poolsSymbol]
+}
+
+async function createStalledSocks5Proxy ({ stallOnConnect = false } = {}) {
+  const sockets = new Set()
+  const server = net.createServer((socket) => {
+    sockets.add(socket)
+    socket.once('close', () => sockets.delete(socket))
+    socket.on('error', () => {})
+
+    let state = 'handshake'
+    let buffer = Buffer.alloc(0)
+    socket.on('data', (data) => {
+      buffer = Buffer.concat([buffer, data])
+
+      if (state === 'handshake') {
+        if (buffer.length < 2 || buffer.length < 2 + buffer[1]) {
+          return
+        }
+        buffer = buffer.subarray(2 + buffer[1])
+        socket.write(Buffer.from([0x05, 0x00]))
+        state = 'connect'
+      } else if (state === 'connect') {
+        if (buffer.length < 5) {
+          return
+        }
+
+        const addressLength = buffer[3] === 0x01
+          ? 4
+          : buffer[3] === 0x04
+            ? 16
+            : 1 + buffer[4]
+        const messageLength = 4 + addressLength + 2
+        if (buffer.length < messageLength) {
+          return
+        }
+
+        buffer = buffer.subarray(messageLength)
+        if (!stallOnConnect) {
+          socket.write(Buffer.from([0x05, 0x00, 0x00, 0x01, 0, 0, 0, 0, 0, 0]))
+        }
+        state = 'connected'
+      }
+    })
+  })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  return { server, sockets }
+}
 
 const tlsCerts = (() => {
   const forge = require('node-forge')
@@ -70,6 +122,35 @@ test('Socks5ProxyAgent - constructor validation', async (t) => {
     // eslint-disable-next-line no-new
     new Socks5ProxyAgent('socks://localhost:1080')
   }, 'should accept socks:// URLs for compatibility')
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - timeout validation', async (t) => {
+  const p = tspl(t, { plan: 8 })
+
+  for (const connectTimeout of [-1, Infinity, '100']) {
+    p.throws(() => {
+      // eslint-disable-next-line no-new
+      new Socks5ProxyAgent('socks5://localhost:1080', { connectTimeout })
+    }, InvalidArgumentError)
+  }
+
+  for (const timeout of [-1, Infinity]) {
+    p.throws(() => {
+      // eslint-disable-next-line no-new
+      new Socks5ProxyAgent('socks5://localhost:1080', { requestTls: { timeout } })
+    }, InvalidArgumentError)
+    p.throws(() => {
+      // eslint-disable-next-line no-new
+      new Socks5ProxyAgent('socks5://localhost:1080', { proxyTls: { timeout } })
+    }, InvalidArgumentError)
+  }
+
+  p.doesNotThrow(() => {
+    // eslint-disable-next-line no-new
+    new Socks5ProxyAgent('socks5://localhost:1080', { connectTimeout: 0 })
+  })
 
   await p.completed
 })
@@ -186,9 +267,137 @@ test('Socks5ProxyAgent - basic HTTP connection', async (t) => {
   await p.completed
 })
 
+test('Socks5ProxyAgent - removes an origin pool after disconnect', async (t) => {
+  const p = tspl(t, { plan: 2 })
+  const server = createServer((req, res) => {
+    res.setHeader('connection', 'close')
+    res.end('OK')
+  })
+  const targetSocketClosed = new Promise((resolve) => {
+    server.once('connection', (socket) => socket.once('close', resolve))
+  })
+  await new Promise(resolve => server.listen(0, resolve))
+  t.after(() => server.close())
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen()
+  t.after(() => socksServer.close())
+
+  const proxyWrapper = new Socks5ProxyAgent(`socks5://localhost:${socksAddress.port}`)
+  t.after(() => proxyWrapper.destroy())
+
+  const responsePromise = request(`http://localhost:${server.address().port}/`, {
+    dispatcher: proxyWrapper
+  })
+  const pool = getPools(proxyWrapper).values().next().value
+  const disconnected = once(pool, 'disconnect')
+  const response = await responsePromise
+  p.equal(await response.body.text(), 'OK')
+
+  await targetSocketClosed
+  await disconnected
+  p.strictEqual(getPools(proxyWrapper).size, 0, 'should remove the disconnected origin pool')
+
+  await p.completed
+})
+
 test.skip('Socks5ProxyAgent - HTTPS connection', async (t) => {
   // Skip HTTPS test for now - TLS option passing needs additional work
   t.skip('HTTPS test requires TLS option refinement')
+})
+
+test('Socks5ProxyAgent - times out a stalled TLS upgrade', { timeout: 3000 }, async (t) => {
+  const p = tspl(t, { plan: 4 })
+  const { server: stalledProxy, sockets: proxySockets } = await createStalledSocks5Proxy()
+
+  let connectorSocket
+  const agent = new Socks5ProxyAgent(`socks5://127.0.0.1:${stalledProxy.address().port}`, {
+    connectTimeout: 100,
+    connect (opts, callback) {
+      const socket = net.connect({ host: opts.hostname, port: opts.port })
+      connectorSocket = socket
+      socket.once('connect', () => callback(null, socket))
+      socket.once('error', callback)
+      return socket
+    }
+  })
+
+  t.after(async () => {
+    await agent.destroy()
+    for (const socket of proxySockets) {
+      socket.destroy()
+    }
+    await new Promise(resolve => stalledProxy.close(resolve))
+  })
+
+  try {
+    await request('https://example.invalid/', { dispatcher: agent })
+    p.fail('should have thrown an error')
+  } catch (err) {
+    p.ok(err instanceof ConnectTimeoutError)
+    p.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+  }
+
+  p.ok(connectorSocket.destroyed, 'timed out TLS upgrade should destroy the tunnel socket')
+  p.strictEqual(getPools(agent).size, 0, 'failed TLS upgrade should remove the origin pool')
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - times out a stalled CONNECT response', { timeout: 3000 }, async (t) => {
+  const p = tspl(t, { plan: 3 })
+  const { server: stalledProxy, sockets: proxySockets } = await createStalledSocks5Proxy({
+    stallOnConnect: true
+  })
+  const agent = new Socks5ProxyAgent(`socks5://127.0.0.1:${stalledProxy.address().port}`, {
+    connectTimeout: 100
+  })
+
+  t.after(async () => {
+    await agent.destroy()
+    for (const socket of proxySockets) {
+      socket.destroy()
+    }
+    await new Promise(resolve => stalledProxy.close(resolve))
+  })
+
+  try {
+    await request('http://example.invalid/', { dispatcher: agent })
+    p.fail('should have thrown an error')
+  } catch (err) {
+    p.ok(err instanceof ConnectTimeoutError)
+    p.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+  }
+
+  p.strictEqual(getPools(agent).size, 0, 'failed CONNECT should remove the origin pool')
+  await p.completed
+})
+
+test('ProxyAgent forwards connectTimeout to SOCKS5 TLS upgrades', { timeout: 3000 }, async (t) => {
+  const p = tspl(t, { plan: 2 })
+  const { server: stalledProxy, sockets: proxySockets } = await createStalledSocks5Proxy()
+  const agent = new ProxyAgent({
+    uri: `socks5://127.0.0.1:${stalledProxy.address().port}`,
+    connectTimeout: 100
+  })
+
+  t.after(async () => {
+    await agent.destroy()
+    for (const socket of proxySockets) {
+      socket.destroy()
+    }
+    await new Promise(resolve => stalledProxy.close(resolve))
+  })
+
+  try {
+    await request('https://example.invalid/', { dispatcher: agent })
+    p.fail('should have thrown an error')
+  } catch (err) {
+    p.ok(err instanceof ConnectTimeoutError)
+    p.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+  }
+
+  await p.completed
 })
 
 test('Socks5ProxyAgent - with authentication', async (t) => {
@@ -369,7 +578,7 @@ test('Socks5ProxyAgent - requests to different origins are routed correctly', as
 })
 
 test('Socks5ProxyAgent - connection failure', async (t) => {
-  const p = tspl(t, { plan: 1 })
+  const p = tspl(t, { plan: 2 })
 
   // Create Socks5ProxyAgent pointing to non-existent proxy
   const proxyWrapper = new Socks5ProxyAgent('socks5://localhost:9999')
@@ -382,6 +591,49 @@ test('Socks5ProxyAgent - connection failure', async (t) => {
   } catch (err) {
     p.ok(err, 'should throw error when SOCKS5 proxy is not available')
   }
+
+  p.strictEqual(getPools(proxyWrapper).size, 0, 'should remove the failed origin pool')
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - destroys socket when negotiation times out', async (t) => {
+  const p = tspl(t, { plan: 3 })
+
+  // SOCKS5 proxy that accepts the TCP connection but never replies to the greeting
+  const stalledProxy = net.createServer(() => {})
+  await new Promise((resolve) => {
+    stalledProxy.listen(0, '127.0.0.1', resolve)
+  })
+
+  let connectorSocket
+  const agent = new Socks5ProxyAgent(`socks5://127.0.0.1:${stalledProxy.address().port}`, {
+    connectTimeout: 100,
+    connect (opts, callback) {
+      const socket = net.connect({ host: opts.hostname, port: opts.port })
+      connectorSocket = socket
+      socket.once('connect', () => callback(null, socket))
+      socket.once('error', callback)
+      return socket
+    }
+  })
+
+  try {
+    await request('http://example.invalid/', {
+      dispatcher: agent
+    })
+    p.fail('should have thrown an error')
+  } catch (err) {
+    p.ok(err instanceof ConnectTimeoutError)
+    p.strictEqual(err.code, 'UND_ERR_CONNECT_TIMEOUT')
+  }
+
+  await agent.close()
+  p.ok(connectorSocket.destroyed, 'socket left by the timed out negotiation should be destroyed')
+
+  t.after(async () => {
+    stalledProxy.close()
+  })
 
   await p.completed
 })

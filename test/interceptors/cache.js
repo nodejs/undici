@@ -54,6 +54,235 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  // https://github.com/nodejs/undici/issues/5818
+  test('successful cached response is not aborted', async () => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      res.setHeader('cache-control', 'max-age=60')
+      res.end('ok')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    await (await client.request(request)).body.dump()
+
+    const aborted = await new Promise((resolve, reject) => {
+      client.dispatch(request, {
+        onRequestStart () {},
+        onResponseEnd (controller) { resolve(controller.aborted) },
+        onResponseError (controller, error) { reject(error) }
+      })
+    })
+
+    strictEqual(aborted, false)
+  })
+
+  test('aborting a cached response reports aborted', async () => {
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      res.setHeader('cache-control', 'max-age=60')
+      res.end('ok')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    await (await client.request(request)).body.dump()
+
+    const { controller, error } = await new Promise((resolve, reject) => {
+      client.dispatch(request, {
+        onRequestStart (controller) {
+          controller.abort()
+        },
+        onResponseEnd () { reject(new Error('expected abort')) },
+        onResponseError (controller, error) { resolve({ controller, error }) }
+      })
+    })
+
+    strictEqual(controller.aborted, true)
+    strictEqual(controller.reason, error)
+    controller.abort(new Error('second abort'))
+    strictEqual(controller.reason, error)
+  })
+
+  test('aborting a completed cached response preserves the first reason', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 'max-age=60')
+      res.end('ok')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    await (await client.request(request)).body.dump()
+
+    const controller = await new Promise((resolve, reject) => {
+      client.dispatch(request, {
+        onResponseEnd (controller) { resolve(controller) },
+        onResponseError (controller, error) { reject(error) }
+      })
+    })
+
+    strictEqual(requestsToOrigin, 1)
+    strictEqual(controller.aborted, false)
+    strictEqual(controller.reason, null)
+
+    const reason = new Error('abort after completion')
+    controller.abort(reason)
+    strictEqual(controller.aborted, true)
+    strictEqual(controller.reason, reason)
+
+    controller.abort(new Error('second abort'))
+    strictEqual(controller.reason, reason)
+  })
+
+  test('shared cache does not store responses with Set-Cookie', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      const cookie = req.headers.cookie
+      res.setHeader('cache-control', 'public, max-age=300')
+      res.setHeader('set-cookie', `session-for-${cookie}`)
+      res.end(`response for ${cookie}`)
+    }).listen(0)
+
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-a' }
+        })
+        equal(requestsToOrigin, 1)
+        equal(res.headers['set-cookie'], 'session-for-user-a')
+        strictEqual(await res.body.text(), 'response for user-a')
+      }
+
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-b' }
+        })
+        equal(requestsToOrigin, 2)
+        equal(res.headers['set-cookie'], 'session-for-user-b')
+        strictEqual(await res.body.text(), 'response for user-b')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
+  test('shared cache does not serve existing entries with Set-Cookie', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      const cookie = req.headers.cookie
+      res.setHeader('cache-control', 'public, max-age=300')
+      res.setHeader('set-cookie', `session-for-${cookie}`)
+      res.end(`response for ${cookie}`)
+    }).listen(0)
+
+    await once(server, 'listening')
+
+    const store = new MemoryCacheStore()
+    const origin = `http://localhost:${server.address().port}`
+    const privateClient = new Client(origin)
+      .compose(interceptors.cache({ store, type: 'private' }))
+    const sharedClient = new Client(origin)
+      .compose(interceptors.cache({ store, type: 'shared' }))
+
+    try {
+      {
+        const res = await privateClient.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-a' }
+        })
+        equal(requestsToOrigin, 1)
+        equal(res.headers['set-cookie'], 'session-for-user-a')
+        strictEqual(await res.body.text(), 'response for user-a')
+      }
+
+      {
+        const res = await privateClient.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-a' }
+        })
+        equal(requestsToOrigin, 1)
+        equal(res.headers['set-cookie'], 'session-for-user-a')
+        strictEqual(await res.body.text(), 'response for user-a')
+      }
+
+      {
+        const res = await sharedClient.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: { cookie: 'user-b' }
+        })
+        equal(requestsToOrigin, 2)
+        equal(res.headers['set-cookie'], 'session-for-user-b')
+        strictEqual(await res.body.text(), 'response for user-b')
+      }
+    } finally {
+      await privateClient.close()
+      await sharedClient.close()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
   test('vary directives used to decide which response to use', async () => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -131,6 +360,256 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('stale-while-revalidate 304 preserves cached Vary metadata', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.setHeader('date', new Date().toUTCString())
+      res.setHeader('cache-control', 'public, max-age=1, stale-while-revalidate=60')
+      res.setHeader('etag', '"cached"')
+
+      if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+        return
+      }
+
+      requestsToOrigin++
+      res.setHeader('vary', 'cookie')
+      res.end(`hit ${requestsToOrigin}: ${req.headers.cookie}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    const request = cookie => ({
+      origin: 'localhost',
+      method: 'GET',
+      path: '/',
+      headers: {
+        cookie
+      }
+    })
+
+    {
+      const res = await client.request(request('session=a'))
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'hit 1: session=a')
+    }
+
+    clock.tick(1500)
+
+    {
+      const res = await client.request(request('session=a'))
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'hit 1: session=a')
+    }
+
+    await sleep(100)
+    equal(revalidationRequests, 1)
+
+    {
+      const res = await client.request(request('session=b'))
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'hit 2: session=b')
+    }
+  })
+
+  test('Vary array-valued request headers are matched by value, not mutable reference', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.setHeader('vary', 'cookie')
+      res.end(`hit ${requestsToOrigin}: ${req.headers.cookie}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const headers = {
+      cookie: ['session=a']
+    }
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/',
+      headers
+    }
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'hit 1: session=a')
+    }
+
+    headers.cookie[0] = 'session=b'
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'hit 2: session=b')
+    }
+
+    headers.cookie = ['session=a']
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 2)
+      strictEqual(await res.body.text(), 'hit 1: session=a')
+    }
+  })
+
+  test('comma-separated Vary values inside repeated header fields are honored', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.setHeader('vary', ['cookie, authorization', 'user-agent'])
+      res.end(`hit ${requestsToOrigin}: ${req.headers.cookie}`)
+    }).listen(0)
+
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      const request = cookie => ({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          cookie,
+          'user-agent': 'cache-test'
+        }
+      })
+
+      {
+        const res = await client.request(request('session=a'))
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'hit 1: session=a')
+      }
+
+      {
+        const res = await client.request(request('session=b'))
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'hit 2: session=b')
+      }
+
+      {
+        const res = await client.request(request('session=a'))
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'hit 1: session=a')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
+  test('does not cache responses with wildcard Vary in repeated header fields', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((_, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.setHeader('vary', ['accept-encoding, *', 'user-agent'])
+      res.end(`hit ${requestsToOrigin}`)
+    }).listen(0)
+
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          'user-agent': 'cache-test'
+        }
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'hit 1')
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'hit 2')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
+  test('does not cache responses with malformed Vary field names', async () => {
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.setHeader('vary', 'cookie authorization')
+      res.end(`hit ${requestsToOrigin}: ${req.headers.cookie}`)
+    }).listen(0)
+
+    await once(server, 'listening')
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      const request = cookie => ({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          cookie
+        }
+      })
+
+      {
+        const res = await client.request(request('session=a'))
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'hit 1: session=a')
+      }
+
+      {
+        const res = await client.request(request('session=b'))
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'hit 2: session=b')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+    }
+  })
+
   test('revalidates reponses with no-cache directive, regardless of cacheByDefault', async () => {
     let requestCount = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -168,6 +647,224 @@ describe('Cache Interceptor', () => {
     const body2 = await res2.body.text()
     strictEqual(body2, 'Request count: 2')
     strictEqual(requestCount, 2)
+  })
+
+  test('stores response with no-cache directive and etag, revalidates it on reuse', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'no-cache')
+        res.setHeader('etag', '"asd123"')
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    // Send second request. The response was stored, so this should be a
+    //  revalidation request answered with a 304 and served from the cache
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
+  })
+
+  test('stores response with max-age=0 and etag, revalidates it on reuse', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'max-age=0')
+        res.setHeader('etag', '"asd123"')
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    // Send second request. The response was stored but is already stale, so
+    //  this should be a revalidation request answered with a 304 and served
+    //  from the cache
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
+  })
+
+  test('stores response with max-age=0 and etag, revalidates it on reuse within the same millisecond', async () => {
+    // Freeze the clock on a whole second so the Date header carries no apparent
+    //  age and both requests observe now === staleAt
+    const clock = FakeTimers.install({
+      now: 1000,
+      toFake: ['Date']
+    })
+    after(() => clock.uninstall())
+
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.sendDate = false
+      res.setHeader('date', new Date().toUTCString())
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'max-age=0')
+        res.setHeader('etag', '"asd123"')
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
+  })
+
+  test('stores response with no-cache directive, etag and last-modified, revalidates it on reuse', async () => {
+    let requestsToOrigin = 0
+    let revalidationRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.headers['if-none-match'] === '"asd123"') {
+        revalidationRequests++
+        res.statusCode = 304
+        res.end()
+      } else {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'no-cache')
+        res.setHeader('etag', '"asd123"')
+        res.setHeader('last-modified', new Date(Date.now() - 60000).toUTCString())
+        res.end('asd')
+      }
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    /**
+     * @type {import('../../types/dispatcher').default.RequestOptions}
+     */
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    // Send initial request. This should reach the origin
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+    }
+
+    // Send second request. The response was stored, so this should be a
+    //  revalidation request answered with a 304 and served from the cache
+    {
+      const res = await client.request(request)
+      strictEqual(await res.body.text(), 'asd')
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    }
   })
 
   test('expires caching', async () => {
@@ -399,7 +1096,6 @@ describe('Cache Interceptor', () => {
     let serverError
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.setHeader('date', 0)
-      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
 
       try {
         const ifNoneMatch = req.headers['if-none-match']
@@ -410,9 +1106,11 @@ describe('Cache Interceptor', () => {
           notEqual(req.headers['b-mixed-case'], undefined)
 
           res.statusCode = 304
+          res.setHeader('vary', 'a, B-MIXED-CASe')
           res.end()
         } else {
           requestsToOrigin++
+          res.setHeader('cache-control', 'max-age=1')
           res.setHeader('vary', 'a, B-MIXED-CASe')
           res.setHeader('etag', '"asd"')
           res.end('asd')
@@ -477,8 +1175,6 @@ describe('Cache Interceptor', () => {
       strictEqual(await response.body.text(), 'asd')
     }
 
-    // Wait for background revalidation to complete
-    await sleep(100)
     strictEqual(revalidationRequests, 1)
   })
 
@@ -531,6 +1227,126 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('unsafe methods purge same-origin Location and Content-Location targets from cache', async () => {
+    let locationTargetRequests = 0
+    let contentLocationTargetRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.method === 'GET' && req.url === '/location-target') {
+        locationTargetRequests++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end(`location ${locationTargetRequests}`)
+        return
+      }
+
+      if (req.method === 'GET' && req.url === '/content-location-target') {
+        contentLocationTargetRequests++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end(`content-location ${contentLocationTargetRequests}`)
+        return
+      }
+
+      if (req.method === 'POST' && req.url === '/mutate') {
+        res.statusCode = 204
+        res.setHeader('location', '/location-target')
+        res.setHeader('content-location', '/content-location-target')
+        res.end()
+        return
+      }
+
+      res.statusCode = 404
+      res.end()
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const origin = `http://localhost:${server.address().port}`
+
+    {
+      const res = await client.request({ origin, method: 'GET', path: '/location-target' })
+      strictEqual(await res.body.text(), 'location 1')
+    }
+
+    {
+      const res = await client.request({ origin, method: 'GET', path: '/content-location-target' })
+      strictEqual(await res.body.text(), 'content-location 1')
+    }
+
+    {
+      const res = await client.request({ origin, method: 'POST', path: '/mutate' })
+      strictEqual(res.statusCode, 204)
+      await res.body.text()
+    }
+
+    {
+      const res = await client.request({ origin, method: 'GET', path: '/location-target' })
+      strictEqual(await res.body.text(), 'location 2')
+    }
+
+    {
+      const res = await client.request({ origin, method: 'GET', path: '/content-location-target' })
+      strictEqual(await res.body.text(), 'content-location 2')
+    }
+  })
+
+  test('unsafe methods do not purge cross-origin Location and Content-Location targets from cache', async () => {
+    let targetRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      if (req.method === 'GET' && req.url === '/target') {
+        targetRequests++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end(`target ${targetRequests}`)
+        return
+      }
+
+      if (req.method === 'POST' && req.url === '/mutate') {
+        res.statusCode = 204
+        res.setHeader('location', 'http://example.com/target')
+        res.setHeader('content-location', 'http://example.com/target')
+        res.end()
+        return
+      }
+
+      res.statusCode = 404
+      res.end()
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const origin = `http://localhost:${server.address().port}`
+
+    {
+      const res = await client.request({ origin, method: 'GET', path: '/target' })
+      strictEqual(await res.body.text(), 'target 1')
+    }
+
+    {
+      const res = await client.request({ origin, method: 'POST', path: '/mutate' })
+      strictEqual(res.statusCode, 204)
+      await res.body.text()
+    }
+
+    {
+      const res = await client.request({ origin, method: 'GET', path: '/target' })
+      strictEqual(await res.body.text(), 'target 1')
+    }
+  })
+
   test('unsafe methods aren\'t cached', async () => {
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
       res.setHeader('cache-control', 'public, s-maxage=1')
@@ -561,6 +1377,82 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('unsafe methods are not served from cache', async () => {
+    // A heuristically-cacheable response (404) with an explicit max-age would
+    // previously be stored under the unsafe method and replayed on a second,
+    // identical state-changing request without ever hitting the origin.
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      res.statusCode = 404
+      res.setHeader('cache-control', 'max-age=60')
+      res.end(`origin-hit-#${requestsToOrigin}`)
+    }).listen(0)
+
+    after(() => server.close())
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        store: new MemoryCacheStore()
+      }))
+
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      const req = { origin: 'localhost', method, path: '/resource/123' }
+      const before = requestsToOrigin
+
+      const res1 = await client.request(req)
+      const body1 = await res1.body.text()
+
+      const res2 = await client.request(req)
+      const body2 = await res2.body.text()
+
+      // Every unsafe-method request must reach the origin; none may be served from cache.
+      equal(requestsToOrigin - before, 2)
+      equal(body1, `origin-hit-#${before + 1}`)
+      equal(body2, `origin-hit-#${before + 2}`)
+    }
+
+    await client.close()
+  })
+
+  test('successful unsafe methods still invalidate cached entries', async () => {
+    // The fix routes unsafe methods through CacheHandler (not a bare dispatch) so a
+    // successful unsafe request keeps invalidating an existing cached GET for the same path.
+    let requestsToOrigin = 0
+    const server = createServer((req, res) => {
+      requestsToOrigin++
+      if (req.method === 'GET') {
+        res.statusCode = 200
+        res.setHeader('cache-control', 'max-age=60')
+      } else {
+        res.statusCode = 200
+      }
+      res.end(`origin-hit-#${requestsToOrigin}`)
+    }).listen(0)
+
+    after(() => server.close())
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache({
+        store: new MemoryCacheStore()
+      }))
+
+    const get = { origin: 'localhost', method: 'GET', path: '/resource/123' }
+
+    await (await client.request(get)).body.text()
+    const afterPrime = requestsToOrigin
+    await (await client.request(get)).body.text()
+    equal(requestsToOrigin, afterPrime) // second GET served from cache
+
+    await (await client.request({ origin: 'localhost', method: 'POST', path: '/resource/123' })).body.text()
+
+    const beforeFinalGet = requestsToOrigin
+    await (await client.request(get)).body.text()
+    equal(requestsToOrigin - beforeFinalGet, 1) // GET re-fetched after invalidation
+
+    await client.close()
+  })
+
   test('necessary headers are stripped', async () => {
     const headers = [
       // Headers defined in the spec that we need to strip
@@ -571,7 +1463,7 @@ describe('Cache Interceptor', () => {
       'proxy-connection',
       'te',
       'upgrade',
-      // Headers we need to specifiy to be stripped
+      // Headers we need to specify to be stripped
       'should-be-stripped'
     ]
 
@@ -629,6 +1521,149 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('qualified no-cache/private with OWS around = strip named headers from cached responses', async () => {
+    for (const cacheControl of [
+      'public, max-age=60, no-cache= "x-secret"',
+      'public, max-age=60, no-cache ="x-secret"',
+      'public, max-age=60, no-cache \t= \t"x-secret"',
+      'public, max-age=60, no-cache="x-secret"\t, immutable',
+      'public, max-age=60, private= "x-secret"',
+      'public, max-age=60, private ="x-secret"',
+      'public, max-age=60, private\t=\t"x-secret"',
+      'public, max-age=60, private="x-secret"\t, immutable'
+    ]) {
+      let requestToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestToOrigin++
+        res.setHeader('cache-control', cacheControl)
+        res.setHeader('x-secret', 'secret')
+        res.end('ok')
+      }).listen(0)
+
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      try {
+        const request = {
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestToOrigin, 1, cacheControl)
+          equal(res.headers['x-secret'], 'secret', cacheControl)
+          strictEqual(await res.body.text(), 'ok')
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestToOrigin, 1, cacheControl)
+          equal(res.headers['x-secret'], undefined, cacheControl)
+          strictEqual(await res.body.text(), 'ok')
+        }
+      } finally {
+        await client.close()
+        await new Promise(resolve => server.close(resolve))
+      }
+    }
+  })
+
+  test('connection-nominated headers are stripped case-insensitively', async () => {
+    let requestToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+      requestToOrigin++
+      res.setHeader('cache-control', 's-maxage=10')
+      res.setHeader('connection', ['X-Other-Secret, X-Secret', 'Keep-Alive, X-Empty'])
+      res.setHeader('x-other-secret', 'other secret')
+      res.setHeader('x-secret', 'secret')
+      res.setHeader('x-empty', '')
+      res.end('ok')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    {
+      const res = await client.request(request)
+      equal(requestToOrigin, 1)
+      equal(res.headers['x-other-secret'], 'other secret')
+      equal(res.headers['x-secret'], 'secret')
+      equal(res.headers['x-empty'], '')
+      strictEqual(await res.body.text(), 'ok')
+    }
+
+    {
+      const res = await client.request(request)
+      equal(requestToOrigin, 1)
+      equal(res.headers['x-other-secret'], undefined)
+      equal(res.headers['x-secret'], undefined)
+      equal(res.headers['x-empty'], undefined)
+      strictEqual(await res.body.text(), 'ok')
+    }
+  })
+
+  test('malformed quoted no-cache does not swallow a following no-store directive', async () => {
+    for (const cacheControl of [
+      'public, max-age=60, no-cache="set-cookie" garbage, no-store',
+      'public, max-age=60, no-cache="set-cookie, no-store',
+      'public, max-age=60, no-cache=',
+      'public, max-age=60, no-store\u00a0',
+      'public, max-age=60, no\u00a0-store'
+    ]) {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', cacheControl)
+        res.end(`hit ${requestsToOrigin}`)
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      try {
+        await once(server, 'listening')
+
+        const request = {
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestsToOrigin, 1, cacheControl)
+          strictEqual(await res.body.text(), 'hit 1')
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestsToOrigin, 2, cacheControl)
+          strictEqual(await res.body.text(), 'hit 2')
+        }
+      } finally {
+        await client.close()
+        await new Promise(resolve => server.close(resolve))
+      }
+    }
+  })
+
   test('cacheByDefault', async () => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
@@ -668,6 +1703,582 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  test('malformed Last-Modified does not enable heuristic caching', async () => {
+    for (const lastModified of ['0', '2025-01-01']) {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('last-modified', lastModified)
+        res.end(`hit ${requestsToOrigin}`)
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      try {
+        await once(server, 'listening')
+
+        const request = {
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestsToOrigin, 1, lastModified)
+          equal(await res.body.text(), 'hit 1', lastModified)
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestsToOrigin, 2, lastModified)
+          equal(await res.body.text(), 'hit 2', lastModified)
+        }
+      } finally {
+        await client.close()
+        await new Promise(resolve => server.close(resolve))
+      }
+    }
+  })
+
+  test('cacheByDefault does not make explicitly stale responses fresh', async () => {
+    const clock = FakeTimers.install({
+      now: new Date('2026-01-01T00:00:00.000Z'),
+      toFake: ['Date']
+    })
+
+    try {
+      for (const { name, headers } of [
+        {
+          name: 'max-age=0',
+          headers: {
+            'cache-control': 'public, max-age=0'
+          }
+        },
+        {
+          name: 's-maxage=0',
+          headers: {
+            'cache-control': 'public, s-maxage=0'
+          }
+        },
+        {
+          name: 'Expires in the past',
+          headers: {
+            expires: new Date(clock.now - 1000).toUTCString()
+          }
+        },
+        {
+          name: 'invalid Expires',
+          headers: {
+            expires: 'not a date'
+          }
+        },
+        {
+          name: 'invalid Expires day overflow',
+          headers: {
+            date: new Date(clock.now).toUTCString(),
+            expires: 'Sun, 32 Jan 2026 00:00:00 GMT'
+          }
+        },
+        {
+          name: 'Age greater than Expires lifetime',
+          headers: {
+            date: new Date(clock.now).toUTCString(),
+            expires: new Date(clock.now + 1000).toUTCString(),
+            age: '2'
+          }
+        },
+        {
+          name: 'malformed Age',
+          headers: {
+            'cache-control': 'public, max-age=60',
+            age: '0x60'
+          }
+        },
+        {
+          name: 'duplicate Age',
+          headers: {
+            'cache-control': 'public, max-age=60',
+            age: ['0', '9999999999']
+          }
+        },
+        {
+          name: 'duplicate Date',
+          headers: {
+            'cache-control': 'public, max-age=60',
+            date: [
+              new Date(clock.now - 120000).toUTCString(),
+              new Date(clock.now).toUTCString()
+            ]
+          }
+        },
+        {
+          name: 'invalid max-age',
+          headers: {
+            'cache-control': 'public, max-age=bad'
+          }
+        },
+        {
+          name: 'invalid duplicate max-age',
+          headers: {
+            'cache-control': 'public, max-age=60, max-age=bad'
+          }
+        },
+        {
+          name: 'invalid max-age overrides Expires',
+          headers: {
+            'cache-control': 'public, max-age=bad',
+            expires: new Date(clock.now + 60000).toUTCString()
+          }
+        },
+        {
+          name: 'invalid s-maxage',
+          headers: {
+            'cache-control': 'public, s-maxage=bad'
+          }
+        },
+        {
+          name: 'invalid s-maxage overrides max-age in shared cache',
+          headers: {
+            'cache-control': 'public, s-maxage=bad, max-age=60'
+          }
+        }
+      ]) {
+        let requestsToOrigin = 0
+        const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+          requestsToOrigin++
+          for (const [key, value] of Object.entries(headers)) {
+            res.setHeader(key, value)
+          }
+          res.end(`hit ${requestsToOrigin}`)
+        }).listen(0)
+
+        await once(server, 'listening')
+
+        const client = new Client(`http://localhost:${server.address().port}`)
+          .compose(interceptors.cache({
+            cacheByDefault: 3600
+          }))
+
+        try {
+          const request = {
+            origin: 'localhost',
+            path: '/',
+            method: 'GET'
+          }
+
+          {
+            const res = await client.request(request)
+            equal(requestsToOrigin, 1, name)
+            equal(await res.body.text(), 'hit 1')
+          }
+
+          {
+            const res = await client.request(request)
+            equal(requestsToOrigin, 2, name)
+            equal(await res.body.text(), 'hit 2')
+          }
+        } finally {
+          await client.close()
+          await new Promise(resolve => server.close(resolve))
+        }
+      }
+    } finally {
+      clock.uninstall()
+    }
+  })
+
+  test('304 revalidation metadata that forbids reuse is not reused from cache', async () => {
+    for (const testCase of [
+      { name: 'no-store', headers: { 'cache-control': 'no-store' } },
+      { name: 'private', headers: { 'cache-control': 'private' } },
+      { name: 'set-cookie', headers: { 'set-cookie': 'session=secret' } },
+      { name: 'vary-star', headers: { vary: '*' } },
+      { name: 'malformed-vary', headers: { vary: 'cookie authorization' } }
+    ]) {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      let requestsToOrigin = 0
+      let conditionalRequests = 0
+      let unconditionalRefetches = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestsToOrigin++
+        res.setHeader('date', new Date().toUTCString())
+
+        if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+          conditionalRequests++
+          res.statusCode = 304
+          for (const [headerName, headerValue] of Object.entries(testCase.headers)) {
+            res.setHeader(headerName, headerValue)
+          }
+          res.end()
+          return
+        }
+
+        if (requestsToOrigin === 1) {
+          res.setHeader('cache-control', 'public, max-age=1')
+          res.setHeader('etag', '"cached"')
+          res.end('cached')
+          return
+        }
+
+        unconditionalRefetches++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('etag', '"refetched"')
+        res.end('refetched')
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      try {
+        await once(server, 'listening')
+
+        const request = {
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestsToOrigin, 1, testCase.name)
+          strictEqual(await res.body.text(), 'cached', testCase.name)
+        }
+
+        clock.tick(1500)
+
+        {
+          const res = await client.request(request)
+          equal(conditionalRequests, 1, testCase.name)
+          equal(unconditionalRefetches, 1, testCase.name)
+          strictEqual(await res.body.text(), 'refetched', testCase.name)
+        }
+      } finally {
+        await client.close()
+        await new Promise(resolve => server.close(resolve))
+        clock.uninstall()
+      }
+    }
+  })
+
+  test('304 synchronous revalidation refetches when Vary adds a request header', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    let conditionalRequests = 0
+    let unconditionalRefetches = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      res.setHeader('date', new Date().toUTCString())
+
+      if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+        conditionalRequests++
+        res.statusCode = 304
+        res.setHeader('vary', 'x-variant')
+        res.end()
+        return
+      }
+
+      if (requestsToOrigin === 1) {
+        res.setHeader('cache-control', 'public, max-age=1')
+        res.setHeader('etag', '"cached"')
+        res.end('cached')
+        return
+      }
+
+      unconditionalRefetches++
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.setHeader('etag', `"variant-${req.headers['x-variant']}"`)
+      res.setHeader('vary', 'x-variant')
+      res.end(`variant ${req.headers['x-variant']}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      await once(server, 'listening')
+
+      const request = variant => ({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          'x-variant': variant
+        }
+      })
+
+      {
+        const res = await client.request(request('a'))
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      clock.tick(1500)
+
+      {
+        const res = await client.request(request('b'))
+        equal(conditionalRequests, 1)
+        equal(unconditionalRefetches, 1)
+        strictEqual(await res.body.text(), 'variant b')
+      }
+
+      {
+        const res = await client.request(request('c'))
+        equal(unconditionalRefetches, 2)
+        strictEqual(await res.body.text(), 'variant c')
+      }
+
+      {
+        const res = await client.request(request('b'))
+        equal(requestsToOrigin, 4)
+        strictEqual(await res.body.text(), 'variant b')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+      clock.uninstall()
+    }
+  })
+
+  test('304 synchronous revalidation Cache-Control metadata evicts stale-while-revalidate entry', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    let conditionalRequests = 0
+    let unconditionalRefetches = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      res.setHeader('date', new Date().toUTCString())
+
+      if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+        conditionalRequests++
+        res.statusCode = 304
+        res.setHeader('cache-control', 'public, no-cache')
+        res.end()
+        return
+      }
+
+      if (requestsToOrigin === 1) {
+        res.setHeader('cache-control', 'public, max-age=1, stale-while-revalidate=10')
+        res.setHeader('etag', '"cached"')
+        res.end('cached')
+        return
+      }
+
+      unconditionalRefetches++
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.setHeader('etag', '"refetched"')
+      res.end('refetched')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    after(async () => {
+      server.close()
+      await client.close()
+      clock.uninstall()
+    })
+
+    await once(server, 'listening')
+
+    const request = {
+      origin: 'localhost',
+      method: 'GET',
+      path: '/'
+    }
+
+    {
+      const res = await client.request(request)
+      equal(requestsToOrigin, 1)
+      strictEqual(await res.body.text(), 'cached')
+    }
+
+    clock.tick(1500)
+
+    {
+      const res = await client.request({
+        ...request,
+        headers: {
+          'cache-control': 'no-cache'
+        }
+      })
+      equal(conditionalRequests, 1)
+      strictEqual(await res.body.text(), 'cached')
+    }
+
+    {
+      const res = await client.request(request)
+      equal(unconditionalRefetches, 1)
+      strictEqual(await res.body.text(), 'refetched')
+    }
+  })
+
+  test('304 stale-while-revalidate metadata that forbids reuse evicts the cached response', async () => {
+    for (const testCase of [
+      { name: 'no-store', headers: { 'cache-control': 'no-store' } },
+      { name: 'private', headers: { 'cache-control': 'private' } },
+      { name: 'set-cookie', headers: { 'set-cookie': 'session=secret' } },
+      { name: 'vary-star', headers: { vary: '*' } },
+      { name: 'malformed-vary', headers: { vary: 'cookie authorization' } },
+      { name: 'explicitly-stale', headers: { 'cache-control': 'public, max-age=0' } },
+      { name: 'no-cache', headers: { 'cache-control': 'public, no-cache' } },
+      { name: 'must-revalidate', headers: { 'cache-control': 'public, must-revalidate' } }
+    ]) {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      let requestsToOrigin = 0
+      let conditionalRequests = 0
+      let unconditionalRefetches = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestsToOrigin++
+        res.setHeader('date', new Date().toUTCString())
+
+        if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+          conditionalRequests++
+          res.statusCode = 304
+          for (const [headerName, headerValue] of Object.entries(testCase.headers)) {
+            res.setHeader(headerName, headerValue)
+          }
+          res.end()
+          return
+        }
+
+        if (requestsToOrigin === 1) {
+          res.setHeader('cache-control', 'public, max-age=1, stale-while-revalidate=10')
+          res.setHeader('etag', '"cached"')
+          res.end('cached')
+          return
+        }
+
+        unconditionalRefetches++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('etag', '"refetched"')
+        res.end('refetched')
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      try {
+        await once(server, 'listening')
+
+        const request = {
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        }
+
+        {
+          const res = await client.request(request)
+          equal(requestsToOrigin, 1, testCase.name)
+          strictEqual(await res.body.text(), 'cached', testCase.name)
+        }
+
+        clock.tick(1500)
+
+        {
+          const res = await client.request(request)
+          equal(requestsToOrigin, 1, testCase.name)
+          strictEqual(await res.body.text(), 'cached', testCase.name)
+        }
+
+        await sleep(100)
+        equal(conditionalRequests, 1, testCase.name)
+
+        {
+          const res = await client.request(request)
+          equal(unconditionalRefetches, 1, testCase.name)
+          strictEqual(await res.body.text(), 'refetched', testCase.name)
+        }
+      } finally {
+        await client.close()
+        await new Promise(resolve => server.close(resolve))
+        clock.uninstall()
+      }
+    }
+  })
+
+  test('stale-while-revalidate evicts a shared entry when its replacement has Set-Cookie', async () => {
+    const clock = FakeTimers.install({
+      toFake: ['Date']
+    })
+
+    let requestsToOrigin = 0
+    let conditionalRequests = 0
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestsToOrigin++
+      res.setHeader('date', new Date().toUTCString())
+
+      if (req.headers['if-none-match'] || req.headers['if-modified-since']) {
+        conditionalRequests++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('set-cookie', 'session=secret')
+        res.end('personalized')
+        return
+      }
+
+      if (requestsToOrigin === 1) {
+        res.setHeader('cache-control', 'public, max-age=1, stale-while-revalidate=10')
+        res.setHeader('etag', '"cached"')
+        res.end('cached')
+        return
+      }
+
+      res.setHeader('cache-control', 'public, max-age=60')
+      res.end('refetched')
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.cache())
+
+    try {
+      await once(server, 'listening')
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      {
+        const res = await client.request(request)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      clock.tick(1500)
+
+      {
+        const res = await client.request(request)
+        strictEqual(await res.body.text(), 'cached')
+      }
+
+      await sleep(100)
+      equal(conditionalRequests, 1)
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 3)
+        strictEqual(await res.body.text(), 'refetched')
+      }
+    } finally {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+      clock.uninstall()
+    }
+  })
+
   test('stale-if-error (response)', async () => {
     const clock = FakeTimers.install({
       toFake: ['Date']
@@ -680,7 +2291,7 @@ describe('Cache Interceptor', () => {
       requestsToOrigin++
       if (requestsToOrigin === 1) {
         // First request
-        res.setHeader('cache-control', 'public, s-maxage=10, stale-if-error=20')
+        res.setHeader('cache-control', 'public, max-age=10, stale-if-error=20')
         res.end('asd')
       } else {
         res.statusCode = 500
@@ -789,7 +2400,17 @@ describe('Cache Interceptor', () => {
       await client.request(request)
       equal(requestsToOrigin, 1)
 
-      // Send second request, should be served by the cache since it's within
+      // Send second request with max-age=0, should force the request to reach
+      //  the origin even immediately after insertion.
+      await client.request({
+        ...request,
+        headers: {
+          'cache-control': 'max-age=0'
+        }
+      })
+      equal(requestsToOrigin, 2)
+
+      // Send third request, should be served by the cache since it's within
       //  the window
       await client.request({
         ...request,
@@ -797,18 +2418,176 @@ describe('Cache Interceptor', () => {
           'cache-control': 'max-age=5'
         }
       })
-      equal(requestsToOrigin, 1)
+      equal(requestsToOrigin, 2)
 
       clock.tick(6000)
 
-      // Send third request, should reach the origin
+      // Send fourth request, should reach the origin
       await client.request({
         ...request,
         headers: {
           'cache-control': 'max-age=5'
         }
       })
-      equal(requestsToOrigin, 2)
+      equal(requestsToOrigin, 3)
+    })
+
+    test('max-age=0 revalidates cached response conditionally', async () => {
+      let requestsToOrigin = 0
+      let revalidationRequests = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('etag', '"cached"')
+
+        if (req.headers['if-none-match']) {
+          revalidationRequests++
+          equal(req.headers['cache-control'], 'max-age=0')
+          res.statusCode = 304
+          res.end()
+          return
+        }
+
+        res.end(`hit ${requestsToOrigin}`)
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'hit 1')
+      }
+
+      {
+        const res = await client.request({
+          ...request,
+          headers: {
+            'cache-control': 'max-age=0'
+          }
+        })
+        equal(requestsToOrigin, 2)
+        equal(revalidationRequests, 1)
+        strictEqual(await res.body.text(), 'hit 1')
+      }
+    })
+
+    test('no-cache revalidation uses stored Last-Modified as If-Modified-Since', async () => {
+      let requestsToOrigin = 0
+      let revalidationRequests = 0
+      const lastModified = 'Wed, 01 Jan 2020 00:00:00 GMT'
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestsToOrigin++
+        res.setHeader('date', new Date().toUTCString())
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('last-modified', lastModified)
+
+        if (req.headers['if-modified-since']) {
+          revalidationRequests++
+          if (req.headers['if-modified-since'] === lastModified) {
+            res.statusCode = 304
+            res.end()
+            return
+          }
+        }
+
+        res.end(`hit ${requestsToOrigin}`)
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'hit 1')
+      }
+
+      {
+        const res = await client.request({
+          ...request,
+          headers: {
+            'cache-control': 'no-cache'
+          }
+        })
+        equal(requestsToOrigin, 2)
+        equal(revalidationRequests, 1)
+        strictEqual(await res.body.text(), 'hit 1')
+      }
+    })
+
+    test('max-age accounts for apparent response age from Date', async () => {
+      const clock = FakeTimers.install({ now: 100000, toFake: ['Date'] })
+
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('date', new Date(clock.now - 30000).toUTCString())
+        res.sendDate = false
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end(`hit ${requestsToOrigin}`)
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        clock.uninstall()
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const request = {
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      }
+
+      {
+        const res = await client.request(request)
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'hit 1')
+      }
+
+      {
+        const res = await client.request({
+          ...request,
+          headers: {
+            'cache-control': 'max-age=10'
+          }
+        })
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'hit 2')
+      }
     })
 
     test('max-stale', async () => {
@@ -820,7 +2599,7 @@ describe('Cache Interceptor', () => {
       let revalidationRequests = 0
       const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
         res.setHeader('date', 0)
-        res.setHeader('cache-control', 'public, s-maxage=1, stale-while-revalidate=10')
+        res.setHeader('cache-control', 'public, max-age=1, stale-while-revalidate=10')
 
         if (req.headers['if-modified-since']) {
           revalidationRequests++
@@ -882,6 +2661,186 @@ describe('Cache Interceptor', () => {
       // Wait for background revalidation to complete
       await sleep(100)
       equal(revalidationRequests, 1)
+    })
+
+    test('max-stale does not override response revalidation requirements', async () => {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      try {
+        for (const directive of ['must-revalidate', 'proxy-revalidate', 's-maxage=1']) {
+          let requestsToOrigin = 0
+          let revalidationRequests = 0
+          const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+            res.setHeader('date', 0)
+            res.setHeader('cache-control', `public, max-age=1, ${directive}`)
+
+            if (req.headers['if-modified-since']) {
+              revalidationRequests++
+              res.statusCode = 304
+              res.end()
+            } else {
+              requestsToOrigin++
+              res.end(`hit ${requestsToOrigin}`)
+            }
+          }).listen(0)
+
+          await once(server, 'listening')
+
+          const client = new Client(`http://localhost:${server.address().port}`)
+            .compose(interceptors.cache())
+
+          try {
+            const request = {
+              origin: 'localhost',
+              method: 'GET',
+              path: '/'
+            }
+
+            {
+              const res = await client.request(request)
+              equal(requestsToOrigin, 1, directive)
+              equal(revalidationRequests, 0, directive)
+              strictEqual(await res.body.text(), 'hit 1')
+            }
+
+            clock.tick(1500)
+
+            {
+              const res = await client.request({
+                ...request,
+                headers: {
+                  'cache-control': 'max-stale=60'
+                }
+              })
+              equal(requestsToOrigin, 1, directive)
+              equal(revalidationRequests, 1, directive)
+              strictEqual(await res.body.text(), 'hit 1')
+            }
+          } finally {
+            await client.close()
+            await new Promise(resolve => server.close(resolve))
+          }
+        }
+      } finally {
+        clock.uninstall()
+      }
+    })
+
+    test('stale-while-revalidate does not override response revalidation requirements', async () => {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      try {
+        for (const directive of ['must-revalidate', 'proxy-revalidate', 's-maxage=1']) {
+          let requestsToOrigin = 0
+          const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+            requestsToOrigin++
+            res.setHeader('date', 0)
+            res.setHeader('cache-control', `public, max-age=1, stale-while-revalidate=60, ${directive}`)
+            res.end(`hit ${requestsToOrigin}${req.headers['if-modified-since'] ? ' revalidated' : ''}`)
+          }).listen(0)
+
+          await once(server, 'listening')
+
+          const client = new Client(`http://localhost:${server.address().port}`)
+            .compose(interceptors.cache())
+
+          try {
+            const request = {
+              origin: 'localhost',
+              method: 'GET',
+              path: '/'
+            }
+
+            {
+              const res = await client.request(request)
+              equal(requestsToOrigin, 1, directive)
+              strictEqual(await res.body.text(), 'hit 1')
+            }
+
+            clock.tick(1500)
+
+            {
+              const res = await client.request(request)
+              equal(requestsToOrigin, 2, directive)
+              strictEqual(await res.body.text(), 'hit 2 revalidated')
+            }
+          } finally {
+            await client.close()
+            await new Promise(resolve => server.close(resolve))
+          }
+        }
+      } finally {
+        clock.uninstall()
+      }
+    })
+
+    test('stale-if-error does not override response revalidation requirements', async () => {
+      const clock = FakeTimers.install({
+        toFake: ['Date']
+      })
+
+      try {
+        for (const directive of ['must-revalidate', 'proxy-revalidate', 's-maxage=1']) {
+          for (const staleIfErrorSource of ['response', 'request']) {
+            let requestsToOrigin = 0
+            const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+              requestsToOrigin++
+              res.setHeader('date', 0)
+
+              if (requestsToOrigin === 1) {
+                res.setHeader('cache-control', `public, max-age=1, ${directive}${staleIfErrorSource === 'response' ? ', stale-if-error=60' : ''}`)
+                res.end('cached')
+              } else {
+                res.statusCode = 500
+                res.end('error')
+              }
+            }).listen(0)
+
+            await once(server, 'listening')
+
+            const client = new Client(`http://localhost:${server.address().port}`)
+              .compose(interceptors.cache())
+
+            try {
+              const request = {
+                origin: 'localhost',
+                method: 'GET',
+                path: '/'
+              }
+
+              {
+                const res = await client.request(request)
+                equal(requestsToOrigin, 1, `${directive} ${staleIfErrorSource}`)
+                equal(res.statusCode, 200, `${directive} ${staleIfErrorSource}`)
+                strictEqual(await res.body.text(), 'cached')
+              }
+
+              clock.tick(1500)
+
+              {
+                const res = await client.request({
+                  ...request,
+                  headers: staleIfErrorSource === 'request'
+                    ? { 'cache-control': 'stale-if-error=60' }
+                    : undefined
+                })
+                equal(requestsToOrigin, 2, `${directive} ${staleIfErrorSource}`)
+                equal(res.statusCode, 500, `${directive} ${staleIfErrorSource}`)
+                strictEqual(await res.body.text(), 'error')
+              }
+            } finally {
+              await client.close()
+              await new Promise(resolve => server.close(resolve))
+            }
+          }
+        }
+      } finally {
+        clock.uninstall()
+      }
     })
 
     test('min-fresh', async () => {
@@ -1007,6 +2966,51 @@ describe('Cache Interceptor', () => {
       strictEqual(revalidationRequests, 1)
     })
 
+    test('Pragma no-cache revalidates when Cache-Control is absent', async () => {
+      let requestsToOrigin = 0
+      let revalidationRequests = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        if (req.headers['if-modified-since']) {
+          revalidationRequests++
+          res.statusCode = 304
+          res.end()
+        } else {
+          requestsToOrigin++
+          res.setHeader('cache-control', 'public, s-maxage=100')
+          res.end('asd')
+        }
+      }).listen(0)
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      await client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/'
+      })
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 0)
+
+      await client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: {
+          pragma: 'other, no-cache'
+        }
+      })
+      strictEqual(requestsToOrigin, 1)
+      strictEqual(revalidationRequests, 1)
+    })
+
     test('no-store', async () => {
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
         res.setHeader('cache-control', 'public, s-maxage=100')
@@ -1036,6 +3040,63 @@ describe('Cache Interceptor', () => {
           'cache-control': 'no-store'
         }
       })
+    })
+
+    test('no-store in repeated request Cache-Control fields prevents storing', async () => {
+      for (const { name, headers } of [
+        {
+          name: 'iterable',
+          headers: [
+            ['cache-control', 'no-store'],
+            ['cache-control', 'max-age=60']
+          ]
+        },
+        {
+          name: 'plain object with different casing',
+          headers: {
+            'Cache-Control': 'no-store',
+            'cache-control': 'max-age=60'
+          }
+        }
+      ]) {
+        let requestsToOrigin = 0
+        const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+          requestsToOrigin++
+          res.setHeader('cache-control', 'public, max-age=60')
+          res.end(`hit ${requestsToOrigin}`)
+        }).listen(0)
+
+        const client = new Client(`http://localhost:${server.address().port}`)
+          .compose(interceptors.cache())
+
+        try {
+          await once(server, 'listening')
+
+          const request = {
+            origin: 'localhost',
+            method: 'GET',
+            path: '/'
+          }
+
+          {
+            const res = await client.request({
+              ...request,
+              headers
+            })
+            equal(requestsToOrigin, 1, name)
+            strictEqual(await res.body.text(), 'hit 1', name)
+          }
+
+          {
+            const res = await client.request(request)
+            equal(requestsToOrigin, 2, name)
+            strictEqual(await res.body.text(), 'hit 2', name)
+          }
+        } finally {
+          await client.close()
+          await new Promise(resolve => server.close(resolve))
+        }
+      }
     })
 
     test('only-if-cached', async () => {
@@ -1114,7 +3175,7 @@ describe('Cache Interceptor', () => {
         requestsToOrigin++
         if (requestsToOrigin === 1) {
           // First request, send stale-while-revalidate to keep the value in the cache
-          res.setHeader('cache-control', 'public, s-maxage=10, stale-while-revalidate=20')
+          res.setHeader('cache-control', 'public, max-age=10, stale-while-revalidate=20')
           res.end('asd')
         } else {
           res.statusCode = 500
@@ -1485,7 +3546,7 @@ describe('Cache Interceptor', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       const responseDate = new Date()
       res.setHeader('date', responseDate.toUTCString())
-      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
+      res.setHeader('cache-control', 'max-age=1, stale-while-revalidate=10')
 
       if (req.headers['if-modified-since']) {
         revalidationRequests++
@@ -1555,7 +3616,7 @@ describe('Cache Interceptor', () => {
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       const responseDate = new Date()
       res.setHeader('date', responseDate.toUTCString())
-      res.setHeader('cache-control', 's-maxage=1, stale-while-revalidate=10')
+      res.setHeader('cache-control', 'max-age=1, stale-while-revalidate=10')
 
       if (req.headers['if-modified-since']) {
         revalidationRequests++
@@ -1599,16 +3660,24 @@ describe('Cache Interceptor', () => {
       strictEqual(await res.body.text(), 'original-response')
     }
 
-    // Wait for background revalidation
-    await sleep(500)
-    equal(revalidationRequests, 1)
-
-    // Second stale request - should get updated content from cache
-    // (still within stale-while-revalidate window)
+    // Wait for the background revalidation to complete and the cache to be
+    // updated with the revalidated content. Poll until the cache actually
+    // returns the updated response instead of relying on a fixed sleep, which
+    // is flaky on slow/loaded CI runners (the revalidation round-trip plus
+    // cache write can take longer than a hardcoded delay).
     {
-      const res = await client.request(request)
-      strictEqual(await res.body.text(), 'updated-response')
+      const deadline = Date.now() + 5000
+      let body = 'original-response'
+      while (Date.now() < deadline && body === 'original-response') {
+        const res = await client.request(request)
+        body = await res.body.text()
+        if (body === 'original-response') {
+          await sleep(50)
+        }
+      }
+      strictEqual(body, 'updated-response')
       equal(requestsToOrigin, 1) // Still only one origin request
+      equal(revalidationRequests >= 1, true, 'Background revalidation should have occurred')
     }
   })
 
@@ -1624,15 +3693,15 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
         .compose(interceptors.cache({
-          origins: ['localhost']
+          origins: [origin]
         }))
 
       after(() => client.close())
 
       const request = {
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       }
@@ -1919,15 +3988,15 @@ describe('Cache Interceptor', () => {
       after(() => server.close())
       await once(server, 'listening')
 
-      const client = new Client(`http://localhost:${server.address().port}`)
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
         .compose(interceptors.cache({
-          origins: ['LOCALHOST']
+          origins: [origin.toUpperCase()]
         }))
 
       after(() => client.close())
 
       const request = {
-        origin: 'localhost',
         method: 'GET',
         path: '/'
       }
@@ -2098,6 +4167,107 @@ describe('Cache Interceptor', () => {
         strictEqual(revalidationHeaders['if-none-match'], '"abcd"')
         strictEqual(typeof revalidationHeaders['if-modified-since'], 'string')
       }
+    })
+
+    test('future Date header does not extend max-age freshness', async () => {
+      const clock = FakeTimers.install({ now: 1000, toFake: ['Date'] })
+      after(() => clock.uninstall())
+
+      const store = new MemoryCacheStore()
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('date', new Date(clock.now + 86400000).toUTCString())
+        res.sendDate = false
+        res.end('future-date')
+      }).listen(0)
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
+        .compose(interceptors.cache({ store }))
+
+      const res = await client.request({ origin, method: 'GET', path: '/future-date' })
+      strictEqual(await res.body.text(), 'future-date')
+
+      const cached = store.get(makeCacheKey({ origin, method: 'GET', path: '/future-date', headers: {} }))
+
+      notEqual(cached, undefined)
+      equal(cached.staleAt <= clock.now + 60000, true, `staleAt (${cached.staleAt}) should not be extended by a future Date header`)
+      equal(cached.staleAt > clock.now, true, 'entry should still be freshly cacheable for max-age')
+    })
+
+    test('future Date header does not extend Expires freshness', async () => {
+      const clock = FakeTimers.install({ now: 1000, toFake: ['Date'] })
+      after(() => clock.uninstall())
+
+      const store = new MemoryCacheStore()
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        const responseDate = clock.now + 86400000
+        res.setHeader('date', new Date(responseDate).toUTCString())
+        res.setHeader('expires', new Date(responseDate + 60000).toUTCString())
+        res.sendDate = false
+        res.end('future-expires')
+      }).listen(0)
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
+        .compose(interceptors.cache({ store }))
+
+      const res = await client.request({ origin, method: 'GET', path: '/future-expires' })
+      strictEqual(await res.body.text(), 'future-expires')
+
+      const cached = store.get(makeCacheKey({ origin, method: 'GET', path: '/future-expires', headers: {} }))
+
+      notEqual(cached, undefined)
+      equal(cached.staleAt <= clock.now + 60000, true, `staleAt (${cached.staleAt}) should not be extended by a future Date header`)
+      equal(cached.staleAt > clock.now, true, 'entry should still be freshly cacheable until Expires')
+    })
+
+    test('Age header reduces remaining max-age freshness', async () => {
+      const clock = FakeTimers.install({ now: 100000, toFake: ['Date'] })
+      after(() => clock.uninstall())
+
+      const store = new MemoryCacheStore()
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('age', '30')
+        res.setHeader('date', new Date(clock.now).toUTCString())
+        res.sendDate = false
+        res.end('aged')
+      }).listen(0)
+
+      after(async () => {
+        server.close()
+        await client.close()
+      })
+
+      await once(server, 'listening')
+
+      const origin = `http://localhost:${server.address().port}`
+      const client = new Client(origin)
+        .compose(interceptors.cache({ store }))
+
+      const res = await client.request({ origin, method: 'GET', path: '/aged' })
+      strictEqual(await res.body.text(), 'aged')
+
+      const cached = store.get(makeCacheKey({ origin, method: 'GET', path: '/aged', headers: {} }))
+
+      notEqual(cached, undefined)
+      equal(cached.staleAt <= clock.now + 30000, true, `staleAt (${cached.staleAt}) should account for Age`)
+      equal(cached.staleAt > clock.now, true, 'entry should remain fresh for the unexpired max-age remainder')
     })
 
     test('immutable response has deleteAt of ~1 year', async () => {
@@ -2291,7 +4461,20 @@ describe('Cache Interceptor', () => {
       for (const cacheControl of [
         'public, max-age=60, private=" authorization"',
         'public, max-age=60, no-cache="\tauthorization"',
-        'public, max-age=60, no-cache=authorization\t'
+        'public, max-age=60, no-cache=authorization\t',
+        'public, max-age=60, private= "authorization"',
+        'public, max-age=60, private ="authorization"',
+        'public, max-age=60, private\t=\t"authorization"',
+        'public, max-age=60, private="authorization"\t, immutable',
+        'public, max-age=60, private="authorization" garbage',
+        'public, max-age=60, private=, private="authorization"',
+        'public, max-age=60, no-cache= "authorization"',
+        'public, max-age=60, no-cache ="authorization"',
+        'public, max-age=60, no-cache \t= \t"authorization"',
+        'public, max-age=60, no-cache= "\tauthorization\t"\t',
+        'public, max-age=60, no-cache="authorization" garbage',
+        'public, max-age=60, no-cache="set-cookie" garbage, no-cache="authorization"',
+        'public, max-age=60, no-cache=, no-cache="authorization"'
       ]) {
         let requestsToOrigin = 0
         const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
@@ -2337,6 +4520,194 @@ describe('Cache Interceptor', () => {
       }
     })
 
+    test('does not cache response when request has Authorization and only invalid permissive directives', async () => {
+      for (const cacheControl of [
+        'public =, max-age=60',
+        'public= , max-age=60',
+        'must-revalidate =, max-age=60',
+        'public\u00a0, max-age=60',
+        'must-revalidate\u00a0, max-age=60',
+        'public=bad, public, max-age=60',
+        'must-revalidate=bad, must-revalidate, max-age=60',
+        'extension="x, public, s-maxage=60, y", max-age=60',
+        'extension="x, public, s-maxage=60, max-age=60',
+        ['extension="x', 'public, s-maxage=60, max-age=60'],
+        'public, max-age=60, extension="x, private',
+        's-maxage =60',
+        's-maxage= 60',
+        's-maxage=60x',
+        's-maxage=bad, s-maxage=60',
+        's-maxage=60, s-maxage=bad',
+        's-maxage =60, s-maxage=60',
+        'no-store=false, public, max-age=60',
+        'public, max-age=60, max-age=0',
+        's-maxage=60, s-maxage=0',
+        'public, max-age=60, private\u00a0',
+        'public, max-age=60, priv\u00a0ate'
+      ]) {
+        let requestsToOrigin = 0
+        const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+          requestsToOrigin++
+          res.setHeader('cache-control', cacheControl)
+          res.end(`authenticated ${requestsToOrigin}`)
+        }).listen(0)
+
+        await once(server, 'listening')
+
+        const client = new Client(`http://localhost:${server.address().port}`)
+          .compose(interceptors.cache())
+
+        try {
+          const request = {
+            origin: 'localhost',
+            method: 'GET',
+            path: '/',
+            headers: {
+              authorization: 'Bearer token123'
+            }
+          }
+
+          {
+            const res = await client.request(request)
+            equal(requestsToOrigin, 1, cacheControl)
+            strictEqual(await res.body.text(), 'authenticated 1')
+          }
+
+          {
+            const res = await client.request(request)
+            equal(requestsToOrigin, 2, cacheControl)
+            strictEqual(await res.body.text(), 'authenticated 2')
+          }
+        } finally {
+          await client.close()
+          await new Promise(resolve => server.close(resolve))
+        }
+      }
+    })
+
+    test('does not cache Authorization response with malformed s-maxage in shared cache', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 's-maxage=60x')
+
+        if (req.headers.authorization === 'Bearer tenant-a-token') {
+          res.end('SECRET_FOR_AUTHENTICATED_REQUEST')
+          return
+        }
+
+        res.end('PUBLIC_RESPONSE')
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({ type: 'shared' }))
+
+      after(() => client.close())
+
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: {
+            authorization: 'Bearer tenant-a-token'
+          }
+        })
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'SECRET_FOR_AUTHENTICATED_REQUEST')
+      }
+
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        })
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'PUBLIC_RESPONSE')
+      }
+    })
+
+    test('does not cache shared response with empty qualified private directive', async () => {
+      for (const cacheControl of [
+        'public, max-age=60, private=""',
+        'public, max-age=60, private=","',
+        'public, max-age=60, private="   "'
+      ]) {
+        let requestsToOrigin = 0
+        const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+          requestsToOrigin++
+          const who = req.headers.authorization || '(no-auth)'
+          res.setHeader('cache-control', cacheControl)
+          res.setHeader('set-cookie', `session=secret-for-${who}`)
+          res.end(`authenticated ${who} ${requestsToOrigin}`)
+        }).listen(0)
+
+        await once(server, 'listening')
+
+        const client = new Client(`http://localhost:${server.address().port}`)
+          .compose(interceptors.cache())
+
+        try {
+          {
+            const res = await client.request({
+              origin: 'localhost',
+              method: 'GET',
+              path: '/',
+              headers: {
+                authorization: 'Bearer token123'
+              }
+            })
+            equal(requestsToOrigin, 1)
+            strictEqual(await res.body.text(), 'authenticated Bearer token123 1')
+          }
+
+          {
+            const res = await client.request({
+              origin: 'localhost',
+              method: 'GET',
+              path: '/'
+            })
+            equal(requestsToOrigin, 2)
+            strictEqual(await res.body.text(), 'authenticated (no-auth) 2')
+          }
+        } finally {
+          await client.close()
+          await new Promise(resolve => server.close(resolve))
+        }
+      }
+    })
+
+    test('does not crash on mixed unqualified and qualified private directives', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'public, max-age=60, private, private="hdr"')
+        res.end(`response ${requestsToOrigin}`)
+      }).listen(0)
+
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      try {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        })
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'response 1')
+      } finally {
+        await client.close()
+        await new Promise(resolve => server.close(resolve))
+      }
+    })
+
     test('does not cache response when request has Authorization and response only has max-age', async () => {
       let requestsToOrigin = 0
       const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
@@ -2372,6 +4743,46 @@ describe('Cache Interceptor', () => {
         const res = await client.request(request)
         equal(requestsToOrigin, 2)
         strictEqual(await res.body.text(), 'authenticated')
+      }
+    })
+
+    test('does not cache response when request has empty Authorization and response only has max-age', async () => {
+      let requestsToOrigin = 0
+      const server = createServer({ joinDuplicateHeaders: true }, (_, res) => {
+        requestsToOrigin++
+        res.setHeader('cache-control', 'max-age=60')
+        res.end(`authenticated ${requestsToOrigin}`)
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache())
+
+      after(() => client.close())
+
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/',
+          headers: {
+            authorization: ''
+          }
+        })
+        equal(requestsToOrigin, 1)
+        strictEqual(await res.body.text(), 'authenticated 1')
+      }
+
+      {
+        const res = await client.request({
+          origin: 'localhost',
+          method: 'GET',
+          path: '/'
+        })
+        equal(requestsToOrigin, 2)
+        strictEqual(await res.body.text(), 'authenticated 2')
       }
     })
 

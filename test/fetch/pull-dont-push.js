@@ -12,7 +12,9 @@ const { closeServerAsPromise } = require('../utils/node-http')
 test('pull dont\'t push', async (t) => {
   let count = 0
   let socket
-  const max = 1_000_000
+  // Must exceed any socket buffer for the test to be reliable.
+  const chunk = Buffer.alloc(1024, 'a')
+  const max = 1024 * 64 // 65536
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.statusCode = 200
     socket = res.socket
@@ -20,7 +22,7 @@ test('pull dont\'t push', async (t) => {
     // infinite stream
     const stream = new Readable({
       read () {
-        this.push('a')
+        this.push(chunk)
         if (count++ > max) {
           this.push(null)
         }

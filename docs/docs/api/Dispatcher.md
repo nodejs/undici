@@ -228,6 +228,10 @@ added: v4.0.0
   * `bodyTimeout` {number|null} The time, in milliseconds, after which the request
     times out while receiving body data. Monitors the time between body chunks.
     Use `0` to disable it entirely. Defaults to 300 seconds.
+    HTTP/1.1 headers/body parser timeouts are not guaranteed to fire with exact
+    millisecond precision: delays up to 1000ms use native timers, while larger
+    delays use undici's lower-overhead fast timers with a target resolution
+    around 500ms.
   * `reset` {boolean} Whether the request should establish a keep-alive
     connection. **Default:** `false`.
   * `expectContinue` {boolean} For HTTP/2, appends the `expect: 100-continue`
@@ -461,6 +465,15 @@ The `body` exposes the following [body mixin][] methods and properties:
 example, calling `text()` after `json()` throws a `TypeError`. The body also
 provides `dump({ limit })`, which discards up to `limit` bytes (default
 `131072`) without destroying the socket.
+
+> [!WARNING]
+> The `arrayBuffer()`, `blob()`, `bytes()`, `json()`, and `text()` methods buffer
+> the entire body in memory before returning. Where applicable, they also decode
+> or parse the payload and retain that representation in memory. Calling these
+> methods therefore means trusting that the body is small enough to fit in the
+> available memory. Do not use them for bodies received from untrusted or
+> user-controlled sources. Instead, process `body` as a `Readable` stream and
+> enforce an application-specific size limit.
 
 The body is always a `Readable`, even when empty. Deserializing an empty body
 with `json()` throws. To guard against this, verify the status code is not `204`
@@ -729,6 +742,8 @@ await client.request({ path: '/', method: 'GET' })
 ```
 
 For the full list of built-in interceptors provided by undici, see [Interceptors](Interceptors.md).
+For an example of a custom interceptor that wraps handler callbacks, see
+[Custom interceptors](Interceptors.md#custom-interceptors).
 
 ### Event: `'connect'`
 

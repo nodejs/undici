@@ -14,7 +14,8 @@ const {
   kOnError,
   kPingInterval,
   kSocket,
-  kUrl
+  kUrl,
+  kHTTP2Options
 } = require('../lib/core/symbols')
 
 test('Should record http2 ping failures on the socket', async (t) => {
@@ -77,6 +78,14 @@ test('Should record http2 ping failures on the socket', async (t) => {
     [kPingInterval]: 1,
     [kSocket]: null,
     [kUrl]: new URL('https://localhost'),
+    [kHTTP2Options]: {
+      pingInterval: 5,
+      connectionWindowSize: 524288,
+      maxConcurrentStreams: 100,
+      sessionOptions: {
+        initialWindowSize: 262144
+      }
+    },
     emit () {}
   }
 

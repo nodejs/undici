@@ -37,6 +37,12 @@ test('Agent should support H2 connection', async t => {
   })
   after(() => client.close())
 
+  client.on('disconnect', () => {
+    if (!client.closed && !client.destroyed) {
+      t.fail('unexpected disconnect')
+    }
+  })
+
   const response = await client.request({
     origin: `https://localhost:${server.address().port}`,
     path: '/',

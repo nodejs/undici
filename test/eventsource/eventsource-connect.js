@@ -6,6 +6,7 @@ const { test, describe, after } = require('node:test')
 const FakeTimers = require('@sinonjs/fake-timers')
 const { EventSource, defaultReconnectionTime } = require('../../lib/web/eventsource/eventsource')
 const { randomInt } = require('node:crypto')
+const { closeServerAsPromise } = require('../utils/node-http')
 
 describe('EventSource - sending correct request headers', () => {
   test('should send request with connection keep-alive', async (t) => {
@@ -91,6 +92,53 @@ describe('EventSource - sending correct request headers', () => {
     eventSourceInstance.onerror = (t) => {
       t.assert.fail('Should not have errored')
     }
+  })
+
+  test('should use URL credentials after an authentication challenge', async (t) => {
+    const authorizations = []
+    const expectedAuthorization = `Basic ${Buffer.from('user:pass').toString('base64')}`
+
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      authorizations.push(req.headers.authorization)
+
+      if (req.headers.authorization == null) {
+        res.writeHead(401, {
+          'WWW-Authenticate': 'Basic realm="test"'
+        })
+        res.end()
+        return
+      }
+
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream'
+      })
+      res.write('data: authenticated\n\n')
+    })
+
+    await once(server.listen(0, '127.0.0.1'), 'listening')
+    const port = server.address().port
+
+    const eventSourceInstance = new EventSource(
+      `http://user:pass@127.0.0.1:${port}/events`
+    )
+
+    t.after(async () => {
+      eventSourceInstance.close()
+      await closeServerAsPromise(server)()
+    })
+
+    const event = await new Promise((resolve, reject) => {
+      eventSourceInstance.onmessage = resolve
+      eventSourceInstance.onerror = () => {
+        reject(new Error('EventSource authentication failed'))
+      }
+    })
+
+    t.assert.strictEqual(event.data, 'authenticated')
+    t.assert.deepStrictEqual(authorizations, [
+      undefined,
+      expectedAuthorization
+    ])
   })
 })
 

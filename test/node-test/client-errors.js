@@ -678,6 +678,154 @@ test('invalid options throws', (t, done) => {
     assert.strictEqual(err.message, 'connectionWindowSize must be a positive integer, greater than 0')
   }
 
+  try {
+    new Client(new URL('http://localhost:200'), { // eslint-disable-line
+      h2Options: {
+        settings: { initialWindowSize: 'foo' }
+      }
+    })
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.settings.initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { settings: { initialWindowSize: 0 }} }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.settings.initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { settings: { initialWindowSize: -1 }} }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.settings.initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { settings: { initialWindowSize: 1.5 }} }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.settings.initialWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { connectionWindowSize: 'foo' } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.connectionWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { connectionWindowSize: 0 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.connectionWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { connectionWindowSize: -1 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.connectionWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { connectionWindowSize: 1.5 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.connectionWindowSize must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { useH2c: 'foo' } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.useH2c must be a valid boolean value')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { useH2c: 0 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.useH2c must be a valid boolean value')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { useH2c: -1 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.useH2c must be a valid boolean value')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { pingInterval: 'foo' } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.pingInterval must be a positive integer, greater or equal to 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { pingInterval: -1 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.pingInterval must be a positive integer, greater or equal to 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { pingInterval: 1.5 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.pingInterval must be a positive integer, greater or equal to 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { maxConcurrentStreams: 'foo' } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.maxConcurrentStreams must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { maxConcurrentStreams: 0 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.maxConcurrentStreams must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { maxConcurrentStreams: -1 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.maxConcurrentStreams must be a positive integer, greater than 0')
+  }
+
+  try {
+    new Client(new URL('http://localhost:200'), { h2Options: { maxConcurrentStreams: 1.5 } }) // eslint-disable-line
+    assert.ok(0)
+  } catch (err) {
+    assert.ok(err instanceof errors.InvalidArgumentError)
+    assert.strictEqual(err.message, 'h2Options.maxConcurrentStreams must be a positive integer, greater than 0')
+  }
+
   done()
 })
 
