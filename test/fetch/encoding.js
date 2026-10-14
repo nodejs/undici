@@ -2,6 +2,7 @@
 
 const { once } = require('node:events')
 const { createServer } = require('node:http')
+const { createServer: createNetServer } = require('node:net')
 const { test, before, after, describe } = require('node:test')
 const { fetch, Client } = require('../..')
 
@@ -166,5 +167,39 @@ describe('content-encoding chain limit', () => {
         return true
       }
     )
+  })
+
+  test('should handle an early close after rejecting excessive content-encodings', async (t) => {
+    const response = Buffer.from(
+      'HTTP/1.1 200 OK\r\n' +
+      `Content-Encoding: ${Array(MAX_CONTENT_ENCODINGS + 1).fill('gzip').join(', ')}\r\n` +
+      'Content-Length: 1\r\n' +
+      'Connection: close\r\n\r\n'
+    )
+    let resolveSocketClosed
+    const socketClosed = new Promise((resolve) => {
+      resolveSocketClosed = resolve
+    })
+    const earlyCloseServer = createNetServer((socket) => {
+      socket.once('close', resolveSocketClosed)
+      socket.once('data', () => socket.end(response))
+    })
+    t.after(() => earlyCloseServer.close())
+
+    await once(earlyCloseServer.listen(0, '127.0.0.1'), 'listening')
+
+    const client = new Client(`http://127.0.0.1:${earlyCloseServer.address().port}`)
+    t.after(() => client.close())
+
+    await t.assert.rejects(
+      fetch(`http://127.0.0.1:${earlyCloseServer.address().port}`, {
+        dispatcher: client
+      }),
+      (err) => {
+        t.assert.ok(err.cause?.message.includes('content-encoding'))
+        return true
+      }
+    )
+    await socketClosed
   })
 })
