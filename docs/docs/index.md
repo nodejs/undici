@@ -294,7 +294,7 @@ const client = new Agent().compose(interceptors.cache({
     maxEntrySize: 5 * 1024 * 1024 // 5MB
   }),
   
-  // Optional: Specify which HTTP methods to cache (default: ['GET', 'HEAD'])
+  // Optional: Specify which HTTP methods to cache (default: ['GET'])
   methods: ['GET', 'HEAD']
 }));
 
