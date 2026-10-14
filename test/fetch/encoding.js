@@ -132,7 +132,12 @@ test('invalid compressed body received after the headers rejects instead of hang
     })
     res.flushHeaders()
 
-    setTimeout(() => res.end(Buffer.alloc(16)), 100)
+    // The body must arrive in a later packet than the headers for the
+    // regression to manifest. Defer it to a later tick rather than using
+    // a wall-clock setTimeout, which is flaky and adds a fixed delay.
+    setImmediate(() => setImmediate(() => {
+      res.end(Buffer.alloc(16))
+    }))
   }).listen(0, '127.0.0.1')
 
   t.after(closeServerAsPromise(server))
