@@ -148,8 +148,13 @@ added: v1.0.0
       payloads, and decompressed (`permessage-deflate`) messages. Set to `0` to
       disable the limit. **Default:** `134217728`.
   * `eventSource` {Object} (optional) EventSource-specific configuration.
-    * `maxEventSize` {number} The maximum allowed event size, in bytes, for
-      EventSource messages. Set to `0` to disable the limit.
+    * `maxEventSize` {number} The maximum total bytes of data and metadata
+      field values retained for a pending EventSource event. Each unfinished
+      line is separately limited to this value plus seven syntax bytes, before
+      its line ending arrives. The number of `data:` lines per event and input
+      chunks buffered for an unfinished line are each limited to
+      `min(131072, max(1024, floor(maxEventSize / 128)))` to bound object overhead.
+      Set to `0` to disable these limits.
       **Default:** `buffer.kStringMaxLength`.
 * Returns: {Client}
 
