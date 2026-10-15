@@ -5,7 +5,7 @@ const { constants } = require('node:crypto')
 const { once } = require('node:events')
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
-const { createServer } = require('node:tls')
+const { createServer, TLSSocket } = require('node:tls')
 const { test } = require('node:test')
 
 const { Client } = require('..')
@@ -20,10 +20,11 @@ const wrongHost = {
   cert: readFileSync(join(fixtures, 'wrong-cert.pem'))
 }
 const ca = readFileSync(join(fixtures, 'ca.pem'))
+const skip = typeof TLSSocket.prototype.setKeyCert !== 'function'
 
 // @see https://github.com/nodejs/undici/security/advisories/GHSA-qrxm-fqhp-jwvm
 for (const protocol of ['http/1.1', 'h2']) {
-  test(`TLS certificate errors after ${protocol} connection establishment reject the request`, async (t) => {
+  test(`TLS certificate errors after ${protocol} connection establishment reject the request`, { skip }, async (t) => {
     let startRenegotiation
     const renegotiationStarted = new Promise((resolve) => {
       startRenegotiation = resolve
