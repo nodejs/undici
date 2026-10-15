@@ -358,4 +358,73 @@ describe('Readable', () => {
 
     t.deepStrictEqual(await r.json(), { hello: '傳' })
   })
+
+  test('double .text() in the same tick: first resolves, second rejects with TypeError', async function (t) {
+    t = tspl(t, { plan: 2 })
+
+    function resume () {
+    }
+    function abort () {
+    }
+    const r = new Readable({ resume, abort })
+
+    r.push('hello world')
+    r.push(null)
+
+    const p1 = r.text()
+    const p2 = r.text()
+
+    // The first consume wins and resolves with the full body...
+    t.strictEqual(await p1, 'hello world')
+    // ...the second observes the locked body and rejects, per the fetch spec.
+    // (Used to hang the first promise forever and resolve the second with ''.)
+    await t.rejects(p2, { name: 'TypeError', message: 'unusable' })
+  })
+
+  test('second .text() after the first completed rejects instead of throwing synchronously', async function (t) {
+    t = tspl(t, { plan: 3 })
+
+    function resume () {
+    }
+    function abort () {
+    }
+    const r = new Readable({ resume, abort })
+
+    r.push('hello world')
+    r.push(null)
+
+    t.strictEqual(await r.text(), 'hello world')
+
+    // text() is a sync function returning a promise, so a second consume must
+    // reject the returned promise rather than throw at the call site.
+    // (Used to throw AssertionError synchronously.)
+    let threwSync = false
+    let p
+    try {
+      p = r.text()
+    } catch {
+      threwSync = true
+    }
+    t.strictEqual(threwSync, false)
+    await t.rejects(p, { name: 'TypeError', message: 'unusable' })
+  })
+
+  test('mixed .json() then .text() in the same tick: first resolves, second rejects', async function (t) {
+    t = tspl(t, { plan: 2 })
+
+    function resume () {
+    }
+    function abort () {
+    }
+    const r = new Readable({ resume, abort })
+
+    r.push(JSON.stringify({ hello: 'world' }))
+    r.push(null)
+
+    const pj = r.json()
+    const pt = r.text()
+
+    t.deepStrictEqual(await pj, { hello: 'world' })
+    await t.rejects(pt, { name: 'TypeError', message: 'unusable' })
+  })
 })
