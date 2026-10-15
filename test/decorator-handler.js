@@ -440,3 +440,23 @@ describe('DecoratorHandler', () => {
     })
   })
 })
+
+describe('DecoratorHandler interim responses', () => {
+  test('forwards 1xx responses without counting them as the response start', t => {
+    t = tspl(t, { plan: 2 })
+
+    const statusCodes = []
+    const handler = new DecoratorHandler({
+      onResponseStart (controller, statusCode) {
+        statusCodes.push(statusCode)
+      }
+    })
+
+    handler.onResponseStart(null, 103, { link: '</style.css>; rel=preload; as=style' }, 'Early Hints')
+    handler.onResponseStart(null, 200, {}, 'OK')
+    t.deepStrictEqual(statusCodes, [103, 200])
+
+    // a second final response is still rejected
+    t.throws(() => handler.onResponseStart(null, 200, {}, 'OK'), { code: 'ERR_ASSERTION' })
+  })
+})
