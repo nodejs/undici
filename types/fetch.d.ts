@@ -8,6 +8,7 @@ import { ReadableStream } from 'node:stream/web'
 import { FormData } from './formdata'
 import { HeaderRecord } from './header'
 import Dispatcher from './dispatcher'
+import RetryHandler from './retry-handler'
 
 export type RequestInfo = string | URL | Request
 
@@ -148,6 +149,23 @@ export interface RequestInit {
   cache?: RequestCache
   credentials?: RequestCredentials
   dispatcher?: Dispatcher
+  /**
+   * Opt-in automatic retry on recoverable network errors (undici specific).
+   *
+   * - `true` enables retry with {@link RetryHandler}'s defaults (ECONNRESET,
+   *   UND_ERR_SOCKET, and 429/5xx status codes).
+   * - A {@link RetryHandler.RetryOptions} object forwards fine-grained
+   *   retry policy verbatim to the underlying RetryAgent.
+   * - `undefined`/`false` preserves the historical fetch behaviour (surface
+   *   every network error without retry).
+   *
+   * Stateful bodies (streams / AsyncIterables) cannot be replayed and will
+   * reject with `UND_ERR_REQ_RETRY` on the first retry attempt, matching
+   * RetryHandler's existing contract.
+   *
+   * @see https://github.com/nodejs/undici/issues/3492
+   */
+  retry?: boolean | RetryHandler.RetryOptions
   duplex?: RequestDuplex
   headers?: HeadersInit
   integrity?: string
