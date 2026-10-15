@@ -62,6 +62,12 @@ changes:
     `'no-referrer'`, `'no-referrer-when-downgrade'`, `'origin'`,
     `'origin-when-cross-origin'`, `'same-origin'`, `'strict-origin'`,
     `'strict-origin-when-cross-origin'`, or `'unsafe-url'`.
+  * `retry` {boolean|RetryOptions} Opt-in automatic retry on recoverable
+    network errors (undici specific). `true` applies [`RetryHandler`][]'s
+    defaults (`ECONNRESET`, `UND_ERR_SOCKET`, and `429`/`500`/`502`/`503`/`504`
+    status codes), a [`RetryOptions`][] object forwards fine-grained policy
+    verbatim, and `false`/omitted preserves the historical no-retry behaviour.
+    See the [retry example](#enabling-automatic-retry-with-initretry) below.
   * `signal` {AbortSignal|null} An {AbortSignal} used to abort the request.
     **Default:** `null`.
   * `window` {null} Can only be `null`; reserved by the standard.
@@ -96,6 +102,65 @@ const response = await fetch('https://example.com', {
   dispatcher: new Agent({ connect: { rejectUnauthorized: false } }),
 })
 ```
+
+### Enabling automatic retry with `init.retry`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+By default `fetch()` surfaces every network failure to the caller, matching
+the WHATWG Fetch Standard. This can be inconvenient in practice: keep-alive
+sockets closed between requests, transient `ECONNRESET`s, and transient
+`5xx` responses all cost a full application-level retry. The `init.retry`
+option opts into undici's [`RetryHandler`][] without having to replace the
+dispatcher.
+
+```mjs
+import { fetch } from 'undici'
+
+// Enable retry with RetryHandler defaults: ECONNRESET, UND_ERR_SOCKET,
+// and 429/5xx are retried up to 5 times with exponential backoff.
+const response = await fetch('https://example.com', { retry: true })
+```
+
+Pass a [`RetryOptions`][] object to tune the behaviour:
+
+```mjs
+await fetch('https://example.com', {
+  retry: {
+    maxRetries: 3,
+    minTimeout: 500,
+    maxTimeout: 5_000,
+    timeoutFactor: 2,
+    errorCodes: ['ECONNRESET', 'UND_ERR_SOCKET'],
+    statusCodes: [502, 503, 504]
+  }
+})
+```
+
+The option also round-trips through the `Request` constructor:
+
+```mjs
+const req = new Request('https://example.com', { retry: true })
+const response = await fetch(req)
+```
+
+Setting `retry: false` is identical to omitting the option — both preserve
+the WHATWG default behaviour. The option composes with `init.dispatcher`:
+retry wraps the dispatcher the user supplied (or the global dispatcher
+when none is supplied), so proxy agents, mock agents, and custom pools
+all keep working with retry on top.
+
+Stateful request bodies (readable streams, `AsyncIterable`) cannot be
+replayed, so the first retry rejects with `UND_ERR_REQ_RETRY` — this matches
+[`RetryHandler`][]'s existing contract.
+
+See [#3492](https://github.com/nodejs/undici/issues/3492) for the design
+discussion.
+
+[`RetryHandler`]: ./RetryHandler.md
+[`RetryOptions`]: ./RetryHandler.md#parameter-retryoptions
 
 ## Class: `FormData`
 
