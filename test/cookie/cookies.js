@@ -59,6 +59,24 @@ test('Cookie parser', () => {
   })
 })
 
+test('Cookie parser keeps a cookie named __proto__', () => {
+  const headers = new Headers()
+  headers.set('Cookie', '__proto__=foo; bar=baz')
+
+  const cookies = getCookies(headers)
+
+  assert.deepStrictEqual(Object.keys(cookies).sort(), ['__proto__', 'bar'])
+  assert.strictEqual(
+    Object.getOwnPropertyDescriptor(cookies, '__proto__').value,
+    'foo'
+  )
+  assert.strictEqual(cookies.bar, 'baz')
+
+  for (const value of Object.values(cookies)) {
+    assert.strictEqual(typeof value, 'string')
+  }
+})
+
 test('Cookie Name Validation', () => {
   const tokens = [
     '"id"',
@@ -378,6 +396,68 @@ test('Cookie Set', () => {
     headers.get('Set-Cookie'),
     'Space=Cat; Expires=Fri, 07 Jan 1983 15:32:00 GMT'
   )
+
+  // A numeric 0 is the Unix epoch, the canonical "expire now" value, not an
+  // absent option.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: 0
+  })
+  assert.equal(
+    headers.get('Set-Cookie'),
+    'Space=Cat; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  )
+
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: null
+  })
+  assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+
+  // A numeric expires outside the range representable by Date must not be
+  // serialized. Before this was guarded, the numeric form skipped the
+  // "Invalid Date" check and toIMFDate spliced undefined/NaN into the header.
+  for (const expires of [8640000000000001, 1e16, Number.MAX_SAFE_INTEGER]) {
+    headers = new Headers()
+    setCookie(headers, { name: 'Space', value: 'Cat', expires })
+    assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+  }
+
+  // The maximum representable time value is still serialized.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: 8640000000000000
+  })
+  assert.equal(
+    headers.get('Set-Cookie'),
+    'Space=Cat; Expires=Sat, 13 Sep 275760 00:00:00 GMT'
+  )
+
+  // A non-finite number is coerced to 0 by the WebIDL converter before it
+  // reaches serialization, so it still serializes as the epoch.
+  for (const expires of [Infinity, -Infinity, NaN]) {
+    headers = new Headers()
+    setCookie(headers, { name: 'Space', value: 'Cat', expires })
+    assert.equal(
+      headers.get('Set-Cookie'),
+      'Space=Cat; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    )
+  }
+
+  // An invalid Date is ignored, consistent with the out-of-range numeric cases.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    expires: new Date(NaN)
+  })
+  assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
 
   headers = new Headers()
   setCookie(headers, { name: '__Secure-Kitty', value: 'Meow' })
