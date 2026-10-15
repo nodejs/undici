@@ -842,7 +842,7 @@ test('forwards TLS certificate validation callbacks via tls option', async (t) =
   t.after(() => agent.close())
 
   await assert.rejects(
-    request(`https://localhost:${server.address().port}`, { dispatcher: agent }),
+    request(`https://127.0.0.1:${server.address().port}`, { dispatcher: agent }),
     /rejected by custom checkServerIdentity/
   )
   assert.strictEqual(identityChecks, 1)
@@ -874,7 +874,7 @@ test('forwards TLS certificate validation callbacks via connect option', async (
   t.after(() => agent.close())
 
   await assert.rejects(
-    request(`https://localhost:${server.address().port}`, { dispatcher: agent }),
+    request(`https://127.0.0.1:${server.address().port}`, { dispatcher: agent }),
     /rejected by custom checkServerIdentity/
   )
   assert.strictEqual(identityChecks, 1)
@@ -903,7 +903,7 @@ test('copies connect and tls options before storing them', async (t) => {
 
   connect.timeout = 200
   tls.servername = 'agent2'
-  await request(`http://localhost:${server.address().port}`, { dispatcher: agent })
+  await request(`http://127.0.0.1:${server.address().port}`, { dispatcher: agent })
 
   assert.notStrictEqual(capturedOptions.connect, connect)
   assert.notStrictEqual(capturedOptions.tls, tls)
