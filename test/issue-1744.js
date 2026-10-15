@@ -78,3 +78,20 @@ for (const Dispatcher of [Client, Pool]) {
     t.assert.deepStrictEqual(received, ['/start'])
   })
 }
+
+test('a redirect stopped by the limit does not parse its unused Location', { timeout: 10000 }, async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(302, { location: req.url === '/start' ? '/final' : 'http://[' })
+    res.end('redirect body')
+  })
+  t.after(() => { server.closeAllConnections(); server.close() })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+  const origin = `http://127.0.0.1:${server.address().port}`
+  const agent = new Agent().compose(interceptors.redirect({ maxRedirections: 1 }))
+  t.after(() => agent.destroy())
+  const response = await agent.request({ origin, path: '/start', method: 'GET' })
+  t.assert.strictEqual(response.statusCode, 302)
+  t.assert.strictEqual(response.headers.location, 'http://[')
+  t.assert.strictEqual(await response.body.text(), 'redirect body')
+})
