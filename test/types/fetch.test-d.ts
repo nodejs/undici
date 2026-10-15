@@ -199,3 +199,13 @@ expectAssignable<Request>(new (class extends Request {
     return this
   }
 })('https://example.com'))
+
+// init.retry — see https://github.com/nodejs/undici/issues/3492
+const retryInitTrue: RequestInit = { retry: true }
+const retryInitFalse: RequestInit = { retry: false }
+const retryInitOptions: RequestInit = {
+  retry: { maxRetries: 3, minTimeout: 100, maxTimeout: 1_000, timeoutFactor: 2 }
+}
+expectAssignable<RequestInit>(retryInitTrue)
+expectAssignable<RequestInit>(retryInitFalse)
+expectAssignable<RequestInit>(retryInitOptions)
