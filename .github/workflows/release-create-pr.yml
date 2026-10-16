@@ -20,7 +20,7 @@ on:
 
 jobs:
   create-pr:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: write
@@ -30,14 +30,14 @@ jobs:
       version: ${{ steps.bump.outputs.version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Validate release branch
         run: |
           if [ "${{ github.ref_name }}" != "v6.x" ]; then
             echo "This workflow must run from v6.x (current ref: ${{ github.ref_name }})."
             exit 1
           fi
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '20'
       - name: Git Config
@@ -55,7 +55,7 @@ jobs:
           git push origin "HEAD:$RELEASE_BRANCH"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Create PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const releaseBranch = "${{ github.ref_name }}"
