@@ -533,6 +533,31 @@ same connection, so the request fails instead of being retried.
 * `message` {string} The error message. (optional)
 * `options` {Object} Additional `Error` options merged with `cause`. (optional)
 
+## Class: `ProxyConnectionError`
+
+<!-- YAML
+added: v8.10.1
+changes:
+  - version: v8.10.1
+    pr-url: https://github.com/nodejs/undici/pull/5707
+    description: Added to fail the request instead of retrying forever when the proxy connection is torn down.
+-->
+
+* Extends: {UndiciError}
+
+A connection to the proxy failed in a way that cannot be recovered on the
+same connection, so the request fails instead of being retried.
+
+* `name` {string} Always `'ProxyConnectionError'`.
+* `code` {string} Always `'UND_ERR_PRX_CONN'`.
+* `cause` {Error} The underlying error that caused the proxy connection to fail.
+
+### `new ProxyConnectionError(cause[, message[, options]])`
+
+* `cause` {Error} The underlying error. (optional)
+* `message` {string} The error message. (optional)
+* `options` {Object} Additional `Error` options merged with `cause`. (optional)
+
 ## Class: `SecureProxyConnectionError`
 
 <!-- YAML
