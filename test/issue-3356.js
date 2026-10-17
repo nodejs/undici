@@ -14,7 +14,7 @@ test('https://github.com/nodejs/undici/issues/3356', { skip: process.env.CITGM }
   const server = createServer({ joinDuplicateHeaders: true })
   server.on('request', (req, res) => {
     requestCount++
-    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.writeHead(200, { 'content-type': 'text/plain', 'content-length': 12 })
     if (requestCount === 1) {
       // First request: send headers and partial body, then delay the rest
       // long enough for the bodyTimeout to fire via fast timers
