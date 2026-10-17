@@ -2406,3 +2406,14 @@ test('should converge a downstream onResponseEnd throw to a per-request error (G
 
   await t.completed
 })
+
+test('should not emit an ExperimentalWarning', async t => {
+  const { execFile } = require('node:child_process')
+  const { promisify } = require('node:util')
+  const { stderr } = await promisify(execFile)(process.execPath, [
+    '-e',
+    'require(process.argv[1]).interceptors.decompress()',
+    require.resolve('../..')
+  ])
+  assert.doesNotMatch(stderr, /DecompressInterceptor/)
+})
