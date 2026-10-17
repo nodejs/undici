@@ -2497,3 +2497,105 @@ test('Should report an unusable lookup result instead of crashing (dual stack di
     origin: `http://localhost:${server.address().port}`
   }), { code: 'UND_ERR_INFO', message: 'No DNS entries found' })
 })
+
+test('#5974 - Should share a single in-flight lookup between concurrent requests', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  let lookups = 0
+  const client = new Agent().compose(dns({
+    maxTTL: 60000,
+    lookup (origin, opts, cb) {
+      lookups++
+      // Resolve asynchronously so every request below arrives while the
+      // first lookup is still in flight.
+      setTimeout(() => {
+        cb(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
+      }, 30)
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const origin = `http://localhost:${server.address().port}`
+  const batch = () => Promise.all(Array.from({ length: 20 }, async () => {
+    const response = await client.request({ method: 'GET', path: '/', origin })
+    return response.body.text()
+  }))
+
+  const bodies = await batch()
+  t.ok(bodies.every(body => body === 'hello world!'))
+  t.equal(lookups, 1, 'concurrent requests share one lookup')
+
+  // Completed records are served from the cache.
+  const cachedBodies = await batch()
+  t.ok(cachedBodies.every(body => body === 'hello world!'))
+  t.equal(lookups, 1, 'cached records are reused')
+})
+
+test('#5974 - Should fail every request sharing a failed lookup and retry afterwards', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  let lookups = 0
+  const client = new Agent().compose(dns({
+    lookup (origin, opts, cb) {
+      lookups++
+      const attempt = lookups
+      setTimeout(() => {
+        if (attempt === 1) {
+          const err = new Error('getaddrinfo ENOTFOUND localhost')
+          err.code = 'ENOTFOUND'
+          cb(err)
+          return
+        }
+        cb(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
+      }, 30)
+    }
+  }))
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const requestOptions = {
+    method: 'GET',
+    path: '/',
+    origin: `http://localhost:${server.address().port}`
+  }
+
+  const results = await Promise.allSettled(
+    Array.from({ length: 5 }, () => client.request(requestOptions))
+  )
+  t.ok(results.every(result => result.status === 'rejected' && result.reason.code === 'ENOTFOUND'))
+  t.equal(lookups, 1, 'concurrent requests share the failed lookup')
+
+  // The failed lookup is not left pending, so the next request retries it.
+  const response = await client.request(requestOptions)
+  t.equal(await response.body.text(), 'hello world!')
+  t.equal(lookups, 2)
+})
