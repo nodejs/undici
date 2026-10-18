@@ -341,8 +341,29 @@ backing store.
 
 **Parameters**
 
-* `opts` {CacheHandler.CacheOptions} (optional) See the
-  [`CacheStore`](./CacheStore.md) documentation for accepted fields.
+* `opts` {Object} (optional)
+  * `store` {CacheStore} Where responses are stored. See
+    [`CacheStore`](./CacheStore.md) for the built-in stores and the interface
+    of a custom one. **Default:** a new `MemoryCacheStore`.
+  * `methods` {string[]} HTTP methods whose responses are cached. Must be
+    safe HTTP methods (`GET`, `HEAD`, `OPTIONS`, `TRACE`) and must not be
+    empty. Responses to unsafe methods (e.g. `POST`, `PUT`) are never
+    cached; a successful one invalidates the cached responses for its URL.
+    **Default:** `['GET']`.
+  * `cacheByDefault` {number} Freshness lifetime, in milliseconds, given to
+    responses that the server didn't say how long to cache, for example
+    responses without `Cache-Control`, `Expires` or `Last-Modified`. When
+    unset, such responses are not cached. **Default:** `undefined`.
+  * `type` {string} The kind of cache, as defined by RFC 9111. Either
+    `'shared'` or `'private'`. A shared cache uses `s-maxage` and does not
+    store responses with `Cache-Control: private` or a `Set-Cookie` header.
+    A private cache does not use `s-maxage` and can store responses with
+    `Cache-Control: private`. **Default:** `'shared'`.
+  * `origins` {Array<string|RegExp>} Only responses from these origins are
+    cached. A string must match the origin exactly (case-insensitive). A
+    `RegExp` is tested against the lower-cased origin. Requests to other
+    origins are passed through. **Default:** `undefined` (all origins are
+    cached).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
