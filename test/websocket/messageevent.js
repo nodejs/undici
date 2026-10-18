@@ -113,8 +113,8 @@ test('test/parallel/test-worker-message-port.js', (t) => {
     message: 'MessageEvent constructor: Expected eventInitDict.ports[0] ("null") to be an instance of MessagePort.'
   })
   t.assert.throws(() =>
-    new MessageEvent('message', { ports: [{}] })
-  , {
+    new MessageEvent('message', { ports: [{}] }),
+  {
     constructor: TypeError,
     message: 'MessageEvent constructor: Expected eventInitDict.ports[0] ("{}") to be an instance of MessagePort.'
   })
