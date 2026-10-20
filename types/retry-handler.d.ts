@@ -37,7 +37,7 @@ declare namespace RetryHandler {
   export interface RetryOptions {
     /**
      * If true, the retry handler will throw an error if the request fails,
-     * this will prevent the folling handlers from being called, and will destroy the socket.
+     * this will prevent the following handlers from being called, and will destroy the socket.
      *
      * @type {boolean}
      * @memberof RetryOptions
