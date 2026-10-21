@@ -158,3 +158,93 @@ test('a failed lookup is shared by concurrent requests and cleared for retries',
 
   assert.strictEqual(lookupCount, 2)
 })
+
+test('records that expire while a shared lookup is delivered are resolved again', async (t) => {
+  const server = createServer((req, res) => {
+    res.end('ok')
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  let now = Date.now()
+  t.mock.method(Date, 'now', () => now)
+
+  let lookupCount = 0
+  const dispatcher = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        now += 10
+        return dispatch(opts, handler)
+      }
+    },
+    interceptors.dns({
+      maxTTL: 5,
+      lookup (origin, options, callback) {
+        lookupCount++
+        setImmediate(() => {
+          callback(null, [{ address: '127.0.0.1', family: 4, ttl: 5 }])
+        })
+      }
+    })
+  ])
+
+  t.after(async () => {
+    await dispatcher.destroy()
+    await new Promise((resolve, reject) => {
+      server.close(err => err ? reject(err) : resolve())
+    })
+  })
+
+  const origin = `http://dns-expiry-test.invalid:${server.address().port}`
+
+  const results = await Promise.allSettled(
+    Array.from({ length: 5 }, () =>
+      dispatcher.request({ origin, path: '/', method: 'GET' })
+        .then(res => res.body.text())
+    )
+  )
+
+  for (const result of results) {
+    assert.deepStrictEqual(result, { status: 'fulfilled', value: 'ok' })
+  }
+  assert.ok(lookupCount > 1)
+})
+
+test('a lookup that throws does not block later requests for the same hostname', async (t) => {
+  const server = createServer((req, res) => {
+    res.end('ok')
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  let lookupCount = 0
+  const dispatcher = new Agent().compose(interceptors.dns({
+    lookup (origin, options, callback) {
+      lookupCount++
+      if (lookupCount === 1) {
+        throw new Error('resolver initialization failed')
+      }
+      setImmediate(() => {
+        callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
+      })
+    }
+  }))
+
+  t.after(async () => {
+    await dispatcher.destroy()
+    await new Promise((resolve, reject) => {
+      server.close(err => err ? reject(err) : resolve())
+    })
+  })
+
+  const origin = `http://dns-throw-test.invalid:${server.address().port}`
+
+  await assert.rejects(
+    dispatcher.request({ origin, path: '/', method: 'GET' }),
+    { message: 'resolver initialization failed' }
+  )
+
+  const response = await dispatcher.request({ origin, path: '/', method: 'GET' })
+  assert.strictEqual(await response.body.text(), 'ok')
+  assert.strictEqual(lookupCount, 2)
+})
