@@ -2497,3 +2497,54 @@ test('Should report an unusable lookup result instead of crashing (dual stack di
     origin: `http://localhost:${server.address().port}`
   }), { code: 'UND_ERR_INFO', message: 'No DNS entries found' })
 })
+
+test('Should not run a lookup for IPv6 literal origins', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createServer({ joinDuplicateHeaders: true })
+
+  server.on('request', (req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('hello world!')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  let lookups = 0
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        const url = new URL(opts.origin)
+        t.equal(url.hostname, '[::1]')
+
+        // The server only listens on IPv4, route the request there.
+        url.hostname = '127.0.0.1'
+        opts.origin = url.toString()
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup (origin, opts, cb) {
+        lookups++
+        cb(new Error(`unexpected lookup for ${origin.hostname}`))
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({
+    method: 'GET',
+    path: '/',
+    origin: `http://[::1]:${server.address().port}`
+  })
+
+  t.equal(response.statusCode, 200)
+  t.equal(await response.body.text(), 'hello world!')
+  t.equal(lookups, 0)
+})
