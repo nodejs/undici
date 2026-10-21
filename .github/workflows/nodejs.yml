@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
@@ -59,6 +59,14 @@ jobs:
           cd ${{ github.workspace }}\test\web-platform-tests\wpt
           python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
         shell: powershell
+
+      # The macOS runner image now ships Python 3.15, which removed
+      # http.server.CGIHTTPRequestHandler. pywebsocket3, used by the WPT server, still needs it.
+      - name: Setup Python (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.14'
 
       - name: Configure hosts file for WPT (Unix)
         if: runner.os != 'Windows'
@@ -198,6 +206,6 @@ jobs:
       
       - name: Upload coverage report to Codecov
         if: inputs.codecov == true
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

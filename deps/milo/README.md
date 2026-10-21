@@ -91,6 +91,8 @@ milo.dealloc(ptr, message.length)
 
 The default JavaScript entry point uses the SIMD WebAssembly build. Use `@perseveranza-pets/milo/no-simd` when SIMD is not available, and add `/unbundled` to either entry point to load the external `.wasm` file instead of the bundled JavaScript module.
 
+The WebAssembly release build uses immediate-abort panics: panics trap without unwinding or rich panic messages. The debug build also enables the `on_state_change` callback and provides more detailed WebAssembly errors.
+
 CommonJS projects can use the same entry points from `@perseveranza-pets/milo-cjs`:
 
 ```javascript
@@ -233,44 +235,6 @@ clang++ -std=c++11 -o example main.cc libmilo.a
 # Pos=38 Body: abc
 ```
 
-### Build milo (WebAssembly and C++) locally
-
-If you want to build it locally, you need the following tools:
-
-- [cargo-make][cargo-make]
-- Rust toolchain - You can install it via [rustup].
-- [rust-cbindgen](https://github.com/mozilla/cbindgen)
-
-Make sure you have the `nightly` toolchain installed locally:
-
-```bash
-rustup toolchain install nightly
-```
-
-Make sure you have the `wasm32-unknown-unknown` target:
-
-```bash
-rustup target add wasm32-unknown-unknown
-```
-
-Install npm dependencies
-
-```bash
-pnpm install
-```
-
-After all the requirements are met, you can then run:
-
-```bash
-makers
-```
-
-The command above will produce debug and release builds for each language in the top-level `dist` folder.
-
-The WebAssembly release build uses immediate-abort panics to keep the artifact smaller. Panics trap without unwinding or rich panic messages.
-
-The debug build also enables the `on_state_change` callback and is more verbose in case of WebAssembly errors.
-
 ## How to use it (CLI)
 
 Install it from crates.io:
@@ -338,11 +302,7 @@ Milo validates HTTP/1.1 syntax, message framing, protocol switching, connection 
 
 ## How it works?
 
-Milo leverages Rust's [procedural macro], [syn] and [quote] crates to allow an easy definition of actions and matchers for the parser.
-
-See the [macros](./macros/README.md) internal crate for more information.
-
-The resulting parser is a simple state machine which copies data in only one optional case: automatically handling the unconsumed portion of the input data.
+Milo is a simple state machine which copies data in only one optional case: automatically handling the unconsumed portion of the input data.
 
 In all other cases, no data is copied and the memory footprint is very small as only a few dozen `bool`, `uintptr_t`, or `uint64_t` fields can represent the entire parser state.
 
@@ -366,12 +326,7 @@ To see the initial disclosure of milo, check Paolo's talk at [NodeConf EU 2023][
 
 ## Contributing to milo
 
-- Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet.
-- Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it.
-- Fork the project.
-- Start a feature/bugfix branch.
-- Commit and push until you are happy with your contribution.
-- Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
+See [AGENTS.md](./AGENTS.md) for development setup, local and Docker builds, tests, and contribution guidelines.
 
 ## Copyright
 
@@ -389,11 +344,6 @@ Licensed under the ISC license, which can be found at https://choosealicense.com
 [nodeconf-talk]: https://youtube.com/watch?v=dcHbAeO_ccY
 [slides]: https://talks.paoloinsogna.dev/milo
 [isc]: https://choosealicense.com/licenses/isc
-[procedural macro]: https://doc.rust-lang.org/reference/procedural-macros.html
-[syn]: https://crates.io/crates/syn
-[quote]: https://crates.io/crates/quote
 [match]: https://doc.rust-lang.org/rust-by-example/flow_control/match.html
 [match-slice]: https://doc.rust-lang.org/rust-by-example/flow_control/match/destructuring/destructure_slice.html
-[cargo-make]: https://github.com/sagiegurari/cargo-make
-[rustup]: https://rustup.rs/
 [Clang]: https://clang.llvm.org/
