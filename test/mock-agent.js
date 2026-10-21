@@ -3679,6 +3679,29 @@ test('MockAgent - headers should be array of strings (fetch)', async (t) => {
   })
 })
 
+test('MockAgent - should match a path without a query string when acceptNonStandardSearchParameters is true', async (t) => {
+  t.plan(2)
+
+  const baseUrl = 'http://localhost:9999'
+
+  const mockAgent = new MockAgent({ acceptNonStandardSearchParameters: true })
+  after(() => mockAgent.close())
+  mockAgent.disableNetConnect()
+
+  mockAgent.get(baseUrl).intercept({
+    path: '/foo',
+    method: 'GET'
+  }).reply(200, 'hello')
+
+  const { statusCode, body } = await mockAgent.request({
+    origin: baseUrl,
+    path: '/foo',
+    method: 'GET'
+  })
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.strictEqual(await getResponse(body), 'hello')
+})
+
 test('MockAgent - should not accept non-standard search parameters when acceptNonStandardSearchParameters is false (default)', async (t) => {
   t.plan(2)
 
