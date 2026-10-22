@@ -5,6 +5,7 @@ const { test, after } = require('node:test')
 const { createServer } = require('node:tls')
 const { createSecureServer } = require('node:http2')
 const { once } = require('node:events')
+const { performance } = require('node:perf_hooks')
 
 const pem = require('@metcoder95/https-pem')
 
@@ -170,8 +171,8 @@ test('a refused h2 origin must not starve unrelated work in the process', async 
    */
   const measureThroughput = async (ms) => {
     let served = 0
-    const deadline = Date.now() + ms
-    while (Date.now() < deadline) {
+    const deadline = performance.now() + ms
+    while (performance.now() < deadline) {
       const response = await healthyClient.request({ path: '/', method: 'GET' })
       assert.strictEqual(response.statusCode, 200)
       assert.strictEqual(await response.body.text(), 'ok')
@@ -194,6 +195,12 @@ test('a refused h2 origin must not starve unrelated work in the process', async 
     healthy.close()
     release()
   })
+
+  for (let i = 0; i < 100; i++) {
+    const response = await healthyClient.request({ path: '/', method: 'GET' })
+    assert.strictEqual(response.statusCode, 200)
+    assert.strictEqual(await response.body.text(), 'ok')
+  }
 
   const baseline = await measureThroughput(1000)
 
