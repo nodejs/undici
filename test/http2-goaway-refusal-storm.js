@@ -165,6 +165,21 @@ test('a refused h2 origin must not starve unrelated work in the process', async 
     allowH2: true
   })
 
+  /**
+   * @param {number} ms
+   */
+  const measureThroughput = async (ms) => {
+    let served = 0
+    const deadline = Date.now() + ms
+    while (Date.now() < deadline) {
+      const response = await healthyClient.request({ path: '/', method: 'GET' })
+      assert.strictEqual(response.statusCode, 200)
+      assert.strictEqual(await response.body.text(), 'ok')
+      served++
+    }
+    return served
+  }
+
   const refusing = await refusingServer(0)
   const refusingClient = new Client(`https://localhost:${refusing.address().port}`, {
     connect: { rejectUnauthorized: false },
@@ -180,20 +195,21 @@ test('a refused h2 origin must not starve unrelated work in the process', async 
     release()
   })
 
-  await Promise.all([
+  const baseline = await measureThroughput(1000)
+
+  const [, during] = await Promise.all([
     assert.rejects(refusingClient.request({ path: '/', method: 'GET' }), {
       name: 'InformationalError',
       code: 'UND_ERR_INFO',
       message: 'HTTP/2: "GOAWAY" frame received with code 0'
     }),
-    (async () => {
-      for (let i = 0; i < 10; i++) {
-        const response = await healthyClient.request({ path: '/', method: 'GET' })
-        assert.strictEqual(response.statusCode, 200)
-        assert.strictEqual(await response.body.text(), 'ok')
-      }
-    })()
+    measureThroughput(1000).finally(() => refusingClient.destroy())
   ])
 
+  assert.ok(
+    during > baseline / 2,
+    `one refused h2 origin cut unrelated throughput from ${baseline}/s to ${during}/s ` +
+    `(${refusing.connections()} reconnects in 1s)`
+  )
   assert.strictEqual(refusing.connections(), 2)
 })
