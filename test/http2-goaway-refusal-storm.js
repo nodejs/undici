@@ -152,7 +152,6 @@ test('a GOAWAY carrying an error code must not be retried without bound', async 
 test('a refused h2 origin must not starve unrelated work in the process', async () => {
   const release = holdEventLoop()
 
-  // A healthy h2 origin to measure against.
   const healthy = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   healthy.on('stream', (stream) => {
     stream.on('error', () => {})
@@ -166,19 +165,6 @@ test('a refused h2 origin must not starve unrelated work in the process', async 
     allowH2: true
   })
 
-  const measureThroughput = async (ms) => {
-    let served = 0
-    const deadline = Date.now() + ms
-    while (Date.now() < deadline) {
-      const res = await healthyClient.request({ path: '/', method: 'GET' })
-      await res.body.dump()
-      served++
-    }
-    return served
-  }
-
-  const baseline = await measureThroughput(1000)
-
   const refusing = await refusingServer(0)
   const refusingClient = new Client(`https://localhost:${refusing.address().port}`, {
     connect: { rejectUnauthorized: false },
@@ -188,23 +174,26 @@ test('a refused h2 origin must not starve unrelated work in the process', async 
   })
 
   after(async () => {
-    await refusingClient.destroy()
-    await healthyClient.destroy()
+    await Promise.all([refusingClient.destroy(), healthyClient.destroy()])
     refusing.shutdown()
     healthy.close()
     release()
   })
 
-  // One request to the refusing origin, then measure the healthy one again.
-  const pending = refusingClient.request({ path: '/', method: 'GET' }).then(() => {}, () => {})
-  const during = await measureThroughput(1000)
+  await Promise.all([
+    assert.rejects(refusingClient.request({ path: '/', method: 'GET' }), {
+      name: 'InformationalError',
+      code: 'UND_ERR_INFO',
+      message: 'HTTP/2: "GOAWAY" frame received with code 0'
+    }),
+    (async () => {
+      for (let i = 0; i < 10; i++) {
+        const response = await healthyClient.request({ path: '/', method: 'GET' })
+        assert.strictEqual(response.statusCode, 200)
+        assert.strictEqual(await response.body.text(), 'ok')
+      }
+    })()
+  ])
 
-  await refusingClient.destroy()
-  await pending
-
-  assert.ok(
-    during > baseline / 2,
-    `one refused h2 origin cut unrelated throughput from ${baseline}/s to ${during}/s ` +
-    `(${refusing.connections()} reconnects in 1s)`
-  )
+  assert.strictEqual(refusing.connections(), 2)
 })
