@@ -467,3 +467,58 @@ test('SqliteCacheStore compresses big files with zstd', { skip: skipCompression 
   strictEqual(rows[2].compressed, 'zstd')
   strictEqual(rows[2].body.byteLength < jsonBody.byteLength, true)
 })
+
+test('SqliteCacheStore ignores a database locked by another connection', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+  const { DatabaseSync } = require('node:sqlite')
+  const sqliteLocation = 'cache-interceptor-locked.sqlite'
+
+  const store = new SqliteCacheStore({ location: sqliteLocation })
+
+  // A second connection holding the write lock is what another process (or
+  // another store instance) sharing the same cache database looks like.
+  const otherConnection = new DatabaseSync(sqliteLocation)
+
+  t.after(async () => {
+    store.close()
+    otherConnection.close()
+    await rm(sqliteLocation)
+  })
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+   */
+  const key = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+   */
+  const value = {
+    statusCode: 200,
+    statusMessage: '',
+    headers: { foo: 'bar' },
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 10000,
+    deleteAt: Date.now() + 20000,
+    body: Buffer.from('asd')
+  }
+
+  otherConnection.exec('BEGIN IMMEDIATE')
+
+  // Contention is transient and the cache is best effort: none of these may
+  // throw while the database is locked, the entry is just not cached.
+  store.set(key, value)
+  strictEqual(store.get(key), undefined)
+  store.delete(key)
+
+  otherConnection.exec('COMMIT')
+
+  // Once the lock is released the store behaves as usual again.
+  store.set(key, value)
+  notEqual(store.get(key), undefined)
+})
