@@ -811,7 +811,7 @@ For the full reference of built-in interceptors (`dump`, `retry`, `redirect`,
 see [Interceptors](Interceptors.md).
 
 [Fastify]: https://fastify.dev
-[GOAWAY frame]: https://webconcepts.info/concepts/http2-frame-type/0x7
+[GOAWAY frame]: https://www.rfc-editor.org/rfc/rfc9113.html#section-6.8
 [HTTP `CONNECT`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT
 [MDN: Protocol upgrade mechanism]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism
 [`.arrayBuffer()`]: https://fetch.spec.whatwg.org/#dom-body-arraybuffer
