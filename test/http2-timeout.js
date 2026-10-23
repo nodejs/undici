@@ -18,6 +18,9 @@ test('Should handle http2 stream timeout', async t => {
   const stream = createReadStream(__filename)
 
   server.on('stream', (stream, headers) => {
+    // The client is torn down while this stream is still open; the reset can
+    // surface here (e.g. on Windows) and must not crash the test.
+    stream.on('error', () => {})
     stream.respond({
       'content-type': 'text/plain; charset=utf-8',
       'x-custom-h2': headers['x-my-header'],
@@ -77,6 +80,7 @@ test('http2 stream timeout keeps open-stream counter non-negative', async t => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream) => {
+    stream.on('error', () => {})
     // Respond with headers but hold the body long enough for the client
     // bodyTimeout to fire.
     stream.respond({ ':status': 200, 'content-type': 'text/plain' })
