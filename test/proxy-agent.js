@@ -118,10 +118,28 @@ test('using auth in combination with token should throw', (t) => {
 })
 
 test('should accept string, URL and object as options', (t) => {
-  t = tspl(t, { plan: 3 })
+  t = tspl(t, { plan: 5 })
   t.doesNotThrow(() => new ProxyAgent('http://example.com'))
   t.doesNotThrow(() => new ProxyAgent(new URL('http://example.com')))
   t.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
+  t.doesNotThrow(() => new ProxyAgent('socks5://127.0.0.1:1080'))
+  t.doesNotThrow(() => new ProxyAgent('socks://127.0.0.1:1080'))
+})
+
+test('should throw error when unsupported proxy protocol is provided', (t) => {
+  t = tspl(t, { plan: 3 })
+  t.throws(
+    () => new ProxyAgent('socks5h://127.0.0.1:1080'),
+    new InvalidArgumentError("Unsupported proxy protocol 'socks5h:'. Supported: http:, https:, socks5:, socks:")
+  )
+  t.throws(
+    () => new ProxyAgent('socks4://127.0.0.1:1080'),
+    new InvalidArgumentError("Unsupported proxy protocol 'socks4:'. Supported: http:, https:, socks5:, socks:")
+  )
+  t.throws(
+    () => new ProxyAgent({ uri: 'ftp://127.0.0.1:1080' }),
+    new InvalidArgumentError("Unsupported proxy protocol 'ftp:'. Supported: http:, https:, socks5:, socks:")
+  )
 })
 
 test('ProxyAgent forwards connectTimeout to the proxy connector', async (t) => {

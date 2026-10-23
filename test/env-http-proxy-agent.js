@@ -2,7 +2,7 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, describe, after, beforeEach } = require('node:test')
-const { EnvHttpProxyAgent, ProxyAgent, Agent, fetch, MockAgent } = require('..')
+const { EnvHttpProxyAgent, ProxyAgent, Agent, fetch, MockAgent, errors } = require('..')
 const { kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent, kClosed, kDestroyed, kProxy } = require('../lib/core/symbols')
 const { createServer } = require('node:http')
 const { createProxy } = require('proxy')
@@ -83,6 +83,15 @@ test('accepts httpProxy and httpsProxy options', async (t) => {
   t.ok(dispatcher[kHttpsProxyAgent] instanceof ProxyAgent)
   t.equal(dispatcher[kHttpsProxyAgent][kProxy].uri, 'http://example.com:8443/')
   return dispatcher.close()
+})
+
+test('throws InvalidArgumentError when proxy env var uses unsupported protocol', (t) => {
+  t = tspl(t, { plan: 1 })
+  process.env.HTTP_PROXY = 'socks5h://127.0.0.1:1080'
+  t.throws(
+    () => new EnvHttpProxyAgent(),
+    new errors.InvalidArgumentError("Unsupported proxy protocol 'socks5h:'. Supported: http:, https:, socks5:, socks:")
+  )
 })
 
 test('prefers options over env vars', async (t) => {
