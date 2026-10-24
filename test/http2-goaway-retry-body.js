@@ -25,7 +25,6 @@ module.exports.__test = {
   onHttp2SessionGoAway,
   kReceivedGoAway,
   kRequestStream,
-  kRequestStreamId,
   kRequestStreamCleanup
 }
 `
@@ -42,7 +41,6 @@ test('h2: GOAWAY resets unaccepted streams and only requeues replayable requests
     onHttp2SessionGoAway,
     kReceivedGoAway,
     kRequestStream,
-    kRequestStreamId,
     kRequestStreamCleanup
   } = loadClientH2Internals()
 
@@ -61,10 +59,11 @@ test('h2: GOAWAY resets unaccepted streams and only requeues replayable requests
   }
 
   const acceptedRequest = {
-    [kRequestStreamId]: 1
+    [kRequestStream]: { id: 1 }
   }
 
   const replayableStream = {
+    id: 3,
     destroyed: false,
     closed: false,
     closeCode: null,
@@ -78,7 +77,6 @@ test('h2: GOAWAY resets unaccepted streams and only requeues replayable requests
     body: Buffer.from('payload'),
     aborted: false,
     completed: false,
-    [kRequestStreamId]: 3,
     [kRequestStream]: replayableStream,
     [kRequestStreamCleanup]: () => {
       replayableRequest.cleanupCalled = true
@@ -87,6 +85,7 @@ test('h2: GOAWAY resets unaccepted streams and only requeues replayable requests
 
   const streamingBody = new PassThrough()
   const streamingStream = {
+    id: 5,
     destroyed: false,
     closed: false,
     closeCode: null,
@@ -101,7 +100,6 @@ test('h2: GOAWAY resets unaccepted streams and only requeues replayable requests
     aborted: false,
     completed: false,
     error: null,
-    [kRequestStreamId]: 5,
     [kRequestStream]: streamingStream,
     [kRequestStreamCleanup]: () => {
       streamingRequest.cleanupCalled = true
@@ -139,11 +137,9 @@ test('h2: GOAWAY resets unaccepted streams and only requeues replayable requests
   assert.strictEqual(streamingRequest.cleanupCalled, true)
 
   assert.strictEqual(replayableRequest[kRequestStream], null)
-  assert.strictEqual(replayableRequest[kRequestStreamId], null)
   assert.strictEqual(replayableRequest[kRequestStreamCleanup], null)
 
   assert.strictEqual(streamingRequest[kRequestStream], null)
-  assert.strictEqual(streamingRequest[kRequestStreamId], null)
   assert.strictEqual(streamingRequest[kRequestStreamCleanup], null)
   assert.strictEqual(streamingRequest.aborted, true)
   assert.strictEqual(streamingRequest.error.message, 'HTTP/2: "GOAWAY" frame received with code 0')
