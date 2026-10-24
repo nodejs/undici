@@ -124,6 +124,22 @@ test('should accept string, URL and object as options', (t) => {
   t.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
 })
 
+test('unsupported proxy scheme error names the scheme and lists supported ones', (t) => {
+  t = tspl(t, { plan: 2 })
+
+  for (const uri of ['socks5h://127.0.0.1:1080', 'socks4://127.0.0.1:1080']) {
+    t.throws(
+      () => new ProxyAgent(uri),
+      (err) => {
+        return err instanceof InvalidArgumentError &&
+          /Unsupported proxy protocol/.test(err.message) &&
+          /socks/.test(err.message) &&
+          err.message.includes('socks5:')
+      }
+    )
+  }
+})
+
 test('ProxyAgent forwards connectTimeout to the proxy connector', async (t) => {
   t = tspl(t, { plan: 4 })
 
