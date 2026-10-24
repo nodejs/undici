@@ -182,7 +182,9 @@ test('same-origin redirect responses are still cached by the cache interceptor',
   const state = { redirectEnabled: true, targetHits: 0 }
   const server = createServer((req, res) => {
     if (state.redirectEnabled && req.url === '/resource') {
-      res.writeHead(302, { location: '/target' })
+      // 301 is cacheable by default (RFC 9111 §3): a same-origin permanent
+      // redirect can be folded into a cached entry under the original key.
+      res.writeHead(301, { location: '/target' })
       res.end()
       return
     }
@@ -428,5 +430,280 @@ test('cache does not store a cross-origin redirect response for a deduplicated c
   } finally {
     await agent.close()
     await Promise.all([closeServer(trusted), closeServer(attacker)])
+  }
+})
+
+// GHSA-MQG3-3V4R-CM32, primitive 1: a redirect that bounces through an
+// untrusted intermediate origin and lands back on the trusted origin must not
+// be cached under the trusted origin's key. The final response origin matches
+// the original key, but an intermediate hop crossed the trust boundary, so the
+// attacker-controlled intermediate can bounce to any cacheable asset on the
+// trusted origin and poison the original URL.
+test('cache does not store a cross-origin bounce redirect under the original origin key', async () => {
+  const state = {
+    redirectEnabled: true,
+    trustedHits: 0,
+    attackerHits: 0
+  }
+
+  const attacker = createServer((_req, res) => {
+    state.attackerHits++
+    res.writeHead(302, {
+      location: `http://127.0.0.1:${trusted.address().port}/uploads/mallory-controlled.json`
+    })
+    res.end()
+  })
+
+  const trusted = createServer((req, res) => {
+    state.trustedHits++
+    if (state.redirectEnabled && req.url === '/resource') {
+      res.writeHead(302, {
+        location: `http://127.0.0.1:${attacker.address().port}/bounce`
+      })
+      res.end()
+      return
+    }
+    if (req.url === '/uploads/mallory-controlled.json') {
+      res.writeHead(200, {
+        'cache-control': 'public, max-age=86400',
+        'content-type': 'text/plain'
+      })
+      res.end('poisoned-attacker-bytes')
+      return
+    }
+    res.writeHead(200, {
+      'cache-control': 'no-store',
+      'content-type': 'text/plain'
+    })
+    res.end('legitimate-content')
+  })
+
+  await Promise.all([listen(trusted), listen(attacker)])
+  const trustedOrigin = `http://127.0.0.1:${trusted.address().port}`
+
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 3 }),
+    interceptors.cache({
+      store: new cacheStores.MemoryCacheStore(),
+      type: 'shared'
+    })
+  )
+
+  try {
+    const mallory = await agent.request({ origin: trustedOrigin, path: '/resource', method: 'GET' })
+      .then(response => response.body.text())
+    assert.equal(mallory, 'poisoned-attacker-bytes')
+
+    state.redirectEnabled = false
+    const hitsBefore = [state.trustedHits, state.attackerHits]
+    const victim = await agent.request({ origin: trustedOrigin, path: '/resource', method: 'GET' })
+      .then(response => response.body.text())
+
+    // The bounced, attacker-influenced response must not have been stored under
+    // the trusted key, so the later request reaches the trusted origin again.
+    assert.equal(victim, 'legitimate-content')
+    assert.notDeepEqual([state.trustedHits, state.attackerHits], hitsBefore)
+  } finally {
+    await agent.close()
+    await Promise.all([closeServer(trusted), closeServer(attacker)])
+  }
+})
+
+// GHSA-MQG3-3V4R-CM32, primitive 2 & 3: a same-origin hop that carries `Vary: *`
+// (RFC 9111 §4.1) or that must be revalidated before use (`no-cache`/`must-revalidate`)
+// must not be folded into a cacheable final response under the original key. Here an
+// authenticated `/account` redirects to a credential-less public blob and would
+// otherwise leak Alice's response to anonymous callers.
+for (const hopHeaders of [
+  { vary: '*', 'cache-control': 'no-cache, max-age=0, s-maxage=0, must-revalidate' },
+  { vary: '*', 'cache-control': 'public, max-age=3600' },
+  { 'cache-control': 'no-cache, max-age=0, s-maxage=0, must-revalidate' },
+  { 'cache-control': 'private, no-store' }
+]) {
+  test(`cache does not store a redirect response whose hop has restrictive directives (${JSON.stringify(hopHeaders)})`, async () => {
+    const state = { authEnabled: true, objectHits: 0 }
+    const server = createServer((req, res) => {
+      if (req.url === '/account') {
+        if (state.authEnabled && req.headers.authorization === 'Bearer alice') {
+          res.writeHead(302, {
+            ...hopHeaders,
+            location: '/signed-object?token=alice'
+          })
+          res.end()
+          return
+        }
+        res.writeHead(403, { 'cache-control': 'no-store' })
+        res.end('denied')
+        return
+      }
+      if (req.url.startsWith('/signed-object')) {
+        state.objectHits++
+        res.writeHead(200, {
+          'cache-control': 'public, max-age=86400',
+          'content-type': 'text/plain'
+        })
+        res.end('alice-private-object')
+        return
+      }
+      res.writeHead(404)
+      res.end('not found')
+    })
+
+    await listen(server)
+    const origin = `http://127.0.0.1:${server.address().port}`
+
+    const agent = new Agent().compose(
+      interceptors.redirect({ maxRedirections: 2 }),
+      interceptors.cache({
+        store: new cacheStores.MemoryCacheStore(),
+        type: 'shared'
+      })
+    )
+
+    try {
+      const authed = await agent.request({
+        origin,
+        path: '/account',
+        method: 'GET',
+        headers: { authorization: 'Bearer alice' }
+      }).then(response => response.body.text())
+      assert.equal(authed, 'alice-private-object')
+
+      state.authEnabled = false
+      const anon = await agent.request({
+        origin,
+        path: '/account',
+        method: 'GET'
+      }).then(response => response.body.text())
+
+      // The private object must not be served from the cache to an anonymous
+      // caller; the account endpoint now denies it.
+      assert.equal(anon, 'denied')
+      assert.notEqual(anon, 'alice-private-object')
+    } finally {
+      await agent.close()
+      await closeServer(server)
+    }
+  })
+}
+
+// GHSA-MQG3-3V4R-CM32, primitive 2 (union): a hop that selects its target on an
+// authenticated header (`Vary: Authorization`) must make the stored entry vary on
+// that header. Otherwise Alice's response is served to a caller with a different
+// (or no) Authorization.
+test('cache unions a redirect hop Vary header into the stored entry', async () => {
+  const state = { authEnabled: true, objectHits: 0 }
+  const server = createServer((req, res) => {
+    if (req.url === '/account') {
+      if (state.authEnabled && req.headers.authorization === 'Bearer alice') {
+        res.writeHead(302, {
+          vary: 'authorization',
+          'cache-control': 'public, max-age=3600',
+          location: '/signed-object?token=alice'
+        })
+        res.end()
+        return
+      }
+      res.writeHead(403, { 'cache-control': 'no-store' })
+      res.end('denied')
+      return
+    }
+    if (req.url.startsWith('/signed-object')) {
+      state.objectHits++
+      res.writeHead(200, {
+        'cache-control': 'public, max-age=86400',
+        'content-type': 'text/plain'
+      })
+      res.end('alice-private-object')
+      return
+    }
+    res.writeHead(404)
+    res.end('not found')
+  })
+
+  await listen(server)
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2 }),
+    interceptors.cache({
+      store: new cacheStores.MemoryCacheStore(),
+      type: 'shared'
+    })
+  )
+
+  try {
+    const authed = await agent.request({
+      origin,
+      path: '/account',
+      method: 'GET',
+      headers: { authorization: 'Bearer alice' }
+    }).then(response => response.body.text())
+    assert.equal(authed, 'alice-private-object')
+
+    state.authEnabled = false
+    // A caller with a *different* Authorization header must not match Alice's
+    // cached entry, even though both carry an Authorization header.
+    const bob = await agent.request({
+      origin,
+      path: '/account',
+      method: 'GET',
+      headers: { authorization: 'Bearer bob' }
+    }).then(response => response.body.text())
+    assert.equal(bob, 'denied')
+    assert.notEqual(bob, 'alice-private-object')
+  } finally {
+    await agent.close()
+    await closeServer(server)
+  }
+})
+
+// GHSA-MQG3-3V4R-CM32, primitive 3: a bare (cache-control-less) 302 hop is not
+// cacheable by default (RFC 9111 §3) and must not be folded into a cached entry
+// under the original key, otherwise a dynamic redirect is frozen for the final
+// response's freshness lifetime.
+test('cache does not store a redirect response for a bare 302 hop without freshness', async () => {
+  const state = { redirectEnabled: true, targetHits: 0 }
+  const server = createServer((req, res) => {
+    if (state.redirectEnabled && req.url === '/dynamic') {
+      res.writeHead(302, { location: '/static' })
+      res.end()
+      return
+    }
+    state.targetHits++
+    res.writeHead(200, {
+      'cache-control': 'public, max-age=3600',
+      'content-type': 'text/plain'
+    })
+    res.end('static-content')
+  })
+
+  await listen(server)
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2 }),
+    interceptors.cache({
+      store: new cacheStores.MemoryCacheStore(),
+      type: 'shared'
+    })
+  )
+
+  try {
+    const first = await agent.request({ origin, path: '/dynamic', method: 'GET' })
+      .then(response => response.body.text())
+    assert.equal(first, 'static-content')
+
+    state.redirectEnabled = false
+    const hitsBefore = state.targetHits
+    const second = await agent.request({ origin, path: '/dynamic', method: 'GET' })
+      .then(response => response.body.text())
+    assert.equal(second, 'static-content')
+    // Without an explicit freshness the 302 hop is uncacheable, so the dynamic
+    // route is not frozen: the origin is contacted again for the second request.
+    assert.equal(state.targetHits, hitsBefore + 1)
+  } finally {
+    await agent.close()
+    await closeServer(server)
   }
 })
