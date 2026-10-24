@@ -642,7 +642,7 @@ test('Should handle h2 request without body', async t => {
 })
 
 test('Should clear h2 request stream references before completing a response', async t => {
-  t = tspl(t, { plan: 6 })
+  t = tspl(t, { plan: 4 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
@@ -671,7 +671,6 @@ test('Should clear h2 request stream references before completing a response', a
     }
   })
 
-  let requestStreamIdSymbol = null
   let requestStreamSymbol = null
   let requestStreamCleanupSymbol = null
 
@@ -683,11 +682,9 @@ test('Should clear h2 request stream references before completing a response', a
     onResponseStart () {
       const request = client[kQueue][client[kRunningIdx]]
       const symbols = Object.getOwnPropertySymbols(request)
-      requestStreamIdSymbol = symbols.find((symbol) => symbol.description === 'request stream id')
       requestStreamSymbol = symbols.find((symbol) => symbol.description === 'request stream')
       requestStreamCleanupSymbol = symbols.find((symbol) => symbol.description === 'request stream cleanup')
 
-      t.ok(requestStreamIdSymbol)
       t.ok(requestStreamSymbol)
       t.ok(requestStreamCleanupSymbol)
     },
@@ -697,7 +694,6 @@ test('Should clear h2 request stream references before completing a response', a
     onResponseEnd () {
       const request = client[kQueue][client[kRunningIdx]]
 
-      t.strictEqual(request[requestStreamIdSymbol], null)
       t.strictEqual(request[requestStreamSymbol], null)
       t.strictEqual(request[requestStreamCleanupSymbol], null)
     },
@@ -710,7 +706,7 @@ test('Should clear h2 request stream references before completing a response', a
 })
 
 test('Should clear h2 request stream references after abort before response', async t => {
-  t = tspl(t, { plan: 5 })
+  t = tspl(t, { plan: 4 })
 
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
@@ -768,7 +764,6 @@ test('Should clear h2 request stream references after abort before response', as
 
   const {
     request,
-    requestStreamIdSymbol,
     requestStreamSymbol,
     requestStreamCleanupSymbol
   } = await waitFor(() => {
@@ -778,17 +773,15 @@ test('Should clear h2 request stream references after abort before response', as
     }
 
     const symbols = Object.getOwnPropertySymbols(request)
-    const requestStreamIdSymbol = symbols.find((symbol) => symbol.description === 'request stream id')
     const requestStreamSymbol = symbols.find((symbol) => symbol.description === 'request stream')
     const requestStreamCleanupSymbol = symbols.find((symbol) => symbol.description === 'request stream cleanup')
 
-    if (requestStreamIdSymbol == null || requestStreamSymbol == null || requestStreamCleanupSymbol == null) {
+    if (requestStreamSymbol == null || requestStreamCleanupSymbol == null) {
       return null
     }
 
     return {
       request,
-      requestStreamIdSymbol,
       requestStreamSymbol,
       requestStreamCleanupSymbol
     }
@@ -801,7 +794,6 @@ test('Should clear h2 request stream references after abort before response', as
 
   const err = await responseError
   t.strictEqual(err, abortReason)
-  t.strictEqual(request[requestStreamIdSymbol], null)
   t.strictEqual(request[requestStreamSymbol], null)
   t.strictEqual(request[requestStreamCleanupSymbol], null)
 
