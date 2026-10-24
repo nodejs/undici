@@ -124,6 +124,18 @@ test('should accept string, URL and object as options', (t) => {
   t.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
 })
 
+test('should reject an unsupported proxy protocol and name it', (t) => {
+  t = tspl(t, { plan: 2 })
+  t.throws(
+    () => new ProxyAgent('socks5h://127.0.0.1:1080'),
+    /Unsupported proxy protocol 'socks5h:'\. Supported: http:, https:, socks:, socks5:/
+  )
+  t.throws(
+    () => new ProxyAgent('socks4://127.0.0.1:1080'),
+    /Unsupported proxy protocol 'socks4:'/
+  )
+})
+
 test('ProxyAgent forwards connectTimeout to the proxy connector', async (t) => {
   t = tspl(t, { plan: 4 })
 
