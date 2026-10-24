@@ -119,6 +119,87 @@ test('cache does not store a cross-origin redirect response under the original o
   })
 })
 
+test('cross-origin redirect response cannot invalidate original-origin cache entries', async () => {
+  const hits = {
+    '/location-target': 0,
+    '/content-location-target': 0
+  }
+
+  const attacker = createServer((_req, res) => {
+    res.writeHead(200, {
+      location: `${trustedOrigin}/location-target`,
+      'content-location': `${trustedOrigin}/content-location-target`
+    })
+    res.end('redirect target')
+  })
+
+  const trusted = createServer((req, res) => {
+    if (req.method === 'GET' && Object.hasOwn(hits, req.url)) {
+      hits[req.url]++
+      res.writeHead(200, { 'cache-control': 'public, max-age=86400' })
+      res.end(`${req.url} ${hits[req.url]}`)
+      return
+    }
+
+    if (req.method === 'POST' && req.url === '/action') {
+      res.writeHead(303, {
+        location: `http://127.0.0.1:${attacker.address().port}/handler`
+      })
+      res.end()
+      return
+    }
+
+    res.writeHead(404)
+    res.end()
+  })
+
+  await Promise.all([listen(trusted), listen(attacker)])
+  const trustedOrigin = `http://127.0.0.1:${trusted.address().port}`
+
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2 }),
+    interceptors.cache({
+      store: new cacheStores.MemoryCacheStore(),
+      type: 'shared'
+    })
+  )
+
+  try {
+    for (const path of Object.keys(hits)) {
+      for (let i = 0; i < 2; i++) {
+        const response = await agent.request({
+          origin: trustedOrigin,
+          path,
+          method: 'GET'
+        })
+        assert.equal(await response.body.text(), `${path} 1`)
+      }
+      assert.equal(hits[path], 1)
+    }
+
+    const redirected = await agent.request({
+      origin: trustedOrigin,
+      path: '/action',
+      method: 'POST',
+      body: 'trigger'
+    })
+    assert.equal(await redirected.body.text(), 'redirect target')
+
+    for (const path of Object.keys(hits)) {
+      const response = await agent.request({
+        origin: trustedOrigin,
+        path,
+        method: 'GET'
+      })
+      assert.equal(await response.body.text(), `${path} 1`)
+      assert.equal(hits[path], 1)
+    }
+  } finally {
+    await agent.close()
+    await Promise.all([closeServer(trusted), closeServer(attacker)])
+  }
+})
+
 test('cache does not store a cross-origin redirect response under the original origin key (sqlite persistence)', { skip: runtimeFeatures.has('sqlite') === false }, async () => {
   const database = join(tmpdir(), `undici-cache-redirect-origin-${process.pid}.sqlite`)
   try {
