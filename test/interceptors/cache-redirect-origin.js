@@ -4,6 +4,7 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { join } = require('node:path')
 const { tmpdir } = require('node:os')
 const { rm } = require('node:fs/promises')
@@ -819,6 +820,61 @@ test('cache does not store a redirect response for a bare 302 hop without freshn
     // Without an explicit freshness the 302 hop is uncacheable, so the dynamic
     // route is not frozen: the origin is contacted again for the second request.
     assert.equal(state.targetHits, hitsBefore + 1)
+  } finally {
+    await agent.close()
+    await closeServer(server)
+  }
+})
+
+// GHSA-MQG3-3V4R-CM32, primitive 3 (stale-serving): a suppressed redirect hop
+// that grants no `stale-while-revalidate` / `stale-if-error` (RFC 5861) caps
+// stale serving at its freshness. The final response's stale-serving directives
+// must not launder a stale window past the hop-bounded `staleAt`, so a dynamic
+// 302 (short `max-age`, no SWR) redirecting to a static target with a long
+// `stale-while-revalidate` must not be served stale once the hop is stale.
+test('cache does not serve a redirect entry stale past the hop freshness via the final stale-while-revalidate', async () => {
+  const state = { redirectEnabled: true }
+  const server = createServer((req, res) => {
+    if (req.url === '/dynamic') {
+      if (state.redirectEnabled) {
+        res.writeHead(302, { location: '/static', 'cache-control': 'public, max-age=1' })
+        res.end()
+        return
+      }
+      res.writeHead(200, { 'cache-control': 'no-store', 'content-type': 'text/plain' })
+      res.end('dynamic-live')
+      return
+    }
+    res.writeHead(200, {
+      'cache-control': 'public, max-age=3600, stale-while-revalidate=3600',
+      'content-type': 'text/plain'
+    })
+    res.end('static-content')
+  })
+
+  await listen(server)
+  const origin = `http://127.0.0.1:${server.address().port}`
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2 }),
+    interceptors.cache({ store: new cacheStores.MemoryCacheStore(), type: 'shared' })
+  )
+
+  try {
+    // 1. Cache under /dynamic; staleAt is bounded to the hop's max-age=1.
+    const first = await agent.request({ origin, path: '/dynamic', method: 'GET' })
+      .then(r => r.body.text())
+    assert.equal(first, 'static-content')
+
+    // 2. Wait past the hop freshness (1s).
+    await sleep(1500)
+
+    // 3. Disable the redirect and request again. The hop freshness is exhausted,
+    //    so the entry must not be served stale from the final SWR window; the
+    //    dynamic route must be reached instead of serving stale 'static-content'.
+    state.redirectEnabled = false
+    const second = await agent.request({ origin, path: '/dynamic', method: 'GET' })
+      .then(r => r.body.text())
+    assert.notEqual(second, 'static-content')
   } finally {
     await agent.close()
     await closeServer(server)
