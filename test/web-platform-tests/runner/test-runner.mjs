@@ -10,7 +10,8 @@ import {
   caches,
   EventSource,
   WebSocketStream,
-  WebSocketError
+  WebSocketError,
+  MessageEvent
 } from '../../../index.js'
 import { Cache } from '../../../lib/web/cache/cache.js'
 import { CacheStorage } from '../../../lib/web/cache/cachestorage.js'
@@ -76,6 +77,10 @@ Object.defineProperties(globalThis, {
   WebSocketError: {
     ...globalPropertyDescriptors,
     value: WebSocketError
+  },
+  MessageEvent: {
+    ...globalPropertyDescriptors,
+    value: MessageEvent
   }
 })
 

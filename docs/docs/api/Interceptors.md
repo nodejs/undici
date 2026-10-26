@@ -200,7 +200,9 @@ const agent = new Agent().compose(
 
 Automatically decompresses response bodies encoded with `gzip`, `x-gzip`,
 `br` (Brotli), `deflate`, or `zstd`. Any other coding, including `compress`
-and `x-compress`, is left untouched, matching `fetch()`.
+and `x-compress`, is left untouched, matching `fetch()`. As required by
+[RFC 9659](https://www.rfc-editor.org/rfc/rfc9659.html), a `zstd` frame that
+requires a window size larger than 8 MB fails to decode.
 
 > **Experimental:** This interceptor is experimental and subject to change.
 > A one-time `ExperimentalWarning` is emitted on first use.
@@ -246,8 +248,11 @@ The error body is automatically decoded for `application/json` and
 
 **Parameters**
 
-* `opts` {Object} (optional) — currently reserved for future use; may be
-  omitted.
+* `opts` {Object} (optional)
+  * `maxSize` {number} Maximum number of response body bytes to include in the
+    error. If the body exceeds this limit, the resulting `ResponseError`
+    contains the retained prefix with `bodyTruncated` set to `true`. Set to `0`
+    to disable the limit. **Default:** `1048576` (1 MiB).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
@@ -336,8 +341,21 @@ backing store.
 
 **Parameters**
 
-* `opts` {CacheHandler.CacheOptions} (optional) See the
-  [`CacheStore`](./CacheStore.md) documentation for accepted fields.
+* `opts` {Object} (optional)
+  * `store` {CacheStore} The store that cached responses are kept in. See
+    [`CacheStore`](./CacheStore.md). **Default:** a new `MemoryCacheStore`.
+  * `methods` {string[]} The HTTP methods to cache. Only safe methods are
+    allowed (`GET`, `HEAD`, `OPTIONS`, `TRACE`) and at least one is required.
+    **Default:** `['GET']`.
+  * `cacheByDefault` {number} RFC 9111 allows caching responses that are not
+    explicitly marked as cacheable or not cacheable. Set this to cache such
+    responses. **Default:** `undefined`.
+  * `type` {string} Whether the cache is `'shared'` or `'private'`, which
+    decides how directives such as `s-maxage` and `private` are applied.
+    **Default:** `'shared'`.
+  * `origins` {(string|RegExp)[]} Only requests to these origins are cached.
+    Strings are compared case-insensitively. **Default:** `undefined` (all
+    origins are cached).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 

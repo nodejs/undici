@@ -2,11 +2,95 @@
 
 const { once } = require('node:events')
 const http = require('node:http')
+const { gzipSync } = require('node:zlib')
 const { test, describe } = require('node:test')
 const { EventSource } = require('../../lib/web/eventsource/eventsource')
 const { Agent } = require('../..')
 
 describe('EventSource - withCredentials', () => {
+  test('compressed unfinished SSE line exceeds decoded event limit', async (t) => {
+    let response
+    const server = http.createServer((req, res) => {
+      response = res
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Content-Encoding': 'gzip'
+      })
+      res.flushHeaders()
+    })
+    await once(server.listen(0, '127.0.0.1'), 'listening')
+
+    const agent = new Agent({
+      eventSource: { maxEventSize: 1024 },
+      maxResponseSize: 65536
+    })
+    const source = new EventSource(`http://127.0.0.1:${server.address().port}`, {
+      node: { dispatcher: agent }
+    })
+    t.after(async () => {
+      source.close()
+      server.closeAllConnections()
+      server.close()
+      await agent.close()
+    })
+
+    let errors = 0
+    let messages = 0
+    source.addEventListener('error', () => { errors++ })
+    source.addEventListener('message', () => { messages++ })
+    await once(source, 'open', { signal: AbortSignal.timeout(2000) })
+    response.write(gzipSync(Buffer.from(`data: ${'A'.repeat(4096)}`)))
+    await once(source, 'error', { signal: AbortSignal.timeout(2000) })
+
+    t.assert.strictEqual(source.readyState, EventSource.CLOSED)
+    t.assert.strictEqual(errors, 1)
+    t.assert.strictEqual(messages, 0)
+  })
+
+  test('compressed tiny SSE fields close at the parser item limit', async (t) => {
+    let response
+    const server = http.createServer((req, res) => {
+      response = res
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Content-Encoding': 'gzip'
+      })
+      res.flushHeaders()
+    })
+    await once(server.listen(0, '127.0.0.1'), 'listening')
+
+    const maxResponseSize = 256 * 1024
+    const agent = new Agent({
+      eventSource: { maxEventSize: 8 * 1024 * 1024 },
+      maxResponseSize
+    })
+    const source = new EventSource(`http://127.0.0.1:${server.address().port}`, {
+      node: { dispatcher: agent }
+    })
+    t.after(async () => {
+      source.close()
+      server.closeAllConnections()
+      server.close()
+      await agent.close()
+    })
+
+    let errors = 0
+    let messages = 0
+    source.addEventListener('error', () => { errors++ })
+    source.addEventListener('message', () => { messages++ })
+    await once(source, 'open', { signal: AbortSignal.timeout(2000) })
+    const decoded = Buffer.from('data:\n'.repeat(65537))
+    const encoded = gzipSync(decoded)
+    t.assert.ok(encoded.length < maxResponseSize)
+    t.assert.ok(decoded.length > maxResponseSize)
+    response.write(encoded)
+    await once(source, 'error', { signal: AbortSignal.timeout(2000) })
+
+    t.assert.strictEqual(source.readyState, EventSource.CLOSED)
+    t.assert.strictEqual(errors, 1)
+    t.assert.strictEqual(messages, 0)
+  })
+
   test('dispatcher eventSource.maxEventSize closes the connection when exceeded', async (t) => {
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
@@ -22,6 +106,39 @@ describe('EventSource - withCredentials', () => {
     const agent = new Agent({
       eventSource: {
         maxEventSize: 5
+      }
+    })
+    const eventSourceInstance = new EventSource(`http://localhost:${port}`, {
+      node: {
+        dispatcher: agent
+      }
+    })
+    t.after(async () => {
+      eventSourceInstance.close()
+      server.close()
+      await agent.close()
+    })
+
+    await once(eventSourceInstance, 'open')
+    await once(eventSourceInstance, 'error', { signal: AbortSignal.timeout(1000) })
+
+    t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
+  })
+
+  test('dispatcher eventSource.maxEventSize closes the connection on an unterminated data line', async (t) => {
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      // A data field that never contains a line terminator must not bypass the
+      // configured maxEventSize and drive the client toward memory exhaustion.
+      res.write('data: 123456789a123456789a')
+    })
+
+    await once(server.listen(0), 'listening')
+    const port = server.address().port
+
+    const agent = new Agent({
+      eventSource: {
+        maxEventSize: 10
       }
     })
     const eventSourceInstance = new EventSource(`http://localhost:${port}`, {
