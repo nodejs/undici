@@ -3,11 +3,44 @@
 const { test } = require('node:test')
 const { notEqual, strictEqual, deepStrictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
+const { join } = require('node:path')
+const { tmpdir } = require('node:os')
 const { cacheStoreTests, writeBody, compareGetResults } = require('./cache-store-test-utils.js')
 const { runtimeFeatures } = require('../../lib/util/runtime-features.js')
 
 const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 cacheStoreTests(SqliteCacheStore, { skip: runtimeFeatures.has('sqlite') === false })
+
+test('SqliteCacheStore invalidates entries from the previous cache format', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
+  const { DatabaseSync } = require('node:sqlite')
+  const sqliteLocation = join(tmpdir(), `undici-cache-interceptor-v3-${process.pid}.sqlite`)
+  await rm(sqliteLocation, { force: true })
+  const oldDatabase = new DatabaseSync(sqliteLocation)
+  oldDatabase.exec(`
+    CREATE TABLE cacheInterceptorV3 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      url TEXT NOT NULL,
+      method TEXT NOT NULL
+    );
+    INSERT INTO cacheInterceptorV3 (url, method)
+    VALUES ('http://example.test//resource', 'GET');
+  `)
+  oldDatabase.close()
+
+  const store = new SqliteCacheStore({ location: sqliteLocation })
+  t.after(async () => {
+    store.close()
+    await rm(sqliteLocation, { force: true })
+  })
+
+  strictEqual(store.get({
+    origin: 'http://example.test',
+    path: '/resource',
+    method: 'GET',
+    headers: {}
+  }), undefined)
+  strictEqual(store.size, 0)
+})
 
 test('SqliteCacheStore works nicely with multiple stores', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')

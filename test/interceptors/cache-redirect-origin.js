@@ -182,9 +182,10 @@ test('same-origin redirect responses are still cached by the cache interceptor',
   const state = { redirectEnabled: true, targetHits: 0 }
   const server = createServer((req, res) => {
     if (state.redirectEnabled && req.url === '/resource') {
-      // 301 is cacheable by default (RFC 9111 §3): a same-origin permanent
-      // redirect can be folded into a cached entry under the original key.
-      res.writeHead(301, { location: '/target' })
+      res.writeHead(301, {
+        location: '/target',
+        'cache-control': 'public, max-age=60'
+      })
       res.end()
       return
     }
@@ -518,7 +519,8 @@ for (const hopHeaders of [
   { vary: '*', 'cache-control': 'no-cache, max-age=0, s-maxage=0, must-revalidate' },
   { vary: '*', 'cache-control': 'public, max-age=3600' },
   { 'cache-control': 'no-cache, max-age=0, s-maxage=0, must-revalidate' },
-  { 'cache-control': 'private, no-store' }
+  { 'cache-control': 'private, no-store' },
+  { 'cache-control': 'public, max-age=3600, private="location"' }
 ]) {
   test(`cache does not store a redirect response whose hop has restrictive directives (${JSON.stringify(hopHeaders)})`, async () => {
     const state = { authEnabled: true, objectHits: 0 }
@@ -652,6 +654,121 @@ test('cache unions a redirect hop Vary header into the stored entry', async () =
     }).then(response => response.body.text())
     assert.equal(bob, 'denied')
     assert.notEqual(bob, 'alice-private-object')
+  } finally {
+    await agent.close()
+    await closeServer(server)
+  }
+})
+
+// A redirect hop that is already stale must not inherit the final response's
+// freshness. This covers current age, expiration, and invalid freshness values.
+for (const staleHop of [
+  {
+    name: 'Age exhausts max-age',
+    statusCode: 301,
+    headers: () => ({
+      'cache-control': 'public, max-age=60',
+      age: '60'
+    })
+  },
+  {
+    name: 'Expires is already past',
+    statusCode: 302,
+    headers: () => ({
+      expires: new Date(Date.now() - 60_000).toUTCString()
+    })
+  },
+  {
+    name: 'max-age is malformed',
+    statusCode: 302,
+    headers: () => ({
+      'cache-control': 'public, max-age=invalid'
+    })
+  }
+]) {
+  test(`cache does not store an already stale redirect hop (${staleHop.name})`, async () => {
+    const state = { redirectEnabled: true, hits: 0 }
+    const server = createServer((req, res) => {
+      state.hits++
+      if (state.redirectEnabled && req.url === '/dynamic') {
+        res.writeHead(staleHop.statusCode, {
+          ...staleHop.headers(),
+          location: '/attacker-choice'
+        })
+        res.end()
+        return
+      }
+      if (req.url === '/attacker-choice') {
+        res.writeHead(200, { 'cache-control': 'public, max-age=86400' })
+        res.end('attacker-choice')
+        return
+      }
+      res.writeHead(200, { 'cache-control': 'no-store' })
+      res.end('legitimate-content')
+    })
+
+    await listen(server)
+    const origin = `http://127.0.0.1:${server.address().port}`
+    const agent = new Agent().compose(
+      interceptors.redirect({ maxRedirections: 2 }),
+      interceptors.cache({
+        store: new cacheStores.MemoryCacheStore(),
+        type: 'shared'
+      })
+    )
+
+    try {
+      const first = await agent.request({ origin, path: '/dynamic', method: 'GET' })
+        .then(response => response.body.text())
+      assert.equal(first, 'attacker-choice')
+
+      state.redirectEnabled = false
+      const hitsBefore = state.hits
+      const second = await agent.request({ origin, path: '/dynamic', method: 'GET' })
+        .then(response => response.body.text())
+
+      assert.equal(second, 'legitimate-content')
+      assert.equal(state.hits, hitsBefore + 1)
+    } finally {
+      await agent.close()
+      await closeServer(server)
+    }
+  })
+}
+
+test('cache bounds redirect freshness by the hop remaining lifetime', async () => {
+  const store = new cacheStores.MemoryCacheStore()
+  const server = createServer((req, res) => {
+    if (req.url === '/dynamic') {
+      res.writeHead(301, {
+        location: '/static',
+        'cache-control': 'public, max-age=60',
+        age: '50'
+      })
+      res.end()
+      return
+    }
+    res.writeHead(200, { 'cache-control': 'public, max-age=3600' })
+    res.end('static-content')
+  })
+
+  await listen(server)
+  const origin = `http://127.0.0.1:${server.address().port}`
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2 }),
+    interceptors.cache({ store, type: 'shared' })
+  )
+
+  try {
+    const startedAt = Date.now()
+    const body = await agent.request({ origin, path: '/dynamic', method: 'GET' })
+      .then(response => response.body.text())
+    assert.equal(body, 'static-content')
+
+    const cached = store.get({ origin, path: '/dynamic', method: 'GET', headers: {} })
+    assert.ok(cached)
+    assert.ok(cached.staleAt > startedAt)
+    assert.ok(cached.staleAt <= startedAt + 11_000)
   } finally {
     await agent.close()
     await closeServer(server)
