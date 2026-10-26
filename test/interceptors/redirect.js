@@ -836,3 +836,63 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
   const text = await res.body.text()
   strictEqual(text, 'redirected')
 })
+
+test('Cross-origin redirects strip credentials from array-of-tuples headers', async (t) => {
+  const { strictEqual } = tspl(t, { plan: 12 })
+
+  // With a built-in header-normalizing interceptor (cache/deduplicate) outside
+  // redirect(), the redirect interceptor must still strip cross-origin
+  // credentials from the iterable-of-pairs representation. Treating every Array
+  // as a flat [name, value, ...] list misreads each tuple and leaks them.
+  const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    strictEqual(req.headers.cookie, undefined)
+    strictEqual(req.headers.authorization, undefined)
+    strictEqual(req.headers['proxy-authorization'], undefined)
+    strictEqual(req.headers['x-api-key'], undefined)
+    strictEqual(req.headers['x-keep'], 'present')
+
+    res.end('redirected')
+  }).listen(0)
+
+  const server2 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeHead(302, {
+      ...req.headers,
+      Location: `http://localhost:${server1.address().port}`
+    })
+    res.end()
+  }).listen(0)
+
+  t.after(() => {
+    server1.close()
+    server2.close()
+  })
+
+  await Promise.all([
+    once(server1, 'listening'),
+    once(server2, 'listening')
+  ])
+
+  const headers = [
+    ['Authorization', 'tuple-secret'],
+    ['Cookie', 'ddd=dddd'],
+    ['Proxy-Authorization', 'tuple-secret'],
+    ['X-Api-Key', 'tuple-secret'],
+    ['X-Keep', 'present']
+  ]
+
+  for (const interceptor of [
+    undici.interceptors.cache(),
+    undici.interceptors.deduplicate()
+  ]) {
+    const res = await undici.request(`http://localhost:${server2.address().port}`, {
+      dispatcher: new undici.Agent({}).compose([
+        interceptor,
+        undici.interceptors.redirect({ maxRedirections: 1, stripHeadersOnCrossOriginRedirect: ['X-Api-Key'] })
+      ]),
+      headers
+    })
+
+    const text = await res.body.text()
+    strictEqual(text, 'redirected')
+  }
+})
