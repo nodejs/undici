@@ -1061,3 +1061,37 @@ for (const [name, headers] of [
     ].sort())
   })
 }
+
+test('resume: false retries a failure before the headers but not after them', async t => {
+  t = tspl(t, { plan: 3 })
+
+  let count = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    count++
+    if (count === 1) {
+      req.socket.destroy()
+      return
+    }
+
+    res.setHeader('content-length', '5')
+    res.write('123', () => setTimeout(() => res.destroy(), 20))
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+    .compose(retry({ minTimeout: 1, resume: false }))
+
+  after(async () => {
+    await client.destroy()
+    server.closeAllConnections()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'GET', path: '/' })
+  t.strictEqual(response.statusCode, 200)
+  await t.rejects(response.body.text(), { code: 'UND_ERR_SOCKET' })
+  t.strictEqual(count, 2, 'no range request should be sent')
+})
