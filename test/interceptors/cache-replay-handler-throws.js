@@ -100,3 +100,31 @@ test('cache hit: downstream throw in onResponseEnd is reported to onResponseErro
 
   strictEqual(await promise, boom)
 })
+
+test('cache hit: downstream throw without onResponseError does not crash the process', async (t) => {
+  const origin = await startServer(t, (_, res) => {
+    res.setHeader('cache-control', 'public, max-age=60')
+    res.end('x'.repeat(64))
+  })
+
+  const store = new MemoryCacheStore()
+  await populate(origin, store)
+
+  const client = new Client(origin).compose(interceptors.cache({ store }))
+  after(() => client.close())
+
+  const { promise, resolve } = Promise.withResolvers()
+
+  client.dispatch({ origin, path: '/', method: 'GET' }, {
+    onRequestStart () {},
+    onResponseStart () {},
+    onResponseData () {
+      setImmediate(resolve)
+      throw new Error('boom')
+    }
+  })
+
+  await promise
+  // Give the destroyed replay stream time to emit 'error' and 'close'
+  await new Promise((resolve) => setTimeout(resolve, 20))
+})
