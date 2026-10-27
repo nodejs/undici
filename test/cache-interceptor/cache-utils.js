@@ -128,9 +128,7 @@ test('normalizeHeaders keeps a header named __proto__ without reprototyping the 
 
   // JSON.parse is the everyday way an own `__proto__` key shows up, e.g.
   // headers read from a config file or a request body.
-  const headers = normalizeHeaders({
-    headers: JSON.parse('{"__proto__":"a","x-real":"same"}')
-  })
+  const headers = normalizeHeaders(JSON.parse('{"__proto__":"a","x-real":"same"}'))
 
   deepStrictEqual(Object.keys(headers).sort(), ['__proto__', 'x-real'])
   strictEqual(Object.getOwnPropertyDescriptor(headers, '__proto__').value, 'a')
