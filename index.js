@@ -158,7 +158,7 @@ module.exports.fetch = function fetch (init, options = undefined) {
     if (currentFilename) {
       appendFetchStackTrace(err, currentFilename)
     } else if (err && typeof err === 'object') {
-      Error.captureStackTrace(err, module.exports.fetch)
+      Error.captureStackTrace(err)
     }
     throw err
   })
