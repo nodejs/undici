@@ -47,3 +47,7 @@ expectType<RetryHandler.RetryState>(contextTest.state)
 expectType<
   Dispatcher.DispatchOptions & { retryOptions?: RetryHandler.RetryOptions }
 >(contextTest.opts)
+
+// Test the resume option
+expectAssignable<RetryHandler.RetryOptions>({ resume: false })
+expectNotAssignable<RetryHandler.RetryOptions>({ resume: 1 })
