@@ -507,9 +507,78 @@ This is useful for verifying that deduplication is working, monitoring the numbe
 of concurrent in-flight requests, and debugging deduplication behaviour in
 production.
 
+## Event: `'undici:interceptor:enter'`
+
+Published when a request enters an interceptor in a [composed][`Dispatcher.compose`]
+dispatcher chain. One event fires per interceptor per dispatch. The payload is:
+
+* **interceptor** `string` — the interceptor's `function.name`, or `'anonymous'`
+  if the interceptor is an anonymous function.
+* **requestId** `string` — formatted as `${process.pid}-${counter}`, unique
+  per `(interceptor, dispatch)` pair within a Node.js process. The same
+  value is published on the paired `enter` / `exit` / `error` event, letting
+  subscribers correlate the hop lifecycle without relying on request identity
+  (which may be rewritten across the chain). Serializable: APM / tracing
+  libraries can persist it directly as a span attribute. To correlate hops
+  across one logical request through the compose chain, join on the
+  `request` object emitted by [`'undici:request:create'`][].
+* **method** `string | undefined` — HTTP method, as seen by this interceptor.
+* **origin** `string | URL | undefined` — origin, as seen by this interceptor.
+* **path** `string | undefined` — path, as seen by this interceptor.
+* **startTime** `number` — `performance.now()` at hop entry.
+
+```js
+import diagnosticsChannel from 'node:diagnostics_channel'
+
+diagnosticsChannel.channel('undici:interceptor:enter').subscribe((msg) => {
+  console.log('enter', msg.interceptor, msg.method, msg.path)
+})
+```
+
+## Event: `'undici:interceptor:exit'`
+
+Published when a request exits an interceptor on the success path (that is,
+when the wrapped handler's `onResponseEnd` fires). The payload adds a
+`duration` field; the other fields match the paired `enter` event.
+
+* **interceptor** `string`
+* **requestId** `string`
+* **method**, **origin**, **path** — same as `enter`
+* **duration** `number` — milliseconds from `enter` to `exit`,
+  measured via `performance.now()`.
+
+## Event: `'undici:interceptor:error'`
+
+Published when a request exits an interceptor on the error path — either the
+handler's `onResponseError` fires, or the interceptor itself throws
+synchronously. The payload adds `duration` and `error`:
+
+* **interceptor** `string`
+* **requestId** `string`
+* **method**, **origin**, **path** — same as `enter`
+* **duration** `number` — milliseconds from `enter` to `error`.
+* **error** `Error` — the error passed to `onResponseError`, or thrown
+  synchronously by the interceptor.
+
+The three interceptor channels together let an APM or tracing library build a
+per-hop span tree for each request without patching individual interceptors.
+When no subscriber is attached, the instrumentation layer short-circuits before
+allocating event payloads — the overhead on a composed dispatcher with no
+listeners is a single `hasSubscribers` check.
+
+### A note on `retry` and other re-dispatching interceptors
+
+The `retry` interceptor (and any interceptor that re-dispatches on error) calls
+the client's underlying `dispatch` directly, bypassing the composed chain. As
+a result, retries fire a single `enter` / `error` or `enter` / `exit` pair at
+the retry interceptor itself — subsequent attempts are not re-published as new
+hops. This matches undici's existing single-dispatch semantics and avoids
+double-counting.
+
 [`'undici:client:beforeConnect'`]: #event-undiciclientbeforeconnect
 [`'undici:request:create'`]: #event-undicirequestcreate
 [`'undici:request:headers'`]: #event-undicirequestheaders
+[`Dispatcher.compose`]: Dispatcher.md#dispatchercomposeinterceptors
 [`ProxyAgent`]: ProxyAgent.md#class-proxyagent
 [`WebSocket`]: WebSocket.md#class-websocket
 [`dedupe`]: Dispatcher.md#dedupe

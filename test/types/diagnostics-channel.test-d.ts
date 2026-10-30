@@ -81,3 +81,28 @@ expectAssignable<DiagnosticsChannel.ClientConnectErrorMessage>({
     callback: buildConnector.Callback
   ) => new Socket()
 })
+expectAssignable<DiagnosticsChannel.InterceptorEnterMessage>({
+  interceptor: 'retry',
+  requestId: '1234-5',
+  method: 'GET',
+  origin: 'http://localhost',
+  path: '/',
+  startTime: 0
+})
+expectAssignable<DiagnosticsChannel.InterceptorExitMessage>({
+  interceptor: 'retry',
+  requestId: '1234-5',
+  method: 'GET',
+  origin: 'http://localhost',
+  path: '/',
+  duration: 1.23
+})
+expectAssignable<DiagnosticsChannel.InterceptorErrorMessage>({
+  interceptor: 'retry',
+  requestId: '1234-5',
+  method: 'GET',
+  origin: 'http://localhost',
+  path: '/',
+  duration: 1.23,
+  error: new Error('boom')
+})
