@@ -1429,3 +1429,32 @@ test('pool does not dispatch to clientTtl-evicted client when stale drain fires'
   c1.emit('drain', new URL('http://notahost'), [c1])
   t.ok(true, 'no ClientClosedError when evicted client emits drain')
 })
+
+test('pool dispatches after a request fails validation', async (t) => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createServer((req, res) => {
+    res.end('hello')
+  })
+  after(() => server.close())
+
+  server.listen(0, async () => {
+    const pool = new Pool(`http://localhost:${server.address().port}`, {
+      connections: 1
+    })
+    after(() => pool.destroy())
+
+    await t.rejects(
+      pool.request({ path: '/', method: 'GET', headers: { 'x-invalid': '\n' } }),
+      errors.InvalidArgumentError
+    )
+
+    const request = pool.request({ path: '/', method: 'GET' })
+    t.strictEqual(pool.stats.queued, 0)
+
+    const { body } = await request
+    t.strictEqual(await body.text(), 'hello')
+  })
+
+  await t.completed
+})
