@@ -1,5 +1,5 @@
 import { URL } from 'node:url'
-import { expectType, expectAssignable } from 'tsd'
+import { expectType, expectAssignable, expectError } from 'tsd'
 
 import { Agent, EventSource, EventSourceInit, Dispatcher } from '../../'
 
@@ -23,3 +23,13 @@ expectAssignable<EventSourceInit>({ withCredentials: true })
 expectAssignable<EventSourceInit>({})
 
 expectType<Agent>(new Agent({ eventSource: { maxEventSize: 1024 } }))
+
+eventSource.onerror = (event) => {
+  expectType<Event>(event)
+  expectError(event.message)
+}
+
+eventSource.addEventListener('error', (event) => {
+  expectType<Event>(event)
+  expectError(event.message)
+})
