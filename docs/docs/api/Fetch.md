@@ -97,6 +97,119 @@ const response = await fetch('https://example.com', {
 })
 ```
 
+### Composition and interceptors
+
+undici's [`Dispatcher.compose()`][] composes a chain of interceptors over the
+dispatcher's `dispatch()` method, returning a new dispatcher. Passing that
+composed dispatcher to `fetch()` via `init.dispatcher` is the supported way
+to add retry, cache, custom redirect handling, header dumping, or any
+user-defined behaviour around a `fetch()` call — without changing the
+WHATWG `fetch()` surface itself.
+
+The following recipes cover the most common questions about `fetch()`
+behaviour. Each one builds a dispatcher once and reuses it for every call.
+
+#### Automatic retry
+
+Retry transient network errors and 5xx responses, without manual loops:
+
+```mjs
+import { fetch, Agent, interceptors } from 'undici'
+
+const dispatcher = new Agent().compose(interceptors.retry({
+  maxRetries: 3,
+  minTimeout: 500,
+  maxTimeout: 5_000,
+  timeoutFactor: 2,
+  // Methods allowed to retry; the default list excludes POST and PATCH
+  // to avoid replaying non-idempotent side effects.
+  methods: ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE', 'QUERY'],
+  statusCodes: [500, 502, 503, 504, 429],
+  errorCodes: ['ECONNRESET', 'ECONNREFUSED', 'ENOTFOUND', 'ENETDOWN',
+    'ENETUNREACH', 'EHOSTDOWN', 'EHOSTUNREACH', 'EPIPE', 'UND_ERR_SOCKET']
+}))
+
+const response = await fetch('https://example.com/api', { dispatcher })
+```
+
+See [`RetryHandler`][] for the full option reference.
+
+#### HTTP caching
+
+Serve responses from an in-memory or SQLite cache store, honouring
+`Cache-Control` and `Vary`:
+
+```mjs
+import { fetch, Agent, interceptors, cacheStores } from 'undici'
+
+const dispatcher = new Agent().compose(interceptors.cache({
+  store: new cacheStores.MemoryCacheStore(),
+  methods: ['GET', 'HEAD']
+}))
+
+const response = await fetch('https://example.com/api', { dispatcher })
+```
+
+See [CacheStore][] for store options.
+
+#### Custom redirect handling
+
+Follow redirects a limited number of times, with optional header-stripping on
+cross-origin hops:
+
+```mjs
+import { fetch, Agent, interceptors } from 'undici'
+
+const dispatcher = new Agent().compose(interceptors.redirect({
+  maxRedirections: 5,
+  stripHeadersOnCrossOriginRedirect: ['authorization', 'cookie']
+}))
+
+const response = await fetch('https://example.com/old-path', { dispatcher })
+```
+
+#### Response error enrichment
+
+Surface a `ResponseError` (with status + headers + body preview) instead of a
+raw `Response` when the server returns 4xx/5xx:
+
+```mjs
+import { fetch, Agent, interceptors } from 'undici'
+
+const dispatcher = new Agent().compose(interceptors.responseError({
+  // Max response body bytes buffered into the thrown ResponseError.
+  maxSize: 128 * 1024
+}))
+
+try {
+  await fetch('https://example.com/missing', { dispatcher })
+} catch (err) {
+  // err is a ResponseError with err.statusCode, err.headers, err.body
+}
+```
+
+#### Chaining multiple interceptors
+
+`compose()` accepts an array; the order matters — the LAST interceptor in the
+array runs FIRST on the outbound request:
+
+```mjs
+import { fetch, Agent, interceptors } from 'undici'
+
+const dispatcher = new Agent().compose([
+  interceptors.retry({ maxRetries: 2 }),
+  interceptors.redirect({ maxRedirections: 5 }),
+  interceptors.cache({ store: new cacheStores.MemoryCacheStore() })
+])
+
+// On the way out: cache → redirect → retry → network.
+// On the way back: network → retry → redirect → cache.
+const response = await fetch('https://example.com/api', { dispatcher })
+```
+
+See [`Dispatcher.compose()`][] for the full composition semantics, and
+[Interceptors][] for the complete list of built-in interceptors.
+
 ## Class: `FormData`
 
 <!-- YAML
@@ -713,9 +826,13 @@ added: v1.0.0
 * Type: {boolean} `true` once the body has been read.
 
 [@fastify/busboy]: https://www.npmjs.com/package/@fastify/busboy
+[`Dispatcher.compose()`]: ./Dispatcher.md#dispatchercomposeinterceptors-interceptor
+[CacheStore]: ./CacheStore.md
+[Interceptors]: ./Interceptors.md
 [MDN Fetch documentation]: https://developer.mozilla.org/en-US/docs/Web/API/fetch
 [MDN `FormData` documentation]: https://developer.mozilla.org/en-US/docs/Web/API/FormData
 [MDN `Headers` documentation]: https://developer.mozilla.org/en-US/docs/Web/API/Headers
 [MDN `Request` documentation]: https://developer.mozilla.org/en-US/docs/Web/API/Request
 [MDN `Response` documentation]: https://developer.mozilla.org/en-US/docs/Web/API/Response
+[`RetryHandler`]: ./RetryHandler.md
 [WHATWG Fetch Standard]: https://fetch.spec.whatwg.org/
