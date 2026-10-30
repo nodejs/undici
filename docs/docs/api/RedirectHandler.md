@@ -20,6 +20,11 @@ bodies that have already been consumed are not replayed, and headers that refer
 to the original URL (such as `host`) are stripped on each hop, with additional
 credential headers removed on cross-origin redirects.
 
+When the redirect interceptor or `buildDispatch` wraps a single-origin
+[`Client`][] or [`Pool`][], a redirect to another origin is returned unchanged,
+including its body and `Location` header. Use an [`Agent`][] to follow
+cross-origin redirects.
+
 ```mjs
 import { RedirectHandler } from 'undici'
 ```
@@ -43,7 +48,7 @@ added: v4.0.0
 Implements the [`DispatchHandler`][] interface, delegating every callback to the
 wrapped `handler` while intercepting redirect responses.
 
-### `new RedirectHandler(dispatch, maxRedirections, opts, handler)`
+### `new RedirectHandler(dispatch, maxRedirections, opts, handler[, origin])`
 
 <!-- YAML
 added: v4.0.0
@@ -68,6 +73,9 @@ added: v4.0.0
     **Default:** `null`.
 * `handler` {DispatchHandler} The downstream handler that receives the lifecycle
   callbacks for the final response.
+* `origin` {string|null} The origin to which the dispatch function is bound.
+  Redirects to another origin are returned unchanged. Omit this argument for a
+  dispatch function that can reach multiple origins.
 
 Throws an [`InvalidArgumentError`][] when `maxRedirections` is not a non-negative
 integer, when `throwOnMaxRedirect` is not a boolean, or when either
@@ -174,9 +182,7 @@ forwarded to the wrapped `handler`.
 
 Throws when `throwOnMaxRedirect` is `true` and a redirect that would otherwise be
 followed arrives after `maxRedirections` redirects have already been followed,
-and throws an [`InvalidArgumentError`][] if a
-redirect loop is detected (for example when a [`Client`][] or [`Pool`][] is used
-for a cross-origin redirect; use an [`Agent`][] instead).
+and throws an [`InvalidArgumentError`][] if a redirect loop is detected.
 
 ### `redirectHandler.onResponseData(controller, chunk)`
 
