@@ -17,7 +17,7 @@ export interface Cache {
   match (request: RequestInfo, options?: CacheQueryOptions): Promise<Response | undefined>,
   matchAll (request?: RequestInfo, options?: CacheQueryOptions): Promise<readonly Response[]>,
   add (request: RequestInfo): Promise<undefined>,
-  addAll (requests: RequestInfo[]): Promise<undefined>,
+  addAll (requests: Iterable<RequestInfo>): Promise<undefined>,
   put (request: RequestInfo, response: Response): Promise<undefined>,
   delete (request: RequestInfo, options?: CacheQueryOptions): Promise<boolean>,
   keys (request?: RequestInfo, options?: CacheQueryOptions): Promise<readonly Request[]>
