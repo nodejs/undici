@@ -1,3 +1,5 @@
+import type { UndiciHeaders } from './dispatcher'
+
 export namespace util {
   /**
    * Retrieves a header name and returns its lowercase value.
@@ -15,4 +17,11 @@ export namespace util {
     headers: (Buffer | string | (Buffer | string)[])[],
     obj?: Record<string, string | string[]>
   ): Record<string, string | string[]>
+
+  /**
+   * Normalizes supported request header inputs into an object with lowercase names.
+   */
+  export function normalizeHeaders (
+    headers?: UndiciHeaders
+  ): Record<string, number | string | string[]>
 }
