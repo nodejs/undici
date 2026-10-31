@@ -846,6 +846,44 @@ describe('SnapshotAgent - Header Management', () => {
     assert(!snapshot.responses[0].headers['set-cookie'], 'Set-Cookie header should be excluded from storage')
     assert(snapshot.responses[0].headers['content-type'], 'Content-Type header should be preserved')
   })
+
+  it('replays repeated response headers as separate values', async (t) => {
+    const cookies = [
+      'a=1; Path=/',
+      'b=2; Path=/; Expires=Wed, 21 Oct 2037 07:28:00 GMT'
+    ]
+    const server = createTestServer((req, res) => {
+      res.setHeader('set-cookie', cookies)
+      res.end('repeated headers')
+    })
+
+    const { origin } = await setupServer(server)
+    const snapshotPath = createSnapshotPath('repeated-headers')
+
+    setupCleanup(t, { server, snapshotPath })
+
+    const agent = new SnapshotAgent({
+      mode: 'record',
+      snapshotPath
+    })
+    setupCleanup(t, { agent })
+
+    const live = await request(`${origin}/test`, { dispatcher: agent })
+    await live.body.text()
+    assert.deepStrictEqual(live.headers['set-cookie'], cookies)
+
+    await agent.saveSnapshots()
+
+    const playbackAgent = new SnapshotAgent({
+      mode: 'playback',
+      snapshotPath
+    })
+    setupCleanup(t, { agent: playbackAgent })
+
+    const replayed = await request(`${origin}/test`, { dispatcher: playbackAgent })
+    assert.strictEqual(await replayed.body.text(), 'repeated headers')
+    assert.deepStrictEqual(replayed.headers['set-cookie'], cookies)
+  })
 })
 
 describe('SnapshotAgent - Request Matching', () => {
