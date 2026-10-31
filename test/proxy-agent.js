@@ -1122,7 +1122,7 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623', async
     for (const header of ['via', 'x-forwarded-for']) {
       delete req.headers[header]
     }
-    t.deepStrictEqual(req.headers, expectedHeaders)
+    t.deepStrictEqual({ ...req.headers }, expectedHeaders)
     res.end('goodbye')
   })
 
@@ -1169,11 +1169,11 @@ test('ProxyAgent correctly sends headers when using fetch - #1355, #1623 (with p
   }
 
   proxy.on('connect', (req, res) => {
-    t.deepStrictEqual(req.headers, expectedProxyHeaders)
+    t.deepStrictEqual({ ...req.headers }, expectedProxyHeaders)
   })
 
   server.on('request', (req, res) => {
-    t.deepStrictEqual(req.headers, expectedHeaders)
+    t.deepStrictEqual({ ...req.headers }, expectedHeaders)
     res.end('goodbye')
   })
 
