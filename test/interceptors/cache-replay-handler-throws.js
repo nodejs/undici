@@ -3,6 +3,7 @@
 const { createServer } = require('node:http')
 const { test, after } = require('node:test')
 const { once } = require('node:events')
+const { Readable, Writable } = require('node:stream')
 const { strictEqual, rejects } = require('node:assert')
 const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
 
@@ -127,4 +128,40 @@ test('cache hit: downstream throw without onResponseError does not crash the pro
   await promise
   // Give the destroyed replay stream time to emit 'error' and 'close'
   await new Promise((resolve) => setTimeout(resolve, 20))
+})
+
+test('304 revalidation replay: dump maxSize exceeded during the cached-body replay is a request error', async (t) => {
+  // The 304 path replays the cached body from CacheHandler itself (not sendCachedValue),
+  // forwarding onResponseData from a later stream tick. A throwing downstream (dump over
+  // maxSize) must be converged to a per-request error instead of crashing the process.
+  const origin = await startServer(t, (_, res) => {
+    res.writeHead(304, { 'cache-control': 'public, max-age=60' }).end()
+  })
+
+  const now = Date.now()
+  let gets = 0
+  const store = {
+    // First get returns an expired entry, forcing the 304 revalidation replay path.
+    get: () => Promise.resolve({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: { 'cache-control': 'public, max-age=60' },
+      cacheControlDirectives: { public: true, 'max-age': 60 },
+      cachedAt: now,
+      staleAt: now + 60_000,
+      deleteAt: ++gets === 1 ? now - 1 : now + 60_000,
+      body: Readable.from([Buffer.alloc(32)])
+    }),
+    createWriteStream: () => new Writable({ write (_chunk, _enc, cb) { cb() } }),
+    delete: () => {}
+  }
+
+  const client = new Client(origin)
+    .compose(interceptors.cache({ store }), interceptors.dump({ maxSize: 8 }))
+  after(() => client.close())
+
+  await rejects(async () => {
+    const res = await client.request({ path: '/', method: 'GET' })
+    await res.body.text()
+  }, { code: 'UND_ERR_ABORTED', message: /larger than maxSize/ })
 })
