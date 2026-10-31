@@ -165,3 +165,60 @@ test('304 revalidation replay: dump maxSize exceeded during the cached-body repl
     await res.body.text()
   }, { code: 'UND_ERR_ABORTED', message: /larger than maxSize/ })
 })
+
+test('304 revalidation replay failure releases the connection for reuse', async (t) => {
+  // Converging the throw is not enough: the replay leaves the origin response
+  // paused, so the failure path must release it or the next request on the
+  // same connection hangs forever.
+  const origin = await startServer(t, (req, res) => {
+    if (req.url === '/ping') {
+      res.writeHead(200).end('pong')
+    } else {
+      res.writeHead(304, { 'cache-control': 'public, max-age=60' }).end()
+    }
+  })
+
+  const now = Date.now()
+  let gets = 0
+  const store = {
+    // Only '/' has a (stale) cached entry, forcing the 304 revalidation replay.
+    get: (key) => {
+      if (key?.path !== '/') {
+        return undefined
+      }
+      return Promise.resolve({
+        statusCode: 200,
+        statusMessage: 'OK',
+        headers: { 'cache-control': 'public, max-age=60' },
+        cacheControlDirectives: { public: true, 'max-age': 60 },
+        cachedAt: now,
+        staleAt: now + 60_000,
+        deleteAt: ++gets === 1 ? now - 1 : now + 60_000,
+        body: Readable.from([Buffer.alloc(32)])
+      })
+    },
+    createWriteStream: () => new Writable({ write (_chunk, _enc, cb) { cb() } }),
+    delete: () => {}
+  }
+
+  const client = new Client(origin)
+    .compose(interceptors.cache({ store }), interceptors.dump({ maxSize: 8 }))
+  after(() => client.close())
+
+  await rejects(async () => {
+    const res = await client.request({ path: '/', method: 'GET' })
+    await res.body.text()
+  }, { code: 'UND_ERR_ABORTED' })
+
+  // The connection must be reusable promptly: without releasing the paused
+  // origin response, the follow-up request stalls until a connection timeout
+  // (several seconds) instead of completing immediately.
+  const followUp = (async () => {
+    const res = await client.request({ path: '/ping', method: 'GET' })
+    await res.body.text()
+    return res.statusCode
+  })()
+  const timer = new Promise((_resolve, reject) =>
+    setTimeout(() => reject(new Error('follow-up request stalled: connection not released')), 2000).unref())
+  strictEqual(await Promise.race([followUp, timer]), 200)
+})
