@@ -1026,3 +1026,163 @@ test('cache does not serve a redirect entry stale past the hop freshness via the
     await closeServer(server)
   }
 })
+
+// Reproduces GHSA-7XG3-FPHP-28HG (CWE-524 / CWE-639).
+//
+// A credential-bearing **same-origin** redirect whose final hop advertises a
+// permissive cache policy (`public`, `s-maxage`, or `must-revalidate`) must not
+// be stored under the original (alias) URL key. The intermediate redirect here
+// carries no restrictive `Cache-Control` (a bare 302), so the suppressed-hop
+// guard does not trip, and the final hop shares the cache-key origin, so the
+// cross-origin guard does not trip either. Because the store key omits the
+// credential (and the final hop has no `Vary`), a later request for the alias
+// URL by a different principal — or an anonymous caller — would be served the
+// first principal's private body without re-contacting the origin.
+//
+// The credential matters even when the request is cookie-authenticated: the
+// RFC-9111 §3.5 authenticated-request gate only inspects `Authorization`, so a
+// cookie-only request with a plain `max-age` final hop was also disclosed.
+for (const { name, credentialHeaders, finalCacheControl } of [
+  {
+    name: 'authorization + public final hop',
+    credentialHeaders: { authorization: 'Bearer alice' },
+    finalCacheControl: 'public, max-age=600'
+  },
+  {
+    name: 'authorization + must-revalidate final hop',
+    credentialHeaders: { authorization: 'Bearer alice' },
+    finalCacheControl: 'max-age=600, must-revalidate'
+  },
+  {
+    name: 'cookie-only + public final hop',
+    credentialHeaders: { cookie: 'session=alice' },
+    finalCacheControl: 'public, max-age=600'
+  },
+  {
+    name: 'cookie-only + max-age final hop (bypasses RFC 9111 §3.5 gate)',
+    credentialHeaders: { cookie: 'session=alice' },
+    finalCacheControl: 'max-age=600'
+  }
+]) {
+  test(`cache does not store a same-origin redirect for a credential-bearing request under the alias key (${name})`, async () => {
+    const state = { me: 0, profile: 0 }
+    const server = createServer((req, res) => {
+      const requestUrl = new URL(req.url, 'http://dummy')
+      if (requestUrl.pathname === '/me') {
+        state.me++
+        const user = (req.headers.authorization || req.headers.cookie || 'anon')
+          .replace('Bearer ', '')
+          .replace('session=', '')
+        res.writeHead(302, { location: `/profile/${user}` })
+        res.end()
+        return
+      }
+      if (requestUrl.pathname.startsWith('/profile/')) {
+        state.profile++
+        const user = requestUrl.pathname.split('/')[2]
+        res.writeHead(200, {
+          'cache-control': finalCacheControl,
+          'content-type': 'text/plain'
+        })
+        res.end(`${user.toUpperCase()} ssn=111-11-1111`)
+        return
+      }
+      res.writeHead(404)
+      res.end('not found')
+    })
+
+    await listen(server)
+    const origin = `http://127.0.0.1:${server.address().port}`
+
+    const agent = new Agent().compose(
+      interceptors.redirect({ maxRedirections: 2 }),
+      interceptors.cache({
+        store: new cacheStores.MemoryCacheStore(),
+        type: 'shared'
+      })
+    )
+
+    const requestAs = (user, headers) => agent.request({
+      origin,
+      path: '/me',
+      method: 'GET',
+      headers
+    }).then(response => response.body.text())
+
+    try {
+      const alice = await requestAs('alice', credentialHeaders)
+      assert.equal(alice, 'ALICE ssn=111-11-1111')
+
+      // A different principal must receive its own profile, and an anonymous
+      // caller must also reach the origin rather than be served Alice's body.
+      const bob = await requestAs('bob', {
+        authorization: 'Bearer bob'
+      })
+      const anon = await requestAs('anon', undefined)
+
+      assert.equal(bob, 'BOB ssn=111-11-1111')
+      assert.equal(anon, 'ANON ssn=111-11-1111')
+      // Every request must have reached the origin: nothing was stored under
+      // the alias key, so none were served from the shared cache.
+      assert.equal(state.me, 3)
+      assert.equal(state.profile, 3)
+    } finally {
+      await agent.close()
+      await closeServer(server)
+    }
+  })
+}
+
+// The fix must not regress the legitimate same-origin redirect caching for
+// requests that carry no credential: those are still cached under the original
+// key, so the redirect target is not re-fetched on a repeat request.
+test('cache still stores an unauthenticated same-origin redirect under the original key', async () => {
+  const state = { hits: 0 }
+  const server = createServer((req, res) => {
+    if (req.url === '/alias') {
+      res.writeHead(302, { location: '/target' })
+      res.end()
+      return
+    }
+    state.hits++
+    res.writeHead(200, {
+      'cache-control': 'public, max-age=600',
+      'content-type': 'text/plain'
+    })
+    res.end('public-content')
+  })
+
+  await listen(server)
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2 }),
+    interceptors.cache({
+      store: new cacheStores.MemoryCacheStore(),
+      type: 'shared'
+    })
+  )
+
+  try {
+    const first = await agent.request({
+      origin,
+      path: '/alias',
+      method: 'GET'
+    }).then(response => response.body.text())
+    assert.equal(first, 'public-content')
+
+    const hitsBefore = state.hits
+    const second = await agent.request({
+      origin,
+      path: '/alias',
+      method: 'GET'
+    }).then(response => response.body.text())
+
+    assert.equal(second, 'public-content')
+    // The repeat request must be a cache hit (the target was not re-fetched).
+    assert.equal(state.hits, hitsBefore)
+  } finally {
+    await agent.close()
+    await closeServer(server)
+  }
+})
