@@ -1041,7 +1041,9 @@ test('cache does not serve a redirect entry stale past the hop freshness via the
 //
 // The credential matters even when the request is cookie-authenticated: the
 // RFC-9111 §3.5 authenticated-request gate only inspects `Authorization`, so a
-// cookie-only request with a plain `max-age` final hop was also disclosed.
+// cookie-only request with a plain `max-age` final hop was also disclosed. The
+// same holds for `Proxy-Authorization`, which undici already classifies as a
+// request credential in the redirect handler.
 for (const { name, credentialHeaders, finalCacheControl } of [
   {
     name: 'authorization + public final hop',
@@ -1062,6 +1064,11 @@ for (const { name, credentialHeaders, finalCacheControl } of [
     name: 'cookie-only + max-age final hop (bypasses RFC 9111 §3.5 gate)',
     credentialHeaders: { cookie: 'session=alice' },
     finalCacheControl: 'max-age=600'
+  },
+  {
+    name: 'proxy-authorization + public final hop',
+    credentialHeaders: { 'proxy-authorization': 'Bearer alice' },
+    finalCacheControl: 'public, max-age=600'
   }
 ]) {
   test(`cache does not store a same-origin redirect for a credential-bearing request under the alias key (${name})`, async () => {
@@ -1070,7 +1077,7 @@ for (const { name, credentialHeaders, finalCacheControl } of [
       const requestUrl = new URL(req.url, 'http://dummy')
       if (requestUrl.pathname === '/me') {
         state.me++
-        const user = (req.headers.authorization || req.headers.cookie || 'anon')
+        const user = (req.headers.authorization || req.headers.cookie || req.headers['proxy-authorization'] || 'anon')
           .replace('Bearer ', '')
           .replace('session=', '')
         res.writeHead(302, { location: `/profile/${user}` })
