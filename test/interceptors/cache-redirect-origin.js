@@ -1193,3 +1193,66 @@ test('cache still stores an unauthenticated same-origin redirect under the origi
     await closeServer(server)
   }
 })
+
+// The credential guard must key on an *actual* redirect, not merely a non-empty
+// redirect history. A credential-bearing response that was not redirected is
+// legitimately cacheable under RFC 9111 §3.5 when it carries `public`, and must
+// still be revalidated and refreshed normally. The redirect handler records
+// every hop in `history` (including the single final hop), and on revalidation
+// the cache handler's deferred `onRequestStart` sees that entry, so a guard that
+// fired on a non-empty history would mistake a plain revalidation for a redirect
+// and never replace the stale entry.
+test('cache refreshes a credential-bearing non-redirected entry on revalidation', async () => {
+  const state = { version: 1, ifNoneMatch: [] }
+  const server = createServer((req, res) => {
+    const inm = req.headers['if-none-match']
+    if (inm) state.ifNoneMatch.push(inm)
+    const etag = `"v${state.version}"`
+    if (inm === etag) {
+      res.writeHead(304, { etag, 'cache-control': 'public, max-age=0' })
+      res.end()
+      return
+    }
+    res.writeHead(200, {
+      etag,
+      'cache-control': 'public, max-age=0',
+      'content-type': 'text/plain'
+    })
+    res.end(`DATA-${state.version}`)
+  })
+
+  await listen(server)
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2 }),
+    interceptors.cache({
+      store: new cacheStores.MemoryCacheStore(),
+      type: 'shared'
+    })
+  )
+
+  const get = () => agent.request({
+    origin,
+    path: '/data',
+    method: 'GET',
+    headers: { authorization: 'Bearer alice' }
+  }).then(response => response.body.text())
+
+  try {
+    assert.equal(await get(), 'DATA-1')
+    state.version = 2
+    // Revalidation returns a fresh 200; the entry must be refreshed to v2.
+    assert.equal(await get(), 'DATA-2')
+    // A subsequent request must revalidate against the refreshed etag, proving
+    // the cache stored v2 rather than remaining stuck on v1.
+    await get()
+    assert.ok(
+      state.ifNoneMatch.includes('"v2"'),
+      `cache never refreshed past v1 (origin saw ${JSON.stringify(state.ifNoneMatch)})`
+    )
+  } finally {
+    await agent.close()
+    await closeServer(server)
+  }
+})
