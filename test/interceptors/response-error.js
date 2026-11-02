@@ -8,6 +8,41 @@ const { gzipSync } = require('node:zlib')
 const { interceptors, Client } = require('../..')
 const { responseError } = interceptors
 
+for (const [contentType, expectedBody] of [
+  ['Application/JSON', { message: 'Bad Request' }],
+  ['APPLICATION/JSON; Charset=UTF-8', { message: 'Bad Request' }],
+  ['application/json ; charset=utf-8', { message: 'Bad Request' }],
+  ['Text/Plain', '{"message":"Bad Request"}'],
+  ['TEXT/PLAIN; charset=utf-8', '{"message":"Bad Request"}'],
+  ['application/jsonp', ''],
+  ['application/json-seq', ''],
+  ['text/plain-extra', ''],
+  ['application/json/invalid', ''],
+  ['application/problem+json', '']
+]) {
+  test(`responseError matches the MIME essence of ${contentType}`, async t => {
+    const server = createServer((req, res) => {
+      res.writeHead(400, { 'content-type': contentType })
+      res.end('{"message":"Bad Request"}')
+    })
+    server.listen(0, '127.0.0.1')
+    await once(server, 'listening')
+    const client = new Client(`http://127.0.0.1:${server.address().port}`)
+      .compose(responseError())
+    t.after(async () => {
+      await client.close()
+      await new Promise(resolve => server.close(resolve))
+    })
+    await assert.rejects(client.request({ method: 'GET', path: '/' }), error => {
+      assert.equal(error.code, 'UND_ERR_RESPONSE')
+      assert.deepStrictEqual(error.body, expectedBody)
+      assert.equal(error.headers['content-type'], contentType)
+      assert.equal(error.bodyTruncated, false)
+      return true
+    })
+  })
+}
+
 test('should throw error for error response', async () => {
   const server = createServer({ joinDuplicateHeaders: true })
 

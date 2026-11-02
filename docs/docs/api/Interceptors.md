@@ -246,6 +246,10 @@ The error body is automatically decoded for `application/json` and
 `text/plain` responses. For JSON responses the body is parsed and exposed as
 `error.body`.
 
+Media types are matched case-insensitively, ignoring parameters such as
+`charset=utf-8`. Other media types, including names that only start with
+`application/json` or `text/plain`, are not decoded.
+
 **Parameters**
 
 * `opts` {Object} (optional)
