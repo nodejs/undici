@@ -72,6 +72,31 @@ test('cache hit from async store: dump maxSize exceeded in onResponseStart is a 
   }, { code: 'UND_ERR_ABORTED', message: /larger than maxSize/ })
 })
 
+test('cache hit: async store get() rejection is converged to a request error', async (t) => {
+  const origin = await startServer(t, (_, res) => {
+    res.setHeader('cache-control', 'public, max-age=60')
+    res.end('x'.repeat(64))
+  })
+
+  // A cache backend that fails on get() must not surface as an unhandled
+  // promise rejection that crashes the process (async store path).
+  const store = {
+    get: () => Promise.reject(new Error('cache backend unavailable')),
+    createWriteStream: () => {},
+    delete: () => {}
+  }
+
+  const client = new Client(origin).compose(interceptors.cache({ store }))
+  after(() => client.close())
+
+  await rejects(
+    async () => {
+      await client.request({ path: '/', method: 'GET' })
+    },
+    { message: /cache backend unavailable/ }
+  )
+})
+
 test('cache hit: downstream throw in onResponseEnd is reported to onResponseError', async (t) => {
   const origin = await startServer(t, (_, res) => {
     res.setHeader('cache-control', 'public, max-age=60')
