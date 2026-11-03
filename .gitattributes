@@ -1,0 +1,15 @@
+# Normalize line endings for all text files
+* text=auto eol=lf
+
+# Binary files
+*.ico binary
+*.png binary
+*.wasm binary
+
+# Prevent CRLF issues on Windows for TypeScript/JavaScript files
+*.ts text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.md text eol=lf
