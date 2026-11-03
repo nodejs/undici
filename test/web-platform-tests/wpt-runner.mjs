@@ -776,7 +776,7 @@ async function run (filters = []) {
         console.log(`\t${c.index + 1}. "${escapeControlCharacters(c.name)}": ${c.status === 0 ? '✅ PASS' : '❌ FAIL'}`)
 
         if (c.status !== 0 && (c.message || c.stack)) {
-          log(`${escapeControlCharacters(String(c.message))}:\n${c.stack.split('\n').slice(1).join('\n')}`)
+          log(`${escapeControlCharacters(String(c.message))}:\n${(c.stack ?? '').split('\n').slice(1).join('\n')}`)
         }
       }
     }
