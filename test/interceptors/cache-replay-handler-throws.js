@@ -6,6 +6,7 @@ const { once } = require('node:events')
 const { Readable, Writable } = require('node:stream')
 const { strictEqual, rejects } = require('node:assert')
 const { Agent, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
+const { createDeferredPromise } = require('../../lib/util/promise')
 
 async function startServer (t, handler) {
   const server = createServer({ joinDuplicateHeaders: true }, handler).listen(0)
@@ -135,7 +136,7 @@ test('cache hit: downstream throw in onResponseEnd is reported to onResponseErro
   after(() => client.close())
 
   const boom = new Error('boom')
-  const { promise, resolve } = Promise.withResolvers()
+  const { promise, resolve } = createDeferredPromise()
 
   client.dispatch({ origin, path: '/', method: 'GET' }, {
     onRequestStart () {},
@@ -164,7 +165,7 @@ test('cache hit: downstream throw without onResponseError does not crash the pro
   const client = new Agent().compose(interceptors.cache({ store }))
   after(() => client.close())
 
-  const { promise, resolve } = Promise.withResolvers()
+  const { promise, resolve } = createDeferredPromise()
 
   client.dispatch({ origin, path: '/', method: 'GET' }, {
     onRequestStart () {},
