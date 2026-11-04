@@ -1732,6 +1732,21 @@ test('ProxyAgent handles multiple concurrent HTTP requests via HTTP proxy', asyn
   proxyAgent.close()
 })
 
+test('ProxyAgent with IP address HTTPS proxy does not set IP as TLS servername - #6144', async (t) => {
+  t = tspl(t, { plan: 1 })
+  const dispatcher = new ProxyAgent('https://127.0.0.1:9', {
+    proxyTls: { rejectUnauthorized: false }
+  })
+  try {
+    await request('http://example.test/', { dispatcher })
+  } catch (err) {
+    // Should fail with network error (connection refused), NOT with ERR_INVALID_ARG_VALUE
+    t.notStrictEqual(err.code, 'ERR_INVALID_ARG_VALUE')
+  } finally {
+    await dispatcher.destroy()
+  }
+})
+
 function buildServer () {
   return new Promise((resolve) => {
     const server = createServer({ joinDuplicateHeaders: true })
