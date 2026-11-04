@@ -342,7 +342,7 @@ test('pipelined chunked POST iterator', async (t) => {
   await t.completed
 })
 
-function errordInflightPost (bodyType) {
+function erroredInflightPost (bodyType) {
   test(`errored POST body lets inflight complete ${bodyType}`, async (t) => {
     t = tspl(t, { plan: 6 })
 
@@ -399,8 +399,8 @@ function errordInflightPost (bodyType) {
   })
 }
 
-errordInflightPost(consts.STREAM)
-errordInflightPost(consts.ASYNC_ITERATOR)
+erroredInflightPost(consts.STREAM)
+erroredInflightPost(consts.ASYNC_ITERATOR)
 
 test('pipelining non-idempotent', async (t) => {
   t = tspl(t, { plan: 4 })

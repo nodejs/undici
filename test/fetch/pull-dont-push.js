@@ -9,7 +9,7 @@ const { setTimeout: sleep } = require('node:timers/promises')
 
 const { closeServerAsPromise } = require('../utils/node-http')
 
-test('pull dont\'t push', async (t) => {
+test('pull don\'t push', async (t) => {
   let count = 0
   let socket
   // Must exceed any socket buffer for the test to be reliable.

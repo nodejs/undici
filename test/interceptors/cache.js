@@ -610,7 +610,7 @@ describe('Cache Interceptor', () => {
     }
   })
 
-  test('revalidates reponses with no-cache directive, regardless of cacheByDefault', async () => {
+  test('revalidates responses with no-cache directive, regardless of cacheByDefault', async () => {
     let requestCount = 0
     const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
       ++requestCount
@@ -3019,7 +3019,7 @@ describe('Cache Interceptor', () => {
 
       const store = new MemoryCacheStore()
       store.createWriteStream = () => {
-        fail('shouln\'t have reached this')
+        fail('shouldn\'t have reached this')
       }
 
       const client = new Client(`http://localhost:${server.address().port}`)

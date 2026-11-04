@@ -180,7 +180,7 @@ test('Headers delete', async (t) => {
     t.plan(2)
     const headers = new Headers()
 
-    t.assert.throws(() => headers.delete(), 'throws on missing namee')
+    t.assert.throws(() => headers.delete(), 'throws on missing name')
     t.assert.throws(() => headers.delete('invalid @ header ? name'), 'throws on invalid name')
   })
 
