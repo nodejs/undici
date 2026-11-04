@@ -5,7 +5,7 @@ const { test, after } = require('node:test')
 const { once } = require('node:events')
 const { Readable, Writable } = require('node:stream')
 const { strictEqual, rejects } = require('node:assert')
-const { Client, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
+const { Agent, interceptors, cacheStores: { MemoryCacheStore } } = require('../../index')
 
 async function startServer (t, handler) {
   const server = createServer({ joinDuplicateHeaders: true }, handler).listen(0)
@@ -26,9 +26,9 @@ function asyncStore (store) {
 }
 
 async function populate (origin, store) {
-  const client = new Client(origin).compose(interceptors.cache({ store }))
+  const client = new Agent().compose(interceptors.cache({ store }))
   after(() => client.close())
-  const res = await client.request({ path: '/', method: 'GET' })
+  const res = await client.request({ origin, path: '/', method: 'GET' })
   strictEqual((await res.body.text()).length, 64)
 }
 
@@ -43,12 +43,12 @@ test('cache hit: dump maxSize exceeded during body replay is a request error', a
   const store = new MemoryCacheStore()
   await populate(origin, store)
 
-  const client = new Client(origin)
+  const client = new Agent()
     .compose(interceptors.cache({ store }), interceptors.dump({ maxSize: 8 }))
   after(() => client.close())
 
   await rejects(async () => {
-    const res = await client.request({ path: '/', method: 'GET' })
+    const res = await client.request({ origin, path: '/', method: 'GET' })
     await res.body.text()
   }, { code: 'UND_ERR_ABORTED', message: /larger than maxSize/ })
 })
@@ -62,12 +62,12 @@ test('cache hit from async store: dump maxSize exceeded in onResponseStart is a 
   const store = asyncStore(new MemoryCacheStore())
   await populate(origin, store)
 
-  const client = new Client(origin)
+  const client = new Agent()
     .compose(interceptors.cache({ store }), interceptors.dump({ maxSize: 8 }))
   after(() => client.close())
 
   await rejects(async () => {
-    const res = await client.request({ path: '/', method: 'GET' })
+    const res = await client.request({ origin, path: '/', method: 'GET' })
     await res.body.text()
   }, { code: 'UND_ERR_ABORTED', message: /larger than maxSize/ })
 })
@@ -85,13 +85,13 @@ test('cache hit from async store: decompress too many content-encodings on repla
   const store = asyncStore(new MemoryCacheStore())
   await populate(origin, store)
 
-  const client = new Client(origin)
+  const client = new Agent()
     .compose(interceptors.cache({ store }), interceptors.decompress())
   after(() => client.close())
 
   await rejects(
     async () => {
-      await client.request({ path: '/', method: 'GET' })
+      await client.request({ origin, path: '/', method: 'GET' })
     },
     { message: /content-encoding/ }
   )
@@ -111,12 +111,12 @@ test('cache hit: async store get() rejection is converged to a request error', a
     delete: () => {}
   }
 
-  const client = new Client(origin).compose(interceptors.cache({ store }))
+  const client = new Agent().compose(interceptors.cache({ store }))
   after(() => client.close())
 
   await rejects(
     async () => {
-      await client.request({ path: '/', method: 'GET' })
+      await client.request({ origin, path: '/', method: 'GET' })
     },
     { message: /cache backend unavailable/ }
   )
@@ -131,7 +131,7 @@ test('cache hit: downstream throw in onResponseEnd is reported to onResponseErro
   const store = new MemoryCacheStore()
   await populate(origin, store)
 
-  const client = new Client(origin).compose(interceptors.cache({ store }))
+  const client = new Agent().compose(interceptors.cache({ store }))
   after(() => client.close())
 
   const boom = new Error('boom')
@@ -161,7 +161,7 @@ test('cache hit: downstream throw without onResponseError does not crash the pro
   const store = new MemoryCacheStore()
   await populate(origin, store)
 
-  const client = new Client(origin).compose(interceptors.cache({ store }))
+  const client = new Agent().compose(interceptors.cache({ store }))
   after(() => client.close())
 
   const { promise, resolve } = Promise.withResolvers()
@@ -206,12 +206,12 @@ test('304 revalidation replay: dump maxSize exceeded during the cached-body repl
     delete: () => {}
   }
 
-  const client = new Client(origin)
+  const client = new Agent()
     .compose(interceptors.cache({ store }), interceptors.dump({ maxSize: 8 }))
   after(() => client.close())
 
   await rejects(async () => {
-    const res = await client.request({ path: '/', method: 'GET' })
+    const res = await client.request({ origin, path: '/', method: 'GET' })
     await res.body.text()
   }, { code: 'UND_ERR_ABORTED', message: /larger than maxSize/ })
 })
@@ -251,12 +251,12 @@ test('304 revalidation replay failure releases the connection for reuse', async 
     delete: () => {}
   }
 
-  const client = new Client(origin)
+  const client = new Agent()
     .compose(interceptors.cache({ store }), interceptors.dump({ maxSize: 8 }))
   after(() => client.close())
 
   await rejects(async () => {
-    const res = await client.request({ path: '/', method: 'GET' })
+    const res = await client.request({ origin, path: '/', method: 'GET' })
     await res.body.text()
   }, { code: 'UND_ERR_ABORTED' })
 
@@ -264,7 +264,7 @@ test('304 revalidation replay failure releases the connection for reuse', async 
   // origin response, the follow-up request stalls until a connection timeout
   // (several seconds) instead of completing immediately.
   const followUp = (async () => {
-    const res = await client.request({ path: '/ping', method: 'GET' })
+    const res = await client.request({ origin, path: '/ping', method: 'GET' })
     await res.body.text()
     return res.statusCode
   })()
