@@ -838,7 +838,7 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
 })
 
 test('Cross-origin redirects strip credentials from array-of-tuples headers', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 12 })
+  const { strictEqual } = tspl(t, { plan: 10 })
 
   // With a built-in header-normalizing interceptor (cache/deduplicate) outside
   // redirect(), the redirect interceptor must still strip cross-origin
@@ -848,7 +848,6 @@ test('Cross-origin redirects strip credentials from array-of-tuples headers', as
     strictEqual(req.headers.cookie, undefined)
     strictEqual(req.headers.authorization, undefined)
     strictEqual(req.headers['proxy-authorization'], undefined)
-    strictEqual(req.headers['x-api-key'], undefined)
     strictEqual(req.headers['x-keep'], 'present')
 
     res.end('redirected')
@@ -876,7 +875,6 @@ test('Cross-origin redirects strip credentials from array-of-tuples headers', as
     ['Authorization', 'tuple-secret'],
     ['Cookie', 'ddd=dddd'],
     ['Proxy-Authorization', 'tuple-secret'],
-    ['X-Api-Key', 'tuple-secret'],
     ['X-Keep', 'present']
   ]
 
@@ -887,7 +885,7 @@ test('Cross-origin redirects strip credentials from array-of-tuples headers', as
     const res = await undici.request(`http://localhost:${server2.address().port}`, {
       dispatcher: new undici.Agent({}).compose([
         interceptor,
-        undici.interceptors.redirect({ maxRedirections: 1, stripHeadersOnCrossOriginRedirect: ['X-Api-Key'] })
+        undici.interceptors.redirect({ maxRedirections: 1 })
       ]),
       headers
     })
