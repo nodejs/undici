@@ -2,6 +2,8 @@
 
 const { test } = require('node:test')
 const { createServer } = require('node:http')
+const { once } = require('node:events')
+const { gzipSync } = require('node:zlib')
 const { fetch, Agent } = require('../..')
 const { closeServerAsPromise } = require('../utils/node-http')
 
@@ -165,4 +167,57 @@ test('responseStart should be greater than 0 with composed interceptor', (t, don
   })
 
   t.after(closeServerAsPromise(server))
+})
+
+test('should include contentType and contentEncoding in performance entry', async (t) => {
+  const responses = {
+    '/json': { 'content-type': 'application/json; charset=utf-8' },
+    '/gzip': { 'content-type': 'text/javascript', 'content-encoding': 'GZIP' },
+    '/unknown': { 'content-encoding': 'foo' },
+    '/multiple': { 'content-encoding': 'foo, bar' },
+    '/plain': {}
+  }
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const headers = responses[req.url]
+    res.writeHead(200, headers)
+    res.end(headers['content-encoding'] === 'GZIP' ? gzipSync('ok') : 'ok')
+  }).listen(0)
+  await once(server, 'listening')
+  t.after(closeServerAsPromise(server))
+
+  const origin = `http://localhost:${server.address().port}`
+  const entries = new Map()
+  const { promise, resolve } = Promise.withResolvers()
+  const obs = new PerformanceObserver(list => {
+    for (const entry of list.getEntries()) {
+      entries.set(new URL(entry.name).pathname, entry)
+    }
+    if (entries.size === Object.keys(responses).length) {
+      resolve()
+    }
+  })
+  obs.observe({ entryTypes: ['resource'] })
+  t.after(() => {
+    obs.disconnect()
+    performance.clearResourceTimings()
+  })
+
+  for (const path of Object.keys(responses)) {
+    const response = await fetch(origin + path)
+    t.assert.strictEqual(await response.text(), 'ok')
+  }
+  await promise
+
+  const actual = Object.fromEntries([...entries].map(([path, entry]) => [path, {
+    contentType: entry.contentType,
+    contentEncoding: entry.contentEncoding
+  }]))
+  t.assert.deepStrictEqual(actual, {
+    '/json': { contentType: 'application/json', contentEncoding: '' },
+    '/gzip': { contentType: 'text/javascript', contentEncoding: 'gzip' },
+    '/unknown': { contentType: '', contentEncoding: '@unknown' },
+    '/multiple': { contentType: '', contentEncoding: 'multiple' },
+    '/plain': { contentType: '', contentEncoding: '' }
+  })
 })
