@@ -1147,7 +1147,10 @@ test('cache still stores an unauthenticated same-origin redirect under the origi
   const state = { hits: 0 }
   const server = createServer((req, res) => {
     if (req.url === '/alias') {
-      res.writeHead(302, { location: '/target' })
+      res.writeHead(302, {
+        location: '/target',
+        'cache-control': 'public, max-age=600'
+      })
       res.end()
       return
     }
