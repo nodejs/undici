@@ -72,6 +72,31 @@ test('cache hit from async store: dump maxSize exceeded in onResponseStart is a 
   }, { code: 'UND_ERR_ABORTED', message: /larger than maxSize/ })
 })
 
+test('cache hit from async store: decompress too many content-encodings on replay is a request error', async (t) => {
+  const origin = await startServer(t, (_, res) => {
+    res.setHeader('cache-control', 'public, max-age=60')
+    // 6 codings exceeds the decompress interceptor's limit of 5. The poisoned
+    // entry is written by a dispatcher without the decompress interceptor, then
+    // replayed through one that has it (async store path).
+    res.setHeader('content-encoding', Array(6).fill('identity').join(', '))
+    res.end('x'.repeat(64))
+  })
+
+  const store = asyncStore(new MemoryCacheStore())
+  await populate(origin, store)
+
+  const client = new Client(origin)
+    .compose(interceptors.cache({ store }), interceptors.decompress())
+  after(() => client.close())
+
+  await rejects(
+    async () => {
+      await client.request({ path: '/', method: 'GET' })
+    },
+    { message: /content-encoding/ }
+  )
+})
+
 test('cache hit: async store get() rejection is converged to a request error', async (t) => {
   const origin = await startServer(t, (_, res) => {
     res.setHeader('cache-control', 'public, max-age=60')
