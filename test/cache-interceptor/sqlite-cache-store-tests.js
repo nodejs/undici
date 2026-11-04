@@ -371,14 +371,7 @@ test('SqliteCacheStore updates vary when overwriting an existing row', { skip: r
   }), undefined)
 })
 
-let hasZstd = false
-try {
-  hasZstd = typeof require('node:zlib').zstdCompressSync === 'function'
-} catch {
-  // zstd may be unavailable on older Node versions
-}
-
-const skipCompression = runtimeFeatures.has('sqlite') === false || hasZstd === false
+const skipCompression = runtimeFeatures.has('sqlite') === false
 
 test('SqliteCacheStore compresses big files with zstd', { skip: skipCompression }, async (t) => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
