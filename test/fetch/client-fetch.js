@@ -248,7 +248,7 @@ test('multipart formdata base64', (t, done) => {
   })
 })
 
-test('multipart fromdata non-ascii filed names', async (t) => {
+test('multipart formdata non-ascii filed names', async (t) => {
   t.plan(1)
 
   const request = new Request('http://localhost', {
