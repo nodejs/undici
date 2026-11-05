@@ -1429,3 +1429,41 @@ test('pool does not dispatch to clientTtl-evicted client when stale drain fires'
   c1.emit('drain', new URL('http://notahost'), [c1])
   t.ok(true, 'no ClientClosedError when evicted client emits drain')
 })
+
+test('pool remains usable after a request validation error', { timeout: 5000 }, async (t) => {
+  const assert = require('node:assert/strict')
+  const { once } = require('node:events')
+  const { setImmediate: nextTurn } = require('node:timers/promises')
+
+  let received = 0
+  const server = createServer((req, res) => {
+    received++
+    res.end('ok')
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const pool = new Pool(`http://127.0.0.1:${server.address().port}`, { connections: 1 })
+  t.after(async () => {
+    await pool.destroy()
+    server.closeAllConnections()
+    await new Promise(resolve => server.close(resolve))
+  })
+
+  // Warm the only connection and fully consume its response.
+  const warm = await pool.request({ path: '/', method: 'GET' })
+  assert.strictEqual(await warm.body.text(), 'ok')
+  await nextTurn()
+  assert.strictEqual(pool.stats.free, 1)
+
+  // A synchronous validation error must reject without consuming a pool slot.
+  await assert.rejects(
+    pool.request({ path: '/', method: 'GET', headers: { 'x-invalid': '\n' } }),
+    { code: 'UND_ERR_INVALID_ARG' }
+  )
+
+  // The pool must remain usable: the next valid request reaches the server.
+  const next = await pool.request({ path: '/', method: 'GET' })
+  assert.strictEqual(await next.body.text(), 'ok')
+  assert.strictEqual(received, 2)
+})
