@@ -77,7 +77,7 @@ const tlsCerts = (() => {
     const isCa = issuer === undefined
     cert.setExtensions([
       { name: 'basicConstraints', cA: isCa },
-      { name: 'subjectAltName', altNames: [{ type: 2, value: cn }] }
+      { name: 'subjectAltName', altNames: [net.isIP(cn) ? { type: 7, ip: cn } : { type: 2, value: cn }] }
     ])
     const alg = forge.md.sha256.create()
     if (issuer !== undefined) {
@@ -91,12 +91,17 @@ const tlsCerts = (() => {
   }
   const root = createCert('socks5-test-ca')
   const server = createCert('localhost', root)
+  const ip = createCert('127.0.0.1', root)
+  const otherIp = createCert('127.0.0.2', root)
+  const toPem = (cert) => ({
+    key: forge.pki.privateKeyToPem(cert.privateKey),
+    crt: forge.pki.certificateToPem(cert.certificate)
+  })
   return {
     root: { crt: forge.pki.certificateToPem(root.certificate) },
-    server: {
-      key: forge.pki.privateKeyToPem(server.privateKey),
-      crt: forge.pki.certificateToPem(server.certificate)
-    }
+    server: toPem(server),
+    ip: toPem(ip),
+    otherIp: toPem(otherIp)
   }
 })()
 
@@ -794,6 +799,87 @@ test('ProxyAgent forwards requestTls to Socks5ProxyAgent (GHSA-vmh5-mc38-953g)',
   p.strictEqual(response.statusCode, 200, 'request should succeed when ProxyAgent forwards requestTls')
   const body = await response.body.json()
   p.deepStrictEqual(body, { ok: true })
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - sends no SNI to an HTTPS target addressed by IP', async (t) => {
+  const p = tspl(t, { plan: 2 })
+
+  const server = https.createServer({
+    key: tlsCerts.ip.key,
+    cert: tlsCerts.ip.crt
+  }, (req, res) => {
+    res.end('ok')
+  })
+  let servername
+  server.on('secureConnection', (socket) => {
+    servername = socket.servername
+  })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen()
+
+  // The proxy is addressed by name, so the certificate can only match the
+  // target IP if it is checked against the target and not the proxy host.
+  const proxyAgent = new Socks5ProxyAgent(`socks5://localhost:${socksAddress.port}`, {
+    requestTls: {
+      ca: [tlsCerts.root.crt]
+    }
+  })
+
+  after(async () => {
+    await proxyAgent.close()
+    server.close()
+    await socksServer.close()
+  })
+
+  const response = await request(`https://127.0.0.1:${server.address().port}/`, {
+    dispatcher: proxyAgent
+  })
+  p.strictEqual(await response.body.text(), 'ok')
+  p.strictEqual(servername, false, 'no SNI should be sent')
+
+  await p.completed
+})
+
+test('Socks5ProxyAgent - checks the certificate of an HTTPS target addressed by IP', async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  const server = https.createServer({
+    key: tlsCerts.otherIp.key,
+    cert: tlsCerts.otherIp.crt
+  }, () => {
+    p.fail('the request must not reach the server')
+  })
+  // The test SOCKS5 server keeps its connection to the target open when the
+  // client drops the tunnel, so close the server side here.
+  const sockets = new Set()
+  server.on('connection', (socket) => sockets.add(socket))
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen()
+
+  const proxyAgent = new Socks5ProxyAgent(`socks5://localhost:${socksAddress.port}`, {
+    requestTls: {
+      ca: [tlsCerts.root.crt]
+    }
+  })
+
+  after(async () => {
+    await proxyAgent.close()
+    for (const socket of sockets) {
+      socket.destroy()
+    }
+    server.close()
+    await socksServer.close()
+  })
+
+  await p.rejects(request(`https://127.0.0.1:${server.address().port}/`, {
+    dispatcher: proxyAgent
+  }), { code: 'ERR_TLS_CERT_ALTNAME_INVALID' })
 
   await p.completed
 })
