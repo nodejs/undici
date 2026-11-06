@@ -72,4 +72,29 @@ declare namespace DiagnosticsChannel {
     connectParams: ConnectParams;
     connector: Connector;
   }
+  export interface InterceptorEnterMessage {
+    interceptor: string;
+    requestId: string;
+    method?: Dispatcher.HttpMethod;
+    origin?: string | URL;
+    path?: string;
+    startTime: number;
+  }
+  export interface InterceptorExitMessage {
+    interceptor: string;
+    requestId: string;
+    method?: Dispatcher.HttpMethod;
+    origin?: string | URL;
+    path?: string;
+    duration: number;
+  }
+  export interface InterceptorErrorMessage {
+    interceptor: string;
+    requestId: string;
+    method?: Dispatcher.HttpMethod;
+    origin?: string | URL;
+    path?: string;
+    duration: number;
+    error: Error;
+  }
 }
