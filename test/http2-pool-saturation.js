@@ -1,6 +1,7 @@
 'use strict'
 
 const assert = require('node:assert/strict')
+const { AsyncLocalStorage } = require('node:async_hooks')
 const { once } = require('node:events')
 const { createSecureServer, createServer } = require('node:http2')
 const { test } = require('node:test')
@@ -9,6 +10,83 @@ const pem = require('@metcoder95/https-pem')
 const { Client, Pool } = require('..')
 
 for (const secure of [true, false]) {
+  for (const failAt of [2, 3]) {
+    test(`Pool rejects queued ${secure ? 'h2' : 'h2c'} factory failure ${failAt} without replay`, { timeout: 5000 }, async t => {
+      const options = { settings: { maxConcurrentStreams: 1 } }
+      const server = secure
+        ? createSecureServer({ ...await pem.generate({ opts: { keySize: 2048 } }), ...options })
+        : createServer(options)
+      const sessions = new Set()
+      const received = []
+      let liveStream
+      server.on('session', session => sessions.add(session))
+      server.on('stream', (stream, headers) => {
+        stream.on('error', () => {})
+        stream.resume()
+        stream.respond({ ':status': 200 })
+        if (headers[':path'] === '/live') {
+          liveStream = stream
+          stream.write('live')
+        } else {
+          received.push(headers[':path'])
+          stream.end('ok')
+        }
+      })
+
+      await once(server.listen(0), 'listening')
+      let factoryCalls = 0
+      const factoryError = new Error('factory failed')
+      const pool = new Pool(`${secure ? 'https' : 'http'}://localhost:${server.address().port}`, {
+        allowH2: true,
+        useH2c: !secure,
+        connections: 3,
+        connect: { rejectUnauthorized: false },
+        factory (origin, options) {
+          if (++factoryCalls === failAt) throw factoryError
+          return new Client(origin, options)
+        }
+      })
+      t.after(async () => {
+        await pool.destroy()
+        for (const session of sessions) session.destroy()
+        await new Promise(resolve => server.close(resolve))
+      })
+
+      const storage = new AsyncLocalStorage()
+      const terminals = []
+      const first = pool.request({ path: '/live', method: 'GET' })
+      const mutations = [1, 2].map(id => storage.run(id, () => new Promise(resolve => {
+        pool.dispatch({ path: `/mutation-${id}`, method: 'POST', body: 'one' }, {
+          onRequestStart () {},
+          onResponseStart () {},
+          onResponseData () {},
+          onResponseEnd () {
+            terminals.push(id)
+            resolve(null)
+          },
+          onResponseError (_controller, err) {
+            terminals.push(id)
+            assert.equal(storage.getStore(), id)
+            resolve(err)
+          }
+        })
+      })))
+      assert.equal(pool.stats.queued, 2)
+      const live = await first
+      const outcomes = await Promise.all(mutations)
+      assert.deepEqual(outcomes, failAt === 2 ? [factoryError, null] : [null, factoryError])
+      assert.deepEqual(terminals.sort(), [1, 2])
+      assert.deepEqual(received, [failAt === 2 ? '/mutation-2' : '/mutation-1'])
+      assert.equal(factoryCalls, 3)
+      assert.equal(pool.stats.queued, 0)
+      assert.equal(sessions.size, 2)
+      assert.equal(live.body.destroyed, false)
+      liveStream.end()
+      assert.equal(await live.body.text(), 'live')
+      await pool.close()
+    })
+  }
+
   test(`Pool defers spare ${secure ? 'h2' : 'h2c'} factories until dispatch`, { timeout: 5000 }, async t => {
     const options = { settings: { maxConcurrentStreams: 1 } }
     const server = secure
