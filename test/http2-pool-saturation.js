@@ -6,9 +6,59 @@ const { createSecureServer, createServer } = require('node:http2')
 const { test } = require('node:test')
 const pem = require('@metcoder95/https-pem')
 
-const { Pool } = require('..')
+const { Client, Pool } = require('..')
 
 for (const secure of [true, false]) {
+  test(`Pool defers spare ${secure ? 'h2' : 'h2c'} factories until dispatch`, { timeout: 5000 }, async t => {
+    const options = { settings: { maxConcurrentStreams: 1 } }
+    const server = secure
+      ? createSecureServer({ ...await pem.generate({ opts: { keySize: 2048 } }), ...options })
+      : createServer(options)
+    const sessions = new Set()
+    let liveStream
+    let requests = 0
+    server.on('session', session => sessions.add(session))
+    server.on('stream', stream => {
+      requests++
+      liveStream = stream
+      stream.on('error', () => {})
+      stream.respond({ ':status': 200 })
+      stream.write('live')
+    })
+
+    await once(server.listen(0), 'listening')
+    let factoryCalls = 0
+    let failFactory = false
+    const factoryError = new Error('factory failed')
+    const pool = new Pool(`${secure ? 'https' : 'http'}://localhost:${server.address().port}`, {
+      allowH2: true,
+      useH2c: !secure,
+      connections: 2,
+      connect: { rejectUnauthorized: false },
+      factory (origin, options) {
+        factoryCalls++
+        if (failFactory) throw factoryError
+        return new Client(origin, options)
+      }
+    })
+    t.after(async () => {
+      await pool.destroy()
+      for (const session of sessions) session.destroy()
+      await new Promise(resolve => server.close(resolve))
+    })
+
+    const live = await pool.request({ path: '/live', method: 'GET' })
+    assert.equal(factoryCalls, 1)
+    failFactory = true
+    await assert.rejects(pool.request({ path: '/mutation', method: 'POST', body: 'one' }), error => error === factoryError)
+    assert.equal(factoryCalls, 2)
+    assert.equal(requests, 1)
+    assert.equal(live.body.destroyed, false)
+    liveStream.end()
+    await live.body.text()
+    await pool.close()
+  })
+
   for (const connections of [1, 2]) {
     test(`Pool preserves ${secure ? 'h2' : 'h2c'} backpressure at connections=${connections}`, { timeout: 5000 }, async t => {
       const options = { settings: { maxConcurrentStreams: 1 } }
