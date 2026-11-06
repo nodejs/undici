@@ -1978,6 +1978,54 @@ test('retry once with dual-stack', async t => {
   t.equal(counter, 2)
 })
 
+test('keeps the hostname servername on the dual-stack fallback', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const servernames = []
+  const client = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        servernames.push(opts.servername)
+        return dispatch(opts, handler)
+      }
+    },
+    dns({
+      lookup: (_origin, _opts, cb) => {
+        cb(null, [
+          {
+            address: '127.0.0.1',
+            port: 3669,
+            family: 4,
+            ttl: 1000
+          },
+          {
+            address: '::1',
+            port: 3669,
+            family: 6,
+            ttl: 1000
+          }
+        ])
+      }
+    })
+  ])
+
+  after(async () => {
+    await client.close()
+  })
+
+  await t.rejects(client.request({
+    method: 'GET',
+    path: '/',
+    origin: 'http://localhost'
+  }), 'ECONNREFUSED')
+
+  // Both the initial attempt and the other-family fallback must present the
+  // original hostname as the TLS servername; otherwise the fallback verifies
+  // the certificate against the resolved IP literal instead of the hostname.
+  t.equal(servernames[0], 'localhost')
+  t.equal(servernames[1], 'localhost')
+})
+
 test('Should handle ENOTFOUND response error', async t => {
   t = tspl(t, { plan: 3 })
   let lookupCounter = 0
