@@ -243,8 +243,11 @@ await fetch('https://example.com', {
 installs undici's `WebSocket`, `CloseEvent`, `ErrorEvent`, `MessageEvent`, and
 `EventSource` globals.
 
-Avoid mixing a global `FormData` with `undici.fetch()`, or `undici.FormData`
-with the built-in global `fetch()`.
+Avoid mixing `fetch`, `Request`, `Response`, `Headers`, and `FormData`
+implementations from different sources. For example, a `Request` created by
+Node.js' built-in global `Request` is not guaranteed to work with `fetch`
+imported from a different `undici` package version, and the reverse is also
+unsupported.
 
 ### Version Compatibility
 

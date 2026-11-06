@@ -72,11 +72,11 @@ const ws = new WebSocket('wss://example.com')
 const eventSource = new EventSource('https://example.com/events')
 ```
 
-### Pairing `fetch` and `FormData`
+### Pairing fetch classes
 
-When a request body is a `FormData` instance, the `fetch` and `FormData`
-implementations must come from the same source. After `install()`, both globals
-resolve to undici, so they always match:
+When a request uses `Request`, `Response`, `Headers`, or `FormData` instances,
+the fetch function and those classes should come from the same implementation.
+After `install()`, the globals resolve to undici, so they always match:
 
 ```mjs
 import { install } from 'undici'
@@ -87,19 +87,24 @@ const body = new FormData()
 await fetch('https://example.com', { method: 'POST', body })
 ```
 
-If global installation is not desired, import the matching pair directly from
-`'undici'` instead:
+If global installation is not desired, import the matching classes directly
+from `'undici'` instead:
 
 ```mjs
-import { fetch, FormData } from 'undici'
+import { fetch, FormData, Request } from 'undici'
 
 const body = new FormData()
-await fetch('https://example.com', { method: 'POST', body })
+const request = new Request('https://example.com', { method: 'POST', body })
+await fetch(request)
 ```
 
 Mixing a global `FormData` with `undici.fetch()`, or `undici.FormData` with the
 built-in global `fetch()`, can produce surprising multipart behavior across
-Node.js and undici versions. Keep the two paired.
+Node.js and undici versions. The same rule applies to `Request`, `Response`, and
+`Headers`: a `Request` created by Node.js' built-in global `Request` is not
+guaranteed to work with `fetch` imported from a different `undici` package
+version, and an `undici.Request` is not guaranteed to work with the built-in
+global `fetch()`. Use one implementation consistently.
 
 ### Conditional installation
 
