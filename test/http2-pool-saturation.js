@@ -10,6 +10,78 @@ const pem = require('@metcoder95/https-pem')
 const { Client, Pool } = require('..')
 
 for (const secure of [true, false]) {
+  test(`Pool preserves ${secure ? 'h2' : 'h2c'} backpressure after a reentrant factory-error retry`, { timeout: 5000 }, async t => {
+    const options = { settings: { maxConcurrentStreams: 1 } }
+    const server = secure
+      ? createSecureServer({ ...await pem.generate({ opts: { keySize: 2048 } }), ...options })
+      : createServer(options)
+    const sessions = new Set()
+    const streams = new Map()
+    server.on('session', session => sessions.add(session))
+    server.on('stream', (stream, headers) => {
+      streams.set(headers[':path'], stream)
+      stream.on('error', () => {})
+      stream.resume()
+      stream.respond({ ':status': 200 })
+      stream.write('live')
+    })
+    await once(server.listen(0), 'listening')
+    let factoryCalls = 0
+    const factoryError = new Error('factory failed')
+    const pool = new Pool(`${secure ? 'https' : 'http'}://localhost:${server.address().port}`, {
+      allowH2: true,
+      useH2c: !secure,
+      connections: 2,
+      connect: { rejectUnauthorized: false },
+      factory (origin, options) {
+        if (++factoryCalls === 2) throw factoryError
+        return new Client(origin, options)
+      }
+    })
+    t.after(async () => {
+      await pool.destroy()
+      for (const session of sessions) session.destroy()
+      await new Promise(resolve => server.close(resolve))
+    })
+    let drains = 0
+    let errors = 0
+    let retryEnds = 0
+    let retryError
+    pool.on('drain', () => drains++)
+    const first = pool.request({ path: '/live', method: 'GET' })
+    const retryHeaders = new Promise(resolve => {
+      pool.dispatch({ path: '/mutation', method: 'POST', body: 'one' }, {
+        onResponseError (_controller, err) {
+          errors++
+          assert.equal(err, factoryError)
+          const ready = pool.dispatch({ path: '/retry', method: 'POST', body: 'one' }, {
+            onRequestStart () {},
+            onResponseStart () { resolve() },
+            onResponseData () {},
+            onResponseEnd () { retryEnds++ },
+            onResponseError (_controller, err) { retryError = err }
+          })
+          assert.equal(ready, false)
+        }
+      })
+    })
+    const live = await first
+    await retryHeaders
+    assert.equal(drains, 0)
+    assert.equal(errors, 1)
+    assert.equal(factoryCalls, 3)
+    assert.equal(sessions.size, 2)
+    assert.deepEqual([...streams.keys()].sort(), ['/live', '/retry'])
+    const drained = once(pool, 'drain')
+    streams.get('/retry').end()
+    await drained
+    assert.equal(retryEnds, 1)
+    assert.equal(retryError, undefined)
+    streams.get('/live').end()
+    await live.body.text()
+    await pool.close()
+  })
+
   for (const failAt of [2, 3]) {
     test(`Pool rejects queued ${secure ? 'h2' : 'h2c'} factory failure ${failAt} without replay`, { timeout: 5000 }, async t => {
       const options = { settings: { maxConcurrentStreams: 1 } }
