@@ -283,12 +283,14 @@ dual-stack (IPv4 + IPv6) and custom lookup/storage implementations.
 **Parameters**
 
 * `opts` {Object} (optional)
-  * `maxTTL` {number} Maximum number of milliseconds a DNS record is cached,
-    regardless of the TTL returned by the resolver. **Default:** `0`
-    (use the TTL from the DNS record).
-  * `maxItems` {number} Maximum number of origins to cache simultaneously.
-    Oldest entries are evicted when the limit is reached. **Default:**
-    `Infinity`.
+  * `maxTTL` {number} Maximum number of milliseconds a DNS record is cached.
+    A record that `lookup` returns with a shorter TTL keeps its own TTL. A
+    record without a TTL, which includes every record from the default
+    lookup, is cached for `maxTTL`. **Default:** `10000` (10 seconds).
+  * `maxItems` {number} Maximum number of hostnames to cache at the same
+    time. When the cache is full, cached hostnames stay until their records
+    expire, and other hostnames are not looked up or cached: their requests
+    are resolved as if the interceptor were not used. **Default:** `Infinity`.
   * `dualStack` {boolean} When `true`, both IPv4 (`A`) and IPv6 (`AAAA`)
     records are looked up and the interceptor picks between them based on
     `affinity`. **Default:** `true`.
