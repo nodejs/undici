@@ -38,11 +38,22 @@ test('process.unref allows the process to exit with an open WebSocket', async (t
   const undici = join(__dirname, '../..')
   const child = spawn(process.execPath, ['-e', `
     const { WebSocket } = require(${JSON.stringify(undici)})
+    const { throws } = require('node:assert');
     const ws = new WebSocket(${JSON.stringify(url)})
-    if (typeof ws[Symbol.for('nodejs.ref')] !== 'function' ||
-        typeof ws[Symbol.for('nodejs.unref')] !== 'function') {
+
+    const kRef = Symbol.for('nodejs.ref')
+    const kUnref = Symbol.for('nodejs.unref')
+
+    const refFn = ws[kRef]
+    const unrefFn = ws[kUnref]
+
+    if (typeof refFn !== 'function' ||
+        typeof unrefFn !== 'function') {
       throw new Error('WebSocket does not implement the Refable protocol')
     }
+    throws(() => refFn(), { message: 'Illegal invocation' })
+    throws(() => unrefFn(), { message: 'Illegal invocation' })
+
     ws.addEventListener('open', () => {
       process.unref(ws)
       process.ref(ws)
