@@ -64,3 +64,41 @@ test('a reset stream does not prevent other requests from completing', async (t)
   assert.strictEqual(res.statusCode, 200)
   assert.strictEqual(await res.body.text(), 'ok')
 })
+
+test('a stream reset with NGHTTP2_ENHANCE_YOUR_CALM closes the session so new requests reconnect', async (t) => {
+  let sessionCount = 0
+  const server = createServer()
+  server.on('session', () => {
+    sessionCount++
+  })
+  server.on('stream', (stream, headers) => {
+    stream.on('error', () => {})
+    if (headers[':path'] === '/calm') {
+      stream.close(constants.NGHTTP2_ENHANCE_YOUR_CALM)
+    } else {
+      stream.respond({ ':status': 200 })
+      stream.end('ok')
+    }
+  })
+  server.listen(0)
+  await once(server, 'listening')
+  t.after(() => server.close())
+
+  const origin = `http://localhost:${server.address().port}`
+  const dispatcher = new Agent({ connections: 1, useH2c: true })
+  t.after(() => dispatcher.close())
+
+  await assert.rejects(
+    dispatcher.request({ origin, path: '/calm', method: 'GET' }),
+    (err) => {
+      assert.strictEqual(err.code, 'ERR_HTTP2_STREAM_ERROR')
+      assert.strictEqual(err.http2ErrorCode, constants.NGHTTP2_ENHANCE_YOUR_CALM)
+      return true
+    }
+  )
+
+  const res = await dispatcher.request({ origin, path: '/good', method: 'GET' })
+  assert.strictEqual(res.statusCode, 200)
+  assert.strictEqual(await res.body.text(), 'ok')
+  assert.strictEqual(sessionCount, 2)
+})
