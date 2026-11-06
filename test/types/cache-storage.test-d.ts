@@ -37,3 +37,6 @@ expectAssignable<Promise<readonly Request[]>>(cache.keys())
 expectAssignable<Promise<undefined>>(cache.add(options))
 expectAssignable<Promise<undefined>>(cache.addAll([options]))
 expectAssignable<Promise<undefined>>(cache.put(options, response))
+
+declare const requests: Iterable<RequestInfo>
+expectAssignable<Promise<undefined>>(cache.addAll(requests))
