@@ -83,28 +83,27 @@ test('Client.request() throws if opts.dispatcher is provided', async (t) => {
 })
 
 test('Top-level request() still works with opts.dispatcher', async (t) => {
-  t = tspl(t, { plan: 2 })
+  t.plan(2)
 
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.end('hello')
+  })
+  t.after(() => {
+    server.closeAllConnections()
+    return new Promise((resolve) => server.close(resolve))
   })
 
   server.listen(0)
   await once(server, 'listening')
 
   const pool = new Pool(`http://localhost:${server.address().port}`)
-
-  after(async () => {
-    await pool.close()
-    server.close()
-    await once(server, 'close')
-  })
+  t.after(() => pool.destroy())
 
   const { statusCode, body } = await request(`http://localhost:${server.address().port}`, {
     method: 'GET',
     dispatcher: pool
   })
 
-  t.equal(statusCode, 200)
-  t.equal(await body.text(), 'hello')
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.strictEqual(await body.text(), 'hello')
 })
