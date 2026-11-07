@@ -9828,8 +9828,7 @@
             },
             {
               "name": "Input request used for creating new request became disturbed even if body is not used",
-              "success": false,
-              "message": "assert_true: bodyUsed is true when request is disturbed expected true got false"
+              "success": true
             },
             {
               "name": "Request construction failure should not set \"bodyUsed\"",
