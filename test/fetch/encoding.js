@@ -8,6 +8,17 @@ const { test, before, after, describe } = require('node:test')
 const pem = require('@metcoder95/https-pem')
 const { fetch, Client } = require('../..')
 
+// zstd support landed in Node 22.19.0/23.4.0, so the runtime may not be able to
+// decode it. Content codings we advertise depend on that.
+const zstdSupport = (() => {
+  try {
+    return typeof require('node:zlib').createZstdDecompress === 'function'
+  } catch {
+    return false
+  }
+})()
+const advertisingEncodings = zstdSupport ? 'br, gzip, deflate, zstd' : 'br, gzip, deflate'
+
 describe('content-encoding handling', () => {
   const gzipDeflateText = Buffer.from('H4sIAAAAAAAAA6uY89nj7MmT1wM5zuuf8gxkYZCfx5IFACQ8u/wVAAAA', 'base64')
   const zstdText = Buffer.from('KLUv/QBYaQAASGVsbG8sIFdvcmxkIQ==', 'base64')
@@ -79,7 +90,7 @@ describe('content-encoding handling', () => {
     t.assert.strictEqual(await response.text(), 'Hello, World!')
   })
 
-  test('should decompress zstandard response', async (t) => {
+  test('should decompress zstandard response', { skip: !zstdSupport }, async (t) => {
     const response = await fetch(`http://localhost:${server.address().port}`, {
       keepalive: false,
       headers: { 'accept-encoding': 'zstd' }
@@ -229,7 +240,7 @@ describe('default accept-encoding request header', () => {
     t.plan(1)
 
     const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }), (req, res) => {
-      t.assert.deepStrictEqual(req.headers['accept-encoding'], 'br, gzip, deflate, zstd')
+      t.assert.deepStrictEqual(req.headers['accept-encoding'], advertisingEncodings)
 
       res.end()
     }).listen(0, '127.0.0.1')

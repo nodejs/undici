@@ -10,6 +10,10 @@ const { tspl } = require('@matteo.collina/tspl')
 const { Client, DecoratorHandler, errors, getGlobalDispatcher, setGlobalDispatcher, request, interceptors } = require('../..')
 const createDecompressInterceptor = require('../../lib/interceptor/decompress')
 
+// zstd support landed in Node 22.19.0/23.4.0, so the runtime may not expose the
+// zstd APIs these tests need.
+const zstdSupport = createDecompressInterceptor.isZstdSupported()
+
 const immediate = () => new Promise(resolve => setImmediate(resolve))
 
 function createControlledDispatch (handler, options, { forwardAbort = true } = {}) {
@@ -307,7 +311,7 @@ test('should decompress brotli response', async t => {
   await t.completed
 })
 
-test('should decompress zstd response', async t => {
+test('should decompress zstd response', { skip: !zstdSupport }, async t => {
   t = tspl(t, { plan: 3 })
 
   const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
