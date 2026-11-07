@@ -124,6 +124,34 @@ test('parseHeaders', () => {
   assert.deepEqual(util.parseHeaders([Buffer.from('key'), [Buffer.from('value1'), Buffer.from('value2'), Buffer.from('value3')]]), { key: ['value1', 'value2', 'value3'] })
 })
 
+test('normalizeHeaders treats object prototype names as header names', () => {
+  const input = JSON.parse('{"__proto__":"value","constructor":"other"}')
+  const headers = util.normalizeHeaders(input)
+
+  assert.strictEqual(Object.getPrototypeOf(headers), Object.prototype)
+  assert.strictEqual(Object.hasOwn(headers, '__proto__'), true)
+  assert.strictEqual(Object.getOwnPropertyDescriptor(headers, '__proto__').value, 'value')
+  assert.strictEqual(headers.constructor, 'other')
+})
+
+test('normalizeHeaders does not modify its input', () => {
+  const input = { 'X-Test': 'one', 'x-test': 'two' }
+  const headers = util.normalizeHeaders(input)
+
+  assert.deepStrictEqual(input, { 'X-Test': 'one', 'x-test': 'two' })
+  assert.deepStrictEqual(headers, { 'x-test': ['one', 'two'] })
+  assert.notStrictEqual(headers, input)
+})
+
+test('normalizeHeaders handles missing and invalid input', () => {
+  assert.deepStrictEqual(util.normalizeHeaders(), {})
+  assert.deepStrictEqual(util.normalizeHeaders(null), {})
+  assert.throws(() => util.normalizeHeaders('x-test: value'), {
+    name: 'TypeError',
+    message: 'headers must be an object'
+  })
+})
+
 test('parseHeaders decodes values as latin1, not utf8', () => {
   // These bytes (0xE2, 0x80, 0xA6) are the UTF-8 encoding of U+2026 (ellipsis)
   // When decoded as latin1, they should be 3 separate characters: â, €, ¦
