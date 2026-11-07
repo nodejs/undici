@@ -204,9 +204,6 @@ and `x-compress`, is left untouched, matching `fetch()`. As required by
 [RFC 9659](https://www.rfc-editor.org/rfc/rfc9659.html), a `zstd` frame that
 requires a window size larger than 8 MB fails to decode.
 
-> **Experimental:** This interceptor is experimental and subject to change.
-> A one-time `ExperimentalWarning` is emitted on first use.
-
 **Parameters**
 
 * `opts` {Object} (optional)
