@@ -5,7 +5,7 @@ const https = require('node:https')
 const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { request, ProxyAgent } = require('..')
+const { request, ProxyAgent, EnvHttpProxyAgent } = require('..')
 const { ConnectTimeoutError, InvalidArgumentError } = require('../lib/core/errors')
 const Socks5ProxyAgent = require('../lib/dispatcher/socks5-proxy-agent')
 const { createServer } = require('node:http')
@@ -101,7 +101,7 @@ const tlsCerts = (() => {
 })()
 
 test('Socks5ProxyAgent - constructor validation', async (t) => {
-  const p = tspl(t, { plan: 4 })
+  const p = tspl(t, { plan: 5 })
 
   p.throws(() => {
     // eslint-disable-next-line no-new
@@ -122,6 +122,11 @@ test('Socks5ProxyAgent - constructor validation', async (t) => {
     // eslint-disable-next-line no-new
     new Socks5ProxyAgent('socks://localhost:1080')
   }, 'should accept socks:// URLs for compatibility')
+
+  p.doesNotThrow(() => {
+    // eslint-disable-next-line no-new
+    new Socks5ProxyAgent('socks5h://localhost:1080')
+  }, 'should accept socks5h:// URLs')
 
   await p.completed
 })
@@ -797,3 +802,45 @@ test('ProxyAgent forwards requestTls to Socks5ProxyAgent (GHSA-vmh5-mc38-953g)',
 
   await p.completed
 })
+
+// socks5h: means the proxy resolves target host names. Undici always sends
+// host names to the proxy, so socks5h: is accepted and behaves like socks5:.
+for (const [name, createDispatcher] of [
+  ['Socks5ProxyAgent', (uri) => new Socks5ProxyAgent(uri)],
+  ['ProxyAgent', (uri) => new ProxyAgent(uri)],
+  ['EnvHttpProxyAgent', (uri) => new EnvHttpProxyAgent({ httpProxy: uri })]
+]) {
+  test(`${name} - socks5h:// proxy sends the target host name to the proxy`, async (t) => {
+    const p = tspl(t, { plan: 3 })
+
+    const server = createServer((req, res) => {
+      res.end('ok')
+    })
+    await new Promise((resolve) => server.listen(0, resolve))
+
+    const targets = []
+    const socksServer = new TestSocks5Server()
+    const handleConnect = socksServer.handleConnect.bind(socksServer)
+    socksServer.handleConnect = (socket, buffer, callback) => {
+      // CONNECT request: VER CMD RSV ATYP LEN DOMAIN PORT, ATYP 0x03 = domain name
+      if (buffer[3] === 0x03 && buffer.length >= 5 + buffer[4] + 2) {
+        targets.push(buffer.subarray(5, 5 + buffer[4]).toString())
+      }
+      return handleConnect(socket, buffer, callback)
+    }
+    const socksAddress = await socksServer.listen()
+
+    const dispatcher = createDispatcher(`socks5h://127.0.0.1:${socksAddress.port}`)
+
+    after(() => dispatcher.close())
+    after(() => socksServer.close())
+    after(() => server.close())
+
+    const response = await request(`http://localhost:${server.address().port}/`, { dispatcher })
+    p.equal(response.statusCode, 200)
+    p.equal(await response.body.text(), 'ok')
+    p.deepStrictEqual(targets, ['localhost'])
+
+    await p.completed
+  })
+}

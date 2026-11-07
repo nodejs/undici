@@ -12,8 +12,8 @@ dispatcher is accepted, for example with [`request`][] or [`fetch`][], or
 installed globally with [`setGlobalDispatcher`][].
 
 For secure (`https:`) endpoints the proxy connection is established through an
-HTTP `CONNECT` tunnel. SOCKS5 proxies (`socks5:` or `socks:` URIs) are handled
-by delegating to a [`Socks5ProxyAgent`][].
+HTTP `CONNECT` tunnel. SOCKS5 proxies (`socks5:`, `socks5h:`, or `socks:`
+URIs) are handled by delegating to a [`Socks5ProxyAgent`][].
 
 ```mjs
 import { ProxyAgent, setGlobalDispatcher } from 'undici'
