@@ -56,11 +56,12 @@ function serverUrl (protocol, subdomain) {
 
 let pythonInfoPromise
 
+// WPT logs HTTP listeners supporting CONNECT as HTTPS in newer versions.
 const SERVER_READY_CHECKS = [
-  ['http-default', (line) => line.includes('http on port 8000') && line.includes('Starting http server')],
-  ['http-alt', (line) => /\bhttp on port (?!8000\b)\d+\].*Starting http server/.test(line)],
-  ['http-local', (line) => line.includes('http-local on port') && line.includes('Starting http server')],
-  ['http-public', (line) => line.includes('http-public on port') && line.includes('Starting http server')],
+  ['http-default', (line) => line.includes('http on port 8000') && /\bStarting https? server\b/.test(line)],
+  ['http-alt', (line) => /\bhttp on port (?!8000\b)\d+\].*Starting https? server\b/.test(line)],
+  ['http-local', (line) => line.includes('http-local on port') && /\bStarting https? server\b/.test(line)],
+  ['http-public', (line) => line.includes('http-public on port') && /\bStarting https? server\b/.test(line)],
   ['https-8443', (line) => line.includes('https on port 8443') && line.includes('Starting https server')],
   ['https-8444', (line) => line.includes('https on port 8444') && line.includes('Starting https server')],
   ['https-local', (line) => line.includes('https-local on port') && line.includes('Starting https server')],
@@ -775,7 +776,7 @@ async function run (filters = []) {
         console.log(`\t${c.index + 1}. "${escapeControlCharacters(c.name)}": ${c.status === 0 ? '✅ PASS' : '❌ FAIL'}`)
 
         if (c.status !== 0 && (c.message || c.stack)) {
-          log(`${escapeControlCharacters(String(c.message))}:\n${c.stack.split('\n').slice(1).join('\n')}`)
+          log(`${escapeControlCharacters(String(c.message))}:\n${(c.stack ?? '').split('\n').slice(1).join('\n')}`)
         }
       }
     }
