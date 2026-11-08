@@ -953,6 +953,94 @@ test('pool dispatch error', async (t) => {
   await t.completed
 })
 
+test('pool remains usable after a request validation error', async (t) => {
+  t = tspl(t, { plan: 5 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.end('ok')
+  })
+  after(() => server.close())
+
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const pool = new Pool(`http://localhost:${server.address().port}`, {
+    connections: 1,
+    pipelining: 1
+  })
+  after(() => pool.destroy())
+
+  // Warm the pool so that a single idle client is in rotation.
+  {
+    const { statusCode, body } = await pool.request({ path: '/', method: 'GET' })
+    t.strictEqual(statusCode, 200)
+    await body.text()
+  }
+
+  // A synchronously rejected dispatch must not take the idle client out of
+  // rotation waiting for a drain event that never comes.
+  // See https://github.com/nodejs/undici/issues/6054
+  await t.rejects(
+    pool.request({ path: '/', method: 'GET', headers: { 'x-invalid': '\n' } }),
+    { code: 'UND_ERR_INVALID_ARG' }
+  )
+
+  const { statusCode, body } = await Promise.race([
+    pool.request({ path: '/', method: 'GET' }),
+    new Promise((_resolve, reject) => {
+      setTimeout(() => reject(new Error('pool stalled after a validation error')), 1000)
+    })
+  ])
+  t.strictEqual(statusCode, 200)
+  await body.text()
+
+  // The client slot was never consumed, so it stays available.
+  t.strictEqual(pool.stats.connected, 1)
+  t.strictEqual(pool.stats.size, 0)
+})
+
+test('pool keeps draining the queue when a queued request fails validation', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+    if (req.url === '/slow') {
+      await new Promise(resolve => setTimeout(resolve, 20))
+    }
+    res.end('ok')
+  })
+  after(() => server.close())
+
+  await new Promise(resolve => server.listen(0, resolve))
+
+  const pool = new Pool(`http://localhost:${server.address().port}`, {
+    connections: 1,
+    pipelining: 1
+  })
+  after(() => pool.destroy())
+
+  // The first request occupies the only client, the following two are queued
+  // by the pool. When the client drains, the invalid request must fail
+  // without ending the drain loop or marking the idle client busy.
+  const slow = pool.request({ path: '/slow', method: 'GET' })
+  const invalid = pool.request({ path: '/', method: 'GET', headers: { 'transfer-encoding': 'fail' } })
+  const valid = pool.request({ path: '/', method: 'GET' })
+
+  {
+    const { body } = await slow
+    await body.text()
+  }
+
+  await t.rejects(invalid, { code: 'UND_ERR_INVALID_ARG' })
+
+  const { statusCode, body } = await Promise.race([
+    valid,
+    new Promise((_resolve, reject) => {
+      setTimeout(() => reject(new Error('pool stalled after a queued validation error')), 1000)
+    })
+  ])
+  t.strictEqual(statusCode, 200)
+  await body.text()
+})
+
 test('pool request abort in queue', async (t) => {
   t = tspl(t, { plan: 3 })
 
