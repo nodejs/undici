@@ -79,7 +79,7 @@ added: v7.7.0
     **Default:** `600e3`.
   * `keepAliveTimeoutThreshold` {number} A number of milliseconds subtracted from
     server _keep-alive_ hints when overriding `keepAliveTimeout`, to account for
-    timing inaccuracies such as transport latency. **Default:** `1e3`.
+    timing inaccuracies such as transport latency. **Default:** `2e3`.
   * `socketPath` {string} An IPC endpoint, either a Unix domain socket or a
     Windows named pipe. **Default:** `null`.
   * `strictContentLength` {boolean} If `true`, an error is thrown when the
