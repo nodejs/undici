@@ -136,6 +136,28 @@ test('async iterable body', async (t) => {
   t.assert.strictEqual(await response.text(), 'abc')
 })
 
+test('arrayBuffer() and bytes() return a new buffer for small and large bodies', async (t) => {
+  for (const size of [0, 10, 64 * 1024]) {
+    const body = new Uint8Array(size).fill(97)
+    const response = new Response(body)
+    const clone = response.clone()
+
+    const arrayBuffer = await response.arrayBuffer()
+    t.assert.ok(arrayBuffer instanceof ArrayBuffer)
+    t.assert.strictEqual(arrayBuffer.byteLength, size)
+
+    const bytes = await clone.bytes()
+    t.assert.strictEqual(Object.getPrototypeOf(bytes), Uint8Array.prototype)
+    t.assert.strictEqual(bytes.byteOffset, 0)
+    t.assert.strictEqual(bytes.buffer.byteLength, size)
+    t.assert.notStrictEqual(bytes.buffer, arrayBuffer)
+
+    // Writing to one result must not change the other or the source.
+    new Uint8Array(arrayBuffer).fill(98)
+    t.assert.deepStrictEqual(bytes, body)
+  }
+})
+
 // https://github.com/nodejs/node/pull/43752#issuecomment-1179678544
 test('Modifying headers using Headers.prototype.set', (t) => {
   const response = new Response('body', {
