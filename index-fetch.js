@@ -2,7 +2,7 @@
 
 const { getGlobalDispatcher, setGlobalDispatcher } = require('./lib/global')
 const EnvHttpProxyAgent = require('./lib/dispatcher/env-http-proxy-agent')
-const fetchImpl = require('./lib/web/fetch').fetch
+const { fetch: fetchImpl, rejectedBeforeReturn } = require('./lib/web/fetch')
 
 // Capture __filename at module load time for stack trace augmentation.
 // This may be undefined when bundled in environments like Node.js internals.
@@ -33,7 +33,11 @@ function appendFetchStackTrace (err, filename) {
 }
 
 module.exports.fetch = function fetch (init, options = undefined) {
-  return fetchImpl(init, options).catch(err => {
+  const promise = fetchImpl(init, options)
+  if (rejectedBeforeReturn.has(promise)) {
+    return promise
+  }
+  return promise.catch(err => {
     if (currentFilename) {
       appendFetchStackTrace(err, currentFilename)
     } else if (err && typeof err === 'object') {
