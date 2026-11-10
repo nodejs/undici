@@ -277,6 +277,36 @@ describe('parseHttpDate', () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const fuzzingCount = 1e6
 
+  function toRfc850 (date) {
+    return `${daysLong[date.getUTCDay()]}, ` +
+      `${date.getUTCDate().toString().padStart(2, '0')}-` +
+      `${months[date.getUTCMonth()]}-` +
+      `${date.getUTCFullYear().toString().slice(-2)} ` +
+      `${date.getUTCHours().toString().padStart(2, '0')}:` +
+      `${date.getUTCMinutes().toString().padStart(2, '0')}:` +
+      `${date.getUTCSeconds().toString().padStart(2, '0')} GMT`
+  }
+
+  test('RFC850 two-digit years slide with the clock', (t) => {
+    const currentYear = new Date().getUTCFullYear()
+
+    // "Recipients of a timestamp value in rfc850-date format, which uses a
+    // two-digit year, MUST interpret a timestamp that appears to be more than
+    // 50 years in the future as representing the most recent year in the past
+    // that had the same last two digits."
+    // @see https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.7
+    for (const [offset, label] of [[50, 'the last year still in range'], [-49, 'the oldest year still in range']]) {
+      const expected = new Date(Date.UTC(currentYear + offset, 5, 15, 12, 30, 45))
+      t.assert.deepStrictEqual(parseHttpDate(toRfc850(expected)), expected, `${label}: ${toRfc850(expected)}`)
+    }
+
+    // One year past the edge, the same two digits name the century below.
+    const beyond = new Date(Date.UTC(currentYear + 51, 5, 15, 12, 30, 45))
+    const wrapped = new Date(Date.UTC(currentYear - 49, 5, 15, 12, 30, 45))
+    t.assert.deepStrictEqual(parseHttpDate(toRfc850(wrapped)), wrapped, toRfc850(wrapped))
+    t.assert.notDeepStrictEqual(parseHttpDate(toRfc850(wrapped)), beyond)
+  })
+
   test('fuzzing asctime', { skip: skipFuzzing }, (t) => {
     const { randomInt } = require('node:crypto')
 
@@ -357,8 +387,12 @@ describe('parseHttpDate', () => {
       return result
     }
 
-    const minYear = 1970
-    const maxYear = 2069
+    // The rfc850-date window slides: a two-digit year more than 50 years
+    // ahead names the most recent past year with the same digits, so the
+    // round trip only holds inside (now - 49, now + 50].
+    const currentYear = new Date().getUTCFullYear()
+    const minYear = currentYear - 49
+    const maxYear = currentYear + 50
 
     for (let i = 0; i < fuzzingCount; i++) {
       const date = new Date(Date.UTC(
