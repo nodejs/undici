@@ -169,6 +169,9 @@ eagerly.
 > * The server must support HTTP/2 and select it during ALPN negotiation, and
 >   must not give HTTP/1.1 a higher priority than HTTP/2.
 > * `PUSH` frames are not supported.
+> * Aborting a request, for example through its `signal`, resets its stream
+>   with `RST_STREAM` and the `CANCEL` error code, including when part of the
+>   request body has not been sent yet.
 
 ```mjs displayName="Basic instantiation"
 import { Client } from 'undici'
