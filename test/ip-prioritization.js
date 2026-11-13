@@ -35,20 +35,16 @@ test('HTTP/1.1 Request Prioritization', async () => {
   after(() => client.close())
   after(() => server.close())
 
-  const response = await client.request({
-    path: '/',
-    method: 'GET',
-    typeOfService: 42
-  })
-  await response.body.text()
+  for (const typeOfService of [42, undefined, undefined, 42, 42, null, 0, undefined]) {
+    const response = await client.request({
+      path: '/',
+      method: 'GET',
+      typeOfService
+    })
+    assert.strictEqual(await response.body.text(), 'ok')
+  }
 
-  const response2 = await client.request({
-    path: '/',
-    method: 'GET'
-  })
-  await response2.body.text()
-
-  assert.deepStrictEqual(priorities, [42])
+  assert.deepStrictEqual(priorities, [42, 0, 42, 0])
 })
 
 // https://github.com/nodejs/undici/issues/5544
