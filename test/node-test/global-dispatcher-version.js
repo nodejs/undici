@@ -164,6 +164,42 @@ test('setGlobalDispatcher lets Node.js global fetch use a MockAgent interceptor'
   })
 })
 
+for (const [name, agentOptions] of [['MockPool', '{}'], ['MockClient', '{ connections: 1 }']]) {
+  test(`${name}.cleanMocks() also clears the interceptors that Node.js global fetch uses`, () => {
+    const script = `
+      const { MockAgent, setGlobalDispatcher } = require('./index.js')
+
+      ;(async () => {
+        const agent = new MockAgent(${agentOptions})
+        agent.disableNetConnect()
+        setGlobalDispatcher(agent)
+
+        const mockDispatcher = agent.get('https://example.com')
+        mockDispatcher.intercept({ path: '/v1/test' }).reply(200, 'first').persist()
+        const first = await (await fetch('https://example.com/v1/test')).text()
+
+        mockDispatcher.cleanMocks()
+        mockDispatcher.intercept({ path: '/v1/test' }).reply(200, 'second').persist()
+        const second = await (await fetch('https://example.com/v1/test')).text()
+
+        process.stdout.write(JSON.stringify({ first, second }))
+
+        await agent.close()
+      })().catch((err) => {
+        console.error(err?.cause?.stack || err?.stack || err)
+        process.exit(1)
+      })
+    `
+
+    const result = runNode(script)
+    assert.strictEqual(result.status, 0, result.stderr)
+    assert.deepStrictEqual(JSON.parse(result.stdout), {
+      first: 'first',
+      second: 'second'
+    })
+  })
+}
+
 test('Dispatcher1Wrapper bridges legacy handlers to a new Agent', () => {
   const script = `
     const { Agent, Dispatcher1Wrapper } = require('./index.js')
