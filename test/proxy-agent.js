@@ -124,6 +124,21 @@ test('should accept string, URL and object as options', (t) => {
   t.doesNotThrow(() => new ProxyAgent({ uri: 'http://example.com' }))
 })
 
+test('unsupported proxy protocol reports informative error (#6082)', (t) => {
+  t = tspl(t, { plan: 4 })
+
+  for (const uri of ['socks5h://127.0.0.1:1080', 'socks4://127.0.0.1:1080']) {
+    t.throws(
+      () => new ProxyAgent(uri),
+      new InvalidArgumentError(`Unsupported proxy protocol '${new URL(uri).protocol}'. Supported: http:, https:, socks5:, socks:`)
+    )
+    t.throws(
+      () => new ProxyAgent({ uri }),
+      new InvalidArgumentError(`Unsupported proxy protocol '${new URL(uri).protocol}'. Supported: http:, https:, socks5:, socks:`)
+    )
+  }
+})
+
 test('ProxyAgent forwards connectTimeout to the proxy connector', async (t) => {
   t = tspl(t, { plan: 4 })
 
