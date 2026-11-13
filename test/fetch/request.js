@@ -443,3 +443,20 @@ test('Issue#2465', async (t) => {
   const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
   t.assert.strictEqual(await request.text(), '[object SharedArrayBuffer]')
 })
+
+// WHATWG Fetch spec §5.4 step 36.1 / https://github.com/nodejs/undici/issues/1666
+test('Input request becomes disturbed when init supplies a new body', async (t) => {
+  const req1 = new Request('https://example.com', { method: 'POST', body: 'body-1' })
+  const originalBody = req1.body
+  t.assert.strictEqual(req1.bodyUsed, false)
+
+  const req2 = new Request(req1, { body: 'body-2' })
+  t.assert.strictEqual(req1.bodyUsed, true)
+  t.assert.strictEqual(req1.body, originalBody)
+  t.assert.strictEqual(req2.bodyUsed, false)
+  t.assert.strictEqual(await req2.text(), 'body-2')
+
+  // Calling clone() or constructing another Request from the disturbed request must throw
+  t.assert.throws(() => req1.clone(), TypeError)
+  t.assert.throws(() => new Request(req1), TypeError)
+})
