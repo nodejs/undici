@@ -443,6 +443,37 @@ test('Socks5ProxyAgent - with authentication', async (t) => {
   await p.completed
 })
 
+test('ProxyAgent - decodes percent-encoded SOCKS5 credentials in the URI', async (t) => {
+  const p = tspl(t, { plan: 1 })
+
+  const server = createServer((req, res) => {
+    res.end('ok')
+  })
+  await new Promise((resolve) => server.listen(0, resolve))
+
+  const socksServer = new TestSocks5Server({
+    requireAuth: true,
+    credentials: { username: 'user@example.com', password: 'p@ss:w/rd' }
+  })
+  const socksAddress = await socksServer.listen()
+
+  const proxyAgent = new ProxyAgent(`socks5://user%40example.com:p%40ss%3Aw%2Frd@localhost:${socksAddress.port}`)
+
+  after(async () => {
+    await proxyAgent.close()
+    server.close()
+    await socksServer.close()
+  })
+
+  const response = await request(`http://localhost:${server.address().port}/`, {
+    dispatcher: proxyAgent
+  })
+  await response.body.text()
+  p.equal(response.statusCode, 200)
+
+  await p.completed
+})
+
 test('Socks5ProxyAgent - authentication with options', async (t) => {
   const p = tspl(t, { plan: 2 })
 
