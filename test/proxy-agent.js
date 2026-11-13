@@ -1732,6 +1732,45 @@ test('ProxyAgent handles multiple concurrent HTTP requests via HTTP proxy', asyn
   proxyAgent.close()
 })
 
+test('ProxyAgent does not set the TLS servername to a proxy addressed by an IP literal (#6144)', async (t) => {
+  t = tspl(t, { plan: 2 })
+
+  // Plain HTTP target reached through an HTTPS proxy addressed by IP. This is
+  // the non-tunnel forward path, where ProxyAgent derives the proxy SNI from
+  // the proxy host. SNI must be a hostname, never an IP (RFC 6066); Node >= 26
+  // rejects an IP servername with ERR_INVALID_ARG_VALUE.
+  const server = await buildServer()
+  const proxy = await buildSSLProxy()
+
+  server.on('request', (req, res) => res.end('ok'))
+
+  let proxySni = 'unset'
+  proxy.on('secureConnection', (socket) => { proxySni = socket.servername })
+
+  const proxyAgent = new ProxyAgent({
+    // IP literal does not match the proxy certificate name, so skip verification.
+    uri: `https://127.0.0.1:${proxy.address().port}`,
+    proxyTls: { rejectUnauthorized: false }
+  })
+
+  const res = await request(`http://localhost:${server.address().port}`, { dispatcher: proxyAgent })
+  await res.body.dump()
+
+  t.strictEqual(res.statusCode, 200)
+  // The SNI sent to the proxy must not be the IP literal (Node >= 26 rejects it
+  // outright; older Node sent an invalid IP SNI). An absent SNI is reported as
+  // false. net.isIP returns 0 for a hostname, false, or '' and non-zero for an IP.
+  t.strictEqual(
+    net.isIP(typeof proxySni === 'string' ? proxySni : ''),
+    0,
+    `proxy SNI must not be an IP literal, got ${JSON.stringify(proxySni)}`
+  )
+
+  server.close()
+  proxy.close()
+  proxyAgent.close()
+})
+
 function buildServer () {
   return new Promise((resolve) => {
     const server = createServer({ joinDuplicateHeaders: true })
