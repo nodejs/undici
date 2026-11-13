@@ -2,9 +2,10 @@
 
 const assert = require('node:assert')
 const { test } = require('node:test')
+const { once } = require('node:events')
 const { WebSocket } = require('../..')
 
-test('closing before connection is established should only fire error and close events once', (t) => {
+test('closing before connection is established should only fire error and close events once', async (t) => {
   t.plan(2)
 
   t.after(() => assert.deepStrictEqual(events, ['error', 'close']))
@@ -25,4 +26,7 @@ test('closing before connection is established should only fire error and close 
   })
 
   ws.close()
+
+  // Wait for close event to fire via queue
+  await once(ws, 'close')
 })
