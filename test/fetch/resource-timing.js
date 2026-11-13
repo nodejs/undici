@@ -2,8 +2,9 @@
 
 const { test } = require('node:test')
 const { createServer } = require('node:http')
+const { createServer: createHttp2Server } = require('node:http2')
 const { fetch, Agent } = require('../..')
-const { closeServerAsPromise } = require('../utils/node-http')
+const { closeServerAsPromise, closeClientAndServerAsPromise } = require('../utils/node-http')
 
 const {
   PerformanceObserver,
@@ -165,4 +166,65 @@ test('responseStart should be greater than 0 with composed interceptor', (t, don
   })
 
   t.after(closeServerAsPromise(server))
+})
+
+test('firstInterimResponseStart should be set by a 103 response', (t, done) => {
+  t.plan(4)
+  const obs = new PerformanceObserver(list => {
+    const [entry] = list.getEntries()
+
+    t.assert.ok(entry.firstInterimResponseStart >= entry.requestStart)
+    t.assert.ok(entry.finalResponseHeadersStart > entry.firstInterimResponseStart)
+    t.assert.strictEqual(entry.responseStart, entry.firstInterimResponseStart)
+
+    obs.disconnect()
+    performance.clearResourceTimings()
+    done()
+  })
+
+  obs.observe({ entryTypes: ['resource'] })
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.writeEarlyHints({ link: '</style.css>; rel=preload; as=style' })
+    setTimeout(() => res.end('ok'), 10)
+  }).listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}`)
+    t.assert.strictEqual('ok', await body.text())
+  })
+
+  t.after(closeServerAsPromise(server))
+})
+
+test('firstInterimResponseStart should be set by a 103 response over HTTP/2', (t, done) => {
+  t.plan(4)
+  const obs = new PerformanceObserver(list => {
+    const [entry] = list.getEntries()
+
+    t.assert.ok(entry.firstInterimResponseStart >= entry.requestStart)
+    t.assert.ok(entry.finalResponseHeadersStart > entry.firstInterimResponseStart)
+    t.assert.strictEqual(entry.responseStart, entry.firstInterimResponseStart)
+
+    obs.disconnect()
+    performance.clearResourceTimings()
+    done()
+  })
+
+  obs.observe({ entryTypes: ['resource'] })
+
+  const dispatcher = new Agent({ allowH2: true, useH2c: true })
+
+  const server = createHttp2Server()
+  server.on('stream', (stream) => {
+    stream.additionalHeaders({ ':status': 103, link: '</style.css>; rel=preload; as=style' })
+    setTimeout(() => {
+      stream.respond({ ':status': 200 })
+      stream.end('ok')
+    }, 10)
+  })
+  server.listen(0, async () => {
+    const body = await fetch(`http://localhost:${server.address().port}`, { dispatcher })
+    t.assert.strictEqual('ok', await body.text())
+  })
+
+  t.after(closeClientAndServerAsPromise(dispatcher, server))
 })
