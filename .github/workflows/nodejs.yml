@@ -17,6 +17,10 @@ on:
         type: string
         required: false
         default: ''
+      milo:
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -85,6 +89,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test node-test
         run: npm run test:node-test
@@ -93,6 +98,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test fetch
         run: npm run test:fetch
@@ -101,6 +107,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test node-fetch
         run: npm run test:node-fetch
@@ -109,6 +116,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test cache
         run: npm run test:cache
@@ -117,6 +125,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test cache-interceptor with sqlite
         run: npm run test:cache-interceptor
@@ -126,6 +135,7 @@ jobs:
           NODE_OPTIONS: --experimental-sqlite
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
 
       - name: Test cache-tests
         run: npm run test:cache-tests
@@ -134,6 +144,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test cookies
         run: npm run test:cookies
@@ -142,6 +153,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
 
       - name: Test interceptors
         run: npm run test:interceptors
@@ -150,6 +162,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test eventsource
         run: npm run test:eventsource
@@ -158,6 +171,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test infra
         run: npm run test:infra
@@ -166,6 +180,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
 
       - name: Test subresource-integrity
         run: npm run test:subresource-integrity
@@ -174,6 +189,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test websocket
         run: npm run test:websocket
@@ -182,6 +198,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test jest
         run: npm run test:jest
@@ -190,6 +207,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ''
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
       
       - name: Test wpt
         run: npm run test:wpt
@@ -198,6 +216,7 @@ jobs:
           CI: true
           NODE_V8_COVERAGE: ${{ inputs.codecov == true && './coverage/tmp' || '' }} 
           UNDICI_NO_WASM_SIMD: ${{ inputs['no-wasm-simd'] }}
+          UNDICI_USE_MILO: ${{ inputs.milo }}
 
       - name: Coverage summary
         if: inputs.codecov == true
