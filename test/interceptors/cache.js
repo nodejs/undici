@@ -360,6 +360,72 @@ describe('Cache Interceptor', () => {
     }
   })
 
+  for (const { name, Store, skip } of [
+    { name: 'memory', Store: MemoryCacheStore, skip: false },
+    { name: 'sqlite', Store: SqliteCacheStore, skip: runtimeFeatures.has('sqlite') === false }
+  ]) {
+    test(`Vary distinguishes request headers named __proto__ in the ${name} store`, { skip }, async () => {
+      let requestsToOrigin = 0
+      const server = createServer((req, res) => {
+        requestsToOrigin++
+
+        let variant = '<absent>'
+        for (let i = 0; i < req.rawHeaders.length; i += 2) {
+          if (req.rawHeaders[i].toLowerCase() === '__proto__') {
+            variant = req.rawHeaders[i + 1]
+            break
+          }
+        }
+
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.setHeader('vary', '__proto__')
+        res.end(`hit ${requestsToOrigin}: ${variant}`)
+      }).listen(0)
+
+      await once(server, 'listening')
+
+      const store = new Store()
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({ store }))
+      const request = variant => ({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        headers: variant === undefined ? [] : ['__proto__', variant]
+      })
+
+      try {
+        {
+          const res = await client.request(request('alpha'))
+          equal(requestsToOrigin, 1)
+          strictEqual(await res.body.text(), 'hit 1: alpha')
+        }
+
+        {
+          const res = await client.request(request('beta'))
+          equal(requestsToOrigin, 2)
+          strictEqual(await res.body.text(), 'hit 2: beta')
+        }
+
+        {
+          const res = await client.request(request())
+          equal(requestsToOrigin, 3)
+          strictEqual(await res.body.text(), 'hit 3: <absent>')
+        }
+
+        {
+          const res = await client.request(request('alpha'))
+          equal(requestsToOrigin, 3)
+          strictEqual(await res.body.text(), 'hit 1: alpha')
+        }
+      } finally {
+        await client.close()
+        store.close?.()
+        await new Promise(resolve => server.close(resolve))
+      }
+    })
+  }
+
   test('stale-while-revalidate 304 preserves cached Vary metadata', async () => {
     const clock = FakeTimers.install({
       toFake: ['Date']

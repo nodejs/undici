@@ -548,6 +548,21 @@ describe('parseVaryHeader', () => {
     })
   })
 
+  test('handles field names that shadow Object.prototype', () => {
+    const result = parseVaryHeader(
+      '__proto__, constructor',
+      JSON.parse('{"__proto__":"alpha","constructor":"beta"}')
+    )
+
+    deepStrictEqual(Object.keys(result).sort(), ['__proto__', 'constructor'])
+    strictEqual(Object.getOwnPropertyDescriptor(result, '__proto__').value, 'alpha')
+    strictEqual(Object.getOwnPropertyDescriptor(result, 'constructor').value, 'beta')
+    strictEqual(Object.getPrototypeOf(result), Object.prototype)
+
+    const absent = parseVaryHeader('__proto__', {})
+    strictEqual(Object.getOwnPropertyDescriptor(absent, '__proto__').value, null)
+  })
+
   test('invalid field names are rejected', () => {
     strictEqual(parseVaryHeader('Accept-Encoding, Cookie Authorization', {}), undefined)
     strictEqual(parseVaryHeader(['Accept-Encoding', 'Cookie Authorization'], {}), undefined)
