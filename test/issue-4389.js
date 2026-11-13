@@ -5,6 +5,7 @@ const { once } = require('node:events')
 const { createServer: createHttpServer } = require('node:http')
 const { createServer: createSocketServer } = require('node:net')
 const { fetch, Agent } = require('..')
+const { miloEnabled } = require('./utils/milo')
 
 describe('Interceptor should not break multi-value headers', () => {
   test('Interceptor should not break Set-Cookie', async (t) => {
@@ -29,7 +30,7 @@ describe('Interceptor should not break multi-value headers', () => {
 
   test('Interceptor should not break other multi-value header', {
     // Milo intentionally does not support HTTP/1.0 responses.
-    skip: process.env.UNDICI_USE_MILO === 'true' && 'Milo does not support HTTP/1.0 responses'
+    skip: miloEnabled && 'Milo does not support HTTP/1.0 responses'
   }, async (t) => {
     const server = createSocketServer((socket) => {
       socket.write('HTTP/1.0 204 No Content\r\n')
