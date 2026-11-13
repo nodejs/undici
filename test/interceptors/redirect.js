@@ -1133,3 +1133,36 @@ test('Cross-origin redirects strip credentials from array-of-tuples headers', as
     strictEqual(text, 'redirected')
   }
 })
+
+test('should handle paths starting with // correctly (#6184)', async t => {
+  const { strictEqual, deepStrictEqual } = await tspl(t, { plan: 2 })
+
+  const seen = []
+  const server = createServer((req, res) => {
+    seen.push(req.url)
+    if (req.url === '//users/start') {
+      res.writeHead(302, { location: '/login' })
+      return res.end()
+    }
+    res.end('ok')
+  })
+
+  after(() => new Promise(resolve => server.close(resolve)))
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const agent = new undici.Agent().compose(
+    redirect({ maxRedirections: 3 })
+  )
+  after(() => agent.destroy())
+
+  const { statusCode, body } = await agent.request({
+    origin: `http://127.0.0.1:${server.address().port}`,
+    path: '//users/start',
+    method: 'GET'
+  })
+  await body.dump()
+
+  strictEqual(statusCode, 200)
+  deepStrictEqual(seen, ['//users/start', '/login'])
+})
