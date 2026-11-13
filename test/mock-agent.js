@@ -3,6 +3,8 @@
 const { test, after, describe } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
+const { Readable, PassThrough } = require('node:stream')
+const { pipeline } = require('node:stream/promises')
 const { request, setGlobalDispatcher, MockAgent, Agent } = require('..')
 const { getResponse } = require('../lib/mock/mock-utils')
 const { kClients, kConnected } = require('../lib/core/symbols')
@@ -3720,6 +3722,66 @@ test('MockAgent - should not accept non-standard search parameters when acceptNo
 
   const textResponse = await getResponse(body)
   t.assert.strictEqual(textResponse, '(non-intercepted) response from server')
+})
+
+// https://github.com/nodejs/undici/issues/2791
+test('MockAgent - pipeline() completes when the request body exceeds the highWaterMark', async (t) => {
+  t.plan(1)
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  after(() => mockAgent.close())
+
+  mockAgent.get('http://localhost:3000')
+    .intercept({ path: '/foo', method: 'POST' })
+    .reply(200, 'bar')
+
+  let response = ''
+  const sink = new PassThrough().on('data', (chunk) => { response += chunk })
+
+  await pipeline(
+    Readable.from(Buffer.alloc(1024 * 1024)),
+    mockAgent.pipeline({ origin: 'http://localhost:3000', path: '/foo', method: 'POST' }, ({ body }) => body),
+    sink
+  )
+
+  t.assert.strictEqual(response, 'bar')
+})
+
+test('MockAgent - an unread request body that errors after the reply does not throw', async (t) => {
+  t.plan(2)
+
+  const mockAgent = new MockAgent()
+  mockAgent.disableNetConnect()
+  after(() => mockAgent.close())
+
+  mockAgent.get('http://localhost:3000')
+    .intercept({ path: '/foo', method: 'POST' })
+    .reply(200, 'bar')
+
+  let reads = 0
+  const body = new Readable({
+    read () {
+      if (++reads === 3) {
+        this.destroy(new Error('kaboom'))
+      } else {
+        this.push(Buffer.alloc(16))
+      }
+    }
+  })
+  // don't use once() here, it adds an 'error' listener
+  const closed = new Promise((resolve) => body.on('close', resolve))
+
+  const { statusCode, body: responseBody } = await mockAgent.request({
+    origin: 'http://localhost:3000',
+    path: '/foo',
+    method: 'POST',
+    body
+  })
+  t.assert.strictEqual(statusCode, 200)
+  t.assert.strictEqual(await responseBody.text(), 'bar')
+
+  await closed
 })
 
 // https://github.com/nodejs/undici/issues/4703
