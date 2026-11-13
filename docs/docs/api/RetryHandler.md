@@ -64,6 +64,11 @@ changes:
   attempt and propagated to the inner handler; when `false`, the failing response
   is passed through instead, which is useful when the error body is needed or a
   custom error handler is in place. **Default:** `true`.
+* `resume` {boolean} When `false`, a response that fails after its headers were
+  received is not resumed with a `Range` request: the error is passed to the
+  inner handler, and only failures before the response headers are retried. This
+  suits proxies that stream the response downstream as it arrives.
+  **Default:** `true`.
 * `retry` {Function} Callback invoked on every retry iteration to decide whether
   another attempt should be made. It receives the error, the retry context, and a
   callback. Call the callback with an `Error` to stop retrying, or with `null` to
