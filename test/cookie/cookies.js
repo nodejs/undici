@@ -421,7 +421,16 @@ test('Cookie Set', () => {
   // A numeric expires outside the range representable by Date must not be
   // serialized. Before this was guarded, the numeric form skipped the
   // "Invalid Date" check and toIMFDate spliced undefined/NaN into the header.
-  for (const expires of [8640000000000001, 1e16, Number.MAX_SAFE_INTEGER]) {
+  const outOfRange = [
+    8640000000000001,
+    1e16,
+    Number.MAX_SAFE_INTEGER,
+    2 ** 64,
+    -(2 ** 64),
+    Number.MAX_VALUE,
+    -Number.MAX_VALUE
+  ]
+  for (const expires of outOfRange) {
     headers = new Headers()
     setCookie(headers, { name: 'Space', value: 'Cat', expires })
     assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
