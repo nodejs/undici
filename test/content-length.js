@@ -516,7 +516,8 @@ function dispatchPaused (client) {
 }
 
 for (const statusCode of [204, 304]) {
-  // Milo follows RFC 9110 strictly and fails the response instead.
+  // Milo follows RFC 9110 strictly and fails the response instead. Remove
+  // these skips once https://github.com/ShogunPanda/milo/issues/63 is resolved.
   const miloSkip = (framing) => {
     if (!miloEnabled) {
       return false
