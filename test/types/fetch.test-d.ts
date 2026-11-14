@@ -21,7 +21,8 @@ import {
   ResponseInit,
   ResponseType,
   ReferrerPolicy,
-  Dispatcher
+  Dispatcher,
+  HttpMethod
 } from '../..'
 
 const requestInit: RequestInit = {}
@@ -33,6 +34,12 @@ const requestInit3: RequestInit = {}
 // Test assignment. See https://github.com/whatwg/fetch/issues/1445
 requestInit3.credentials = 'include'
 const requestInit4: RequestInit = { body: null }
+const requestInit5: RequestInit = {
+  method: 'GET'
+}
+const requestInit6: RequestInit = {
+  method: 'POST'
+}
 
 declare const request: Request
 declare const headers: Headers
@@ -44,7 +51,7 @@ expectType<RequestCredentials | undefined>(requestInit.credentials)
 expectType<HeadersInit | undefined>(requestInit.headers)
 expectType<string | undefined>(requestInit.integrity)
 expectType<boolean | undefined>(requestInit.keepalive)
-expectType<string | undefined>(requestInit.method)
+expectType<HttpMethod | undefined>(requestInit.method)
 expectType<RequestMode | undefined>(requestInit.mode)
 expectType<RequestRedirect | undefined>(requestInit.redirect)
 expectType<string | undefined>(requestInit.referrer)
@@ -55,6 +62,8 @@ expectType<null | undefined>(requestInit.window)
 expectType<Dispatcher | undefined>(requestInit2.dispatcher)
 
 expectType<BodyInit | undefined>(requestInit4.body)
+expectType<HttpMethod | undefined>(requestInit5.method)
+expectType<HttpMethod | undefined>(requestInit6.method)
 
 expectType<number | undefined>(responseInit.status)
 expectType<string | undefined>(responseInit.statusText)
