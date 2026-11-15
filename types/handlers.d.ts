@@ -7,7 +7,8 @@ export declare class RedirectHandler implements Dispatcher.DispatchHandler {
     dispatch: Dispatcher.Dispatch,
     maxRedirections: number,
     opts: Dispatcher.DispatchOptions,
-    handler: Dispatcher.DispatchHandler
+    handler: Dispatcher.DispatchHandler,
+    origin?: string | null
   )
 }
 
