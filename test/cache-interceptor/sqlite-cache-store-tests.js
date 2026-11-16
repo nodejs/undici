@@ -3,11 +3,44 @@
 const { test } = require('node:test')
 const { notEqual, strictEqual, deepStrictEqual } = require('node:assert')
 const { rm } = require('node:fs/promises')
+const { join } = require('node:path')
+const { tmpdir } = require('node:os')
 const { cacheStoreTests, writeBody, compareGetResults } = require('./cache-store-test-utils.js')
 const { runtimeFeatures } = require('../../lib/util/runtime-features.js')
 
 const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
 cacheStoreTests(SqliteCacheStore, { skip: runtimeFeatures.has('sqlite') === false })
+
+test('SqliteCacheStore invalidates entries from the previous cache format', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
+  const { DatabaseSync } = require('node:sqlite')
+  const sqliteLocation = join(tmpdir(), `undici-cache-interceptor-v4-${process.pid}.sqlite`)
+  await rm(sqliteLocation, { force: true })
+  const oldDatabase = new DatabaseSync(sqliteLocation)
+  oldDatabase.exec(`
+    CREATE TABLE cacheInterceptorV4 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      url TEXT NOT NULL,
+      method TEXT NOT NULL
+    );
+    INSERT INTO cacheInterceptorV4 (url, method)
+    VALUES ('http://example.test//resource', 'GET');
+  `)
+  oldDatabase.close()
+
+  const store = new SqliteCacheStore({ location: sqliteLocation })
+  t.after(async () => {
+    store.close()
+    await rm(sqliteLocation, { force: true })
+  })
+
+  strictEqual(store.get({
+    origin: 'http://example.test',
+    path: '/resource',
+    method: 'GET',
+    headers: {}
+  }), undefined)
+  strictEqual(store.size, 0)
+})
 
 test('SqliteCacheStore works nicely with multiple stores', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
   const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
@@ -456,7 +489,7 @@ test('SqliteCacheStore compresses big files with zstd', { skip: skipCompression 
   storeClosed = true
   const DatabaseSync = require('node:sqlite').DatabaseSync
   const db = new DatabaseSync(sqliteLocation)
-  const rows = db.prepare('SELECT compressed, body FROM cacheInterceptorV4 ORDER BY id').all()
+  const rows = db.prepare('SELECT compressed, body FROM cacheInterceptorV5 ORDER BY id').all()
   db.close()
 
   strictEqual(rows.length, 3)
@@ -466,4 +499,59 @@ test('SqliteCacheStore compresses big files with zstd', { skip: skipCompression 
   strictEqual(Buffer.from(rows[1].body).equals(smallBody), true)
   strictEqual(rows[2].compressed, 'zstd')
   strictEqual(rows[2].body.byteLength < jsonBody.byteLength, true)
+})
+
+test('SqliteCacheStore ignores a database locked by another connection', { skip: runtimeFeatures.has('sqlite') === false }, async (t) => {
+  const SqliteCacheStore = require('../../lib/cache/sqlite-cache-store.js')
+  const { DatabaseSync } = require('node:sqlite')
+  const sqliteLocation = 'cache-interceptor-locked.sqlite'
+
+  const store = new SqliteCacheStore({ location: sqliteLocation })
+
+  // A second connection holding the write lock is what another process (or
+  // another store instance) sharing the same cache database looks like.
+  const otherConnection = new DatabaseSync(sqliteLocation)
+
+  t.after(async () => {
+    store.close()
+    otherConnection.close()
+    await rm(sqliteLocation)
+  })
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheKey}
+   */
+  const key = {
+    origin: 'localhost',
+    path: '/',
+    method: 'GET',
+    headers: {}
+  }
+
+  /**
+   * @type {import('../../types/cache-interceptor.d.ts').default.CacheValue}
+   */
+  const value = {
+    statusCode: 200,
+    statusMessage: '',
+    headers: { foo: 'bar' },
+    cachedAt: Date.now(),
+    staleAt: Date.now() + 10000,
+    deleteAt: Date.now() + 20000,
+    body: Buffer.from('asd')
+  }
+
+  otherConnection.exec('BEGIN IMMEDIATE')
+
+  // Contention is transient and the cache is best effort: none of these may
+  // throw while the database is locked, the entry is just not cached.
+  store.set(key, value)
+  strictEqual(store.get(key), undefined)
+  store.delete(key)
+
+  otherConnection.exec('COMMIT')
+
+  // Once the lock is released the store behaves as usual again.
+  store.set(key, value)
+  notEqual(store.get(key), undefined)
 })
