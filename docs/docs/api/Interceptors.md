@@ -178,6 +178,13 @@ Per-request override: any of the four options above can also be set directly
 on the dispatch options to override the interceptor defaults for a specific
 request.
 
+When composed outside the cache interceptor (`compose(redirect(), cache())`),
+headers listed in `stripHeadersOnRedirect` or
+`stripHeadersOnCrossOriginRedirect` are treated as credentials: a redirected
+request that carries one of them is not stored under the original request's
+cache key, the same as a request carrying `Authorization`, `Cookie`, or
+`Proxy-Authorization`.
+
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
 **Example**

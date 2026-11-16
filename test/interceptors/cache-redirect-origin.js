@@ -1140,6 +1140,134 @@ for (const { name, credentialHeaders, finalCacheControl } of [
   })
 }
 
+// A header the caller declares redirect-sensitive through the strip options is
+// treated like a built-in credential: a redirected request carrying it is not
+// stored under the original (alias) key. The declared names are matched
+// case-insensitively against the request headers.
+for (const { name, interceptorOpts, requestOpts, requestHeader } of [
+  {
+    name: 'interceptor stripHeadersOnRedirect',
+    interceptorOpts: { stripHeadersOnRedirect: ['X-Api-Key'] },
+    requestHeader: 'x-api-key'
+  },
+  {
+    name: 'mixed-case request header',
+    interceptorOpts: { stripHeadersOnRedirect: ['x-auth-token'] },
+    requestHeader: 'X-Auth-Token'
+  },
+  {
+    name: 'per-request stripHeadersOnRedirect',
+    requestOpts: { stripHeadersOnRedirect: ['X-Api-Key'] },
+    requestHeader: 'x-api-key'
+  },
+  {
+    name: 'interceptor stripHeadersOnCrossOriginRedirect',
+    interceptorOpts: { stripHeadersOnCrossOriginRedirect: ['X-Api-Key'] },
+    requestHeader: 'x-api-key'
+  }
+]) {
+  test(`cache does not store a same-origin redirect under the alias key for a declared sensitive header (${name})`, async () => {
+    const state = { me: 0, profile: 0 }
+    const server = createServer((req, res) => {
+      const requestUrl = new URL(req.url, 'http://dummy')
+      if (requestUrl.pathname === '/me') {
+        state.me++
+        const user = req.headers[requestHeader.toLowerCase()] || 'anon'
+        res.writeHead(302, {
+          location: `/profile/${user}`,
+          'cache-control': 'public, max-age=600'
+        })
+        res.end()
+        return
+      }
+      state.profile++
+      res.writeHead(200, {
+        'cache-control': 'public, max-age=600',
+        'content-type': 'text/plain'
+      })
+      res.end(requestUrl.pathname.split('/')[2].toUpperCase())
+    })
+
+    await listen(server)
+    const origin = `http://127.0.0.1:${server.address().port}`
+
+    const agent = new Agent().compose(
+      interceptors.redirect({ maxRedirections: 2, ...interceptorOpts }),
+      interceptors.cache({
+        store: new cacheStores.MemoryCacheStore(),
+        type: 'shared'
+      })
+    )
+
+    const requestAs = (user) => agent.request({
+      origin,
+      path: '/me',
+      method: 'GET',
+      headers: { [requestHeader]: user },
+      ...requestOpts
+    }).then(response => response.body.text())
+
+    try {
+      assert.equal(await requestAs('alice'), 'ALICE')
+      assert.equal(await requestAs('bob'), 'BOB')
+      assert.equal(state.me, 2)
+      assert.equal(state.profile, 2)
+    } finally {
+      await agent.close()
+      await closeServer(server)
+    }
+  })
+}
+
+// Declaring a sensitive header does not disable caching for redirected requests
+// that do not carry it.
+test('cache still stores a same-origin redirect when a declared sensitive header is absent', async () => {
+  const state = { hits: 0 }
+  const server = createServer((req, res) => {
+    if (req.url === '/alias') {
+      res.writeHead(302, {
+        location: '/target',
+        'cache-control': 'public, max-age=600'
+      })
+      res.end()
+      return
+    }
+    state.hits++
+    res.writeHead(200, {
+      'cache-control': 'public, max-age=600',
+      'content-type': 'text/plain'
+    })
+    res.end('public-content')
+  })
+
+  await listen(server)
+  const origin = `http://127.0.0.1:${server.address().port}`
+
+  const agent = new Agent().compose(
+    interceptors.redirect({ maxRedirections: 2, stripHeadersOnRedirect: ['X-Api-Key'] }),
+    interceptors.cache({
+      store: new cacheStores.MemoryCacheStore(),
+      type: 'shared'
+    })
+  )
+
+  const get = () => agent.request({
+    origin,
+    path: '/alias',
+    method: 'GET'
+  }).then(response => response.body.text())
+
+  try {
+    assert.equal(await get(), 'public-content')
+    const hitsBefore = state.hits
+    assert.equal(await get(), 'public-content')
+    assert.equal(state.hits, hitsBefore)
+  } finally {
+    await agent.close()
+    await closeServer(server)
+  }
+})
+
 // The fix must not regress the legitimate same-origin redirect caching for
 // requests that carry no credential: those are still cached under the original
 // key, so the redirect target is not re-fetched on a repeat request.
