@@ -877,3 +877,66 @@ test('Set-Cookie parser ignores an unparseable Expires', () => {
     value: 'a3fWa'
   }])
 })
+
+// https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis#section-5.1.1
+test('Set-Cookie parser reads Expires as a cookie-date', async (t) => {
+  const cases = [
+    // IMF-fixdate, rfc850-date and asctime-date
+    ['Sun, 06 Nov 1994 08:49:37 GMT', Date.UTC(1994, 10, 6, 8, 49, 37)],
+    ['Sunday, 06-Nov-94 08:49:37 GMT', Date.UTC(1994, 10, 6, 8, 49, 37)],
+    ['Sun Nov  6 08:49:37 1994', Date.UTC(1994, 10, 6, 8, 49, 37)],
+    // The result is always UTC, whatever the time zone text says
+    ['Wed, 09 Jun 2021 10:18:14', Date.UTC(2021, 5, 9, 10, 18, 14)],
+    ['Wed, 09 Jun 2021 10:18:14 +0800', Date.UTC(2021, 5, 9, 10, 18, 14)],
+    ['Wed, 09 Jun 2021 10:18:14 PST', Date.UTC(2021, 5, 9, 10, 18, 14)],
+    // Two-digit years: 70-99 are 19xx, 0-69 are 20xx
+    ['Thu, 01 Jan 70 00:00:00 GMT', Date.UTC(1970, 0, 1)],
+    ['Thu, 01 Jan 60 00:00:00 GMT', Date.UTC(2060, 0, 1)],
+    ['Sat, 01 Jan 00 00:00:00 GMT', Date.UTC(2000, 0, 1)],
+    // Tokens may come in any order, month names are case-insensitive and
+    // only their first three characters count
+    ['2021 jun 9 10:18:14', Date.UTC(2021, 5, 9, 10, 18, 14)],
+    ['09 JUNE 2021 1:2:3', Date.UTC(2021, 5, 9, 1, 2, 3)],
+    ['Fri, 31 Dec 9999 23:59:59 GMT', Date.UTC(9999, 11, 31, 23, 59, 59)],
+    ['Mon, 01 Jan 1601 00:00:00 GMT', Date.UTC(1601, 0, 1)]
+  ]
+
+  for (const [expires, expected] of cases) {
+    await t.test(expires, () => {
+      const cookie = parseCookie(`id=a3fWa; Expires=${expires}`)
+      assert.ok(cookie.expires instanceof Date)
+      assert.strictEqual(cookie.expires.getTime(), expected)
+    })
+  }
+})
+
+test('Set-Cookie parser ignores an Expires that is not a cookie-date', async (t) => {
+  const cases = [
+    '1',
+    'Jun 9 2021',
+    '2021-06-09T10:18:14Z',
+    'Wed, 09 Jun 2021',
+    '10:18:14 2021 Jun',
+    'Fri, 01 Jan 1600 00:00:00 GMT',
+    'Wed, 31 Feb 2021 00:00:00 GMT',
+    'Wed, 00 Jun 2021 00:00:00 GMT',
+    'Wed, 32 Jun 2021 00:00:00 GMT',
+    'Wed, 09 Jun 2021 24:00:00 GMT',
+    'Wed, 09 Jun 2021 10:60:00 GMT',
+    'Wed, 09 Jun 2021 10:18:60 GMT',
+    'Wed, 09 Jun 2021 100:18:14 GMT',
+    'Wed, 09 Jun 2021 010:18:14 GMT',
+    'Wed, 09 Jun 20211 10:18:14 GMT',
+    'Wed, 09 Jun 9 10:18:14 GMT',
+    'Wed, 09 2021 10:18:14 GMT'
+  ]
+
+  for (const expires of cases) {
+    await t.test(expires, () => {
+      assert.deepEqual(parseCookie(`id=a3fWa; Expires=${expires}`), {
+        name: 'id',
+        value: 'a3fWa'
+      })
+    })
+  }
+})
