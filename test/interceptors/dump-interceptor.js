@@ -138,10 +138,13 @@ test('Should dump on abort', { skip }, async t => {
   await t.completed
 })
 
-test('Should dump on already aborted request', { skip }, async t => {
+test('Should dump when aborted before the response starts', { skip }, async t => {
   t = tspl(t, { plan: 3 })
   let offset = 0
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    // The request is in flight: the abort turns into dumping the response.
+    abc.abort()
+
     const max = 1024
     const buffer = Buffer.alloc(max)
 
@@ -190,12 +193,10 @@ test('Should dump on already aborted request', { skip }, async t => {
     await once(server, 'close')
   })
 
-  // Aborting before request() would reject without dispatching the request.
   client.request(requestOptions).catch(err => {
     t.equal(err.name, 'AbortError')
     t.equal(err.message, 'This operation was aborted')
   })
-  abc.abort()
 
   await t.completed
 })
@@ -203,6 +204,9 @@ test('Should dump on already aborted request', { skip }, async t => {
 test('Should reject aborted request when response is smaller than maxSize', { skip }, async t => {
   t = tspl(t, { plan: 2 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    // The request is in flight: the abort turns into dumping the response.
+    abc.abort()
+
     res.writeHead(200, {
       'Content-Type': 'application/octet-stream'
     })
@@ -232,12 +236,42 @@ test('Should reject aborted request when response is smaller than maxSize', { sk
     await once(server, 'close')
   })
 
-  // Aborting before request() would reject without dispatching the request.
   client.request(requestOptions).catch(err => {
     t.equal(err.name, 'AbortError')
     t.equal(err.message, 'This operation was aborted')
   })
-  abc.abort()
+
+  await t.completed
+})
+
+test('Should not send an already aborted request', { skip }, async t => {
+  t = tspl(t, { plan: 3 })
+  let requests = 0
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    requests++
+    res.end('ok')
+  })
+
+  server.listen(0)
+
+  await once(server, 'listening')
+
+  const client = new Client(
+    `http://localhost:${server.address().port}`
+  ).compose(dump({ maxSize: 512 }))
+
+  after(async () => {
+    await client.close()
+
+    server.close()
+    await once(server, 'close')
+  })
+
+  await client.request({ method: 'GET', path: '/', signal: AbortSignal.abort() }).catch(err => {
+    t.equal(err.name, 'AbortError')
+    t.equal(err.message, 'This operation was aborted')
+  })
+  t.equal(requests, 0)
 
   await t.completed
 })
