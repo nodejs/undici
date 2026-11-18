@@ -190,11 +190,12 @@ test('Should dump on already aborted request', { skip }, async t => {
     await once(server, 'close')
   })
 
-  abc.abort()
+  // Aborting before request() would reject without dispatching the request.
   client.request(requestOptions).catch(err => {
     t.equal(err.name, 'AbortError')
     t.equal(err.message, 'This operation was aborted')
   })
+  abc.abort()
 
   await t.completed
 })
@@ -231,11 +232,12 @@ test('Should reject aborted request when response is smaller than maxSize', { sk
     await once(server, 'close')
   })
 
-  abc.abort()
+  // Aborting before request() would reject without dispatching the request.
   client.request(requestOptions).catch(err => {
     t.equal(err.name, 'AbortError')
     t.equal(err.message, 'This operation was aborted')
   })
+  abc.abort()
 
   await t.completed
 })
