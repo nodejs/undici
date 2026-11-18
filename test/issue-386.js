@@ -110,13 +110,16 @@ function settlesWithin (promise, ms = 2000) {
   ]).finally(() => clearTimeout(timer))
 }
 
-// '/hold' responses wait until release() is called, everything else answers.
-async function startServer (t) {
+// '/hold' responses wait until release() is called, routes answer their own
+// paths, everything else answers 'ok'.
+async function startServer (t, routes = {}) {
   const held = []
   let connections = 0
   const server = createServer((req, res) => {
     if (req.url === '/hold') {
       held.push(res)
+    } else if (routes[req.url]) {
+      routes[req.url](req, res)
     } else {
       res.end('ok')
     }
@@ -532,4 +535,128 @@ test('the caller\'s abort does not cancel a background revalidation', async (t) 
   assert.strictEqual(connect.calls, 1)
   assert.strictEqual(hanging.stats.pending, 1)
   assert.strictEqual(requests, 1)
+})
+
+// Lets the first attempt finish, then holds the only connection so that the
+// next attempt has to wait for it.
+async function queueNextAttempt (server, pool) {
+  const hold = pool.request({ path: '/hold', method: 'GET' })
+  await server.waitForHeld()
+  while (pool.stats.queued === 0) await new Promise(resolve => setImmediate(resolve))
+  return async () => {
+    server.release()
+    await (await hold).body.dump()
+  }
+}
+
+test('a retry aborted while it waits for a connection rejects at once', async (t) => {
+  const apis = {
+    request: (client, signal) => client.request({ path: '/flaky', method: 'GET', signal }),
+    stream: (client, signal) => client.stream({ path: '/flaky', method: 'GET', signal }, () => new Writable({
+      write (chunk, encoding, callback) { callback() }
+    }))
+  }
+
+  for (const [name, call] of Object.entries(apis)) {
+    let attempts = 0
+    const server = await startServer(t, {
+      '/flaky': (req, res) => {
+        attempts++
+        res.statusCode = 500
+        res.end('fail')
+      }
+    })
+    const pool = new Pool(server.origin, { connections: 1 })
+    t.after(() => pool.destroy())
+    const client = pool.compose(interceptors.retry({ minTimeout: 10, maxRetries: 3 }))
+
+    const ac = new AbortController()
+    const reason = new Error(`${name} aborted while its retry waits`)
+    const promise = call(client, ac.signal)
+    const release = await queueNextAttempt(server, pool)
+
+    ac.abort(reason)
+    await assert.rejects(settlesWithin(promise), (err) => err === reason, name)
+    assert.strictEqual(pool.stats.queued, 0, name)
+
+    await release()
+    assert.strictEqual(attempts, 1, name)
+  }
+})
+
+test('a redirect aborted while it waits for a connection rejects at once', async (t) => {
+  let targets = 0
+  const server = await startServer(t, {
+    '/redirect': (req, res) => {
+      res.statusCode = 302
+      res.setHeader('location', '/target')
+      res.end()
+    },
+    '/target': (req, res) => {
+      targets++
+      res.end('target')
+    }
+  })
+  const pool = new Pool(server.origin, { connections: 1 })
+  t.after(() => pool.destroy())
+  const client = pool.compose(interceptors.redirect({ maxRedirections: 2 }))
+
+  const ac = new AbortController()
+  const reason = new Error('aborted while the redirect waits')
+  const promise = client.request({ path: '/redirect', method: 'GET', signal: ac.signal })
+  const release = await queueNextAttempt(server, pool)
+
+  ac.abort(reason)
+  await assert.rejects(settlesWithin(promise), (err) => err === reason)
+  assert.strictEqual(pool.stats.queued, 0)
+
+  await release()
+  assert.strictEqual(targets, 0)
+
+  // Without an abort, the same redirect is followed.
+  const res = await settlesWithin(client.request({ path: '/redirect', method: 'GET' }))
+  assert.strictEqual(await res.body.text(), 'target')
+})
+
+test('a resumed retry aborted while it waits for a connection rejects at once', async (t) => {
+  let resumes = 0
+  const server = await startServer(t, {
+    '/partial': (req, res) => {
+      if (req.headers.range) {
+        resumes++
+        res.writeHead(206, { 'content-range': 'bytes 5-9/10', 'content-length': 5, etag: '"e1"' })
+        res.end('56789')
+        return
+      }
+      // Send half of the body, then drop the connection: the retry resumes it.
+      res.writeHead(200, { 'content-length': 10, etag: '"e1"', 'accept-ranges': 'bytes' })
+      res.write('01234', () => setTimeout(() => res.socket.destroy(), 10))
+    }
+  })
+  const pool = new Pool(server.origin, { connections: 1 })
+  t.after(() => pool.destroy())
+  const client = pool.compose(interceptors.retry({ minTimeout: 50, maxRetries: 3 }))
+
+  const ac = new AbortController()
+  const reason = new Error('aborted while the resume waits')
+  let received = ''
+  let onFirstChunk
+  const firstChunk = new Promise(resolve => { onFirstChunk = resolve })
+  const promise = client.stream({ path: '/partial', method: 'GET', signal: ac.signal }, () => new Writable({
+    write (chunk, encoding, callback) {
+      received += chunk
+      onFirstChunk()
+      callback()
+    }
+  }))
+  await firstChunk
+  const release = await queueNextAttempt(server, pool)
+
+  ac.abort(reason)
+  await assert.rejects(settlesWithin(promise), (err) => err === reason)
+  assert.strictEqual(received, '01234')
+  assert.strictEqual(pool.stats.queued, 0)
+
+  await release()
+  assert.strictEqual(resumes, 0)
 })
