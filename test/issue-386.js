@@ -18,7 +18,7 @@ const { Readable, Writable } = require('node:stream')
 const { test } = require('node:test')
 const { tspl } = require('@matteo.collina/tspl')
 
-const { Client, Pool, Agent, interceptors } = require('..')
+const { Client, Pool, Agent, interceptors, cacheStores } = require('..')
 
 async function listen (t) {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -422,4 +422,114 @@ test('an already aborted signal does not open a connection for any API', async (
     await assert.rejects(settlesWithin(call(AbortSignal.abort(reason))), (err) => err === reason, name)
   }
   assert.strictEqual(connect.calls, 0)
+})
+
+test('a queued request is aborted through every interceptor', async (t) => {
+  const server = await startServer(t)
+  const { dump, decompress, responseError, retry, redirect, cache, deduplicate, dns } = interceptors
+  const cases = {
+    dump: dump(),
+    decompress: decompress(),
+    responseError: responseError(),
+    retry: retry(),
+    redirect: redirect({ maxRedirections: 2 }),
+    cache: cache(),
+    deduplicate: deduplicate(),
+    all: [
+      dns({ dualStack: false, affinity: 4 }), retry(), redirect({ maxRedirections: 2 }), cache(),
+      deduplicate(), decompress(), responseError(), dump()
+    ]
+  }
+
+  for (const [name, interceptor] of Object.entries(cases)) {
+    const pool = new Pool(server.origin, { connections: 1 })
+    t.after(() => pool.destroy())
+
+    const first = pool.request({ path: '/hold', method: 'GET' })
+    await server.waitForHeld()
+
+    const ac = new AbortController()
+    const reason = new Error(`${name} aborted`)
+    const queued = pool.compose(interceptor).request({ path: '/', method: 'GET', signal: ac.signal })
+    ac.abort(reason)
+    await assert.rejects(settlesWithin(queued), (err) => err === reason, name)
+    assert.strictEqual(pool.stats.queued, 0, name)
+
+    server.release()
+    await (await first).body.dump()
+  }
+})
+
+test('an abort during a stale-if-error revalidation does not serve the stale response', async (t) => {
+  const server = createServer((req, res) => {
+    res.setHeader('cache-control', 'max-age=1, stale-if-error=60')
+    res.setHeader('etag', '"v1"')
+    res.end('cached')
+  })
+  server.listen(0)
+  await once(server, 'listening')
+  t.after(() => { server.closeAllConnections(); server.close() })
+
+  const connect = hangingConnector()
+  const client = new Client(`http://localhost:${server.address().port}`)
+  const store = new cacheStores.MemoryCacheStore()
+  const cached = client.compose(interceptors.cache({ store }))
+  t.after(() => client.destroy())
+
+  const res = await cached.request({ path: '/', method: 'GET' })
+  assert.strictEqual(await res.body.text(), 'cached')
+  await client.close()
+  await new Promise(resolve => setTimeout(resolve, 1100))
+
+  // The entry is stale: revalidating it waits on a connection that never opens.
+  const hanging = new Client(`http://localhost:${server.address().port}`, { connect })
+  t.after(() => { connect.destroy(); return hanging.destroy() })
+  const ac = new AbortController()
+  const reason = new Error('aborted during revalidation')
+  const promise = hanging.compose(interceptors.cache({ store })).request({ path: '/', method: 'GET', signal: ac.signal })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.strictEqual(connect.calls, 1)
+  ac.abort(reason)
+  await assert.rejects(settlesWithin(promise), (err) => err === reason)
+})
+
+test('the caller\'s abort does not cancel a background revalidation', async (t) => {
+  let requests = 0
+  const server = createServer((req, res) => {
+    requests++
+    res.setHeader('cache-control', 'max-age=1, stale-while-revalidate=60')
+    res.end('cached')
+  })
+  server.listen(0)
+  await once(server, 'listening')
+  t.after(() => { server.closeAllConnections(); server.close() })
+
+  // An async store: the caller can abort while its cache lookup is pending.
+  const inner = new cacheStores.MemoryCacheStore()
+  const store = {
+    get: (key) => new Promise(resolve => setTimeout(() => resolve(inner.get(key)), 20)),
+    createWriteStream: (key, value) => inner.createWriteStream(key, value),
+    delete: (key) => inner.delete(key)
+  }
+  const connect = hangingConnector()
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.after(() => client.destroy())
+  await (await client.compose(interceptors.cache({ store })).request({ path: '/', method: 'GET' })).body.dump()
+  await client.close()
+  await new Promise(resolve => setTimeout(resolve, 1100))
+
+  // The stale entry is served and revalidated in the background, on a
+  // connection that never opens.
+  const hanging = new Client(`http://localhost:${server.address().port}`, { connect })
+  t.after(() => { connect.destroy(); return hanging.destroy() })
+  const ac = new AbortController()
+  const promise = hanging.compose(interceptors.cache({ store })).request({ path: '/', method: 'GET', signal: ac.signal })
+  ac.abort()
+  await assert.rejects(settlesWithin(promise), { name: 'AbortError' })
+
+  // Wait for the store lookup and the background revalidation to be queued.
+  await new Promise(resolve => setTimeout(resolve, 50))
+  assert.strictEqual(connect.calls, 1)
+  assert.strictEqual(hanging.stats.pending, 1)
+  assert.strictEqual(requests, 1)
 })
