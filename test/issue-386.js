@@ -618,17 +618,18 @@ test('a redirect aborted while it waits for a connection rejects at once', async
   assert.strictEqual(await res.body.text(), 'target')
 })
 
-test('a resumed retry aborted while it waits for a connection rejects at once', async (t) => {
-  let resumes = 0
+// '/partial' sends half of its body and drops the connection, so the retry
+// interceptor resumes it with a range request.
+async function startResumable (t) {
+  const state = { resumes: 0 }
   const server = await startServer(t, {
     '/partial': (req, res) => {
       if (req.headers.range) {
-        resumes++
+        state.resumes++
         res.writeHead(206, { 'content-range': 'bytes 5-9/10', 'content-length': 5, etag: '"e1"' })
         res.end('56789')
         return
       }
-      // Send half of the body, then drop the connection: the retry resumes it.
       res.writeHead(200, { 'content-length': 10, etag: '"e1"', 'accept-ranges': 'bytes' })
       res.write('01234', () => setTimeout(() => res.socket.destroy(), 10))
     }
@@ -636,6 +637,11 @@ test('a resumed retry aborted while it waits for a connection rejects at once', 
   const pool = new Pool(server.origin, { connections: 1 })
   t.after(() => pool.destroy())
   const client = pool.compose(interceptors.retry({ minTimeout: 50, maxRetries: 3 }))
+  return { server, pool, client, state }
+}
+
+test('a resumed retry aborted while it waits for a connection rejects at once', async (t) => {
+  const { server, pool, client, state } = await startResumable(t)
 
   const ac = new AbortController()
   const reason = new Error('aborted while the resume waits')
@@ -658,5 +664,33 @@ test('a resumed retry aborted while it waits for a connection rejects at once', 
   assert.strictEqual(pool.stats.queued, 0)
 
   await release()
-  assert.strictEqual(resumes, 0)
+  assert.strictEqual(state.resumes, 0)
+})
+
+test('a resumed retry is not sent once its response body is aborted', async (t) => {
+  for (const how of ['signal', 'destroy']) {
+    const { server, pool, client, state } = await startResumable(t)
+
+    const ac = new AbortController()
+    const reason = new Error(`aborted by ${how}`)
+    const res = await client.request({
+      path: '/partial',
+      method: 'GET',
+      signal: how === 'signal' ? ac.signal : undefined
+    })
+    const chunks = res.body[Symbol.asyncIterator]()
+    assert.strictEqual(String((await chunks.next()).value), '01234', how)
+    const release = await queueNextAttempt(server, pool)
+
+    if (how === 'signal') {
+      ac.abort(reason)
+    } else {
+      res.body.destroy(reason)
+    }
+    await assert.rejects(settlesWithin(chunks.next()), (err) => err === reason, how)
+    assert.strictEqual(pool.stats.queued, 0, how)
+
+    await release()
+    assert.strictEqual(state.resumes, 0, how)
+  }
 })
