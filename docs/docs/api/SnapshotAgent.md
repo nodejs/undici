@@ -72,7 +72,8 @@ added: v7.13.0
     a request against a snapshot. When omitted, all headers are matched.
   * `ignoreHeaders` {string[]} Header names to ignore when matching a request.
   * `excludeHeaders` {string[]} Header names to strip from snapshots entirely,
-    so that sensitive values are never written to disk.
+    so that sensitive values are never written to disk. Names are always matched
+    case-insensitively, even when `caseSensitive` is `true`.
   * `matchBody` {boolean} When `true`, the request body is included in request
     matching. **Default:** `true`.
   * `normalizeBody` {Function} Normalizes the request body before it is matched

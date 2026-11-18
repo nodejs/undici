@@ -340,6 +340,29 @@ test('SnapshotRecorder - case sensitivity in header filtering', (t) => {
   })
 })
 
+test('SnapshotRecorder - excludeHeaders ignores case when caseSensitive is true', async (t) => {
+  const recorder = new SnapshotRecorder({
+    excludeHeaders: ['Authorization', 'Set-Cookie'],
+    caseSensitive: true
+  })
+
+  await recorder.record({
+    origin: 'https://api.example.com',
+    path: '/me',
+    method: 'GET',
+    headers: { Authorization: 'Bearer secret-token', Accept: 'application/json' }
+  }, {
+    statusCode: 200,
+    headers: { 'Set-Cookie': 'session=secret', 'Content-Type': 'application/json' },
+    body: Buffer.from('{}')
+  })
+
+  const [snapshot] = recorder.getSnapshots()
+
+  assert.deepStrictEqual(snapshot.request.headers, { accept: 'application/json' })
+  assert.deepStrictEqual(snapshot.responses[0].headers, { 'content-type': 'application/json' })
+})
+
 test('SnapshotRecorder - request formatting with match options', (t) => {
   const requestOpts = {
     origin: 'https://api.example.com',
