@@ -871,6 +871,26 @@ Arguments:
 
 Returns: `Dispatcher`.
 
+Because interceptors wrap each other, ordering is the end-user's responsibility.
+Certain built-in interceptors are order-sensitive and will throw an
+`InvalidArgumentError` if composed in an unsafe order. In particular, the
+`cache` interceptor must be composed **after** the `redirect` interceptor. When
+`cache` is composed before `redirect`, the cache handler is wrapped *above* the
+redirect handler, so it never observes the redirect history and its
+cross-origin / credential-bearing redirect guards are silently disabled.
+This allows an attacker-controlled or cross-principal redirect response to be
+stored under the trusted origin's cache key and replayed to unrelated callers
+(see GHSA-75VM-9G8F-99J4, GHSA-MQG3-3V4R-CM32, GHSA-4W7W-5XRC-9H26 and
+GHSA-7XG3-FPHP-28HG).
+
+```js
+// Correct: cache is composed after redirect.
+new Agent().compose(interceptors.redirect({ maxRedirections: 5 }), interceptors.cache({}))
+
+// Throws an InvalidArgumentError: cache composed before redirect.
+new Agent().compose(interceptors.cache({}), interceptors.redirect({ maxRedirections: 5 }))
+```
+
 #### Parameter: `Interceptor`
 
 A function that takes a `dispatch` method and returns a `dispatch`-like function.
@@ -1214,6 +1234,18 @@ The `cache` interceptor implements client-side response caching as described in
 - `methods` - The [**safe** HTTP methods](https://www.rfc-editor.org/rfc/rfc9110#section-9.2.1) to cache the response of.
 - `cacheByDefault` - The default expiration time to cache responses by if they don't have an explicit expiration and cannot have an heuristic expiry computed. If this isn't present, responses neither with an explicit expiration nor heuristically cacheable will not be cached. Default `undefined`.
 - `type` - The [type of cache](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching#types_of_caches) for Undici to act as. Can be `shared` or `private`. Default `shared`. `private` implies privately cacheable responses will be cached and potentially shared with other users of your application.
+
+> **Ordering:** the `cache` interceptor must be composed **after** the
+> `redirect` interceptor. When `cache` is composed before `redirect`, the cache
+> handler is wrapped above the redirect handler, so it never observes the
+> redirect history and its cross-origin / credential-bearing redirect guards are
+> silently disabled, which lets an attacker-controlled or cross-principal
+> redirect response be stored under the trusted origin's cache key and replayed
+> to unrelated callers (GHSA-75VM-9G8F-99J4, GHSA-MQG3-3V4R-CM32,
+> GHSA-4W7W-5XRC-9H26, GHSA-7XG3-FPHP-28HG). `compose()` throws an
+> `InvalidArgumentError` for this unsafe order. The `deduplicate` interceptor
+> participates in the same redirect-history contract and may be placed before or
+> after `redirect`, as long as `cache` follows `redirect`.
 
 **Usage with `fetch`**
 
