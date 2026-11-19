@@ -154,29 +154,22 @@ test('cache does not store a cross-origin redirect response under the original o
   }
 })
 
-test('reverse interceptor order (cache outside redirect) still works', async () => {
-  await withOrigins(async ({ state, trustedOrigin }) => {
-    const agent = new Agent().compose(
+// Composing the cache interceptor before the redirect interceptor is rejected:
+// the cache handler sits above the redirect handler, so it never receives the
+// redirect history and its cross-origin / credential guards are silently
+// disabled, which allows an attacker-controlled or cross-principal redirect
+// to be stored under the trusted key. See GHSA-75VM-9G8F-99J4.
+test('reverse interceptor order (cache outside redirect) is rejected', () => {
+  assert.throws(
+    () => new Agent().compose(
       interceptors.cache({
         store: new cacheStores.MemoryCacheStore(),
         type: 'shared'
       }),
       interceptors.redirect({ maxRedirections: 2 })
-    )
-
-    const mallory = await requestAgent(agent, trustedOrigin, 'mallory')
-    state.redirectEnabled = false
-    const alice = await requestAgent(agent, trustedOrigin, 'alice')
-
-    try {
-      assert.equal(mallory, 'attacker-controlled-content')
-      assert.equal(alice, 'legitimate-content')
-      assert.equal(state.trustedHits, 2)
-      assert.equal(state.attackerHits, 1)
-    } finally {
-      await agent.close()
-    }
-  })
+    ),
+    /must be composed after the redirect interceptor/
+  )
 })
 
 test('same-origin redirect responses are still cached by the cache interceptor', async () => {
