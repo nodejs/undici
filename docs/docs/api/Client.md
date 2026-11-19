@@ -217,7 +217,7 @@ import { Client, buildConnector } from 'undici'
 const connector = buildConnector({ rejectUnauthorized: false })
 const client = new Client('https://localhost:3000', {
   connect (opts, cb) {
-    connector(opts, (err, socket) => {
+    return connector(opts, (err, socket) => {
       if (err) {
         cb(err)
       } else {
