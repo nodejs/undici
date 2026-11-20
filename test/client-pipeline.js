@@ -1100,3 +1100,37 @@ test('pipeline abort after headers', async (t) => {
 
   await t.completed
 })
+
+for (const pipelining of [1, 2]) {
+  test(`pipeline does not hang the connection when body is dropped early (pipelining: ${pipelining})`, async (t) => {
+    const server = createServer((req, res) => {
+      if (req.url === '/big') {
+        res.end(Buffer.alloc(1024 * 1024))
+      } else {
+        res.end('ok')
+      }
+    })
+    t.after(() => server.close())
+
+    await new Promise(resolve => server.listen(0, resolve))
+
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining })
+    t.after(() => client.destroy())
+
+    const ret = client.pipeline({ path: '/big', method: 'GET' }, ({ body }) => body.take(1)).end()
+    const next = client.request({ path: '/small', method: 'GET', signal: AbortSignal.timeout(3000) })
+
+    let bytes = 0
+    let running
+    for await (const chunk of ret) {
+      bytes += chunk.length
+      running = client.stats.running
+    }
+    t.assert.ok(bytes > 0)
+    t.assert.strictEqual(running, pipelining)
+
+    const { statusCode, body } = await next
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(await body.text(), 'ok')
+  })
+}
