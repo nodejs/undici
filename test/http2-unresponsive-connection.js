@@ -4,7 +4,8 @@
 // stopped delivering data (dropped by a NAT or load balancer, a hung peer)
 // used to keep receiving new streams that all timed out in turn. The client
 // must drop a connection on which nothing at all arrived while a stream timed
-// out, like HTTP/1.1 drops the socket, and leave a live one alone.
+// out or a PING went unanswered, like HTTP/1.1 drops the socket, and leave a
+// live one alone.
 
 const { test, after } = require('node:test')
 const assert = require('node:assert')
@@ -106,4 +107,30 @@ test('h2: a stream timeout on a live connection keeps the connection', async () 
   const next = await pool.request({ path: '/', method: 'GET' })
   assert.strictEqual(await next.body.text(), 'ok')
   assert.strictEqual(state.connections, 1)
+})
+
+test('h2: a connection that went silent is replaced when a PING goes unanswered', async () => {
+  const { state, origin } = await startProxiedServer((stream) => {
+    stream.on('error', () => {})
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  const pool = new Pool(origin, { useH2c: true, h2Options: { pingInterval: 100 } })
+  after(() => pool.destroy())
+
+  const first = await pool.request({ path: '/', method: 'GET' })
+  assert.strictEqual(await first.body.text(), 'ok')
+
+  // No stream times out on the dead connection, e.g. because the application
+  // aborts its requests first.
+  state.goDark()
+
+  const [, , err] = await once(pool, 'disconnect', { signal: AbortSignal.timeout(5000) })
+  assert.strictEqual(err.code, 'UND_ERR_SOCKET')
+  assert.strictEqual(err.message, 'HTTP/2: connection unresponsive')
+
+  const next = await pool.request({ path: '/', method: 'GET' })
+  assert.strictEqual(await next.body.text(), 'ok')
+  assert.strictEqual(state.connections, 2)
 })
