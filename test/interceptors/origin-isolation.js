@@ -357,44 +357,19 @@ test('bound dispatchers bypass origin-dependent interceptors for DNS virtual hos
   }
 })
 
-test('redirects update the cache origin', async t => {
-  let hitsB = 0
-  const serverB = createServer((_req, res) => {
-    hitsB++
-    res.writeHead(200, {
-      'cache-control': 'public, max-age=300',
-      'x-origin': 'B'
-    })
-    res.end('B')
-  })
-  const serverA = createServer((_req, res) => {
-    res.writeHead(302, {
-      location: `http://127.0.0.1:${serverB.address().port}/final`
-    })
-    res.end()
-  })
-  await Promise.all([listen(serverA), listen(serverB)])
-
-  const dispatcher = new Agent().compose(
-    interceptors.cache(),
-    interceptors.redirect({ maxRedirections: 1 })
+test('composing cache before redirect is rejected', t => {
+  // Composing `cache()` before `redirect()` places the cache handler above the
+  // redirect handler, so it never observes the redirect history and its
+  // cross-origin / credential guards are disabled. The redirect target origin
+  // must not silently become a cache key for a trusted origin's URL. See
+  // GHSA-75VM-9G8F-99J4.
+  t.assert.throws(
+    () => new Agent().compose(
+      interceptors.cache(),
+      interceptors.redirect({ maxRedirections: 1 })
+    ),
+    /must be composed after the redirect interceptor/
   )
-  t.after(async () => {
-    await dispatcher.close()
-    await Promise.all([close(serverA), close(serverB)])
-  })
-
-  const originA = `http://127.0.0.1:${serverA.address().port}`
-  const originB = `http://127.0.0.1:${serverB.address().port}`
-  t.assert.deepStrictEqual(await get(dispatcher, '/redirect', { origin: originA }), {
-    origin: 'B',
-    body: 'B'
-  })
-  t.assert.deepStrictEqual(await get(dispatcher, '/final', { origin: originB }), {
-    origin: 'B',
-    body: 'B'
-  })
-  t.assert.strictEqual(hitsB, 1)
 })
 
 test('bound dispatchers ignore a caller-provided cache origin', async t => {
