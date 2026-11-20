@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   determine-release-version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       release-version: ${{ steps.determine-release-version.outputs.result }}
     steps:
@@ -43,7 +43,7 @@ jobs:
             }
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: determine-release-version
     if: ${{ github.ref_name == 'v7.x' && startsWith(needs.determine-release-version.outputs.release-version, 'v') }}
 
