@@ -11,6 +11,10 @@
     "url": "git+https://github.com/nodejs/undici.git"
   },
   "license": "MIT",
+  "author": {
+    "name": "Matteo Collina and Undici contributors",
+    "url": "https://undici.nodejs.org"
+  },
   "contributors": [
     {
       "name": "Daniele Belardi",
