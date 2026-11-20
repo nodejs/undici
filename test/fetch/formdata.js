@@ -406,3 +406,55 @@ test('.formData() rejects malformed multipart header line ending with bare CR', 
 
   await t.assert.rejects(request.formData(), TypeError)
 })
+
+// https://github.com/nodejs/node/issues/67516
+test('.formData() parses a multipart file part when globalThis.File is replaced', async (t) => {
+  const { File: NodeFile } = require('node:buffer')
+  const OriginalFile = globalThis.File
+  const body =
+    '--b\r\n' +
+    'Content-Disposition: form-data; name="f"; filename="a.txt"\r\n' +
+    'Content-Type: text/plain\r\n\r\n' +
+    'hello\r\n' +
+    '--b--\r\n'
+
+  try {
+    // DOM test environments (vitest/jsdom) replace the global File with
+    // the DOM's implementation. Parsing must not depend on that binding.
+    globalThis.File = class File extends Blob {
+      constructor (bits, name, opts) { super(bits, opts); this.name = name }
+    }
+
+    const part = (await new Response(body, {
+      headers: { 'content-type': 'multipart/form-data; boundary=b' }
+    }).formData()).get('f')
+
+    t.assert.ok(part instanceof NodeFile)
+    t.assert.strictEqual(part.name, 'a.txt')
+    t.assert.strictEqual(await part.text(), 'hello')
+  } finally {
+    globalThis.File = OriginalFile
+  }
+})
+
+// https://github.com/nodejs/node/issues/67516
+test('FormData.append() creates an internal File when globalThis.File is replaced', async (t) => {
+  const { File: NodeFile } = require('node:buffer')
+  const OriginalFile = globalThis.File
+
+  try {
+    globalThis.File = class File extends Blob {
+      constructor (bits, name, opts) { super(bits, opts); this.name = name }
+    }
+
+    const form = new FormData()
+    form.append('f', new Blob(['hello'], { type: 'text/plain' }), 'a.txt')
+    const part = form.get('f')
+
+    t.assert.ok(part instanceof NodeFile)
+    t.assert.strictEqual(part.name, 'a.txt')
+    t.assert.strictEqual(await part.text(), 'hello')
+  } finally {
+    globalThis.File = OriginalFile
+  }
+})
