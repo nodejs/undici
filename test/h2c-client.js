@@ -2,6 +2,7 @@
 
 const { createServer, createSecureServer } = require('node:http2')
 const { once } = require('node:events')
+const { Readable } = require('node:stream')
 const { test } = require('node:test')
 const { Worker } = require('node:worker_threads')
 const diagnosticsChannel = require('node:diagnostics_channel')
@@ -157,6 +158,46 @@ test('Should queue h2c requests above the remote max concurrent streams setting'
     statusCode: 200,
     body: 'Hello, world!'
   })))
+})
+
+test('Should not dispatch a non-replayable body before SETTINGS while a request is running', async t => {
+  const planner = tspl(t, { plan: 3 })
+  let maxActiveStreams = 0
+  let activeStreams = 0
+
+  const server = createServer({
+    settings: {
+      maxConcurrentStreams: 1
+    }
+  })
+
+  server.on('stream', (stream, headers) => {
+    activeStreams++
+    maxActiveStreams = Math.max(maxActiveStreams, activeStreams)
+
+    stream.resume()
+    stream.respond({ ':status': 200 })
+    setTimeout(() => {
+      activeStreams--
+      stream.end(headers[':path'])
+    }, 50)
+  })
+
+  server.listen()
+  await once(server, 'listening')
+  const client = new H2CClient(`http://localhost:${server.address().port}/`)
+
+  t.after(() => client.close())
+  t.after(() => server.close())
+
+  const [get, post] = await Promise.all([
+    client.request({ path: '/get', method: 'GET' }).then(({ body }) => body.text()),
+    client.request({ path: '/post', method: 'POST', body: Readable.from(['upload']) }).then(({ body }) => body.text())
+  ])
+
+  planner.strictEqual(get, '/get')
+  planner.strictEqual(post, '/post')
+  planner.strictEqual(maxActiveStreams, 1)
 })
 
 test('Should dispatch requests together on a new connection before SETTINGS arrive', async t => {
