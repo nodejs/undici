@@ -8,6 +8,7 @@ const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
 const { H2CClient, Client, Agent, Pool, request } = require('..')
+const { guardAgainstUnexpectedDisconnect } = require('./utils/h2-disconnect-guard')
 
 test('Should throw if no h2c origin', async t => {
   const planner = tspl(t, { plan: 1 })
@@ -62,6 +63,7 @@ test('Should support h2c connection', async t => {
   const client = new H2CClient(`http://${authority}/`)
 
   t.after(() => client.close())
+  guardAgainstUnexpectedDisconnect(planner, client)
   t.after(() => server.close())
 
   const response = await client
@@ -89,6 +91,7 @@ test('Should support h2c connection with body', async t => {
   const client = new H2CClient(`http://localhost:${server.address().port}/`)
 
   t.after(() => client.close())
+  guardAgainstUnexpectedDisconnect(planner, client)
   t.after(() => server.close())
 
   const response = await client.request({
@@ -133,6 +136,7 @@ test('Should queue h2c requests above the remote max concurrent streams setting'
   })
 
   t.after(() => client.close())
+  guardAgainstUnexpectedDisconnect(planner, client)
   t.after(() => server.close())
 
   const responses = await Promise.all(Array.from({ length: 5 }, async (_, i) => {
