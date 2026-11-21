@@ -164,6 +164,36 @@ test('two consecutive compressed messages are delivered', async (t) => {
   t.assert.deepStrictEqual(events.server, ['close:1000:'])
 })
 
+test('compressed messages that share the deflate context are delivered in order', async (t) => {
+  // One deflate stream for all messages (context takeover), so later messages
+  // refer back to the text of earlier ones.
+  const deflateRaw = createDeflateRaw()
+  const chunks = []
+  deflateRaw.on('data', (chunk) => chunks.push(chunk))
+  const messages = ['hello world', 'hello world, again', 'hello again, world', 'world']
+  const payloads = []
+  for (const message of messages) {
+    deflateRaw.write(message)
+    await new Promise((resolve) => deflateRaw.flush(constants.Z_SYNC_FLUSH, resolve))
+    const output = Buffer.concat(chunks.splice(0))
+    payloads.push(output.subarray(0, output.length - 4))
+  }
+
+  const events = await exchange(t, [
+    frame(0xC1, payloads[0]),
+    // A fragmented message whose first fragment holds no complete symbol.
+    frame(0x41, payloads[1].subarray(0, 1)),
+    frame(0x00, payloads[1].subarray(1, 4)),
+    frame(0x80, payloads[1].subarray(4)),
+    frame(0xC1, payloads[2]),
+    frame(0xC1, payloads[3]),
+    close
+  ], { perMessageDeflate: true })
+
+  t.assert.deepStrictEqual(events.client, [...messages.map((message) => `message:${message}`), 'close:1000'])
+  t.assert.deepStrictEqual(events.server, ['close:1000:'])
+})
+
 test('a ping inside a fragmented compressed message leaves the message intact', async (t) => {
   const payload = await deflate(Buffer.from('hello'))
 
