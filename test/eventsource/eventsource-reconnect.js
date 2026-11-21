@@ -117,7 +117,50 @@ describe('EventSource - reconnect', () => {
     })
   })
 
-  test('Should reconnect and send lastEventId', async (t) => {
+  test('Should reconnect without an invalid lastEventId', { timeout: 2000 }, async (t) => {
+    let requestCount = 0
+    let secondRequestHeader
+    let resolveSecondRequest
+    let rejectSecondRequest
+    const secondRequest = new Promise((resolve, reject) => {
+      resolveSecondRequest = resolve
+      rejectSecondRequest = reject
+    })
+
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      requestCount++
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+
+      if (requestCount === 1) {
+        res.end('id: \x01poison\nretry: 0\n\n')
+      } else {
+        secondRequestHeader = req.headers['last-event-id']
+        res.end()
+        resolveSecondRequest()
+      }
+    })
+    await once(server.listen(0), 'listening')
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`)
+    t.after(() => {
+      eventSourceInstance.close()
+      server.close()
+    })
+
+    let errorCount = 0
+    eventSourceInstance.onerror = () => {
+      if (++errorCount === 5) {
+        rejectSecondRequest(new Error('EventSource repeatedly failed before reconnecting'))
+      }
+    }
+
+    await secondRequest
+
+    t.assert.strictEqual(requestCount, 2)
+    t.assert.strictEqual(secondRequestHeader, undefined)
+  })
+
+  test('Should reconnect and UTF-8 encode lastEventId', async (t) => {
     t.plan(1)
     const clock = FakeTimers.install()
     after(() => clock.uninstall())
@@ -126,9 +169,9 @@ describe('EventSource - reconnect', () => {
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
       res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
-      res.write('id: 1337\n\n')
+      res.write('id: …\n\n')
       if (++requestCount === 2) {
-        t.assert.strictEqual(req.headers['last-event-id'], '1337')
+        t.assert.strictEqual(req.headers['last-event-id'], Buffer.from('…').toString('latin1'))
       }
       res.end()
     })
@@ -137,6 +180,7 @@ describe('EventSource - reconnect', () => {
     const port = server.address().port
 
     const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+    t.after(() => eventSourceInstance.close())
 
     await once(eventSourceInstance, 'open')
 
