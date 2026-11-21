@@ -17,7 +17,67 @@ test('MessageEvent', (t) => {
   t.assert.strictEqual(noInitEvent.source, null)
   t.assert.ok(Array.isArray(noInitEvent.ports))
   t.assert.ok(Object.isFrozen(noInitEvent.ports))
-  t.assert.ok(new MessageEvent('').initMessageEvent('message') instanceof MessageEvent)
+  t.assert.strictEqual(new MessageEvent('').initMessageEvent('message'), undefined)
+})
+
+test('initMessageEvent updates the current event and resets omitted fields', (t) => {
+  const event = new MessageEvent('before', { data: 'old' })
+  const channel = new MessageChannel()
+  t.after(() => { channel.port1.close(); channel.port2.close() })
+  const ports = [channel.port2]
+  const data = { value: 1 }
+
+  t.assert.strictEqual(event.initMessageEvent('after', true, true, data, 'https://example.com', 'id', channel.port1, ports), undefined)
+  t.assert.strictEqual(event.type, 'after')
+  t.assert.strictEqual(event.bubbles, true)
+  t.assert.strictEqual(event.cancelable, true)
+  t.assert.strictEqual(event.data, data)
+  t.assert.strictEqual(event.origin, 'https://example.com')
+  t.assert.strictEqual(event.lastEventId, 'id')
+  t.assert.strictEqual(event.source, channel.port1)
+  t.assert.deepStrictEqual(event.ports, ports)
+  t.assert.notStrictEqual(event.ports, ports)
+  t.assert.strictEqual(Object.isFrozen(event.ports), true)
+  t.assert.strictEqual(Object.isFrozen(ports), false)
+
+  event.initMessageEvent('reset')
+  t.assert.strictEqual(event.type, 'reset')
+  t.assert.strictEqual(event.bubbles, false)
+  t.assert.strictEqual(event.cancelable, false)
+  t.assert.strictEqual(event.data, null)
+  t.assert.strictEqual(event.origin, '')
+  t.assert.strictEqual(event.lastEventId, '')
+  t.assert.strictEqual(event.source, null)
+  t.assert.deepStrictEqual(event.ports, [])
+})
+
+test('initMessageEvent converts arguments in order before changing the event', (t) => {
+  const calls = []
+  const string = (name) => ({ toString () { calls.push(name); return name } })
+  const event = new MessageEvent('before', { data: 'old' })
+
+  t.assert.throws(() => event.initMessageEvent(string('type'), false, false, 'new', string('origin'), string('lastEventId'), {}), TypeError)
+  t.assert.deepStrictEqual(calls, ['type', 'origin', 'lastEventId'])
+  t.assert.strictEqual(event.type, 'before')
+  t.assert.strictEqual(event.data, 'old')
+})
+
+test('initMessageEvent converts arguments but does not modify an event during dispatch', (t) => {
+  const target = new EventTarget()
+  const event = new MessageEvent('message', { data: 'old' })
+  let conversions = 0
+  target.addEventListener('message', () => {
+    event.initMessageEvent({ toString () { conversions++; return 'changed' } }, true, true, 'new')
+    t.assert.throws(() => event.initMessageEvent(Symbol('type')), TypeError)
+    t.assert.strictEqual(event.type, 'message')
+    t.assert.strictEqual(event.data, 'old')
+  })
+
+  target.dispatchEvent(event)
+  t.assert.strictEqual(conversions, 1)
+  event.initMessageEvent('after', false, false, 'new')
+  t.assert.strictEqual(event.type, 'after')
+  t.assert.strictEqual(event.data, 'new')
 })
 
 test('CloseEvent', (t) => {
