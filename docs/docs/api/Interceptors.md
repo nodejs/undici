@@ -204,6 +204,9 @@ and `x-compress`, is left untouched, matching `fetch()`. As required by
 [RFC 9659](https://www.rfc-editor.org/rfc/rfc9659.html), a `zstd` frame that
 requires a window size larger than 8 MB fails to decode.
 
+By default, decompression removes `Content-Encoding` and `Content-Length` from
+both the response headers and `controller.rawHeaders`.
+
 **Parameters**
 
 * `opts` {Object} (optional)
@@ -211,6 +214,11 @@ requires a window size larger than 8 MB fails to decode.
     skipped. **Default:** `[204, 304]`.
   * `skipErrorResponses` {boolean} When `true`, responses with a status code
     >= 400 are not decompressed. **Default:** `true`.
+  * `preserveHeaders` {boolean} When `true`, keeps `Content-Encoding` and
+    `Content-Length` in both the response headers and `controller.rawHeaders`
+    while still decompressing the body. These headers describe the encoded
+    response, so `Content-Length` is the compressed size, not the decoded size.
+    Useful for implementing Fetch or XMLHttpRequest semantics. **Default:** `false`.
   * `maxSize` {number} Maximum decompressed response size in bytes for each
     decompression stage. The request fails with a
     `ResponseExceededMaxSizeError` if a stage exceeds this limit. Set to `0` to
