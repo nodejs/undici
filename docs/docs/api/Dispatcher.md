@@ -235,9 +235,9 @@ added: v4.0.0
     times out while receiving body data. Monitors the time between body chunks.
     Use `0` to disable it entirely. Defaults to 300 seconds.
     HTTP/1.1 headers/body parser timeouts are not guaranteed to fire with exact
-    millisecond precision: delays up to 1000ms use native timers, while larger
-    delays use undici's lower-overhead fast timers with a target resolution
-    around 500ms.
+    millisecond precision: every delay uses undici's lower-overhead fast
+    timers, which tick about every 500ms, so a timeout can fire up to about one
+    second late. This includes delays below 1000ms.
   * `reset` {boolean} Whether the request should establish a keep-alive
     connection. **Default:** `false`.
   * `expectContinue` {boolean} For HTTP/2, appends the `expect: 100-continue`
