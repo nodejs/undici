@@ -4,7 +4,9 @@ const { test } = require('node:test')
 const assert = require('node:assert')
 const { tmpdir } = require('node:os')
 const { join } = require('node:path')
-const { unlink } = require('node:fs/promises')
+const { existsSync } = require('node:fs')
+const { readFile, unlink } = require('node:fs/promises')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { SnapshotRecorder, formatRequestKey, createRequestHash, filterHeadersForMatching, filterHeadersForStorage, createHeaderFilters } = require('../lib/mock/snapshot-recorder')
 
 test('SnapshotRecorder - basic recording and retrieval', (t) => {
@@ -449,4 +451,64 @@ test('SnapshotRecorder - a header named __proto__ does not collide with its abse
     createRequestHash(withProto),
     createRequestHash(withoutProto)
   )
+})
+
+function createAutoFlushRecorder (t, name, flushInterval) {
+  const snapshotPath = join(tmpdir(), `test-recorder-${name}-${Date.now()}.json`)
+  const recorder = new SnapshotRecorder({ snapshotPath, autoFlush: true, flushInterval })
+  t.after(async () => {
+    await recorder.close()
+    await unlink(snapshotPath).catch(() => {})
+  })
+  return { recorder, snapshotPath }
+}
+
+function recordAutoFlushRequest (recorder, path) {
+  return recorder.record(
+    { origin: 'https://api.example.com', path, method: 'GET' },
+    { statusCode: 200, headers: {}, body: Buffer.from(path), trailers: {} }
+  )
+}
+
+test('SnapshotRecorder - autoFlush writes once flushInterval has passed', async (t) => {
+  const { recorder, snapshotPath } = createAutoFlushRecorder(t, 'flush-short', 50)
+
+  await recordAutoFlushRequest(recorder, '/users')
+
+  // Shorter than the one second debounce that used to replace flushInterval.
+  await sleep(500)
+
+  const snapshots = JSON.parse(await readFile(snapshotPath, 'utf8'))
+  assert.strictEqual(snapshots.length, 1)
+})
+
+test('SnapshotRecorder - autoFlush waits for flushInterval before writing', async (t) => {
+  const { recorder, snapshotPath } = createAutoFlushRecorder(t, 'flush-long', 60_000)
+
+  await recordAutoFlushRequest(recorder, '/users')
+  await recordAutoFlushRequest(recorder, '/posts')
+
+  // Longer than the one second debounce that used to replace flushInterval.
+  await sleep(1500)
+  assert.strictEqual(existsSync(snapshotPath), false)
+
+  // close() still writes the recordings that have not been flushed yet.
+  await recorder.close()
+  const snapshots = JSON.parse(await readFile(snapshotPath, 'utf8'))
+  assert.strictEqual(snapshots.length, 2)
+})
+
+test('SnapshotRecorder - autoFlush writes nothing after close()', async (t) => {
+  const { recorder, snapshotPath } = createAutoFlushRecorder(t, 'flush-close', 50)
+
+  await recordAutoFlushRequest(recorder, '/users')
+  await recordAutoFlushRequest(recorder, '/posts')
+  await recordAutoFlushRequest(recorder, '/comments')
+
+  await recorder.close()
+  await unlink(snapshotPath)
+
+  // Give any flush left behind by close() time to run.
+  await sleep(1500)
+  assert.strictEqual(existsSync(snapshotPath), false)
 })
