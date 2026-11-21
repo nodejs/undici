@@ -131,7 +131,11 @@ added: v1.0.0
       streams for a single session. Once h2 is negotiated this — not `pipelining`,
       which is HTTP/1.1 only — is the ceiling used to dispatch in-flight requests.
       The server's `SETTINGS_MAX_CONCURRENT_STREAMS` can lower this limit, but
-      not raise it. **Default:** `100`.
+      not raise it. Until the server's SETTINGS frame is received on a new
+      connection, requests whose body can be replayed are dispatched up to the
+      lower of this limit and `100`, and a stream refused by a lower server limit
+      is retried once; a request with a streaming body waits for the SETTINGS
+      frame while another request is in flight. **Default:** `100`.
     * `connectionWindowSize` {number} The HTTP/2 connection-level flow-control
       window size set via `ClientHttp2Session.setLocalWindowSize()`. Must be a
       positive integer. **Default:** `524288`.
