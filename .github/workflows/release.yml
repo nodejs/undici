@@ -99,3 +99,18 @@ jobs:
             const versionTag = "${{ needs.determine-release-version.outputs.release-version }}"
             const commitHash = "${{ github.sha }}"
             await require('./scripts/release').release({ github, context, defaultBranch, versionTag, commitHash })
+
+      - name: Update Documentation
+        uses: actions/github-script@d746ffe35508b1917358783b479e04febd2b8f71 # v9.0.0
+        with:
+          github-token: ${{ secrets.UNDICI_WEBSITE_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: "nodejs",
+              repo: "undici-website",
+              workflow_id: "release.yml",
+              ref: "main",
+              inputs: {
+                tag: "${{ needs.determine-release-version.outputs.release-version }}",
+              },
+            });
