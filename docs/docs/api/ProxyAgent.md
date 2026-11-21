@@ -45,7 +45,9 @@ added: v4.8.2
   The options object extends {AgentOptions} (omitting `connect`).
   * `uri` {string} The URI of the proxy server. Required when `options` is an
     object. Parsed into a {URL} according to the
-    [WHATWG URL Specification][].
+    [WHATWG URL Specification][]. The protocol must be `http:`, `https:`,
+    `socks5:`, or `socks:`; any other protocol throws an
+    `InvalidArgumentError`.
   * `token` {string} A pre-formatted `proxy-authorization` header value sent to
     the proxy on every request, for example `` `Bearer ${apiKey}` ``.
   * `auth` {string} A base64-encoded `username:password` credential sent as a
