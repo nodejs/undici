@@ -47,9 +47,11 @@ added: v7.23.0
 
 > Stability: 1 - Experimental
 
-* `proxyUrl` {string|URL} The SOCKS5 proxy server URL. Must use the `socks5:` or
-  `socks:` protocol. Credentials may be embedded in the URL userinfo (for
-  example `socks5://user:pass@host:1080`).
+* `proxyUrl` {string|URL} The SOCKS5 proxy server URL. Must use the `socks5:`,
+  `socks5h:`, or `socks:` protocol. All three behave the same: target host
+  names are always resolved by the proxy, which is what `socks5h:` means.
+  Credentials may be embedded in the URL userinfo (for example
+  `socks5://user:pass@host:1080`).
 * `options` {Object} (optional) Extends {PoolOptions}; the pool options are
   applied to the per-origin pools created behind the tunnel.
   * `headers` {Object} Additional headers to send with the proxy connection.
@@ -74,8 +76,9 @@ added: v7.23.0
     host name.
 
 Throws an `InvalidArgumentError` if `proxyUrl` is missing or does not use the
-`socks5:` or `socks:` protocol, or if `connectTimeout`, `proxyTls.timeout`, or
-`requestTls.timeout` is not a finite, non-negative number.
+`socks5:`, `socks5h:`, or `socks:` protocol, or if `connectTimeout`,
+`proxyTls.timeout`, or `requestTls.timeout` is not a finite, non-negative
+number.
 
 ```mjs
 import { Socks5ProxyAgent } from 'undici'
