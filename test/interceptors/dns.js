@@ -48,6 +48,47 @@ test('Should validate options', t => {
   t.throws(() => dns({ storage: new Map() }), { code: 'UND_ERR_INVALID_ARG' })
 })
 
+for (const headerName of ['host', 'Host']) {
+  test(`Should ignore inherited ${headerName} headers when preserving the DNS origin`, { timeout: 30000 }, async context => {
+    const server = createServer((req, res) => {
+      res.end(JSON.stringify({
+        host: req.headers.host,
+        own: req.headers['x-own'],
+        inherited: req.headers['x-inherited']
+      }))
+    })
+    const client = new Agent().compose(dns({
+      lookup (_origin, _opts, cb) {
+        cb(null, [{ address: '127.0.0.1', family: 4 }])
+      }
+    }))
+    context.after(async () => {
+      await client.destroy()
+      await new Promise(resolve => server.close(resolve))
+    })
+
+    server.listen(0, '127.0.0.1')
+    await once(server, 'listening')
+    const origin = `http://dns-header.test:${server.address().port}`
+    const headers = Object.assign(Object.create({
+      [headerName]: 'inherited.test',
+      'x-inherited': 'ignored'
+    }), { 'x-own': 'preserved' })
+
+    const response = await client.request({ origin, path: '/', method: 'GET', headers })
+    context.assert.strictEqual(response.statusCode, 200)
+    context.assert.deepStrictEqual(await response.body.json(), {
+      host: new URL(origin).host,
+      own: 'preserved'
+    })
+
+    headers[headerName] = 'custom.test'
+    const customResponse = await client.request({ origin, path: '/', method: 'GET', headers })
+    context.assert.strictEqual(customResponse.statusCode, 200)
+    context.assert.deepStrictEqual(await customResponse.body.json(), { host: 'custom.test', own: 'preserved' })
+  })
+}
+
 test('Should automatically resolve IPs (dual stack)', async t => {
   t = tspl(t, { plan: 8 })
 
