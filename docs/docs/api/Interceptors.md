@@ -386,6 +386,8 @@ const agent = new Agent().compose(
 Deduplicates concurrent identical requests so that only one is sent over the
 wire. All waiting callers receive the same response once the in-flight request
 completes. Only safe HTTP methods (e.g. `GET`, `HEAD`) may be deduplicated.
+Requests that carry a body are never deduplicated, since the body is not part
+of the deduplication key.
 
 **Parameters**
 
