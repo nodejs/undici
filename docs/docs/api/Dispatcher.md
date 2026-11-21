@@ -243,6 +243,12 @@ added: v4.0.0
   * `expectContinue` {boolean} For HTTP/2, appends the `expect: 100-continue`
     header and halts the request body until a `100 Continue` is received from the
     remote server. **Default:** `false`.
+  * `servername` {string} The TLS server name (SNI) to use for this request on
+    `https:` origins. **Default:** the hostname of the `host` header, if any
+    (IP addresses are not used). A client reconnects when the server name of the
+    next queued request differs from the one of its current connection, and
+    waits for any running requests to finish first. Set this to share one
+    connection across requests with different `host` headers.
 * `handler` {Object} A set of callbacks invoked over the request lifecycle.
   * `onRequestStart` {Function} Invoked before the request is dispatched on the
     socket. May be invoked multiple times when the request is retried.

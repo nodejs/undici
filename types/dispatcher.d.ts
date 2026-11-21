@@ -123,6 +123,8 @@ declare namespace Dispatcher {
     reset?: boolean;
     /** For H2, it appends the expect: 100-continue header, and halts the request body until a 100-continue is received from the remote server */
     expectContinue?: boolean;
+    /** The TLS server name (SNI) used for this request on `https:` origins. Defaults to the hostname of the `host` header. A client reconnects when the server name of the next queued request differs from the current connection's. */
+    servername?: string;
   }
   export interface ConnectOptions<TOpaque = null> {
     origin: string | URL;
