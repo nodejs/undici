@@ -74,12 +74,16 @@ test('error 103 body', async (t) => {
   await t.completed
 })
 
-test('error 100 body', async (t) => {
-  t = tspl(t, { plan: 2 })
+test('ignore unsolicited 100 response', async (t) => {
+  t = tspl(t, { plan: 3 })
 
   const server = net.createServer({ joinDuplicateHeaders: true }, (socket) => {
-    socket.write('HTTP/1.1 100 Early Hints\r\n')
+    socket.write('HTTP/1.1 100 Continue\r\n')
     socket.write('\r\n')
+    socket.write('HTTP/1.1 200 OK\r\n')
+    socket.write('Content-Length: 5\r\n')
+    socket.write('\r\n')
+    socket.write('hello')
   })
   after(() => server.close())
   server.listen(0)
@@ -91,11 +95,10 @@ test('error 100 body', async (t) => {
   client.request({
     path: '/',
     method: 'GET'
-  }, (err) => {
-    t.strictEqual(err.message, 'bad response')
-  })
-  client.on('disconnect', () => {
-    t.ok(true, 'pass')
+  }, async (err, response) => {
+    t.ifError(err)
+    t.strictEqual(response.statusCode, 200)
+    t.strictEqual(await response.body.text(), 'hello')
   })
   await t.completed
 })
