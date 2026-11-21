@@ -155,3 +155,49 @@ test('truncated HTTP/2 server session resets the client session', async (t) => {
 
   await t.completed
 })
+
+test('request dispatched right after the client session is destroyed gets a fresh session', async (t) => {
+  t = tspl(t, { plan: 6 })
+
+  const { kHTTP2Session } = require('../lib/core/symbols')
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  let sessions = 0
+  server.on('session', () => {
+    sessions++
+  })
+  server.on('stream', (stream) => {
+    stream.respond({ ':status': 200 })
+    stream.end('ok')
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    allowH2: true,
+    connect: {
+      rejectUnauthorized: false
+    }
+  })
+  after(() => client.close())
+
+  const request = async () => {
+    const response = await client.request({ path: '/', method: 'GET' })
+    return { statusCode: response.statusCode, body: await response.body.text() }
+  }
+
+  t.deepStrictEqual(await request(), { statusCode: 200, body: 'ok' })
+
+  // Dispatch while the destroyed session is still attached to the client,
+  // before its 'close' event runs.
+  client[kHTTP2Session].destroy()
+
+  t.deepStrictEqual(await request(), { statusCode: 200, body: 'ok' })
+  t.deepStrictEqual(await request(), { statusCode: 200, body: 'ok' })
+  t.ok(client[kHTTP2Session] != null)
+  t.strictEqual(client[kHTTP2Session].destroyed, false)
+  t.strictEqual(sessions, 2)
+
+  await t.completed
+})
