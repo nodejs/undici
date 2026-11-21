@@ -32,6 +32,8 @@ expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.re
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.retry())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress({ maxSize: 1024 }))
+expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress({ preserveHeaders: true }))
+expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.decompress({ preserveHeaders: false }))
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.responseError())
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.responseError({ maxSize: 1024 }))
 expectAssignable<Dispatcher.DispatcherComposeInterceptor>(Undici.interceptors.responseError({ maxSize: 0 }))

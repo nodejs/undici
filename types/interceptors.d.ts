@@ -12,6 +12,8 @@ declare namespace Interceptors {
   export type DecompressInterceptorOpts = {
     skipErrorResponses?: boolean
     skipStatusCodes?: number[]
+    /** Preserve the original response headers after decompression, including `controller.rawHeaders`. @default false */
+    preserveHeaders?: boolean
     /** Maximum decompressed response size in bytes per stage. 0 disables the limit. @default 0 */
     maxSize?: number
   }
