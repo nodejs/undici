@@ -151,3 +151,36 @@ describe('Close', () => {
     await t.completed
   })
 })
+
+describe('Close frame ordering', () => {
+  test('Close frame is queued behind pending blob sends (#6236)', (t) => {
+    return new Promise((resolve, reject) => {
+      const server = new WebSocketServer({ port: 0 })
+      const received = []
+
+      server.on('connection', (ws) => {
+        ws.on('message', (data) => {
+          received.push(data.toString())
+        })
+        ws.on('close', (code) => {
+          try {
+            t.assert.strictEqual(code, 1000)
+            t.assert.deepStrictEqual(received, ['blob-data', 'after'])
+            server.close()
+            resolve()
+          } catch (err) {
+            server.close()
+            reject(err)
+          }
+        })
+      })
+
+      const ws = new WebSocket(`ws://localhost:${server.address().port}`)
+      ws.addEventListener('open', () => {
+        ws.send(new Blob(['blob-data']))
+        ws.send('after')
+        ws.close(1000)
+      })
+    })
+  })
+})
