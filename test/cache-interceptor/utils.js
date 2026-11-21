@@ -559,6 +559,16 @@ describe('parseVaryHeader', () => {
     const result = parseVaryHeader('*', headers)
     deepStrictEqual(result, headers)
   })
+
+  test('stores a __proto__ Vary field as an own property', () => {
+    const headers = Object.fromEntries([['__proto__', 'tenant-A']])
+    const output = parseVaryHeader('__proto__', headers)
+    // A bare assignment (`output[trimmedHeader] = ...`) would hit the
+    // Object.prototype __proto__ setter and drop the field, leaving the cached
+    // entry to match every request regardless of the __proto__ header value.
+    equal(Object.hasOwn(output, '__proto__'), true)
+    equal(Object.getOwnPropertyDescriptor(output, '__proto__').value, 'tenant-A')
+  })
 })
 
 describe('isEtagUsable', () => {

@@ -166,3 +166,50 @@ test('h2 sends a request header named __proto__', async (t) => {
     'pwned'
   )
 })
+
+test('shared cache honors a Vary: __proto__ response dimension', async (t) => {
+  const { createServer } = require('node:http')
+  const { Client, interceptors, cacheStores } = require('..')
+
+  let originRequests = 0
+  const server = createServer((req, res) => {
+    originRequests++
+    const index = req.rawHeaders.findIndex(
+      (value, n) => n % 2 === 0 && value.toLowerCase() === '__proto__'
+    )
+    const tenant = index < 0 ? 'missing' : req.rawHeaders[index + 1]
+    res.setHeader('Cache-Control', 'public, max-age=60')
+    res.setHeader('Vary', '__proto__')
+    res.end('response for ' + tenant)
+  })
+
+  t.after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  await promisify(server.listen.bind(server))(0)
+
+  const client = new Client(`http://127.0.0.1:${server.address().port}`).compose(
+    interceptors.cache({
+      type: 'shared',
+      store: new cacheStores.MemoryCacheStore()
+    })
+  )
+  t.after(() => client.close())
+
+  async function get (tenant) {
+    const { body } = await client.request({
+      path: '/',
+      method: 'GET',
+      headers: Object.fromEntries([['__proto__', tenant]])
+    })
+    return body.text()
+  }
+
+  // A distinct `__proto__` value must be cached separately: the second request
+  // must not reuse the first tenant's body even though it targets the same URL.
+  assert.strictEqual(await get('tenant-A'), 'response for tenant-A')
+  assert.strictEqual(await get('tenant-B'), 'response for tenant-B')
+  assert.strictEqual(originRequests, 2)
+})
