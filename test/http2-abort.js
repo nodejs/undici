@@ -2,8 +2,9 @@
 
 const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
-const { createSecureServer } = require('node:http2')
+const { createSecureServer, constants } = require('node:http2')
 const { once } = require('node:events')
+const { Readable } = require('node:stream')
 
 const pem = require('@metcoder95/https-pem')
 
@@ -123,6 +124,169 @@ test('#2364 - Concurrent aborts', async t => {
   // teardown (and any ECONNRESET it generates) lands while the test is still
   // running — otherwise node:test flags it as "async activity after the test
   // ended" on macOS/Windows.
+  await client.close()
+})
+
+test('#6187 - abort while the request body is queued behind flow control sends RST_STREAM(CANCEL)', async t => {
+  t = tspl(t, { plan: 4 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.on('error', () => {})
+  server.on('session', session => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
+  server.on('secureConnection', socket => socket.on('error', () => {}))
+
+  let notifyStream
+  const streamReceived = new Promise(resolve => { notifyStream = resolve })
+  let notifyClose
+  const streamClosed = new Promise(resolve => { notifyClose = resolve })
+  let rstCode
+
+  server.on('stream', (stream, headers) => {
+    stream.on('error', () => {})
+
+    if (headers[':path'] === '/ok') {
+      stream.respond({
+        'content-type': 'text/plain; charset=utf-8',
+        ':status': 200
+      })
+      stream.end('hello h2!')
+      return
+    }
+
+    // Never read the body: the upload stalls at the initial flow-control
+    // window with most of the 2 MiB body still queued on the client.
+    stream.on('close', () => {
+      rstCode = stream.rstCode
+      notifyClose()
+    })
+    notifyStream()
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+  after(() => client.close().catch(() => {}))
+
+  const ac = new AbortController()
+  const requestPromise = client.request({
+    path: '/',
+    method: 'POST',
+    body: Buffer.alloc(2 * 1024 * 1024),
+    signal: ac.signal
+  })
+
+  // Abort only once the server has the stream, so the body is already
+  // queued behind flow control when the abort lands.
+  await streamReceived
+  ac.abort()
+
+  const err = await requestPromise.then(() => null, err => err)
+  t.ok(err, 'the aborted request rejects')
+
+  // The fix submits RST_STREAM synchronously with the abort, so 2 s is a
+  // generous bound. Without it, close() defers the reset until the queued
+  // body flushes, and the server only sees the stream go away seconds later
+  // (or, once it grants window, not at all: the session loops instead).
+  let timer
+  const closed = await Promise.race([
+    streamClosed.then(() => true),
+    new Promise(resolve => { timer = setTimeout(() => resolve(false), 2000) })
+  ]).finally(() => clearTimeout(timer))
+  t.strictEqual(closed, true, 'the server sees the stream close promptly after the abort')
+  t.strictEqual(rstCode, constants.NGHTTP2_CANCEL, 'the server receives RST_STREAM(CANCEL)')
+
+  // The orphaned stream must not wedge the session: a follow-up request on
+  // the same client still succeeds.
+  const res = await client.request({ path: '/ok', method: 'GET' })
+  t.strictEqual(res.statusCode, 200)
+  await res.body.text()
+
+  await t.completed
+  await client.close()
+})
+
+test('#6187 - abort while a streaming body is still being piped sends RST_STREAM(CANCEL)', async t => {
+  t = tspl(t, { plan: 3 })
+
+  const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+  server.on('error', () => {})
+  server.on('session', session => {
+    session.on('error', () => {})
+    session.socket?.on('error', () => {})
+  })
+  server.on('secureConnection', socket => socket.on('error', () => {}))
+
+  let notifyStream
+  const streamReceived = new Promise(resolve => { notifyStream = resolve })
+  let notifyClose
+  const streamClosed = new Promise(resolve => { notifyClose = resolve })
+  let rstCode
+
+  server.on('stream', (stream) => {
+    stream.on('error', () => {})
+    // Never read: the piped body stalls behind flow control mid-upload.
+    stream.on('close', () => {
+      rstCode = stream.rstCode
+      notifyClose()
+    })
+    notifyStream()
+  })
+
+  after(() => server.close())
+  await once(server.listen(0), 'listening')
+
+  const client = new Client(`https://localhost:${server.address().port}`, {
+    connect: {
+      rejectUnauthorized: false
+    },
+    allowH2: true
+  })
+  after(() => client.close().catch(() => {}))
+
+  // 2 MiB in 64 KiB chunks, then the source stalls without ending, so the
+  // request is still uploading when the abort lands.
+  let pushed = 0
+  const body = new Readable({
+    read () {
+      if (pushed < 32) {
+        this.push(Buffer.alloc(64 * 1024))
+        pushed++
+      }
+    }
+  })
+
+  const ac = new AbortController()
+  const requestPromise = client.request({
+    path: '/',
+    method: 'POST',
+    body,
+    signal: ac.signal
+  })
+
+  await streamReceived
+  ac.abort()
+
+  const err = await requestPromise.then(() => null, err => err)
+  t.ok(err, 'the aborted request rejects')
+
+  let timer
+  const closed = await Promise.race([
+    streamClosed.then(() => true),
+    new Promise(resolve => { timer = setTimeout(() => resolve(false), 2000) })
+  ]).finally(() => clearTimeout(timer))
+  t.strictEqual(closed, true, 'the server sees the stream close promptly after the abort')
+  t.strictEqual(rstCode, constants.NGHTTP2_CANCEL, 'the server receives RST_STREAM(CANCEL)')
+
+  await t.completed
   await client.close()
 })
 
