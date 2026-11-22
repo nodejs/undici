@@ -361,3 +361,68 @@ test('Socks5Client - connection refused', async (t) => {
 
   await p.completed
 })
+
+test('Socks5Client - connect encodes bracketed IPv6 with ATYP 0x04', async (t) => {
+  const p = tspl(t, { plan: 6 })
+
+  const server = net.createServer((socket) => {
+    let stage = 'handshake'
+
+    socket.on('data', (data) => {
+      if (stage === 'handshake' && data[0] === 0x05) {
+        socket.write(Buffer.from([0x05, AUTH_METHODS.NO_AUTH]))
+        stage = 'connect'
+      } else if (stage === 'connect') {
+        p.equal(data[0], 0x05)
+        p.equal(data[1], 0x01)
+        p.equal(data[3], 0x04)
+        p.equal(data.subarray(4, 20).toString('hex'), '00000000000000000000000000000001')
+        p.equal(data.readUInt16BE(20), 8080)
+
+        const response = Buffer.from([
+          0x05,
+          REPLY_CODES.SUCCEEDED,
+          0x00,
+          0x04,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+          0x1f, 0x90
+        ])
+        socket.write(response)
+      }
+    })
+  })
+
+  await new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', resolve)
+  })
+
+  const { port } = server.address()
+  const socket = net.connect(port, '127.0.0.1')
+
+  await new Promise((resolve) => {
+    socket.on('connect', resolve)
+  })
+
+  t.after(() => {
+    socket.destroy()
+    server.close()
+  })
+
+  const client = new Socks5Client(socket)
+
+  client.on('authenticated', () => {
+    client.connect('[::1]', 8080)
+  })
+
+  client.on('connected', (info) => {
+    p.equal(info.port, 8080)
+  })
+
+  await client.handshake()
+
+  await new Promise((resolve) => {
+    client.once('connected', resolve)
+  })
+
+  await p.completed
+})

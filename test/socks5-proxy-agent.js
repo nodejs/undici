@@ -828,3 +828,69 @@ test('ProxyAgent forwards requestTls to Socks5ProxyAgent (GHSA-vmh5-mc38-953g)',
 
   await p.completed
 })
+
+test('Socks5ProxyAgent - connects to IPv6 proxy and tunnels IPv6 target with ATYP 0x04', async (t) => {
+  const p = tspl(t, { plan: 5 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'application/json' })
+    res.end(JSON.stringify({ ok: true, path: req.url }))
+  })
+  await new Promise((resolve) => server.listen(0, '::1', resolve))
+  const serverPort = server.address().port
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen(0, '::1')
+
+  const proxyAgent = new Socks5ProxyAgent(`socks5://[::1]:${socksAddress.port}`)
+
+  t.after(async () => {
+    await proxyAgent.close()
+    await socksServer.close()
+    server.close()
+  })
+
+  const response = await request(`http://[::1]:${serverPort}/ipv6`, {
+    dispatcher: proxyAgent
+  })
+
+  p.strictEqual(response.statusCode, 200)
+  p.deepStrictEqual(await response.body.json(), { ok: true, path: '/ipv6' })
+  p.strictEqual(socksServer.lastConnectRequest.atyp, 0x04)
+  p.strictEqual(socksServer.lastConnectRequest.host, '0:0:0:0:0:0:0:1')
+  p.strictEqual(socksServer.lastConnectRequest.port, serverPort)
+
+  await p.completed
+})
+
+test('ProxyAgent - connects to IPv6 SOCKS5 proxy and tunnels IPv6 target', async (t) => {
+  const p = tspl(t, { plan: 3 })
+
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('ok-ipv6')
+  })
+  await new Promise((resolve) => server.listen(0, '::1', resolve))
+  const serverPort = server.address().port
+
+  const socksServer = new TestSocks5Server()
+  const socksAddress = await socksServer.listen(0, '::1')
+
+  const proxyAgent = new ProxyAgent(`socks5://[::1]:${socksAddress.port}`)
+
+  t.after(async () => {
+    await proxyAgent.close()
+    await socksServer.close()
+    server.close()
+  })
+
+  const response = await request(`http://[::1]:${serverPort}/`, {
+    dispatcher: proxyAgent
+  })
+
+  p.strictEqual(response.statusCode, 200)
+  p.strictEqual(await response.body.text(), 'ok-ipv6')
+  p.strictEqual(socksServer.lastConnectRequest.atyp, 0x04)
+
+  await p.completed
+})
