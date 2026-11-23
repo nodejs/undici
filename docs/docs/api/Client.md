@@ -149,6 +149,11 @@ added: v1.0.0
       WebSocket messages. Applied to uncompressed messages, compressed frame
       payloads, and decompressed (`permessage-deflate`) messages. Set to `0` to
       disable the limit. **Default:** `134217728`.
+    * `perMessageDeflate` {boolean} Whether to offer the
+      [`permessage-deflate`](https://datatracker.ietf.org/doc/html/rfc7692)
+      extension during the opening handshake. Set to `false` to disable
+      compression; the handshake then fails if the server indicates any
+      extension. **Default:** `true`.
   * `eventSource` {Object} (optional) EventSource-specific configuration.
     * `maxEventSize` {number} The maximum total bytes of data and metadata
       field values retained for a pending EventSource event. Each unfinished

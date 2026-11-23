@@ -15,7 +15,8 @@ const {
 
 const webSocket = {
   maxFragments: 8,
-  maxPayloadSize: 1024
+  maxPayloadSize: 1024,
+  perMessageDeflate: false
 }
 
 const dispatchers = {

@@ -145,6 +145,12 @@ export declare namespace Client {
      * @default 134217728 (128 MB)
      */
     maxPayloadSize?: number;
+    /**
+     * Whether to offer the permessage-deflate extension (RFC 7692) during the opening handshake.
+     * Set to false to disable compression; the handshake then fails if the server indicates any extension.
+     * @default true
+     */
+    perMessageDeflate?: boolean;
   }
 
   export interface H2Options extends Omit<SessionOptions, keyof buildConnector.BuildOptions> {
