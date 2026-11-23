@@ -485,3 +485,45 @@ test('a waiting handler whose error callback also throws does not affect the oth
     ['other end', trailers]
   ])
 })
+
+test('aborting a waiting handler from its own error callback does not notify it twice', t => {
+  const errors = []
+  const handler = new DeduplicationHandler({ onRequestStart () {}, onResponseStart () {} }, () => {})
+  handler.addWaitingHandler({
+    onRequestStart () {},
+    onResponseStart () { throw new Error('start failed') },
+    onResponseError (controller, err) {
+      errors.push(err.message)
+      controller.abort(new Error('abort from error callback'))
+    }
+  })
+
+  handler.onRequestStart({ aborted: false }, {})
+  handler.onResponseStart({ aborted: false }, 200, {}, 'OK')
+
+  t.assert.deepStrictEqual(errors, ['start failed'])
+})
+
+test('a same-key request dispatched from a waiting handler error callback receives the response start once', t => {
+  const starts = []
+  const handler = new DeduplicationHandler({ onRequestStart () {}, onResponseStart () {} }, () => {})
+  let redispatched = false
+  handler.addWaitingHandler({
+    onRequestStart () {},
+    onResponseStart () { throw new Error('start failed') },
+    onResponseError () {
+      if (redispatched) return
+      redispatched = true
+      handler.addWaitingHandler({
+        onRequestStart () {},
+        onResponseStart () { starts.push('start') },
+        onResponseError () {}
+      })
+    }
+  })
+
+  handler.onRequestStart({ aborted: false }, {})
+  handler.onResponseStart({ aborted: false }, 200, {}, 'OK')
+
+  t.assert.deepStrictEqual(starts, ['start'])
+})
