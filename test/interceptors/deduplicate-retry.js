@@ -112,9 +112,13 @@ for (const deduplicateFirst of [true, false]) {
 
 test('a waiting caller whose start callback throws reaches a composed retry interceptor as a failed attempt, not an abort', { timeout: 5000 }, async t => {
   let hits = 0
+  let primaryResponse
+  const primaryReceived = Promise.withResolvers()
   const server = createServer((req, res) => {
     hits++
-    setTimeout(() => res.writeHead(200).end('body'), 50)
+    // Hold the response until the waiting caller has joined.
+    primaryResponse = res
+    primaryReceived.resolve()
   })
   t.after(() => server.close())
   server.listen(0)
@@ -149,7 +153,8 @@ test('a waiting caller whose start callback throws reaches a composed retry inte
     })
   })
 
-  await new Promise(resolve => setTimeout(resolve, 10))
+  // The origin has the primary request, so the waiting caller attaches to it.
+  await primaryReceived.promise
 
   const waitingDone = new Promise((resolve) => {
     client.dispatch({ method: 'GET', path: '/' }, {
@@ -160,6 +165,8 @@ test('a waiting caller whose start callback throws reaches a composed retry inte
       onResponseError (controller, err) { events.push(`waiting error: ${err.message}:aborted=${controller.aborted}`); resolve() }
     })
   })
+
+  primaryResponse.writeHead(200).end('body')
 
   await Promise.all([primaryDone, waitingDone])
   // The waiter's caller is failed with the thrown error instead of hanging.
