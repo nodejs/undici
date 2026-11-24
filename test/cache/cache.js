@@ -14,6 +14,25 @@ test('constructor', (t) => {
   })
 })
 
+test('cache.addAll validates every URL before starting fetches', async (t) => {
+  let requests = 0
+  const server = createServer((req, res) => {
+    requests++
+    res.writeHead(404).end()
+  }).listen(0, '127.0.0.1')
+
+  t.after(closeServerAsPromise(server))
+  await once(server, 'listening')
+
+  const cache = await caches.open('invalid-url')
+  t.after(() => caches.delete('invalid-url'))
+
+  const url = `http://127.0.0.1:${server.address().port}/`
+  await t.assert.rejects(cache.addAll([url, 'invalid-url']), TypeError)
+
+  t.assert.strictEqual(requests, 0)
+})
+
 // https://github.com/nodejs/undici/issues/4710
 test('cache.match should work after garbage collection', async (t) => {
   const cache = await caches.open('test-gc-cache')
