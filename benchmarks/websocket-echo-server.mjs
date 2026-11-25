@@ -1,11 +1,7 @@
 import { Worker, isMainThread, parentPort, threadId } from 'node:worker_threads'
 import { cpus } from 'node:os'
-import { createRequire } from 'node:module'
 import url from 'node:url'
-
-// Load the CommonJS entry point: the ESM wrapper shipped with
-// uWebSockets.js v20.71.0 imports a non-existent './index.js'.
-const uws = createRequire(import.meta.url)('uWebSockets.js')
+import uws from 'uWebSockets.js'
 
 const __filename = url.fileURLToPath(import.meta.url)
 
