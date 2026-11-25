@@ -672,3 +672,36 @@ test('removes cookie header on third party origin', async t => {
 
   await t.completed
 })
+
+test('a relative Location after a path starting with // stays on the origin', async t => {
+  t = tspl(t, { plan: 2 })
+  const { createServer } = require('node:http')
+  const { once } = require('node:events')
+  const seen = []
+  const server = createServer((req, res) => {
+    seen.push(req.url)
+    if (req.url === '//users/start') {
+      res.writeHead(302, { location: '/login' })
+      return res.end()
+    }
+    res.end('ok')
+  })
+  after(() => server.close())
+
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const dispatcher = new undici.Agent().compose(redirect({ maxRedirections: 3 }))
+  after(() => dispatcher.close())
+
+  const { statusCode, body } = await undici.request({
+    origin: `http://127.0.0.1:${server.address().port}`,
+    path: '//users/start',
+    method: 'GET',
+    dispatcher
+  })
+  await body.dump()
+
+  t.strictEqual(statusCode, 200)
+  t.deepStrictEqual(seen, ['//users/start', '/login'])
+})
