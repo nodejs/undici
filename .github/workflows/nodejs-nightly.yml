@@ -1,6 +1,8 @@
 name: Node.js Nightly
 
 on:
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "0 10 * * *"
@@ -32,7 +34,6 @@ jobs:
     needs: nightly-version
     strategy:
       fail-fast: false
-      max-parallel: 0
       matrix:
         runs-on: [ubuntu-latest, windows-latest, macos-latest]
     uses: ./.github/workflows/nodejs.yml
@@ -58,7 +59,9 @@ jobs:
       node-download-server-path: '/nightly'
 
   report-failure:
-    if: ${{ always() && (needs.nightly-version.result == 'failure' || needs.test.result == 'failure' || needs.test-shared-builtin.result == 'failure' || needs.autobahn.result == 'failure') }}
+    if: >-
+      ${{ always() && github.repository == 'nodejs/undici' && github.event_name != 'pull_request' &&
+      (needs.nightly-version.result == 'failure' || needs.test.result == 'failure' || needs.test-shared-builtin.result == 'failure' || needs.autobahn.result == 'failure') }}
     needs:
       - nightly-version
       - test

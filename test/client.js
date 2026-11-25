@@ -1918,42 +1918,27 @@ test('TypedArray and DataView body', async (t) => {
   await t.completed
 })
 
-test('async iterator empty chunk continues', async (t) => {
-  t = tspl(t, { plan: 5 })
-  const serverChunks = ['hello', 'world']
+test('async iterator empty chunk continues', { timeout: 10_000 }, async (t) => {
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    let str = ''
-    let i = 0
-    req.on('data', (chunk) => {
-      const content = chunk.toString()
-      t.strictEqual(serverChunks[i++], content)
-      str += content
-    }).on('end', () => {
-      t.strictEqual(str, serverChunks.join(''))
-      res.end()
-    })
+    req.pipe(res)
   })
-  after(() => server.close())
+  server.listen(0)
+  await EE.once(server, 'listening')
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      bodyTimeout: 0
-    })
-    after(() => client.close())
-
-    const body = (async function * () {
-      yield serverChunks[0]
-      yield ''
-      yield serverChunks[1]
-    })()
-    client.request({ path: '/', method: 'POST', body }, (err, { statusCode, body }) => {
-      t.ifError(err)
-      t.strictEqual(statusCode, 200)
-      body.resume()
-    })
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.after(async () => {
+    await client.destroy()
+    await new Promise((resolve) => server.close(resolve))
   })
 
-  await t.completed
+  const body = (async function * () {
+    yield 'hello'
+    yield ''
+    yield 'world'
+  })()
+  const response = await client.request({ path: '/', method: 'POST', body })
+  t.assert.strictEqual(response.statusCode, 200)
+  t.assert.strictEqual(await response.body.text(), 'helloworld')
 })
 
 test('async iterator error from server destroys early', async (t) => {

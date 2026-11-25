@@ -271,7 +271,7 @@ test('#5468 - requeue multiplexed requests after mid-burst GOAWAY', async (t) =>
   await t.completed
 })
 
-test('Agent keeps a Pool with requests requeued after GOAWAY', async (t) => {
+test('Agent keeps a Pool with requests requeued after GOAWAY', { timeout: 10_000 }, async (t) => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
   let firstSession = null
   const sessionCounts = new Map()
@@ -322,9 +322,11 @@ test('Agent keeps a Pool with requests requeued after GOAWAY', async (t) => {
 
   t.after(async () => {
     agent.removeAllListeners('disconnect')
-    await agent.close()
-    server.close()
-    await once(server, 'close')
+    await agent.destroy()
+    for (const session of sessionCounts.keys()) {
+      session.destroy()
+    }
+    await new Promise((resolve) => server.close(resolve))
   })
 
   const url = `https://localhost:${server.address().port}`

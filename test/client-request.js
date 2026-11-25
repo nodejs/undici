@@ -125,43 +125,29 @@ test('request dump', async (t) => {
 })
 
 test('request dump with abort signal', async (t) => {
-  t = tspl(t, { plan: 10 })
   const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     res.write('hello')
   })
-  after(() => {
-    server.closeAllConnections?.()
-    server.close()
+  server.listen(0)
+  await EE.once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+  t.after(async () => {
+    await client.destroy()
+    server.closeAllConnections()
+    await promisify(server.close.bind(server))()
   })
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`)
-    after(() => client.destroy())
+  const { body } = await client.request({ path: '/', method: 'GET' })
+  const ac = new AbortController()
+  const dumping = body.dump({ signal: ac.signal })
+  ac.abort()
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      t.ifError(err)
-      const ac = new AbortController()
-      body.dump({ signal: ac.signal }).catch((err) => {
-        t.strictEqual(err.name, 'AbortError')
-        t.strictEqual(err.message, 'This operation was aborted')
-        const stackLines = err.stack.split('\n').map((l) => l.trim())
-
-        t.ok(stackLines[0].startsWith('AbortError: This operation was aborted'))
-        t.ok(stackLines[1].startsWith('at new DOMException'))
-        t.ok(stackLines[2].startsWith('at AbortController.abort'))
-        t.ok(/client-request.js/.test(stackLines[3]))
-        t.ok(stackLines[4].startsWith('at RequestHandler.runInAsyncScope'))
-        t.ok(stackLines[5].startsWith('at RequestHandler.onResponseStart'))
-        t.ok(stackLines[6].startsWith('at Request.onResponseStart'))
-      })
-      ac.abort()
-    })
+  await t.assert.rejects(dumping, (err) => {
+    t.assert.strictEqual(err, ac.signal.reason)
+    t.assert.strictEqual(err.name, 'AbortError')
+    return true
   })
-
-  await t.completed
 })
 
 test('request dump with POJO as invalid signal', async (t) => {

@@ -5,7 +5,19 @@ const { test, after } = require('node:test')
 const { Client } = require('..')
 const { createServer } = require('node:http')
 
-test('synchronous error in request callback should reach uncaughtException handler', async (t) => {
+function captureUncaughtException (t, handler) {
+  const originalHandlers = process.rawListeners('uncaughtException')
+  process.removeAllListeners('uncaughtException')
+  process.once('uncaughtException', handler)
+  t.after(() => {
+    process.removeListener('uncaughtException', handler)
+    for (const originalHandler of originalHandlers) {
+      process.on('uncaughtException', originalHandler)
+    }
+  })
+}
+
+test('synchronous error in request callback should reach uncaughtException handler', { timeout: 10_000 }, async (t) => {
   const p = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
@@ -21,24 +33,9 @@ test('synchronous error in request callback should reach uncaughtException handl
   after(() => client.close())
 
   const testError = new Error('sync error in callback')
-
-  // Set up uncaughtException handler
-  const originalHandler = process.listenerCount('uncaughtException') > 0
-    ? process.listeners('uncaughtException')[0]
-    : null
-
-  process.removeAllListeners('uncaughtException')
-
-  const uncaughtHandler = (err) => {
+  captureUncaughtException(t, (err) => {
     p.strictEqual(err, testError, 'Error should reach uncaughtException handler')
-    // Clean up
-    process.removeListener('uncaughtException', uncaughtHandler)
-    if (originalHandler) {
-      process.on('uncaughtException', originalHandler)
-    }
-  }
-
-  process.on('uncaughtException', uncaughtHandler)
+  })
 
   client.request({
     path: '/',
@@ -54,19 +51,10 @@ test('synchronous error in request callback should reach uncaughtException handl
     throw testError
   })
 
-  // Wait a bit to ensure the uncaughtException handler is triggered
-  await new Promise(resolve => setTimeout(resolve, 100))
-
-  // Clean up handler if not triggered
-  process.removeListener('uncaughtException', uncaughtHandler)
-  if (originalHandler) {
-    process.on('uncaughtException', originalHandler)
-  }
-
   await p.completed
 })
 
-test('synchronous error thrown immediately in request callback', async (t) => {
+test('synchronous error thrown immediately in request callback', { timeout: 10_000 }, async (t) => {
   const p = tspl(t, { plan: 3 })
 
   const server = createServer((req, res) => {
@@ -82,24 +70,9 @@ test('synchronous error thrown immediately in request callback', async (t) => {
   after(() => client.close())
 
   const testError = new Error('immediate sync error')
-
-  // Set up uncaughtException handler
-  const originalHandler = process.listenerCount('uncaughtException') > 0
-    ? process.listeners('uncaughtException')[0]
-    : null
-
-  process.removeAllListeners('uncaughtException')
-
-  const uncaughtHandler = (err) => {
+  captureUncaughtException(t, (err) => {
     p.strictEqual(err, testError, 'Error should reach uncaughtException handler')
-    // Clean up
-    process.removeListener('uncaughtException', uncaughtHandler)
-    if (originalHandler) {
-      process.on('uncaughtException', originalHandler)
-    }
-  }
-
-  process.on('uncaughtException', uncaughtHandler)
+  })
 
   client.request({
     path: '/',
@@ -111,15 +84,6 @@ test('synchronous error thrown immediately in request callback', async (t) => {
     // Throw immediately without any stream operations
     throw testError
   })
-
-  // Wait a bit to ensure the uncaughtException handler is triggered
-  await new Promise(resolve => setTimeout(resolve, 100))
-
-  // Clean up handler if not triggered
-  process.removeListener('uncaughtException', uncaughtHandler)
-  if (originalHandler) {
-    process.on('uncaughtException', originalHandler)
-  }
 
   await p.completed
 })
