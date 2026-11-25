@@ -106,7 +106,11 @@ await fetch('https://example.com', {
 ```
 
 Those combinations may behave differently across Node.js and undici versions.
-Using matching pairs keeps multipart handling predictable.
+The same rule applies to `Request`, `Response`, and `Headers`: objects created
+by Node.js' built-in globals are not guaranteed to interoperate with `fetch`
+imported from a different `undici` package version, and the reverse is also
+unsupported. Use one implementation consistently, or call `install()` once at
+process startup if globals are required.
 
 ## When you do NOT need to install undici
 
