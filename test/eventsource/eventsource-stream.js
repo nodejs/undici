@@ -31,6 +31,17 @@ describe('EventSourceStream', () => {
     t.assert.strictEqual(messages[0].options.data, 'hello')
   })
 
+  test('sets the reconnection time before the event is dispatched', async (t) => {
+    const stream = new EventSourceStream({ eventSourceSettings: { reconnectionTime: 3000 } })
+    t.after(() => stream.destroy())
+
+    stream.write(Buffer.from('retry: 100\n'))
+    t.assert.strictEqual(stream.state.reconnectionTime, 100)
+
+    stream.write(Buffer.from('retry: 200x\n'))
+    t.assert.strictEqual(stream.state.reconnectionTime, 100)
+  })
+
   test('accepts one-byte event and retry fields at a one-byte limit', async (t) => {
     for (const line of ['event: X\n\n', 'retry: 1\n\n']) {
       await t.test(line.trim(), async () => {
