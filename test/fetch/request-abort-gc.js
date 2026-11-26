@@ -323,3 +323,50 @@ test('fetch follows copied request signals after garbage collection', {
     }
   }
 })
+
+test('request defers attaching source abort listener until signal is accessed', () => {
+  const controller = new AbortController()
+  const request = new Request('http://localhost', { signal: controller.signal })
+
+  assert.strictEqual(getEventListeners(controller.signal, 'abort').length, 0)
+
+  const signal = request.signal
+  assert.strictEqual(signal, request.signal)
+  assert.strictEqual(getEventListeners(controller.signal, 'abort').length, 1)
+
+  const reason = new Error('abort after read')
+  controller.abort(reason)
+  assert.strictEqual(signal.aborted, true)
+  assert.strictEqual(signal.reason, reason)
+})
+
+test('request preserves abort reason when source aborts before signal is accessed', () => {
+  for (const reason of [new Error('abort before read'), 0, false, '']) {
+    const controller = new AbortController()
+    const request = new Request('http://localhost', { signal: controller.signal })
+
+    controller.abort(reason)
+    assert.strictEqual(getEventListeners(controller.signal, 'abort').length, 0)
+    assert.strictEqual(request.signal.aborted, true)
+    assert.strictEqual(request.signal.reason, reason)
+    assert.strictEqual(request.signal, request.signal)
+  }
+})
+
+test('request copy and clone read internal signal slot rather than own signal property', () => {
+  const controller = new AbortController()
+  const request = new Request('http://localhost', { signal: controller.signal })
+  const decoy = new AbortController()
+  Object.defineProperty(request, 'signal', { value: decoy.signal, configurable: true })
+
+  const copy = new Request(request)
+  const clone = request.clone()
+
+  const reason = new Error('real source')
+  controller.abort(reason)
+
+  assert.strictEqual(copy.signal.aborted, true)
+  assert.strictEqual(copy.signal.reason, reason)
+  assert.strictEqual(clone.signal.aborted, true)
+  assert.strictEqual(clone.signal.reason, reason)
+})

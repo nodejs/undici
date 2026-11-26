@@ -443,3 +443,16 @@ test('Issue#2465', async (t) => {
   const request = new Request('http://localhost', { body: new SharedArrayBuffer(0), method: 'POST' })
   t.assert.strictEqual(await request.text(), '[object SharedArrayBuffer]')
 })
+
+test('new Request(request, { headers }) replaces input headers', (t) => {
+  const original = new Request('http://localhost', {
+    headers: { 'x-old': '1', 'set-cookie': 'a=1' }
+  })
+  const replaced = new Request(original, {
+    headers: { 'x-new': '2' }
+  })
+
+  t.assert.deepStrictEqual([...replaced.headers], [['x-new', '2']])
+  t.assert.deepStrictEqual(replaced.headers.getSetCookie(), [])
+  t.assert.strictEqual(original.headers.get('x-old'), '1')
+})
