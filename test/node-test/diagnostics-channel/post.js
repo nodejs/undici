@@ -8,7 +8,7 @@ const { createServer } = require('node:http')
 
 test('Diagnostics channel - post', (t) => {
   const assert = tspl(t, { plan: 39 })
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+  const server = createServer({ joinDuplicateHeaders: true, keepAliveTimeout: 5000 }, (req, res) => {
     req.resume()
     res.setHeader('Content-Type', 'text/plain')
     res.setHeader('trailer', 'foo')
@@ -148,6 +148,7 @@ test('Diagnostics channel - post', (t) => {
       const client = new Client(`http://localhost:${server.address().port}`, {
         keepAliveTimeout: 300e3
       })
+      t.after(() => client.destroy())
 
       client.request({
         path: '/',

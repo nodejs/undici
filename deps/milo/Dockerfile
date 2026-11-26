@@ -32,5 +32,6 @@ ENV RUSTUP_TOOLCHAIN=${RUST_TOOLCHAIN}
 WORKDIR /workspace/parser
 
 # Build from an internal copy so Cargo and the build tasks cannot modify the
-# read-only source mount. Only the generated WASM artifacts are written out.
-CMD ["sh", "-ec", "cp -a /src /tmp/milo && cd /tmp/milo/parser && makers wasm && mkdir -p /output && cp -a /tmp/milo/dist/wasm/. /output/"]
+# read-only source mount. Make generated files removable by the host user,
+# whose UID can differ from the container's node user.
+CMD ["sh", "-ec", "cp -a /src /tmp/milo && cd /tmp/milo/parser && makers wasm && cp -R /tmp/milo/dist/wasm/* /output/ && chmod -R a+rwX /output/release /output/debug"]

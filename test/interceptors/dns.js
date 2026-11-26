@@ -684,7 +684,7 @@ test('Should automatically resolve IPs (dual stack disabled - 6)', { skip: !ipv6
 test('Should we handle TTL (4)', async t => {
   t = tspl(t, { plan: 10 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ toFake: ['Date'] })
   let counter = 0
   let lookupCounter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -787,7 +787,7 @@ test('Should we handle TTL (4)', async t => {
 test('Should we handle TTL (6)', { skip: !ipv6Available }, async t => {
   t = tspl(t, { plan: 10 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ toFake: ['Date'] })
   let counter = 0
   let lookupCounter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -892,7 +892,7 @@ test('Should we handle TTL (6)', { skip: !ipv6Available }, async t => {
 test('Should set lowest TTL between resolved and option maxTTL', async t => {
   t = tspl(t, { plan: 9 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ toFake: ['Date'] })
   let lookupCounter = 0
   const server = createServer({ joinDuplicateHeaders: true })
   const requestOptions = {
@@ -1268,7 +1268,7 @@ test('Should use all dns entries (dual stack disabled - 6)', async t => {
 test('Should handle single family resolved (dual stack)', async t => {
   t = tspl(t, { plan: 7 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ toFake: ['Date'] })
   let counter = 0
   let lookupCounter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -1359,7 +1359,7 @@ test('Should handle single family resolved (dual stack)', async t => {
 test('Should prefer affinity (dual stack - 4)', async t => {
   t = tspl(t, { plan: 10 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ toFake: ['Date'] })
   let counter = 0
   let lookupCounter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -1461,7 +1461,7 @@ test('Should prefer affinity (dual stack - 4)', async t => {
 test('Should prefer affinity (dual stack - 6)', async t => {
   t = tspl(t, { plan: 10 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ toFake: ['Date'] })
   let counter = 0
   let lookupCounter = 0
   const server = createServer({ joinDuplicateHeaders: true })
@@ -2401,7 +2401,7 @@ test('#4234 - Should pass Pool requests without origin through', async t => {
 test('Should not fail over to a TTL-expired address (dual stack)', async t => {
   t = tspl(t, { plan: 4 })
 
-  const clock = FakeTimers.install()
+  const clock = FakeTimers.install({ toFake: ['Date'] })
   const attempts = []
   const server = createServer({ joinDuplicateHeaders: true })
 

@@ -802,15 +802,14 @@ test('global api', async t => {
 
   t.after(closeServerAsPromise(server))
 
-  server.listen(0, async () => {
-    const origin = `http://localhost:${server.address().port}`
-    await request(origin, { path: '/foo' })
-    await request(`${origin}/foo`)
-    await request({ origin, path: '/foo' })
-    await stream({ origin, path: '/foo' }, () => new PassThrough())
-    await request({ protocol: 'http:', hostname: 'localhost', port: server.address().port, path: '/foo' })
-    await request(`${origin}/bar`, { body: 'asd' })
-  })
+  await once(server.listen(0), 'listening')
+  const origin = `http://localhost:${server.address().port}`
+  await (await request(origin, { path: '/foo' })).body.dump()
+  await (await request(`${origin}/foo`)).body.dump()
+  await (await request({ origin, path: '/foo' })).body.dump()
+  await stream({ origin, path: '/foo' }, () => new PassThrough())
+  await (await request({ protocol: 'http:', hostname: 'localhost', port: server.address().port, path: '/foo' })).body.dump()
+  await (await request(`${origin}/bar`, { body: 'asd' })).body.dump()
 
   await p.completed
 })
