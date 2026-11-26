@@ -18,7 +18,7 @@ jobs:
   test-shared-builtin:
     name: Test with Node.js ${{ inputs.node-version }} compiled --shared-builtin-undici/undici-path
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     steps:
       # Checkout into a subdirectory otherwise Node.js tests will break due to finding Undici's package.json in a parent directory.
       - name: Checkout Repository

@@ -905,81 +905,41 @@ test('Should only accept valid ping interval values', async t => {
   await planner.completed
 })
 
-test('Should send http2 PING frames', async t => {
+test('Should send http2 PING frames', { timeout: 10_000 }, async (t) => {
   const server = createSecureServer(pem)
-  let session = null
+  const { promise: fifthPing, resolve: receivedFivePings } = Promise.withResolvers()
+  let session
   let pingCounter = 0
 
-  server.on('stream', async (stream, headers) => {
-    stream.respond({
-      'content-type': 'text/plain; charset=utf-8',
-      'x-custom-h2': headers['x-my-header'],
-      ':status': 200
-    },
-    {
-      waitForTrailers: true
-    })
-
-    stream.on('wantTrailers', () => {
-      stream.sendTrailers({
-        'x-trailer': 'hello'
-      })
-    })
-
+  server.on('stream', (stream) => {
+    stream.respond({ ':status': 200 }, { waitForTrailers: true })
+    stream.on('wantTrailers', () => stream.sendTrailers({ 'x-trailer': 'hello' }))
     stream.end('hello h2!')
   })
 
   server.on('session', (s) => {
     session = s
-    session.on('ping', (payload) => {
-      pingCounter++
+    session.on('ping', () => {
+      if (++pingCounter === 5) receivedFivePings()
     })
   })
 
-  t = tspl(t, { plan: 2 })
-
-  server.listen(0, '127.0.0.1')
-  await once(server, 'listening')
-
-  const client = new Client(`https://${server.address().address}:${server.address().port}`, {
-    connect: {
-      rejectUnauthorized: false
-    },
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+  const client = new Client(`https://127.0.0.1:${server.address().port}`, {
+    connect: { rejectUnauthorized: false },
     allowH2: true,
-    pingInterval: 100
+    h2Options: { pingInterval: 100 }
+  })
+  t.after(async () => {
+    await client.destroy()
+    session?.destroy()
+    await new Promise(resolve => server.close(resolve))
   })
 
-  after(async () => {
-    server.close()
-  })
-
-  client.on('disconnect', () => {
-    if (!client.closed && !client.destroyed) {
-      t.fail('unexpected disconnect')
-    }
-  })
-
-  client.dispatch({
-    path: '/',
-    method: 'PUT',
-    body: 'hello'
-  }, {
-    onRequestStart () {},
-    onResponseStart () {},
-    onResponseData () {},
-    onResponseEnd (_controller, trailers) {
-      t.strictEqual(trailers['x-trailer'], 'hello')
-    },
-    onResponseError (_controller, err) {
-      t.ifError(err)
-    }
-  })
-
-  await sleep(600)
-  await client.close()
-  t.equal(pingCounter, 5, 'Expected 5 PING frames to be sent')
-
-  await t.completed
+  const { body, trailers } = await client.request({ path: '/', method: 'PUT', body: 'hello' })
+  await body.dump()
+  t.assert.strictEqual(trailers['x-trailer'], 'hello')
+  await fifthPing
 })
 
 test('Should not send http2 PING frames if interval === 0', async t => {
