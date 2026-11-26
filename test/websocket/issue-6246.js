@@ -11,6 +11,8 @@ const { createServer } = require('node:http')
 const { once } = require('node:events')
 const { createDeflateRaw, constants } = require('node:zlib')
 const { WebSocket } = require('../..')
+const { ByteParser } = require('../../lib/web/websocket/receiver')
+const { states } = require('../../lib/web/websocket/constants')
 
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
 
@@ -304,4 +306,89 @@ test('messages in the same chunk as a close frame are still delivered before clo
       'm2', 'microtask(m2)'
     ]
   })
+})
+
+// Drive the parser directly so the second chunk is parsed after the microtask
+// checkpoint and before the turns armed for the first chunk. A real socket
+// delivers that second chunk in a later poll, which hides the reordering.
+function createRecordingParser (log) {
+  const socket = {
+    writableNeedDrain: false,
+    write (frame) {
+      log.push(frame[0] === 0x88 ? 'close' : 'frame')
+      return true
+    },
+    once () {}
+  }
+  const handler = {
+    readyState: states.OPEN,
+    closeState: new Set(),
+    socket,
+    // WebSocket.#onMessage drops the event once the handshake has left OPEN.
+    onMessage (_opcode, data) {
+      const text = data.toString()
+      if (handler.readyState !== states.OPEN) {
+        log.push(`dropped:${text}`)
+        return
+      }
+      log.push(text)
+      queueMicrotask(() => log.push(`microtask(${text})`))
+    },
+    onPing () {},
+    onPong () {}
+  }
+  return new ByteParser(handler)
+}
+
+function waitForLog (log, length) {
+  return new Promise((resolve) => {
+    let turns = 0
+    const check = () => {
+      if (log.length >= length || ++turns === 8) {
+        resolve()
+        return
+      }
+      setImmediate(check)
+    }
+    setImmediate(check)
+  })
+}
+
+test('a subsequent message chunk stays behind messages already waiting', async (t) => {
+  const log = []
+  const parser = createRecordingParser(log)
+  t.after(() => parser.destroy())
+
+  parser.write(Buffer.concat([textFrame('m1'), textFrame('m2')]))
+  queueMicrotask(() => {
+    parser.write(textFrame('m3'))
+  })
+
+  await waitForLog(log, 6)
+
+  t.assert.deepStrictEqual(log, [
+    'm1', 'microtask(m1)',
+    'm2', 'microtask(m2)',
+    'm3', 'microtask(m3)'
+  ])
+})
+
+test('a separate close-only chunk delivers pending messages before close', async (t) => {
+  const log = []
+  const parser = createRecordingParser(log)
+  t.after(() => parser.destroy())
+
+  const closeFrame = Buffer.from([0x88, 0x02, 0x03, 0xE8])
+  parser.write(Buffer.concat([textFrame('m1'), textFrame('m2')]))
+  queueMicrotask(() => {
+    parser.write(closeFrame)
+  })
+
+  await waitForLog(log, 5)
+
+  t.assert.deepStrictEqual(log, [
+    'm1', 'microtask(m1)',
+    'm2', 'microtask(m2)',
+    'close'
+  ])
 })
