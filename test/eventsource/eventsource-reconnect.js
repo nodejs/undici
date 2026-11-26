@@ -10,7 +10,7 @@ describe('EventSource - reconnect', () => {
   test('Should reconnect on connection closed by server', (t, done) => {
     t.plan(1)
 
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install({ toFake: ['setTimeout', 'clearTimeout'] })
     after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -43,7 +43,7 @@ describe('EventSource - reconnect', () => {
 
   test('Should reconnect on with reconnection timeout', (t, done) => {
     t.plan(2)
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
     after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -80,7 +80,7 @@ describe('EventSource - reconnect', () => {
 
   test('Should reconnect on with modified reconnection timeout', (t, done) => {
     t.plan(3)
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
     after(() => clock.uninstall())
 
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
@@ -223,7 +223,7 @@ describe('EventSource - reconnect', () => {
 
   test('Should reconnect and UTF-8 encode lastEventId', async (t) => {
     t.plan(1)
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install({ toFake: ['setTimeout', 'clearTimeout'] })
     after(() => clock.uninstall())
 
     let requestCount = 0

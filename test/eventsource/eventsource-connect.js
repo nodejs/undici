@@ -224,7 +224,7 @@ describe('EventSource - received response must have content-type to be text/even
   })
 
   test('should try to connect again if server is unreachable', async (t) => {
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
 
     after(() => clock.uninstall())
     const reconnectionTime = defaultReconnectionTime
@@ -257,7 +257,7 @@ describe('EventSource - received response must have content-type to be text/even
 
   test('should try to connect again if server is unreachable, configure reconnectionTime', async (t) => {
     const reconnectionTime = 1000
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
     after(() => clock.uninstall())
 
     const domain = 'bad.n' + randomInt(1e10).toString(36) + '.proxy'
