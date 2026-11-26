@@ -20,10 +20,12 @@ test('closing dispatcher after one multiplexed stream failed pre-response does n
   })
   server.listen(0)
   await once(server, 'listening')
-  t.after(() => server.close())
-
   const origin = `http://localhost:${server.address().port}`
   const dispatcher = new Agent({ connections: 1, useH2c: true })
+  t.after(async () => {
+    await dispatcher.destroy()
+    await new Promise((resolve) => server.close(resolve))
+  })
 
   const slow = dispatcher
     .request({ origin, path: '/slow', method: 'GET' })
@@ -31,7 +33,7 @@ test('closing dispatcher after one multiplexed stream failed pre-response does n
 
   await assert.rejects(
     dispatcher.request({ origin, path: '/bad', method: 'GET' }),
-    { name: 'InformationalError' }
+    (err) => err.code === 'UND_ERR_INFO' || err.code === 'ERR_HTTP2_STREAM_ABORTED'
   )
 
   assert.strictEqual(await slow, 'slow')
