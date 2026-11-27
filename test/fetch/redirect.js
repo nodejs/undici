@@ -75,3 +75,22 @@ test('Redirecting with a body does not fail to write body - #2543', async (t) =>
   t.assert.strictEqual(await resp.text(), 'ok')
   t.assert.ok(resp.redirected)
 })
+
+// https://github.com/nodejs/undici/issues/6178
+test('A redirect status without a Location header keeps its body - #6178', async (t) => {
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    // 302 with no `location`, and the body arrives after the headers.
+    res.writeHead(302, { 'content-type': 'application/json' })
+    res.flushHeaders()
+    res.write('{"error":')
+    setTimeout(() => res.end('"login required"}'), 50)
+  }).listen(0)
+
+  t.after(closeServerAsPromise(server))
+  await once(server, 'listening')
+
+  const resp = await fetch(`http://localhost:${server.address().port}/`)
+  t.assert.strictEqual(resp.status, 302)
+  t.assert.ok(!resp.redirected)
+  t.assert.strictEqual(await resp.text(), '{"error":"login required"}')
+})
