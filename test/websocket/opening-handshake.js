@@ -189,6 +189,10 @@ test('WebSocket over H2 fails the handshake when the extended CONNECT response i
       session.on('close', () => sessions.delete(session))
     })
     .on('stream', (stream) => {
+      stream.on('error', (err) => {
+        // The client closes the stream after rejecting the handshake.
+        if (err.code !== 'ERR_HTTP2_STREAM_ABORTED') throw err
+      })
       stream.respond({ ':status': 401 })
       stream.end()
     })

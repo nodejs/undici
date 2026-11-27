@@ -202,7 +202,7 @@ describe('EventSource - message', () => {
   })
 
   test('Should not emit a custom type message if no data is provided', (t, done) => {
-    const clock = FakeTimers.install()
+    const clock = FakeTimers.install({ toFake: ['setTimeout', 'clearTimeout'] })
     after(() => clock.uninstall())
 
     t.plan(1)

@@ -9,8 +9,8 @@ const pem = require('@metcoder95/https-pem')
 
 const { Client } = require('..')
 
-// RST_STREAM(CANCEL) received before the response is the one reset code Node
-// reports as a bare 'close' on the client stream:
+// On Node versions that do not surface premature resets as stream errors,
+// RST_STREAM(CANCEL) before the response is reported as a bare 'close':
 //
 //   RST NO_ERROR        -> 'end', 'close'
 //   RST PROTOCOL_ERROR  -> 'error', 'close'
@@ -58,10 +58,11 @@ test('a stream cancelled before the response settles the request', async () => {
     new Promise((resolve) => { timer = setTimeout(() => resolve('never settled'), 5000) })
   ]).finally(() => clearTimeout(timer))
 
-  assert.strictEqual(outcome, 'UND_ERR_INFO', 'a cancelled stream must not strand its request')
+  assert.ok(outcome === 'UND_ERR_INFO' || outcome === 'ERR_HTTP2_STREAM_ABORTED',
+    `a cancelled stream must reject its request, got ${outcome}`)
 })
 
-test('a stream cancelled after the response headers still completes', async () => {
+test('a stream cancelled after the response headers settles the response body', async () => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
   server.on('stream', (stream) => {
@@ -87,5 +88,13 @@ test('a stream cancelled after the response headers still completes', async () =
 
   const res = await client.request({ path: '/', method: 'GET' })
   assert.strictEqual(res.statusCode, 200)
-  assert.strictEqual(await res.body.text(), '')
+  let body
+  try {
+    body = await res.body.text()
+  } catch (err) {
+    assert.strictEqual(err.code, 'ERR_HTTP2_STREAM_ABORTED')
+    assert.strictEqual(err.http2ErrorCode, constants.NGHTTP2_CANCEL)
+    return
+  }
+  assert.strictEqual(body, '')
 })

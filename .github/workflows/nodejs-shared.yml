@@ -18,7 +18,7 @@ jobs:
   test-shared-builtin:
     name: Test with Node.js ${{ inputs.node-version }} compiled --shared-builtin-undici/undici-path
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 150
     steps:
       # Checkout into a subdirectory otherwise Node.js tests will break due to finding Undici's package.json in a parent directory.
       - name: Checkout Repository
@@ -43,7 +43,6 @@ jobs:
       - name: Rebuild llhttp WASM from vendored sources
         working-directory: ./undici
         run: |
-          export EXTERNAL_PATH=${{ github.workspace }}/undici
           export WASM_CC=clang
           export WASM_CFLAGS='--target=wasm32-wasi --sysroot=/usr'
           export WASM_LDFLAGS='-nodefaultlibs'
@@ -52,10 +51,14 @@ jobs:
 
       - name: Rebuild Milo WASM from vendored sources
         working-directory: ./undici
-        run: |
-          # Removing bundled artifacts ensures this job cannot reuse prebuilt Milo.
-          rm lib/milo
-          node build/milo.js
+        # The build script replaces the bundled artifacts with the build output.
+        run: node build/milo.js
+
+      - name: Bundle Undici for the shared builtin
+        working-directory: ./undici
+        # Node loads this file as a builtin. Loading other files with require()
+        # would need filesystem permissions when the permission model is enabled.
+        run: npm exec --no -- esbuild index-fetch.js --bundle --platform=node --keep-names --define:__UNDICI_IS_NODE__=true --outfile=undici-shared.js
 
       - name: Determine latest release for Node.js ${{ inputs.node-version }}
         id: release
@@ -94,7 +97,7 @@ jobs:
           export CC="ccache gcc"
           export CXX="ccache g++"
           rm -rf deps/undici
-          ./configure --shared-builtin-undici/undici-path ${{ github.workspace }}/undici/loader.js --ninja --prefix=./final
+          ./configure --shared-builtin-undici/undici-path "${{ github.workspace }}/undici/undici-shared.js" --ninja --prefix=./final
           make
           if grep -q '^build-ffi-tests:' Makefile; then
             make build-ffi-tests

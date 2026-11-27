@@ -194,153 +194,41 @@ test('pipeline 1 is 1 active request', async (t) => {
   await t.completed
 })
 
-test('pipelined chunked POST stream', async (t) => {
-  t = tspl(t, { plan: 4 + 8 + 8 })
-
-  let a = 0
-  let b = 0
-
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    req.on('data', chunk => {
-      // Make sure a and b don't interleave.
-      t.ok(a === 9 || b === 0)
-      res.write(chunk)
-    }).on('end', () => {
-      res.end()
+for (const kind of ['stream', 'iterator']) {
+  test(`pipelined chunked POST ${kind}`, { timeout: 10_000 }, async (t) => {
+    const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      req.pipe(res)
     })
-  })
-  after(() => server.close())
+    server.listen(0)
+    await EE.once(server, 'listening')
 
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
+    const client = new Client(`http://localhost:${server.address().port}`, { pipelining: 2 })
+    t.after(async () => {
+      await client.destroy()
+      await new Promise((resolve) => server.close(resolve))
     })
-    after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
+
+    function makeBody (chunk) {
+      async function * chunks () {
+        for (let i = 0; i < 8; i++) {
+          yield chunk
+        }
       }
-    })
+      return kind === 'stream' ? Readable.from(chunks(), { objectMode: false }) : chunks()
+    }
 
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
+    const requests = [
+      client.request({ path: '/', method: 'GET' }),
+      client.request({ path: '/', method: 'POST', body: makeBody('a') }),
+      client.request({ path: '/', method: 'GET' }),
+      client.request({ path: '/', method: 'POST', body: makeBody('b') })
+    ]
 
-    client.request({
-      path: '/',
-      method: 'POST',
-      body: new Readable({
-        read () {
-          this.push(++a > 8 ? null : 'a')
-        }
-      })
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
-
-    client.request({
-      path: '/',
-      method: 'POST',
-      body: new Readable({
-        read () {
-          this.push(++b > 8 ? null : 'b')
-        }
-      })
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
+    // Compare complete bodies: the HTTP server can combine or split data chunks.
+    const bodies = await Promise.all(requests.map(async (request) => (await request).body.text()))
+    t.assert.deepStrictEqual(bodies, ['', 'aaaaaaaa', '', 'bbbbbbbb'])
   })
-
-  await t.completed
-})
-
-test('pipelined chunked POST iterator', async (t) => {
-  t = tspl(t, { plan: 4 + 8 + 8 })
-
-  let a = 0
-  let b = 0
-
-  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
-    req.on('data', chunk => {
-      // Make sure a and b don't interleave.
-      t.ok(a === 9 || b === 0)
-      res.write(chunk)
-    }).on('end', () => {
-      res.end()
-    })
-  })
-  after(() => server.close())
-
-  server.listen(0, () => {
-    const client = new Client(`http://localhost:${server.address().port}`, {
-      pipelining: 2
-    })
-    after(() => client.close())
-    client.on('disconnect', () => {
-      if (!client.closed && !client.destroyed) {
-        t.fail('unexpected disconnect')
-      }
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
-
-    client.request({
-      path: '/',
-      method: 'POST',
-      body: (async function * () {
-        while (++a <= 8) {
-          yield 'a'
-        }
-      })()
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
-
-    client.request({
-      path: '/',
-      method: 'GET'
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
-
-    client.request({
-      path: '/',
-      method: 'POST',
-      body: (async function * () {
-        while (++b <= 8) {
-          yield 'b'
-        }
-      })()
-    }, (err, { body }) => {
-      body.resume()
-      t.ifError(err)
-    })
-  })
-
-  await t.completed
-})
+}
 
 function erroredInflightPost (bodyType) {
   test(`errored POST body lets inflight complete ${bodyType}`, async (t) => {

@@ -1,7 +1,6 @@
 'use strict'
 
-const { tspl } = require('@matteo.collina/tspl')
-const { test, after } = require('node:test')
+const { test } = require('node:test')
 const { createSecureServer } = require('node:http2')
 const { once } = require('node:events')
 
@@ -9,16 +8,13 @@ const pem = require('@metcoder95/https-pem')
 
 const { Client } = require('..')
 
-test('Should throw informational error on half-closed streams (remote)', async t => {
-  t = tspl(t, { plan: 2 })
-
+test('HTTP/2 requests reject when the server closes a stream before responding', { timeout: 10_000 }, async (t) => {
   const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
 
-  server.on('stream', (stream, headers) => {
+  server.on('stream', (stream) => {
     stream.destroy()
   })
 
-  after(() => server.close())
   await once(server.listen(0), 'listening')
 
   const client = new Client(`https://localhost:${server.address().port}`, {
@@ -27,24 +23,16 @@ test('Should throw informational error on half-closed streams (remote)', async t
     },
     allowH2: true
   })
-  after(() => client.close())
-
-  await t.rejects(client
-    .request({
-      path: '/',
-      method: 'GET'
-    }), {
-    message: 'HTTP/2: stream half-closed (remote)',
-    code: 'UND_ERR_INFO'
-  })
-  await t.rejects(client
-    .request({
-      path: '/',
-      method: 'GET'
-    }), {
-    message: 'HTTP/2: stream half-closed (remote)',
-    code: 'UND_ERR_INFO'
+  t.after(async () => {
+    await client.destroy()
+    await new Promise((resolve) => server.close(resolve))
   })
 
-  await t.completed
+  for (let i = 0; i < 2; i++) {
+    await t.assert.rejects(client.request({ path: '/', method: 'GET' }), (err) => {
+      // Newer Node.js versions surface the premature reset as a stream error.
+      return err.code === 'ERR_HTTP2_STREAM_ABORTED' ||
+        (err.code === 'UND_ERR_INFO' && err.message === 'HTTP/2: stream half-closed (remote)')
+    })
+  }
 })

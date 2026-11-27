@@ -68,6 +68,19 @@ jobs:
       runs-on: ${{ matrix.runs-on }}
     secrets: inherit
 
+  test-alpha:
+    name: Test with Node.js 27 alpha on ${{ matrix.runs-on }}
+    if: github.base_ref == 'main' || github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+    uses: ./.github/workflows/nodejs.yml
+    with:
+      # Use an explicit prerelease range until Node.js 27 is released.
+      node-version: '>=27.0.0-alpha.0.0.0 <28'
+      runs-on: ${{ matrix.runs-on }}
+
   test-with-no-wasm-simd:
     name: Test with Node.js ${{ matrix.node-version }} on ${{ matrix.runs-on }} with WASM SIMD disabled
     strategy:

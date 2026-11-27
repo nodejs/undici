@@ -181,9 +181,7 @@ describe('A pool should be able to reuse TLS sessions between clients', () => {
 })
 
 describe('A connector should enforce maxCachedSessions across hostnames', () => {
-  test('Prepare request', async t => {
-    t = tspl(t, { plan: 4 })
-
+  test('Prepare request', { timeout: 10_000 }, async (t) => {
     const tlsOptions = {
       ...options,
       minVersion: 'TLSv1.2',
@@ -202,10 +200,10 @@ describe('A connector should enforce maxCachedSessions across hostnames', () => 
       new Promise((resolve) => serverB.listen(0, resolve))
     ])
 
-    after(() => {
-      serverA.close()
-      serverB.close()
-    })
+    t.after(() => Promise.all([serverA, serverB].map(server => new Promise(resolve => {
+      server.close(resolve)
+      server.closeAllConnections()
+    }))))
 
     const connector = buildConnector({
       ca,
@@ -222,10 +220,12 @@ describe('A connector should enforce maxCachedSessions across hostnames', () => 
       rejectUnauthorized: false
     })
 
+    // Keep the sessions alive while testing eviction from the weak session cache.
+    const sessions = []
     async function connectOnce ({ hostname, port }) {
       const { promise, resolve, reject } = Promise.withResolvers()
 
-      connector({ hostname, protocol: 'https:', port }, (err, socket) => {
+      const socket = connector({ hostname, protocol: 'https:', port }, (err, socket) => {
         if (err) {
           reject(err)
           return
@@ -238,14 +238,15 @@ describe('A connector should enforce maxCachedSessions across hostnames', () => 
         socket.resume()
         socket.write(`GET / HTTP/1.1\r\nHost: ${hostname}\r\nConnection: close\r\n\r\n`)
       })
+      socket.on('session', session => sessions.push(session))
 
       return promise
     }
 
-    t.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), false)
-    t.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), true)
-    t.strictEqual(await connectOnce({ hostname: 'b.test', port: serverB.address().port }), false)
-    t.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), false)
-    await t.completed
+    t.assert.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), false)
+    t.assert.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), true)
+    t.assert.strictEqual(await connectOnce({ hostname: 'b.test', port: serverB.address().port }), false)
+    t.assert.strictEqual(await connectOnce({ hostname: 'a.test', port: serverA.address().port }), false)
+    sessions.length = 0
   })
 })

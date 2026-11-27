@@ -147,6 +147,9 @@
     }
   },
   "jest": {
+    "roots": [
+      "<rootDir>/test/jest"
+    ],
     "testMatch": [
       "<rootDir>/test/jest/**"
     ]

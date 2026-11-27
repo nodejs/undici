@@ -21,7 +21,7 @@ const requestChannels = {
 }
 
 function onExpectedTeardownError (error) {
-  if (error.code !== 'ECONNRESET') {
+  if (error.code !== 'ECONNRESET' && error.code !== 'ERR_HTTP2_STREAM_ABORTED') {
     throw error
   }
 }

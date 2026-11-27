@@ -33,6 +33,7 @@ for (const protocol of ['http/1.1', 'h2']) {
       ...matching,
       minVersion: 'TLSv1.2',
       maxVersion: 'TLSv1.2',
+      allowRenegotiation: true,
       secureOptions: constants.SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
       ALPNProtocols: [protocol]
     }, (socket) => {
@@ -59,6 +60,7 @@ for (const protocol of ['http/1.1', 'h2']) {
         ca,
         minVersion: 'TLSv1.2',
         maxVersion: 'TLSv1.2',
+        allowRenegotiation: true,
         lookup (hostname, options, callback) {
           if (options.all === true) {
             callback(null, [{ address: '127.0.0.1', family: 4 }])
