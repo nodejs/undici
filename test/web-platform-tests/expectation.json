@@ -401,8 +401,7 @@
             },
             {
               "name": "Already aborted signal rejects immediately",
-              "success": false,
-              "message": "assert_array_equals: expected property 0 to be \"fetch-reject\" but got \"next-microtask\" (expected array [\"fetch-reject\", \"next-microtask\"] got [\"next-microtask\", \"fetch-reject\"])"
+              "success": true
             },
             {
               "name": "Call text() twice on aborted response",
