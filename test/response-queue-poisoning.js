@@ -55,3 +55,48 @@ test('should not reuse an idle socket with buffered unsolicited response bytes',
   assert.strictEqual(response2.headers['poison-free-socket'], undefined)
   assert.strictEqual(await readBody(response2.body), '/request2')
 })
+
+for (const useMilo of [false, true]) {
+  test(`should not attribute buffered unsolicited response bytes to a queued request (useMilo: ${useMilo})`, async () => {
+    let evilServerSocket
+
+    const server = createServer((req, res) => {
+      if (!evilServerSocket) {
+        evilServerSocket = req.socket
+      }
+
+      res.end(req.url)
+    })
+    after(() => server.close())
+
+    await new Promise(resolve => server.listen(0, resolve))
+
+    const client = new Client(`http://localhost:${server.address().port}`, {
+      keepAliveTimeout: 300e3,
+      useMilo
+    })
+    after(() => client.close())
+
+    const response1 = await client.request({ path: '/request1', method: 'GET' })
+    assert.strictEqual(await readBody(response1.body), '/request1')
+
+    // The unsolicited response reaches the client's receive buffer, but is
+    // not read yet when the next request is dispatched.
+    const response2 = await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        evilServerSocket.write(
+          'HTTP/1.1 200 OK\r\n' +
+          'Poison-Free-Socket: true\r\n' +
+          'Connection: keep-alive\r\n' +
+          'Keep-Alive: timeout=300\r\n' +
+          'Content-Length: 0\r\n' +
+          '\r\n'
+        )
+        client.request({ path: '/request2', method: 'GET' }).then(resolve, reject)
+      }, 10)
+    })
+
+    assert.strictEqual(response2.headers['poison-free-socket'], undefined)
+    assert.strictEqual(await readBody(response2.body), '/request2')
+  })
+}
