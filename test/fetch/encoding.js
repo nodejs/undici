@@ -3,6 +3,7 @@
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { createServer: createSecureServer } = require('node:https')
+const { createServer: createNetServer } = require('node:net')
 const { test, before, after, describe } = require('node:test')
 const pem = require('@metcoder95/https-pem')
 const { fetch, Client } = require('../..')
@@ -167,6 +168,40 @@ describe('content-encoding chain limit', () => {
       }
     )
   })
+
+  test('should handle an early close after rejecting excessive content-encodings', async (t) => {
+    const response = Buffer.from(
+      'HTTP/1.1 200 OK\r\n' +
+      `Content-Encoding: ${Array(MAX_CONTENT_ENCODINGS + 1).fill('gzip').join(', ')}\r\n` +
+      'Content-Length: 1\r\n' +
+      'Connection: close\r\n\r\n'
+    )
+    let resolveSocketClosed
+    const socketClosed = new Promise((resolve) => {
+      resolveSocketClosed = resolve
+    })
+    const earlyCloseServer = createNetServer((socket) => {
+      socket.once('close', resolveSocketClosed)
+      socket.once('data', () => socket.end(response))
+    })
+    t.after(() => earlyCloseServer.close())
+
+    await once(earlyCloseServer.listen(0, '127.0.0.1'), 'listening')
+
+    const client = new Client(`http://127.0.0.1:${earlyCloseServer.address().port}`)
+    t.after(() => client.close())
+
+    await t.assert.rejects(
+      fetch(`http://127.0.0.1:${earlyCloseServer.address().port}`, {
+        dispatcher: client
+      }),
+      (err) => {
+        t.assert.ok(err.cause?.message.includes('content-encoding'))
+        return true
+      }
+    )
+    await socketClosed
+  })
 })
 
 describe('default accept-encoding request header', () => {
@@ -212,5 +247,38 @@ describe('default accept-encoding request header', () => {
 
     const response = await fetch(url, { dispatcher: client })
     await response.arrayBuffer()
+  })
+})
+
+// https://github.com/nodejs/undici/issues/5999
+test('invalid compressed body received after the headers rejects instead of hanging', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': '16'
+    })
+    res.flushHeaders()
+
+    // The body must arrive in a later packet than the headers for the
+    // regression to manifest. Defer it to a later tick rather than using
+    // a wall-clock setTimeout, which is flaky and adds a fixed delay.
+    setImmediate(() => setImmediate(() => {
+      res.end(Buffer.alloc(16))
+    }))
+  }).listen(0, '127.0.0.1')
+
+  t.after(() => {
+    server.closeAllConnections()
+    server.close()
+  })
+
+  await once(server, 'listening')
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}`, { keepalive: false })
+
+  await t.assert.rejects(response.text(), (err) => {
+    t.assert.strictEqual(err.name, 'TypeError')
+    t.assert.strictEqual(err.cause?.code, 'Z_DATA_ERROR')
+    return true
   })
 })

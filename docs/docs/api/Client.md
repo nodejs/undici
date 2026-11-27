@@ -116,8 +116,8 @@ added: v1.0.0
   * `maxConcurrentStreams` {number} _Deprecated: use h2Options.useH2c instead_ The maximum number of concurrent HTTP/2
     streams for a single session. Once h2 is negotiated this — not `pipelining`,
     which is HTTP/1.1 only — is the ceiling used to dispatch in-flight requests.
-    It may be overridden by the server's `SETTINGS_MAX_CONCURRENT_STREAMS`
-    frame. **Default:** `100`.
+    The server's `SETTINGS_MAX_CONCURRENT_STREAMS` can lower this limit, but
+    not raise it. **Default:** `100`.
   * `connectionWindowSize` {number} _Deprecated: use h2Options.connectionWindowSize instead_ The HTTP/2 connection-level flow-control
     window size set via `ClientHttp2Session.setLocalWindowSize()`. Must be a
     positive integer. **Default:** `524288`.
@@ -130,14 +130,20 @@ added: v1.0.0
     * `maxConcurrentStreams` {number} The maximum number of concurrent HTTP/2
       streams for a single session. Once h2 is negotiated this — not `pipelining`,
       which is HTTP/1.1 only — is the ceiling used to dispatch in-flight requests.
-      It may be overridden by the server's `SETTINGS_MAX_CONCURRENT_STREAMS`
-      frame. **Default:** `100`.
+      The server's `SETTINGS_MAX_CONCURRENT_STREAMS` can lower this limit, but
+      not raise it. Until the server's SETTINGS frame is received on a new
+      connection, requests whose body can be replayed are dispatched up to the
+      lower of this limit and `100`, and a stream refused by a lower server limit
+      is retried once; a request with a streaming body waits for the SETTINGS
+      frame while another request is in flight. **Default:** `100`.
     * `connectionWindowSize` {number} The HTTP/2 connection-level flow-control
       window size set via `ClientHttp2Session.setLocalWindowSize()`. Must be a
       positive integer. **Default:** `524288`.
     * `pingInterval` {number} The time interval, in milliseconds, between HTTP/2
       PING frames. Set to `0` to disable PING frames. Applies only to HTTP/2
-      connections and emits a `ping` event on the client. **Default:** `60e3`.
+      connections and emits a `ping` event on the client. A connection whose
+      PING is still unacknowledged when the next one is due is closed, and new
+      requests go to a new connection. **Default:** `60e3`.
     * `settings` {object} `SETTINGS` frame options. For full reference, take a
       look to [HTTP/2#Settings Object](https://nodejs.org/api/http2.html#settings-object)
   * `webSocket` {Object} (optional) WebSocket-specific configuration.
@@ -148,8 +154,13 @@ added: v1.0.0
       payloads, and decompressed (`permessage-deflate`) messages. Set to `0` to
       disable the limit. **Default:** `134217728`.
   * `eventSource` {Object} (optional) EventSource-specific configuration.
-    * `maxEventSize` {number} The maximum allowed event size, in bytes, for
-      EventSource messages. Set to `0` to disable the limit.
+    * `maxEventSize` {number} The maximum total bytes of data and metadata
+      field values retained for a pending EventSource event. Each unfinished
+      line is separately limited to this value plus seven syntax bytes, before
+      its line ending arrives. The number of `data:` lines per event and input
+      chunks buffered for an unfinished line are each limited to
+      `min(131072, max(1024, floor(maxEventSize / 128)))` to bound object overhead.
+      Set to `0` to disable these limits.
       **Default:** `buffer.kStringMaxLength`.
 * Returns: {Client}
 
@@ -164,6 +175,9 @@ eagerly.
 > * The server must support HTTP/2 and select it during ALPN negotiation, and
 >   must not give HTTP/1.1 a higher priority than HTTP/2.
 > * `PUSH` frames are not supported.
+> * Aborting a request, for example through its `signal`, resets its stream
+>   with `RST_STREAM` and the `CANCEL` error code, including when part of the
+>   request body has not been sent yet.
 
 ```mjs displayName="Basic instantiation"
 import { Client } from 'undici'
@@ -212,7 +226,7 @@ import { Client, buildConnector } from 'undici'
 const connector = buildConnector({ rejectUnauthorized: false })
 const client = new Client('https://localhost:3000', {
   connect (opts, cb) {
-    connector(opts, (err, socket) => {
+    return connector(opts, (err, socket) => {
       if (err) {
         cb(err)
       } else {

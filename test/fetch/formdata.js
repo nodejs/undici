@@ -3,6 +3,7 @@
 const { test } = require('node:test')
 const { FormData, Response, Request } = require('../../')
 const { isFormDataLike } = require('../../lib/core/util')
+const { inspect } = require('node:util')
 
 test('arg validation', (t) => {
   const form = new FormData()
@@ -405,4 +406,21 @@ test('.formData() rejects malformed multipart header line ending with bare CR', 
   })
 
   await t.assert.rejects(request.formData(), TypeError)
+})
+
+test('FormData inspection preserves empty strings in repeated fields', (t) => {
+  const form = new FormData()
+  form.append('single', '')
+  form.append('double', '')
+  form.append('double', 'blep')
+  form.append('triple', '')
+  form.append('triple', '')
+  form.append('triple', 'blop')
+  form.append('empty', '')
+  form.append('empty', '')
+
+  t.assert.strictEqual(
+    inspect(form, { breakLength: Infinity, colors: false }),
+    "FormData { single: '', double: [ '', 'blep' ], triple: [ '', '', 'blop' ], empty: [ '', '' ] }"
+  )
 })

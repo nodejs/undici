@@ -83,49 +83,54 @@ function makeDispatcher (connections, maxConcurrentStreams) {
   }).compose(interceptors.responseError())
 }
 
-// Integration test:  TLS H2 server in a worker thread, slow responses (2.5s),
-// 20 connections x 100 streams = 2000 concurrent max, 10k total requests queued, responseError interceptor active.
-test('h2: no crash when data arrives after stream abort under high concurrency', async (t) => {
-  t = tspl(t, { plan: 2 })
+// The server worker loads this same file, so only register the test on the
+// main thread. Otherwise every worker runs the test too and starts yet another
+// server worker, and the chain grows until the process is starved of CPU.
+if (isMainThread) {
+  // Integration test:  TLS H2 server in a worker thread, slow responses (2.5s),
+  // 20 connections x 100 streams = 2000 concurrent max, 10k total requests queued, responseError interceptor active.
+  test('h2: no crash when data arrives after stream abort under high concurrency', async (t) => {
+    t = tspl(t, { plan: 2 })
 
-  const { worker, port } = await startServer()
-  after(() => worker.terminate())
+    const { worker, port } = await startServer()
+    after(() => worker.terminate())
 
-  const connections = 20
-  const maxConcurrentStreams = 100
-  const dispatcher = makeDispatcher(connections, maxConcurrentStreams)
-  after(() => dispatcher.close())
+    const connections = 20
+    const maxConcurrentStreams = 100
+    const dispatcher = makeDispatcher(connections, maxConcurrentStreams)
+    after(() => dispatcher.close())
 
-  const origin = `https://127.0.0.1:${port}`
-  const count = 10_000
+    const origin = `https://127.0.0.1:${port}`
+    const count = 10_000
 
-  const requests = Array.from({ length: count }, () =>
-    dispatcher.request({
-      origin,
-      path: '/slow?delayMs=2500',
-      method: 'GET'
-    }).then((res) => res.body.dump())
-  )
+    const requests = Array.from({ length: count }, () =>
+      dispatcher.request({
+        origin,
+        path: '/slow?delayMs=2500',
+        method: 'GET'
+      }).then((res) => res.body.dump())
+    )
 
-  const results = await Promise.allSettled(requests)
+    const results = await Promise.allSettled(requests)
 
-  const errors = results.filter((r) => r.status === 'rejected')
-  const successCount = results.length - errors.length
+    const errors = results.filter((r) => r.status === 'rejected')
+    const successCount = results.length - errors.length
 
-  if (errors.length > 0) {
-    const groups = new Map()
-    for (const e of errors) {
-      const msg = e.reason?.message ?? String(e.reason)
-      groups.set(msg, (groups.get(msg) ?? 0) + 1)
+    if (errors.length > 0) {
+      const groups = new Map()
+      for (const e of errors) {
+        const msg = e.reason?.message ?? String(e.reason)
+        groups.set(msg, (groups.get(msg) ?? 0) + 1)
+      }
+      console.log('Error breakdown:', Object.fromEntries(groups))
+      console.log('First error stack:\n', errors[0].reason?.stack)
     }
-    console.log('Error breakdown:', Object.fromEntries(groups))
-    console.log('First error stack:\n', errors[0].reason?.stack)
-  }
 
-  // If the bug is present, some requests crash with:
-  // "Cannot read properties of null (reading 'push')"
-  t.ok(successCount + errors.length === count, `all ${count} requests settled`)
-  t.ok(successCount === count, `all ${count} requests succeeded (got ${errors.length} errors)`)
+    // If the bug is present, some requests crash with:
+    // "Cannot read properties of null (reading 'push')"
+    t.ok(successCount + errors.length === count, `all ${count} requests settled`)
+    t.ok(successCount === count, `all ${count} requests succeeded (got ${errors.length} errors)`)
 
-  await t.completed
-})
+    await t.completed
+  })
+}

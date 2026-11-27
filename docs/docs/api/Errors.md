@@ -32,6 +32,37 @@ if (err.code === 'UND_ERR_CONNECT_TIMEOUT') {
 }
 ```
 
+## Timeout-related errors
+
+The timeout errors below are controlled by dispatcher/client options:
+
+| Error code | When it is thrown | Related option |
+| ---------- | ----------------- | -------------- |
+| `UND_ERR_CONNECT_TIMEOUT` | A connection could not be established before the connection timeout elapsed. | [`connect.timeout`](Client.md) |
+| `UND_ERR_HEADERS_TIMEOUT` | The full response headers were not received before the headers timeout elapsed. | [`headersTimeout`](Client.md) |
+| `UND_ERR_BODY_TIMEOUT` | While reading the response body, no new data arrived before the body timeout elapsed. | [`bodyTimeout`](Client.md) |
+| `UND_ERR_SOCKET` | A generic socket-level failure happened. | Inspect `error.socket` for connection details. |
+
+### Configuring timeouts for `fetch`
+
+If you are using `fetch` (including Node.js built-in `fetch`), configure timeouts
+through the global dispatcher:
+
+```js
+import { Agent, setGlobalDispatcher, fetch } from 'undici'
+
+setGlobalDispatcher(new Agent({
+  connect: { timeout: 10_000 }, // connection phase
+  headersTimeout: 15_000, // wait for response headers
+  bodyTimeout: 30_000 // wait between response body chunks
+}))
+
+await fetch('https://example.com/data')
+```
+
+You can inspect timeout error codes from `error.code` or (for wrapped fetch
+errors) from `error.cause?.code`.
+
 ## Class: `UndiciError`
 
 <!-- YAML
@@ -465,6 +496,7 @@ The response returned an error status code. This is raised, for example, when th
 * `code` {string} Always `'UND_ERR_RESPONSE'`.
 * `statusCode` {number} The HTTP status code of the response.
 * `body` {Object|string|null} The response body.
+* `bodyTruncated` {boolean} Whether `body` was truncated by a configured limit.
 * `headers` {Object|string[]|null} The response headers.
 
 ### `new ResponseError(message, code, options)`
@@ -474,6 +506,7 @@ The response returned an error status code. This is raised, for example, when th
 * `options` {Object}
   * `headers` {Object|string[]|null} The response headers. (optional)
   * `body` {Object|string|null} The response body. (optional)
+  * `bodyTruncated` {boolean} Whether `body` was truncated. **Default:** `false`.
 
 ## Class: `ProxyConnectionError`
 

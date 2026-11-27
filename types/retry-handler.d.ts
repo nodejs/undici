@@ -37,13 +37,23 @@ declare namespace RetryHandler {
   export interface RetryOptions {
     /**
      * If true, the retry handler will throw an error if the request fails,
-     * this will prevent the folling handlers from being called, and will destroy the socket.
+     * this will prevent the following handlers from being called, and will destroy the socket.
      *
      * @type {boolean}
      * @memberof RetryOptions
      * @default true
      */
     throwOnError?: boolean;
+    /**
+     * If false, a response that fails after its headers were received is not
+     * resumed with a `Range` request: the error is passed through, and only
+     * failures before the response headers are retried.
+     *
+     * @type {boolean}
+     * @memberof RetryOptions
+     * @default true
+     */
+    resume?: boolean;
     /**
      * Callback to be invoked on every retry iteration.
      * It receives the error, current state of the retry object and the options object
@@ -78,7 +88,7 @@ declare namespace RetryHandler {
      */
     minTimeout?: number;
     /**
-     * Factior to multiply the timeout factor between retries.
+     * Factor to multiply the timeout factor between retries.
      *
      * @type {number}
      * @memberof RetryOptions
@@ -98,14 +108,14 @@ declare namespace RetryHandler {
      *
      * @type {Dispatcher.HttpMethod[]}
      * @memberof RetryOptions
-     * @default ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE'],
+     * @default ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'TRACE', 'QUERY'],
      */
     methods?: Dispatcher.HttpMethod[];
     /**
      * Error codes to be retried. e.g. `ECONNRESET`, `ENOTFOUND`, `ETIMEDOUT`, `ECONNREFUSED`, etc.
      *
      * @type {string[]}
-     * @default ['ECONNRESET','ECONNREFUSED','ENOTFOUND','ENETDOWN','ENETUNREACH','EHOSTDOWN','EHOSTUNREACH','EPIPE']
+     * @default ['ECONNRESET','ECONNREFUSED','ENOTFOUND','ENETDOWN','ENETUNREACH','EHOSTDOWN','EHOSTUNREACH','EPIPE','UND_ERR_SOCKET']
      */
     errorCodes?: string[];
     /**

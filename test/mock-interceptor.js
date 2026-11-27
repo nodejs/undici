@@ -506,7 +506,10 @@ describe('https://github.com/nodejs/undici/issues/3649', () => {
     ['', ''],
     ['/', ''],
     ['', '/'],
-    ['/', '/']
+    ['/', '/'],
+    ['/api/some-path?a=1', '/api/some-path/?a=1'],
+    ['/api/some-path/?a=1', '/api/some-path?a=1'],
+    ['/api/some-path/?a=1', '/api/some-path/?a=1']
   ].forEach(([interceptPath, fetchedPath], index) => {
     test(`MockAgent should match with or without trailing slash by setting ignoreTrailingSlash as MockAgent option /${index}`, async (t) => {
       t.plan(1)

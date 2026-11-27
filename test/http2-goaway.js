@@ -4,10 +4,77 @@ const { tspl } = require('@matteo.collina/tspl')
 const { test, after } = require('node:test')
 const { constants, createSecureServer } = require('node:http2')
 const { once, EventEmitter } = require('node:events')
+const { Readable } = require('node:stream')
 
 const pem = require('@metcoder95/https-pem')
 
 const { Agent, Client, Pool, fetch } = require('..')
+
+for (const method of ['GET', 'POST']) {
+  test(`accepted ${method} survives GOAWAY after its stream ID is assigned`, { timeout: 10000 }, async (t) => {
+    const http2 = require('node:http2')
+    const connect = http2.connect
+    t.mock.method(http2, 'connect', (...args) => {
+      const session = connect(...args)
+      const request = session.request
+      session.request = function (...args) {
+        const stream = request.apply(this, args)
+        // A pending stream can receive its ID after request() returns.
+        Object.defineProperty(stream, 'id', { configurable: true, value: undefined })
+        queueMicrotask(() => { delete stream.id })
+        return stream
+      }
+      return session
+    })
+
+    const server = createSecureServer(await pem.generate({ opts: { keySize: 2048 } }))
+    const sessions = new Set()
+    let acceptedStream
+    let acceptedRequests = 0
+    server.on('session', session => sessions.add(session))
+    server.on('stream', (stream, headers) => {
+      stream.on('error', () => {})
+      stream.resume()
+      stream.respond({ ':status': 200 })
+      if (headers[':path'] === '/accepted') {
+        acceptedRequests++
+        acceptedStream = stream
+        stream.write('accepted')
+      } else {
+        stream.end('new connection')
+      }
+    })
+    await once(server.listen(0, '127.0.0.1'), 'listening')
+
+    const client = new Client(`https://127.0.0.1:${server.address().port}`, {
+      allowH2: true,
+      connect: { rejectUnauthorized: false }
+    })
+    t.after(async () => {
+      await client.destroy()
+      for (const session of sessions) session.destroy()
+      await new Promise(resolve => server.close(resolve))
+    })
+
+    const response = await client.request({
+      path: '/accepted',
+      method,
+      body: method === 'POST' ? Readable.from(['payload']) : null
+    })
+    const body = response.body.text()
+    body.catch(() => {})
+    const disconnected = once(client, 'disconnect')
+    acceptedStream.session.goaway(constants.NGHTTP2_NO_ERROR, acceptedStream.id)
+    await disconnected
+    acceptedStream.end(' finished')
+
+    t.assert.strictEqual(await body, 'accepted finished')
+    t.assert.strictEqual(acceptedRequests, 1)
+    const next = await client.request({ path: '/next', method: 'GET' })
+    t.assert.strictEqual(await next.body.text(), 'new connection')
+    t.assert.strictEqual(sessions.size, 2)
+  })
+}
 
 test('#3046 - GOAWAY Frame', async t => {
   t = tspl(t, { plan: 8 })

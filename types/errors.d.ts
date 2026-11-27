@@ -39,13 +39,15 @@ declare namespace Errors {
       code: number,
       options: {
         headers?: IncomingHttpHeaders | string[] | null,
-        body?: null | Record<string, any> | string
+        body?: null | Record<string, any> | string,
+        bodyTruncated?: boolean
       }
     )
     name: 'ResponseError'
     code: 'UND_ERR_RESPONSE'
     statusCode: number
     body: null | Record<string, any> | string
+    bodyTruncated: boolean
     headers: IncomingHttpHeaders | string[] | null
   }
 

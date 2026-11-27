@@ -43,6 +43,7 @@ for (const errorCallbackThrows of [false, true]) {
         events.push(['other end', receivedTrailers])
       }
     })
+    handler.onRequestStart(controller, null)
 
     if (errorCallbackThrows) {
       t.assert.throws(() => handler.onResponseEnd(controller, trailers), err => err === callbackError)
@@ -96,6 +97,7 @@ test('a paused waiting handler receives completion errors without being aborted'
     }
   })
 
+  handler.onRequestStart({}, null)
   handler.onResponseData({}, Buffer.from('body'))
   handler.onResponseEnd({}, trailers)
   t.assert.deepStrictEqual(events, [['cleanup'], ['primary end']])
@@ -127,6 +129,7 @@ test('a paused waiting handler defers completion even without buffered data', t 
     }
   })
 
+  handler.onRequestStart({}, null)
   handler.onResponseEnd({}, trailers)
   t.assert.deepStrictEqual(events, ['cleanup'])
 

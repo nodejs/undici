@@ -204,8 +204,8 @@ and `x-compress`, is left untouched, matching `fetch()`. As required by
 [RFC 9659](https://www.rfc-editor.org/rfc/rfc9659.html), a `zstd` frame that
 requires a window size larger than 8 MB fails to decode.
 
-> **Experimental:** This interceptor is experimental and subject to change.
-> A one-time `ExperimentalWarning` is emitted on first use.
+By default, decompression removes `Content-Encoding` and `Content-Length` from
+both the response headers and `controller.rawHeaders`.
 
 **Parameters**
 
@@ -214,6 +214,11 @@ requires a window size larger than 8 MB fails to decode.
     skipped. **Default:** `[204, 304]`.
   * `skipErrorResponses` {boolean} When `true`, responses with a status code
     >= 400 are not decompressed. **Default:** `true`.
+  * `preserveHeaders` {boolean} When `true`, keeps `Content-Encoding` and
+    `Content-Length` in both the response headers and `controller.rawHeaders`
+    while still decompressing the body. These headers describe the encoded
+    response, so `Content-Length` is the compressed size, not the decoded size.
+    Useful for implementing Fetch or XMLHttpRequest semantics. **Default:** `false`.
   * `maxSize` {number} Maximum decompressed response size in bytes for each
     decompression stage. The request fails with a
     `ResponseExceededMaxSizeError` if a stage exceeds this limit. Set to `0` to
@@ -248,8 +253,11 @@ The error body is automatically decoded for `application/json` and
 
 **Parameters**
 
-* `opts` {Object} (optional) — currently reserved for future use; may be
-  omitted.
+* `opts` {Object} (optional)
+  * `maxSize` {number} Maximum number of response body bytes to include in the
+    error. If the body exceeds this limit, the resulting `ResponseError`
+    contains the retained prefix with `bodyTruncated` set to `true`. Set to `0`
+    to disable the limit. **Default:** `1048576` (1 MiB).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
@@ -340,10 +348,35 @@ backing store.
 
 **Parameters**
 
-* `opts` {CacheHandler.CacheOptions} (optional) See the
-  [`CacheStore`](./CacheStore.md) documentation for accepted fields.
+* `opts` {Object} (optional)
+  * `store` {CacheStore} The store that cached responses are kept in. See
+    [`CacheStore`](./CacheStore.md). **Default:** a new `MemoryCacheStore`.
+  * `methods` {string[]} The HTTP methods to cache. Only safe methods are
+    allowed (`GET`, `HEAD`, `OPTIONS`, `TRACE`) and at least one is required.
+    **Default:** `['GET']`.
+  * `cacheByDefault` {number} RFC 9111 allows caching responses that are not
+    explicitly marked as cacheable or not cacheable. Set this to cache such
+    responses. **Default:** `undefined`.
+  * `type` {string} Whether the cache is `'shared'` or `'private'`, which
+    decides how directives such as `s-maxage` and `private` are applied.
+    **Default:** `'shared'`.
+  * `origins` {(string|RegExp)[]} Only requests to these origins are cached.
+    Strings are compared case-insensitively. **Default:** `undefined` (all
+    origins are cached).
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
+
+> **Ordering:** the `cache` interceptor must be composed **after** the
+> `redirect` interceptor. When `cache` is composed before `redirect`, the cache
+> handler is wrapped above the redirect handler, so it never observes the
+> redirect history and its cross-origin / credential-bearing redirect guards are
+> silently disabled, which lets an attacker-controlled or cross-principal
+> redirect response be stored under the trusted origin's cache key and replayed
+> to unrelated callers (GHSA-75VM-9G8F-99J4, GHSA-MQG3-3V4R-CM32,
+> GHSA-4W7W-5XRC-9H26, GHSA-7XG3-FPHP-28HG). `compose()` throws an
+> `InvalidArgumentError` for this unsafe order. The `deduplicate` interceptor
+> participates in the same redirect-history contract and may be placed before or
+> after `redirect`, as long as `cache` follows `redirect`.
 
 **Example**
 
@@ -351,6 +384,7 @@ backing store.
 import { Agent, interceptors, cacheStores } from 'undici'
 
 const agent = new Agent().compose(
+  interceptors.redirect({ maxRedirections: 5 }),
   interceptors.cache({ store: new cacheStores.MemoryCacheStore() })
 )
 ```
@@ -362,6 +396,8 @@ const agent = new Agent().compose(
 Deduplicates concurrent identical requests so that only one is sent over the
 wire. All waiting callers receive the same response once the in-flight request
 completes. Only safe HTTP methods (e.g. `GET`, `HEAD`) may be deduplicated.
+Requests that carry a body are never deduplicated, since the body is not part
+of the deduplication key.
 
 **Parameters**
 

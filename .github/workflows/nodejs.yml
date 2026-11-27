@@ -28,13 +28,13 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           submodules: recursive
 
       - name: Setup Node.js@${{ inputs.node-version }}
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ inputs.node-version }}
 
@@ -59,6 +59,14 @@ jobs:
           cd ${{ github.workspace }}\test\web-platform-tests\wpt
           python wpt make-hosts-file | Out-File $env:SystemRoot\System32\drivers\etc\hosts -Encoding ascii -Append
         shell: powershell
+
+      # The macOS runner image now ships Python 3.15, which removed
+      # http.server.CGIHTTPRequestHandler. pywebsocket3, used by the WPT server, still needs it.
+      - name: Setup Python (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
 
       - name: Configure hosts file for WPT (Unix)
         if: runner.os != 'Windows'
@@ -198,6 +206,6 @@ jobs:
       
       - name: Upload coverage report to Codecov
         if: inputs.codecov == true
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
