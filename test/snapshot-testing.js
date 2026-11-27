@@ -1609,6 +1609,51 @@ describe('SnapshotAgent - Close Method', () => {
     )
   })
 
+  it('autoFlush does not rewrite the snapshot file in playback mode', async (t) => {
+    const snapshotPath = createSnapshotPath('autoflush-playback-no-rewrite')
+    setupCleanup(t, { snapshotPath })
+
+    const server = createTestServer(createDefaultHandler())
+    const { origin } = await setupServer(server)
+    setupCleanup(t, { server })
+
+    const originalDispatcher = getGlobalDispatcher()
+    setupCleanup(t, { originalDispatcher })
+
+    const recordingAgent = new SnapshotAgent({
+      mode: 'record',
+      snapshotPath,
+      autoFlush: false
+    })
+    setGlobalDispatcher(recordingAgent)
+    await request(`${origin}/test`)
+    await recordingAgent.close()
+
+    const recordedContent = await readFile(snapshotPath, 'utf8')
+
+    const playbackAgent = new SnapshotAgent({
+      mode: 'playback',
+      snapshotPath,
+      autoFlush: true,
+      flushInterval: 50
+    })
+    setupCleanup(t, { agent: playbackAgent })
+    setGlobalDispatcher(playbackAgent)
+
+    await request(`${origin}/test`)
+
+    // Longer than flushInterval and than the one second debounce that used
+    // to run even when nothing had been recorded.
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    const contentDuringPlayback = await readFile(snapshotPath, 'utf8')
+    assert.strictEqual(
+      contentDuringPlayback,
+      recordedContent,
+      'autoFlush should not modify the snapshot file during playback'
+    )
+  })
+
   it('recorder close() method works independently', async (t) => {
     const { SnapshotRecorder } = require('../lib/mock/snapshot-recorder')
     const snapshotPath = createSnapshotPath('recorder-close')
