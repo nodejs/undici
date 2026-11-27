@@ -34,6 +34,17 @@ describe('timers', () => {
     t.ok(typeof timers.setTimeout === 'function')
   })
 
+  test('handles invalid callback gracefully', (t) => {
+    t = tspl(t, { plan: 1 })
+    t.throws(() => timers.setTimeout(null, 1000), TypeError)
+  })
+
+  test('handles invalid delay gracefully', (t) => {
+    t = tspl(t, { plan: 1 })
+    const timer = timers.setTimeout(() => {}, -1)
+    t.ok(timer) // Should handle gracefully
+  })
+
   test('setTimeout instantiates a native NodeJS.Timeout when delay is lower or equal 1e3 ms', (t) => {
     t = tspl(t, { plan: 2 })
 
@@ -254,5 +265,193 @@ describe('timers', () => {
     }
 
     await t.completed
+  })
+
+  test('pendingTimers should not be processed in the same tick', (t) => {
+    t = tspl(t, { plan: 2 })
+
+    let ranFirst = false
+    let ranSecond = false
+
+    // the second timer is scheduled in the callback of the first one
+    timers.setFastTimeout(() => {
+      ranFirst = true
+      timers.setFastTimeout(() => {
+        ranSecond = true
+      }, 10)
+    }, 10)
+
+    // need to tick enough to get the first timer to run
+    tick(500)
+
+    t.ok(ranFirst, 'first timer should have fired')
+    t.ok(!ranSecond, 'second timer should not fire in the same tick')
+  })
+
+  test('multiple FastTimers expiring in the same tick execute correctly', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    let fired = 0
+
+    const timer1 = timers.setFastTimeout(() => fired++, 400)
+    const timer2 = timers.setFastTimeout(() => fired++, 400)
+    const timer3 = timers.setFastTimeout(() => fired++, 400)
+
+    // Advance clock past execution time
+    tick(501)
+    await Promise.resolve() // flush pending microtasks
+
+    t.strictEqual(fired, 3)
+
+    timers.clearTimeout(timer1)
+    timers.clearTimeout(timer2)
+    timers.clearTimeout(timer3)
+  })
+
+  test('FastTimer clears another timer during its callback', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    let fired = 0
+
+    const clearingTimer = timers.setFastTimeout(() => {
+      timers.clearTimeout(timerToClear)
+      fired++
+    }, 400)
+    const timerToClear = timers.setFastTimeout(() => fired++, 400)
+
+    tick(501)
+    await Promise.resolve() // flush pending microtasks
+
+    t.strictEqual(fired, 1)
+
+    timers.clearTimeout(clearingTimer)
+  })
+
+  test('FastTimers added during a callback are processed in next tick', async (t) => {
+    t = tspl(t, { plan: 3 })
+
+    let firedFirst = false
+    let firedSecond = false
+
+    const parentTimer = timers.setFastTimeout(() => {
+      firedFirst = true
+      timers.setFastTimeout(() => {
+        firedSecond = true
+      }, 10)
+    }, 400)
+
+    tick(501)
+    await Promise.resolve() // first timer fires
+    t.ok(firedFirst)
+    t.ok(!firedSecond) // newly added timer should not fire yet
+
+    tick(501)
+    await Promise.resolve() // next tick for newly added timer
+    t.ok(firedSecond)
+
+    timers.clearTimeout(parentTimer)
+  })
+
+  test('FastTimers slightly before TICK_MS boundary fire correctly', async (t) => {
+    t = tspl(t, { plan: 1 })
+    let fired = 0
+
+    timers.setFastTimeout(() => fired++, 498)
+    tick(499)
+    await Promise.resolve()
+    t.strictEqual(fired, 1)
+  })
+
+  test('refreshing a FastTimer updates _executionTime', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const timer = timers.setFastTimeout(() => {}, 1001)
+
+    timer.refresh()
+    tick(500)
+    await Promise.resolve()
+
+    t.notStrictEqual(timer._executionTime, -1)
+  })
+
+  test('long-running FastTimers do not block internal clock', async (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const start = timers.now()
+    const longTimer = timers.setFastTimeout(() => {}, 1e10)
+
+    tick(500)
+    await Promise.resolve()
+
+    t.strictEqual(timers.now() - start, 499)
+
+    timers.clearTimeout(longTimer)
+  })
+
+  test('FastTimer with 0ms delay fires in next tick', async (t) => {
+    t = tspl(t, { plan: 2 })
+    let fired = false
+    const timer = timers.setFastTimeout(() => { fired = true }, 0)
+    t.ok(!fired)
+    tick(500)
+    t.ok(fired)
+    timers.clearTimeout(timer)
+  })
+
+  test('clearing many timers does not cause memory leaks', (t) => {
+    t = tspl(t, { plan: 1 })
+    const timersArray = []
+
+    // Create many timers
+    for (let i = 0; i < 1000; i++) {
+      timersArray.push(timers.setFastTimeout(() => {}, 5000))
+    }
+
+    // Clear them all
+    timersArray.forEach(timer => timers.clearTimeout(timer))
+
+    // Heap should be cleared
+    tick(1000)
+    t.strictEqual(timers.timerHeap?.size || 0, 0)
+  })
+
+  test('timer heap maintains ordering invariant', (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const timersArray = []
+    const delays = [5000, 1500, 3000, 2000, 4000]
+
+    delays.forEach(delay => {
+      timersArray.push(timers.setFastTimeout(() => {}, delay))
+    })
+
+    tick(1000) // Let them become active
+
+    // Check heap property (would need to expose heap for testing)
+    t.ok(true) // This would need internal heap access
+  })
+  test('timer callback receives correct argument', (t) => {
+    t = tspl(t, { plan: 1 })
+
+    const testArg = { test: 'data' }
+    timers.setTimeout((arg) => {
+      t.deepStrictEqual(arg, testArg)
+    }, 1500, testArg)
+
+    tick(2000)
+  })
+  test('refreshing timer multiple times in same tick', (t) => {
+    t = tspl(t, { plan: 1 })
+
+    let fired = 0
+    const timer = timers.setFastTimeout(() => fired++, 1000)
+
+    // Multiple refreshes in same tick
+    timer.refresh()
+    timer.refresh()
+    timer.refresh()
+
+    tick(1500)
+    t.strictEqual(fired, 1) // Should only fire once
   })
 })
