@@ -627,6 +627,28 @@ describe('MockInterceptor - ignoreTrailingSlash with non-string path matchers', 
   })
 })
 
+describe('MockAgent - ignoreTrailingSlash with non-string origin matchers', () => {
+  [
+    ['RegExp', /^https:\/\/localhost$/],
+    ['Function', (origin) => origin === 'https://localhost']
+  ].forEach(([matcherType, origin]) => {
+    test(`a ${matcherType} origin matcher works with ignoreTrailingSlash as a MockAgent option`, async (t) => {
+      t.plan(1)
+
+      const mockAgent = new MockAgent({ ignoreTrailingSlash: true })
+      mockAgent.disableNetConnect()
+      t.after(() => mockAgent.close())
+      mockAgent
+        .get(origin)
+        .intercept({ path: '/api/some-path' }).reply(200, { ok: true })
+
+      const res = await fetch(new URL('/api/some-path/', 'https://localhost'), { dispatcher: mockAgent })
+
+      t.assert.deepStrictEqual(await res.json(), { ok: true })
+    })
+  })
+})
+
 describe('MockInterceptor - different payloads', () => {
   [
     // Buffer
