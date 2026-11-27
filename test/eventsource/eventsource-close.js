@@ -34,6 +34,29 @@ describe('EventSource - close', () => {
     await once(server, 'close')
   })
 
+  test('should not emit error when closing before the response arrives', async (t) => {
+    let onRequest
+    const requested = new Promise(resolve => { onRequest = resolve })
+    // Never responds.
+    const server = http.createServer({ joinDuplicateHeaders: true }, () => onRequest())
+    await once(server.listen(0), 'listening')
+    after(() => {
+      server.closeAllConnections()
+      server.close()
+    })
+
+    const eventSourceInstance = new EventSource(`http://localhost:${server.address().port}`)
+    let errors = 0
+    eventSourceInstance.onerror = () => { errors++ }
+
+    await requested
+    eventSourceInstance.close()
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    t.assert.strictEqual(eventSourceInstance.readyState, EventSource.CLOSED)
+    t.assert.strictEqual(errors, 0)
+  })
+
   test('should set readyState to CLOSED', async (t) => {
     t.plan(3)
     const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
