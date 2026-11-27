@@ -2,7 +2,10 @@
 
 const { createServer, createSecureServer } = require('node:http2')
 const { once } = require('node:events')
+const { Readable } = require('node:stream')
 const { test } = require('node:test')
+const { Worker } = require('node:worker_threads')
+const diagnosticsChannel = require('node:diagnostics_channel')
 
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
@@ -144,11 +147,116 @@ test('Should queue h2c requests above the remote max concurrent streams setting'
   }))
 
   planner.strictEqual(maxActiveStreams, 1)
-  planner.deepStrictEqual(paths, ['/0', '/1', '/2', '/3', '/4'])
+  // All five requests reach the server and never exceed its advertised limit.
+  // The client now dispatches optimistically before the server's SETTINGS
+  // frame confirms maxConcurrentStreams (see #6202), so the extras are refused
+  // with REFUSED_STREAM and retried; HTTP/2 multiplexes on independent streams
+  // and gives no cross-stream ordering guarantee, so assert on the set of paths
+  // rather than their server-side arrival order.
+  planner.deepStrictEqual([...paths].sort(), ['/0', '/1', '/2', '/3', '/4'])
   planner.deepStrictEqual(responses, Array.from({ length: 5 }, () => ({
     statusCode: 200,
     body: 'Hello, world!'
   })))
+})
+
+test('Should not dispatch a non-replayable body before SETTINGS while a request is running', async t => {
+  const planner = tspl(t, { plan: 3 })
+  let maxActiveStreams = 0
+  let activeStreams = 0
+
+  const server = createServer({
+    settings: {
+      maxConcurrentStreams: 1
+    }
+  })
+
+  server.on('stream', (stream, headers) => {
+    activeStreams++
+    maxActiveStreams = Math.max(maxActiveStreams, activeStreams)
+
+    stream.resume()
+    stream.respond({ ':status': 200 })
+    setTimeout(() => {
+      activeStreams--
+      stream.end(headers[':path'])
+    }, 50)
+  })
+
+  server.listen()
+  await once(server, 'listening')
+  const client = new H2CClient(`http://localhost:${server.address().port}/`)
+
+  t.after(() => client.close())
+  t.after(() => server.close())
+
+  const [get, post] = await Promise.all([
+    client.request({ path: '/get', method: 'GET' }).then(({ body }) => body.text()),
+    client.request({ path: '/post', method: 'POST', body: Readable.from(['upload']) }).then(({ body }) => body.text())
+  ])
+
+  planner.strictEqual(get, '/get')
+  planner.strictEqual(post, '/post')
+  planner.strictEqual(maxActiveStreams, 1)
+})
+
+test('Should dispatch requests together on a new connection before SETTINGS arrive', async t => {
+  // Regression test for https://github.com/nodejs/undici/issues/6202
+  // Requests dispatched together on a brand-new connection must go out
+  // together instead of being serialized one stream at a time until the
+  // server's SETTINGS frame has been read. The symptom only shows when the
+  // event loop is busy right after the first request is sent, so the server
+  // runs in a worker thread (to stay responsive) and we block the main thread
+  // for BUSY_MS once the first request's headers go out. Without the fix the
+  // second request waits for that busy spell to end before SETTINGS can be
+  // processed; with it, both requests are sent in the same tick.
+  const planner = tspl(t, { plan: 2 })
+  const BUSY_MS = 50
+
+  const SERVER = `
+    const { parentPort } = require('node:worker_threads')
+    const { createServer } = require('node:http2')
+    const server = createServer()
+    server.on('stream', (stream, headers) => {
+      parentPort.postMessage({ at: performance.timeOrigin + performance.now() })
+      stream.respond({ ':status': 200 })
+      stream.end('ok')
+    })
+    server.listen(0, '127.0.0.1', () => parentPort.postMessage({ port: server.address().port }))
+  `
+
+  const worker = new Worker(SERVER, { eval: true })
+  t.after(() => worker.terminate())
+  const [{ port }] = await once(worker, 'message')
+  const arrivals = []
+  worker.on('message', (m) => arrivals.push(m))
+
+  const client = new H2CClient(`http://127.0.0.1:${port}`)
+  t.after(() => client.close())
+
+  // Burn the event loop for BUSY_MS right after the first request's headers are
+  // sent, so SETTINGS cannot be processed until the spell ends.
+  let busyNext = true
+  const onSend = () => {
+    if (!busyNext) return
+    busyNext = false
+    setImmediate(() => {
+      const end = performance.now() + BUSY_MS
+      while (performance.now() < end);
+    })
+  }
+  diagnosticsChannel.subscribe('undici:client:sendHeaders', onSend)
+  t.after(() => diagnosticsChannel.unsubscribe('undici:client:sendHeaders', onSend))
+
+  await Promise.all(['/one', '/two'].map(async (path) => {
+    const { body } = await client.request({ path, method: 'GET' })
+    await body.text()
+  }))
+  await new Promise((resolve) => setTimeout(resolve, 20))
+
+  planner.strictEqual(arrivals.length, 2)
+  const gap = Math.abs(arrivals[1].at - arrivals[0].at)
+  planner.ok(gap < BUSY_MS / 2, `second request arrived ${gap.toFixed(1)} ms after the first`)
 })
 
 test('Should reject request if not h2c supported', async t => {
