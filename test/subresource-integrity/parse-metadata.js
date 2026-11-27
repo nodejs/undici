@@ -46,6 +46,17 @@ describe('parseMetadata', () => {
     ])
   })
 
+  test('should split metadata on ASCII whitespace', { skip }, (t) => {
+    const validMetadata = `\tsha256-${hash256}\nsha384-${hash384}\fsha512-${hash512}\r `
+    const result = parseMetadata(validMetadata)
+
+    t.assert.deepEqual(result, [
+      { alg: 'sha256', val: hash256 },
+      { alg: 'sha384', val: hash384 },
+      { alg: 'sha512', val: hash512 }
+    ])
+  })
+
   test('should not set hash as undefined when invalid base64 chars are provided', { skip }, (t) => {
     const invalidHash384 = 'zifp5hE1Xl5LQQqQz[]Bq/iaq9Wb6jVb//T7EfTmbXD2aEP5c2ZdJr9YTDfcTE1ZH+'
 

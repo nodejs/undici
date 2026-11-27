@@ -25,3 +25,41 @@ expectAssignable<SpecIterableIterator<File | string>>(formData.values())
 expectAssignable<SpecIterableIterator<[string, File | string]>>(formData.entries())
 expectAssignable<SpecIterableIterator<[string, File | string]>>(formData[Symbol.iterator]())
 expectAssignable<string | Buffer | Uint8Array | FormData | Readable | undefined | null>(dispatcherOptions.body)
+
+const extendedFormData = new (class extends FormData {
+  override forEach (...args: Parameters<FormData['forEach']>) {
+    return super.forEach(...args)
+  }
+
+  override keys () {
+    return super.keys()
+  }
+
+  override values () {
+    return super.values()
+  }
+
+  override entries () {
+    return super.entries()
+  }
+
+  override [Symbol.iterator] () {
+    return super[Symbol.iterator]()
+  }
+})()
+
+expectType<void>(extendedFormData.forEach((value, key, iterable) => {
+  expectType<File | string>(value)
+  expectType<string>(key)
+  expectType<FormData>(iterable)
+}))
+expectType<SpecIterableIterator<string>>(extendedFormData.keys())
+expectType<SpecIterableIterator<File | string>>(extendedFormData.values())
+expectType<SpecIterableIterator<[string, File | string]>>(extendedFormData.entries())
+expectType<SpecIterableIterator<[string, File | string]>>(extendedFormData[Symbol.iterator]())
+
+const formDataWithArrowEntries = new (class extends FormData {
+  override entries = () => super.entries()
+})()
+
+expectType<SpecIterableIterator<[string, File | string]>>(formDataWithArrowEntries.entries())

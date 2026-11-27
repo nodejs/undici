@@ -12,7 +12,7 @@ const { once } = require('node:events')
 const { tspl } = require('@matteo.collina/tspl')
 const pem = require('@metcoder95/https-pem')
 
-const { interceptors, Agent, Client, Pool, request } = require('../..')
+const { interceptors, Agent, Client, Pool, request, fetch } = require('../..')
 const { dns, cache, deduplicate } = interceptors
 
 // Helper to check if IPv6 is available for localhost
@@ -2496,4 +2496,31 @@ test('Should report an unusable lookup result instead of crashing (dual stack di
     path: '/',
     origin: `http://localhost:${server.address().port}`
   }), { code: 'UND_ERR_INFO', message: 'No DNS entries found' })
+})
+
+test('Should handle a 1xx response before the final response', async t => {
+  t = tspl(t, { plan: 2 })
+
+  const server = createServer()
+  server.on('request', (req, res) => {
+    res.writeEarlyHints({ link: '</style.css>; rel=preload; as=style' })
+    res.writeHead(200, { 'content-type': 'text/plain' })
+    res.end('ok')
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  const dispatcher = new Agent().compose(dns())
+
+  after(async () => {
+    await dispatcher.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await fetch(`http://localhost:${server.address().port}/`, { dispatcher })
+
+  t.equal(response.status, 200)
+  t.equal(await response.text(), 'ok')
 })

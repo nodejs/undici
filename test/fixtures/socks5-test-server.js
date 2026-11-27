@@ -14,9 +14,10 @@ class TestSocks5Server {
     this.connections = new Set()
     this.requireAuth = options.requireAuth || false
     this.validCredentials = options.credentials || { username: 'test', password: 'pass' }
+    this.lastConnectRequest = null
   }
 
-  async listen (port = 0) {
+  async listen (port = 0, host) {
     return new Promise((resolve, reject) => {
       this.server = net.createServer((socket) => {
         this.connections.add(socket)
@@ -27,13 +28,19 @@ class TestSocks5Server {
         })
       })
 
-      this.server.listen(port, (err) => {
+      const onListen = (err) => {
         if (err) {
           reject(err)
         } else {
           resolve(this.server.address())
         }
-      })
+      }
+
+      if (host !== undefined) {
+        this.server.listen(port, host, onListen)
+      } else {
+        this.server.listen(port, onListen)
+      }
     })
   }
 
@@ -159,9 +166,17 @@ class TestSocks5Server {
             offset += 1
             targetHost = buffer.subarray(offset, offset + domainLen).toString()
             offset += domainLen
+          } else if (atyp === 0x04) {
+            const parts = []
+            for (let i = 0; i < 8; i++) {
+              parts.push(buffer.readUInt16BE(offset + i * 2).toString(16))
+            }
+            targetHost = parts.join(':')
+            offset += 16
           }
 
           const targetPort = buffer.readUInt16BE(offset)
+          this.lastConnectRequest = { atyp, host: targetHost, port: targetPort }
 
           // Simulate connection failure if requested
           if (this.options.simulateFailure) {
