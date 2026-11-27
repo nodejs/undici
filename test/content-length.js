@@ -9,6 +9,7 @@ const net = require('node:net')
 const { once } = require('node:events')
 const { Readable } = require('node:stream')
 const { maybeWrapStream, consts } = require('./utils/async-iterators')
+const { miloEnabled } = require('./utils/milo')
 
 test('request invalid content-length', async (t) => {
   t = tspl(t, { plan: 7 })
@@ -515,7 +516,19 @@ function dispatchPaused (client) {
 }
 
 for (const statusCode of [204, 304]) {
-  test(`response ${statusCode} with content-length is not a mismatch but closes the connection`, async (t) => {
+  // Milo follows RFC 9110 strictly and fails the response instead. Remove
+  // these skips once https://github.com/ShogunPanda/milo/issues/63 is resolved.
+  const miloSkip = (framing) => {
+    if (!miloEnabled) {
+      return false
+    }
+    if (framing === 'transfer-encoding') {
+      return 'Milo rejects Transfer-Encoding on 204 and 304 responses'
+    }
+    return statusCode === 204 && 'Milo rejects Content-Length on 204 responses'
+  }
+
+  test(`response ${statusCode} with content-length is not a mismatch but closes the connection`, { skip: miloSkip('content-length') }, async (t) => {
     let connections = 0
     const server = createRawServer(t, (socket) => {
       connections++
@@ -548,7 +561,7 @@ for (const statusCode of [204, 304]) {
     assert.ok(disconnects.every((code) => code === 'UND_ERR_INFO'))
   })
 
-  test(`response ${statusCode} with content-length: 0 keeps the connection`, async (t) => {
+  test(`response ${statusCode} with content-length: 0 keeps the connection`, { skip: miloSkip('content-length') }, async (t) => {
     let connections = 0
     const server = createRawServer(t, (socket) => {
       connections++
@@ -577,7 +590,7 @@ for (const statusCode of [204, 304]) {
 
   for (const framing of ['content-length', 'transfer-encoding']) {
     for (const blocking of [true, false]) {
-      test(`response ${statusCode} with ${framing} does not let its content become a pipelined response (blocking: ${blocking})`, async (t) => {
+      test(`response ${statusCode} with ${framing} does not let its content become a pipelined response (blocking: ${blocking})`, { skip: miloSkip(framing) }, async (t) => {
         const forged = 'HTTP/1.1 200 OK\r\ncontent-length: 6\r\n\r\nFORGED'
         let connections = 0
         const server = createRawServer(t, (socket) => {
@@ -616,7 +629,7 @@ for (const statusCode of [204, 304]) {
     }
   }
 
-  test(`response ${statusCode} with content-length completes when the connection closes while paused`, async (t) => {
+  test(`response ${statusCode} with content-length completes when the connection closes while paused`, { skip: miloSkip('content-length') }, async (t) => {
     const server = createRawServer(t, (socket) => {
       socket.once('data', () => {
         socket.end(`HTTP/1.1 ${statusCode} X\r\ncontent-length: 100\r\nconnection: close\r\n\r\n`)
