@@ -202,7 +202,8 @@ test('Should account for network and response errors', async t => {
 })
 
 test('Issue #3288 - request with body (asynciterable)', async t => {
-  t = tspl(t, { plan: 4 })
+  t = tspl(t, { plan: 5 })
+  const received = []
   const server = createServer({ joinDuplicateHeaders: true })
   const dispatchOptions = {
     method: 'POST',
@@ -217,11 +218,16 @@ test('Issue #3288 - request with body (asynciterable)', async t => {
   }
 
   server.on('request', (req, res) => {
-    res.writeHead(500, {
-      'content-type': 'application/json'
-    })
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => {
+      received.push(Buffer.concat(chunks).toString())
+      res.writeHead(500, {
+        'content-type': 'application/json'
+      })
 
-    res.end('{"message": "failed"}')
+      res.end('{"message": "failed"}')
+    })
   })
 
   server.listen(0, () => {
@@ -245,6 +251,8 @@ test('Issue #3288 - request with body (asynciterable)', async t => {
           t.equal(err.message, 'Request failed')
           t.equal(err.statusCode, 500)
           t.equal(err.data.count, 1)
+          // The body was sent once, in full, and not re-sent.
+          t.deepStrictEqual(received, ['helloworld'])
         }
       }
     })

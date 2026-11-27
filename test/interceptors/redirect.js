@@ -626,13 +626,13 @@ for (const factory of [
     const body = await bodyStream.text()
 
     t.strictEqual(statusCode, 301)
-    t.strictEqual(headers.location, `http://${server}/301/2`)
+    t.strictEqual(headers.location, `http://${server}/301/1`)
     t.strictEqual(body.length, 0)
 
     await t.completed
   })
 
-  test('should stop following redirects once async iterable request bodies are disturbed', async t => {
+  test('should not follow redirects when using async iterable request bodies', async t => {
     t = tspl(t, { plan: 3 })
 
     const server = await startRedirectingServer()
@@ -652,7 +652,7 @@ for (const factory of [
     const body = await bodyStream.text()
 
     t.strictEqual(statusCode, 301)
-    t.strictEqual(headers.location, `http://${server}/301/2`)
+    t.strictEqual(headers.location, `http://${server}/301/1`)
     t.strictEqual(body.length, 0)
 
     await t.completed
@@ -1134,5 +1134,105 @@ test('Cross-origin redirects strip credentials from array-of-tuples headers', as
 
     const text = await res.body.text()
     strictEqual(text, 'redirected')
+  }
+})
+
+// Answers the first request with a 307 to /next and every later one with 200,
+// recording the exact request body bytes received on each hop.
+async function startRecording307Server (t) {
+  const received = []
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => {
+      received.push(`${req.url} ${Buffer.concat(chunks)}`)
+      if (req.url === '/') {
+        res.writeHead(307, { location: '/next' }).end()
+      } else {
+        res.writeHead(200).end('ok')
+      }
+    })
+  }).listen(0)
+
+  t.after(() => {
+    server.closeAllConnections()
+    server.close()
+  })
+
+  await once(server, 'listening')
+  return { received, origin: `http://localhost:${server.address().port}` }
+}
+
+test('does not re-send a consumed async iterable request body as empty on a 307', async t => {
+  const payload = 'hello-upload-payload-'.repeat(50)
+  const { received, origin } = await startRecording307Server(t)
+
+  const dispatcher = new undici.Agent().compose(redirect({ maxRedirections: 2 }))
+  t.after(() => dispatcher.close())
+
+  const { statusCode, headers, body } = await undici.request(origin, {
+    method: 'PUT',
+    dispatcher,
+    body: (async function * () {
+      yield payload.slice(0, 500)
+      yield payload.slice(500)
+    })()
+  })
+  await body.dump()
+
+  t.assert.strictEqual(statusCode, 307)
+  t.assert.strictEqual(headers.location, '/next')
+  t.assert.deepStrictEqual(received, [`/ ${payload}`])
+})
+
+test('RedirectHandler.buildDispatch does not re-send a consumed async iterable request body as empty', async t => {
+  const payload = 'hello-upload-payload-'.repeat(50)
+  const { received, origin } = await startRecording307Server(t)
+
+  const client = new undici.Client(origin)
+  t.after(() => client.close())
+
+  const dispatch = undici.RedirectHandler.buildDispatch(client, 2)
+  const statusCode = await new Promise((resolve, reject) => {
+    let status
+    dispatch({
+      origin,
+      method: 'PUT',
+      path: '/',
+      body: (async function * () {
+        yield payload.slice(0, 500)
+        yield payload.slice(500)
+      })()
+    }, {
+      onRequestStart () {},
+      onResponseStart (controller, statusCode) { status = statusCode },
+      onResponseData () {},
+      onResponseEnd () { resolve(status) },
+      onResponseError (controller, err) { reject(err) }
+    })
+  })
+
+  t.assert.strictEqual(statusCode, 307)
+  t.assert.deepStrictEqual(received, [`/ ${payload}`])
+})
+
+test('replays Buffer and array request bodies intact on a 307', async t => {
+  const payload = 'hello-upload-payload-'.repeat(50)
+
+  for (const requestBody of [Buffer.from(payload), [payload.slice(0, 500), payload.slice(500)]]) {
+    const { received, origin } = await startRecording307Server(t)
+
+    const dispatcher = new undici.Agent().compose(redirect({ maxRedirections: 2 }))
+    t.after(() => dispatcher.close())
+
+    const { statusCode, body } = await undici.request(origin, {
+      method: 'PUT',
+      dispatcher,
+      body: requestBody
+    })
+
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(await body.text(), 'ok')
+    t.assert.deepStrictEqual(received, [`/ ${payload}`, `/next ${payload}`])
   }
 })

@@ -517,13 +517,13 @@ for (const factory of [
     const body = await bodyStream.text()
 
     t.strictEqual(statusCode, 301)
-    t.strictEqual(headers.location, `http://${server}/301/2`)
+    t.strictEqual(headers.location, `http://${server}/301/1`)
     t.strictEqual(body.length, 0)
 
     await t.completed
   })
 
-  test('should stop following redirects once async iterable request bodies are disturbed', async t => {
+  test('should not follow redirects when using async iterable request bodies', async t => {
     t = tspl(t, { plan: 3 })
 
     const server = await startRedirectingServer()
@@ -539,7 +539,7 @@ for (const factory of [
     const body = await bodyStream.text()
 
     t.strictEqual(statusCode, 301)
-    t.strictEqual(headers.location, `http://${server}/301/2`)
+    t.strictEqual(headers.location, `http://${server}/301/1`)
     t.strictEqual(body.length, 0)
 
     await t.completed
