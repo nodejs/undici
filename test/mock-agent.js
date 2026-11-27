@@ -1674,6 +1674,84 @@ test('MockAgent - clearCallHistory should clear call history logs', async (t) =>
   t.assert.ok(mockAgent.getCallHistory()?.calls().length === 0)
 })
 
+// RegExp.prototype.test() reads and writes `lastIndex` for /g and /y matchers,
+// so such a matcher is not a pure predicate: it matches once and then stops. A
+// matcher is stored on the interceptor and reused by every request it serves,
+// so it has to be evaluated from the start each time.
+test('MockAgent - a global regexp path matcher keeps matching on every request', async (t) => {
+  t.plan(6)
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockPool = mockAgent.get('http://localhost:9999')
+  mockPool.intercept({
+    path: /^\/foo$/g
+  }).reply(200, 'foo').persist()
+
+  for (let i = 0; i < 3; i++) {
+    const { statusCode, body } = await request('http://localhost:9999/foo')
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(await getResponse(body), 'foo')
+  }
+})
+
+test('MockAgent - a global regexp method matcher keeps matching on every request', async (t) => {
+  t.plan(6)
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockPool = mockAgent.get('http://localhost:9999')
+  mockPool.intercept({
+    path: '/foo',
+    method: /^GET$/g
+  }).reply(200, 'foo').persist()
+
+  for (let i = 0; i < 3; i++) {
+    const { statusCode, body } = await request('http://localhost:9999/foo', { method: 'GET' })
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(await getResponse(body), 'foo')
+  }
+})
+
+test('MockAgent - enableNetConnect with a global regexp host matcher keeps allowing every request', async (t) => {
+  t.plan(6)
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    res.setHeader('content-type', 'text/plain')
+    res.end('hello')
+  })
+  after(() => {
+    server.closeAllConnections?.()
+    server.close()
+  })
+
+  await once(server.listen(0), 'listening')
+
+  const baseUrl = `http://localhost:${server.address().port}`
+
+  const mockAgent = new MockAgent()
+  setGlobalDispatcher(mockAgent)
+  after(() => mockAgent.close())
+
+  const mockPool = mockAgent.get(baseUrl)
+  mockPool.intercept({
+    path: '/wrong',
+    method: 'GET'
+  }).reply(200, 'foo')
+
+  mockAgent.enableNetConnect(new RegExp(`localhost:${server.address().port}`, 'g'))
+
+  for (let i = 0; i < 3; i++) {
+    const { statusCode, body } = await request(`${baseUrl}/foo`, { method: 'GET' })
+    t.assert.strictEqual(statusCode, 200)
+    t.assert.strictEqual(await getResponse(body), 'hello')
+  }
+})
+
 test('MockAgent - handle persists with delayed requests', async (t) => {
   t.plan(4)
 
