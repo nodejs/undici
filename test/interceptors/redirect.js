@@ -838,12 +838,16 @@ test('Cross-origin redirects clear forbidden headers', async (t) => {
 })
 
 test('Cross-origin redirects strip credentials from array-of-tuples headers', async (t) => {
-  const { strictEqual } = tspl(t, { plan: 10 })
+  const { strictEqual } = tspl(t, { plan: 5 })
 
-  // With a built-in header-normalizing interceptor (cache/deduplicate) outside
+  // With a built-in header-normalizing interceptor (deduplicate) outside
   // redirect(), the redirect interceptor must still strip cross-origin
   // credentials from the iterable-of-pairs representation. Treating every Array
   // as a flat [name, value, ...] list misreads each tuple and leaks them.
+  //
+  // Note: the `cache` interceptor used to be exercised here too, but composing
+  // `cache` outside `redirect` is now rejected (the cache must be composed
+  // after redirect for its cross-origin / credential guards to work).
   const server1 = createServer({ joinDuplicateHeaders: true }, (req, res) => {
     strictEqual(req.headers.cookie, undefined)
     strictEqual(req.headers.authorization, undefined)
@@ -879,7 +883,6 @@ test('Cross-origin redirects strip credentials from array-of-tuples headers', as
   ]
 
   for (const interceptor of [
-    undici.interceptors.cache(),
     undici.interceptors.deduplicate()
   ]) {
     const res = await undici.request(`http://localhost:${server2.address().port}`, {
