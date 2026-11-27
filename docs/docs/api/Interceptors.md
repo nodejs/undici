@@ -204,6 +204,9 @@ and `x-compress`, is left untouched, matching `fetch()`. As required by
 [RFC 9659](https://www.rfc-editor.org/rfc/rfc9659.html), a `zstd` frame that
 requires a window size larger than 8 MB fails to decode.
 
+By default, decompression removes `Content-Encoding` and `Content-Length` from
+both the response headers and `controller.rawHeaders`.
+
 **Parameters**
 
 * `opts` {Object} (optional)
@@ -211,6 +214,11 @@ requires a window size larger than 8 MB fails to decode.
     skipped. **Default:** `[204, 304]`.
   * `skipErrorResponses` {boolean} When `true`, responses with a status code
     >= 400 are not decompressed. **Default:** `true`.
+  * `preserveHeaders` {boolean} When `true`, keeps `Content-Encoding` and
+    `Content-Length` in both the response headers and `controller.rawHeaders`
+    while still decompressing the body. These headers describe the encoded
+    response, so `Content-Length` is the compressed size, not the decoded size.
+    Useful for implementing Fetch or XMLHttpRequest semantics. **Default:** `false`.
   * `maxSize` {number} Maximum decompressed response size in bytes for each
     decompression stage. The request fails with a
     `ResponseExceededMaxSizeError` if a stage exceeds this limit. Set to `0` to
@@ -356,12 +364,25 @@ backing store.
 
 **Returns:** {Dispatcher.DispatcherComposeInterceptor}
 
+> **Ordering:** the `cache` interceptor must be composed **after** the
+> `redirect` interceptor. When `cache` is composed before `redirect`, the cache
+> handler is wrapped above the redirect handler, so it never observes the
+> redirect history and its cross-origin / credential-bearing redirect guards are
+> silently disabled, which lets an attacker-controlled or cross-principal
+> redirect response be stored under the trusted origin's cache key and replayed
+> to unrelated callers (GHSA-75VM-9G8F-99J4, GHSA-MQG3-3V4R-CM32,
+> GHSA-4W7W-5XRC-9H26, GHSA-7XG3-FPHP-28HG). `compose()` throws an
+> `InvalidArgumentError` for this unsafe order. The `deduplicate` interceptor
+> participates in the same redirect-history contract and may be placed before or
+> after `redirect`, as long as `cache` follows `redirect`.
+
 **Example**
 
 ```js
 import { Agent, interceptors, cacheStores } from 'undici'
 
 const agent = new Agent().compose(
+  interceptors.redirect({ maxRedirections: 5 }),
   interceptors.cache({ store: new cacheStores.MemoryCacheStore() })
 )
 ```
@@ -373,6 +394,8 @@ const agent = new Agent().compose(
 Deduplicates concurrent identical requests so that only one is sent over the
 wire. All waiting callers receive the same response once the in-flight request
 completes. Only safe HTTP methods (e.g. `GET`, `HEAD`) may be deduplicated.
+Requests that carry a body are never deduplicated, since the body is not part
+of the deduplication key.
 
 **Parameters**
 

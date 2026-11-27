@@ -60,6 +60,86 @@ function createControlledDispatch (handler, options, { forwardAbort = true } = {
   return { controller, events, sourceHandler, state }
 }
 
+for (const preserveHeaders of [undefined, false, true]) {
+  for (const rawHeaderType of ['strings', 'buffers', 'object']) {
+    test(`decompress with preserveHeaders=${preserveHeaders} and ${rawHeaderType} raw headers`, async () => {
+      const data = 'A response whose original compression headers can be preserved.'
+      const compressed = gzipSync(data)
+      const headers = {
+        'content-encoding': 'gzip',
+        'content-length': String(compressed.length),
+        'content-type': 'text/plain'
+      }
+      const rawHeaders = {
+        'Content-Encoding': 'gzip',
+        'Content-Length': String(compressed.length),
+        'Content-Type': 'text/plain'
+      }
+      const expectedHeaders = preserveHeaders ? { ...headers } : { 'content-type': 'text/plain' }
+      const expectedRawHeaders = preserveHeaders ? rawHeaders : { 'Content-Type': 'text/plain' }
+      const toRawHeaders = headers => {
+        if (rawHeaderType === 'object') return { ...headers }
+        const values = Object.entries(headers).flat()
+        return rawHeaderType === 'buffers' ? values.map(value => Buffer.from(value)) : values
+      }
+      let responseHeaders, responseRawHeaders
+      const chunks = []
+      const { promise, resolve, reject } = Promise.withResolvers()
+      const { controller, sourceHandler } = createControlledDispatch({
+        onResponseStart (controller, statusCode, headers) {
+          responseHeaders = headers
+          responseRawHeaders = controller.rawHeaders
+        },
+        onResponseData (controller, chunk) {
+          chunks.push(chunk)
+        },
+        onResponseEnd () {
+          resolve()
+        },
+        onResponseError (controller, error) {
+          reject(error)
+        }
+      }, { preserveHeaders })
+      controller.rawHeaders = toRawHeaders(rawHeaders)
+      sourceHandler.onResponseStart(controller, 200, headers, 'OK')
+      sourceHandler.onResponseData(controller, compressed)
+      sourceHandler.onResponseEnd(controller, {})
+      await promise
+
+      assert.equal(Buffer.concat(chunks).toString(), data)
+      assert.deepEqual(responseHeaders, expectedHeaders)
+      assert.deepEqual(responseRawHeaders, toRawHeaders(expectedRawHeaders))
+    })
+  }
+}
+
+test('should preserve compression headers in request responses when preserveHeaders is true', async t => {
+  const data = 'This response is decoded while retaining its original headers.'
+  const compressed = gzipSync(data)
+  const server = createServer((req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': compressed.length
+    })
+    res.end(compressed)
+  })
+  server.listen(0)
+  await once(server, 'listening')
+
+  const client = new Client(`http://localhost:${server.address().port}`)
+    .compose(interceptors.decompress({ preserveHeaders: true }))
+  t.after(async () => {
+    await client.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  const response = await client.request({ method: 'GET', path: '/' })
+  assert.equal(await response.body.text(), data)
+  assert.equal(response.headers['content-encoding'], 'gzip')
+  assert.equal(response.headers['content-length'], String(compressed.length))
+})
+
 test('should decompress gzip response', async t => {
   t = tspl(t, { plan: 3 })
 

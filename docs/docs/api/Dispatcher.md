@@ -705,6 +705,26 @@ The order of the interceptors matters: the last interceptor in the chain is the
 first to be called. Forking the chain of interceptors can lead to unexpected
 results.
 
+Because interceptors wrap each other, ordering is the end-user's responsibility.
+Certain built-in interceptors are order-sensitive and will throw an
+`InvalidArgumentError` if composed in an unsafe order. In particular, the
+`cache` interceptor must be composed **after** the `redirect` interceptor. When
+`cache` is composed before `redirect`, the cache handler is wrapped *above* the
+redirect handler, so it never observes the redirect history and its
+cross-origin / credential-bearing redirect guards are silently disabled.
+This allows an attacker-controlled or cross-principal redirect response to be
+stored under the trusted origin's cache key and replayed to unrelated callers
+(see GHSA-75VM-9G8F-99J4, GHSA-MQG3-3V4R-CM32, GHSA-4W7W-5XRC-9H26 and
+GHSA-7XG3-FPHP-28HG).
+
+```js
+// Correct: cache is composed after redirect.
+new Agent().compose(interceptors.redirect({ maxRedirections: 5 }), interceptors.cache({}))
+
+// Throws an InvalidArgumentError: cache composed before redirect.
+new Agent().compose(interceptors.cache({}), interceptors.redirect({ maxRedirections: 5 }))
+```
+
 ```text
 compose([interceptor1, interceptor2, interceptor3])
 
@@ -811,7 +831,7 @@ For the full reference of built-in interceptors (`dump`, `retry`, `redirect`,
 see [Interceptors](Interceptors.md).
 
 [Fastify]: https://fastify.dev
-[GOAWAY frame]: https://webconcepts.info/concepts/http2-frame-type/0x7
+[GOAWAY frame]: https://www.rfc-editor.org/rfc/rfc9113.html#section-6.8
 [HTTP `CONNECT`]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT
 [MDN: Protocol upgrade mechanism]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism
 [`.arrayBuffer()`]: https://fetch.spec.whatwg.org/#dom-body-arraybuffer

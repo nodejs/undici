@@ -45,6 +45,16 @@ declare namespace RetryHandler {
      */
     throwOnError?: boolean;
     /**
+     * If false, a response that fails after its headers were received is not
+     * resumed with a `Range` request: the error is passed through, and only
+     * failures before the response headers are retried.
+     *
+     * @type {boolean}
+     * @memberof RetryOptions
+     * @default true
+     */
+    resume?: boolean;
+    /**
      * Callback to be invoked on every retry iteration.
      * It receives the error, current state of the retry object and the options object
      * passed when instantiating the retry handler.

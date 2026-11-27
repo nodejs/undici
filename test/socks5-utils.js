@@ -3,6 +3,7 @@
 const { tspl } = require('@matteo.collina/tspl')
 const { test } = require('node:test')
 const {
+  stripIPv6Brackets,
   parseAddress,
   parseIPv6,
   buildAddressBuffer,
@@ -23,11 +24,26 @@ test('parseAddress - IPv4', async (t) => {
 })
 
 test('parseAddress - IPv6', async (t) => {
-  const p = tspl(t, { plan: 2 })
+  const p = tspl(t, { plan: 10 })
 
   const result = parseAddress('2001:db8::1')
   p.equal(result.type, 0x04, 'should return IPv6 type')
   p.equal(result.buffer.length, 16, 'should return 16-byte buffer')
+
+  const bracketedLoopback = parseAddress('[::1]')
+  p.equal(bracketedLoopback.type, 0x04, 'should return IPv6 type for bracketed loopback')
+  p.equal(bracketedLoopback.buffer.toString('hex'), '00000000000000000000000000000001')
+
+  const bracketedIpv4Mapped = parseAddress('[::ffff:192.0.2.128]')
+  p.equal(bracketedIpv4Mapped.type, 0x04, 'should return IPv6 type for bracketed IPv4-mapped IPv6')
+  p.equal(bracketedIpv4Mapped.buffer.toString('hex'), '00000000000000000000ffffc0000280')
+
+  const invalidBracketed = parseAddress('[not-an-ipv6]')
+  p.equal(invalidBracketed.type, 0x03, 'should leave non-IPv6 bracketed strings as domain')
+  p.equal(invalidBracketed.buffer.subarray(1).toString(), '[not-an-ipv6]')
+
+  p.equal(stripIPv6Brackets('[2001:db8::1]'), '2001:db8::1')
+  p.equal(stripIPv6Brackets('[127.0.0.1]'), '[127.0.0.1]')
 
   await p.completed
 })

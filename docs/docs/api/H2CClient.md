@@ -56,8 +56,12 @@ added: v7.7.0
 * `options` {H2CClientOptions} (optional)
   * `maxConcurrentStreams` {number} The maximum number of concurrent HTTP/2
     streams for the session. The server's `SETTINGS_MAX_CONCURRENT_STREAMS` can
-    lower this limit, but not raise it. Must be a positive integer.
-    **Default:** `100`.
+    lower this limit, but not raise it. Until the server's SETTINGS frame is
+    received on a new connection, requests whose body can be replayed are
+    dispatched up to the lower of this limit and `100`, and a stream refused by a
+    lower server limit is retried once; a request with a streaming body waits for
+    the SETTINGS frame while another request is in flight. Must be a positive
+    integer. **Default:** `100`.
   * `pipelining` {number} The number of concurrent requests multiplexed over the
     single connection. For an `H2CClient` this is aliased to
     `maxConcurrentStreams` and may not exceed it. Must be a positive integer.

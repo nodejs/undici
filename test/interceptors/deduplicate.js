@@ -690,6 +690,56 @@ describe('Deduplicate Interceptor', () => {
     strictEqual(body2, 'response for session=user2-session-id')
   })
 
+  test('does not deduplicate requests with a body', async () => {
+    let requestsToOrigin = 0
+    const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
+      requestsToOrigin++
+      let body = ''
+      for await (const chunk of req) {
+        body += chunk
+      }
+      await sleep(100)
+      res.end(`response for ${body}`)
+    }).listen(0)
+
+    const client = new Client(`http://localhost:${server.address().port}`)
+      .compose(interceptors.deduplicate())
+
+    after(async () => {
+      server.close()
+      await client.close()
+    })
+
+    await once(server, 'listening')
+
+    // Send concurrent GET requests that only differ in their body
+    const [res1, res2] = await Promise.all([
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        body: 'query-user-1'
+      }),
+      client.request({
+        origin: 'localhost',
+        method: 'GET',
+        path: '/',
+        body: 'query-user-2'
+      })
+    ])
+
+    // Both requests should reach origin since the body is not part of the key
+    strictEqual(requestsToOrigin, 2)
+
+    const [body1, body2] = await Promise.all([
+      res1.body.text(),
+      res2.body.text()
+    ])
+
+    strictEqual(body1, 'response for query-user-1')
+    strictEqual(body2, 'response for query-user-2')
+  })
+
   test('deduplicates requests with same Authorization header', async () => {
     let requestsToOrigin = 0
     const server = createServer({ joinDuplicateHeaders: true }, async (req, res) => {
