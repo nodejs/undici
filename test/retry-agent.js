@@ -1,6 +1,7 @@
 'use strict'
 
 const { tspl } = require('@matteo.collina/tspl')
+const assert = require('node:assert')
 const { test, after } = require('node:test')
 const { createServer } = require('node:http')
 const { once } = require('node:events')
@@ -124,3 +125,49 @@ for (const throwOnError of [true, false]) {
     await t.completed
   })
 }
+
+test('does not re-send a consumed ReadableStream request body as empty', async t => {
+  const payload = 'hello-upload-payload-'.repeat(50)
+  const received = []
+
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => {
+      received.push(Buffer.concat(chunks).toString())
+      if (received.length === 1) {
+        res.writeHead(503, { 'retry-after': '0' }).end()
+      } else {
+        res.writeHead(200).end('ok')
+      }
+    })
+  })
+  server.listen(0)
+  await once(server, 'listening')
+
+  const agent = new RetryAgent(new Client(`http://localhost:${server.address().port}`), {
+    minTimeout: 1,
+    maxTimeout: 1,
+    maxRetries: 2
+  })
+
+  t.after(async () => {
+    await agent.close()
+    server.close()
+    await once(server, 'close')
+  })
+
+  await assert.rejects(agent.request({
+    method: 'PUT',
+    path: '/',
+    body: new ReadableStream({
+      start (controller) {
+        controller.enqueue(Buffer.from(payload.slice(0, 500)))
+        controller.enqueue(Buffer.from(payload.slice(500)))
+        controller.close()
+      }
+    })
+  }), { code: 'UND_ERR_REQ_RETRY', statusCode: 503 })
+
+  assert.deepStrictEqual(received, [payload])
+})

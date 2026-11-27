@@ -1095,3 +1095,90 @@ test('resume: false retries a failure before the headers but not after them', as
   await t.rejects(response.body.text(), { code: 'UND_ERR_SOCKET' })
   t.strictEqual(count, 2, 'no range request should be sent')
 })
+
+// Answers the first request with `firstStatus` and every later one with 200,
+// recording the exact request body bytes received on each attempt.
+async function startRecordingServer (t, firstStatus, firstHeaders = {}) {
+  const received = []
+  const server = createServer({ joinDuplicateHeaders: true }, (req, res) => {
+    const chunks = []
+    req.on('data', chunk => chunks.push(chunk))
+    req.on('end', () => {
+      received.push(Buffer.concat(chunks).toString())
+      if (received.length === 1) {
+        res.writeHead(firstStatus, firstHeaders).end()
+      } else {
+        res.writeHead(200).end('ok')
+      }
+    })
+  })
+
+  server.listen(0)
+  await once(server, 'listening')
+
+  t.after(async () => {
+    server.closeAllConnections()
+    server.close()
+    await once(server, 'close')
+  })
+
+  return { received, origin: `http://localhost:${server.address().port}` }
+}
+
+test('does not re-send a consumed async iterable request body as empty', async t => {
+  const payload = 'hello-upload-payload-'.repeat(50)
+  const { received, origin } = await startRecordingServer(t, 503, { 'retry-after': '0' })
+
+  const client = new Client(origin)
+    .compose(retry({ minTimeout: 1, maxTimeout: 1, maxRetries: 2 }))
+  t.after(() => client.close())
+
+  await assert.rejects(client.request({
+    method: 'PUT',
+    path: '/',
+    body: (async function * () {
+      yield payload.slice(0, 500)
+      yield payload.slice(500)
+    })()
+  }), { code: 'UND_ERR_REQ_RETRY', statusCode: 503 })
+
+  assert.deepStrictEqual(received, [payload])
+})
+
+test('does not re-send a consumed sync iterator request body as empty', async t => {
+  const payload = 'hello-upload-payload-'.repeat(50)
+  const { received, origin } = await startRecordingServer(t, 503, { 'retry-after': '0' })
+
+  const client = new Client(origin)
+    .compose(retry({ minTimeout: 1, maxTimeout: 1, maxRetries: 2 }))
+  t.after(() => client.close())
+
+  await assert.rejects(client.request({
+    method: 'PUT',
+    path: '/',
+    body: (function * () {
+      yield payload.slice(0, 500)
+      yield payload.slice(500)
+    })()
+  }), { code: 'UND_ERR_REQ_RETRY', statusCode: 503 })
+
+  assert.deepStrictEqual(received, [payload])
+})
+
+test('replays Buffer and array request bodies intact on retry', async t => {
+  const payload = 'hello-upload-payload-'.repeat(50)
+
+  for (const body of [Buffer.from(payload), [payload.slice(0, 500), payload.slice(500)]]) {
+    const { received, origin } = await startRecordingServer(t, 503, { 'retry-after': '0' })
+
+    const client = new Client(origin)
+      .compose(retry({ minTimeout: 1, maxTimeout: 1, maxRetries: 2 }))
+    t.after(() => client.close())
+
+    const response = await client.request({ method: 'PUT', path: '/', body })
+
+    assert.strictEqual(response.statusCode, 200)
+    assert.strictEqual(await response.body.text(), 'ok')
+    assert.deepStrictEqual(received, [payload, payload])
+  }
+})
