@@ -9,6 +9,7 @@ const { join } = require('node:path')
 const tls = require('node:tls')
 
 const { Client } = require('..')
+const { guardAgainstUnexpectedDisconnect } = require('./utils/h2-disconnect-guard')
 
 const key = readFileSync(join(__dirname, 'fixtures', 'key.pem'), 'utf8')
 const cert = readFileSync(join(__dirname, 'fixtures', 'cert.pem'), 'utf8')
@@ -35,6 +36,7 @@ test('preferH2 offers ALPN as [h2, http/1.1] (h2 first)', async (t) => {
     connect: { ca, servername: 'agent1', preferH2: true }
   })
   after(() => client.close())
+  guardAgainstUnexpectedDisconnect(t, client)
 
   const { statusCode } = await client.request({ path: '/', method: 'GET' })
   t.equal(statusCode, 200)
@@ -55,6 +57,7 @@ test('without preferH2 the default ALPN order [http/1.1, h2] is preserved', asyn
     connect: { ca, servername: 'agent1' }
   })
   after(() => client.close())
+  guardAgainstUnexpectedDisconnect(t, client)
 
   const { statusCode } = await client.request({ path: '/', method: 'GET' })
   t.equal(statusCode, 200)
