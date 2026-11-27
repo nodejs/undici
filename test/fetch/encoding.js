@@ -203,3 +203,36 @@ describe('content-encoding chain limit', () => {
     await socketClosed
   })
 })
+
+// https://github.com/nodejs/undici/issues/5999
+test('invalid compressed body received after the headers rejects instead of hanging', async (t) => {
+  const server = createServer((req, res) => {
+    res.writeHead(200, {
+      'Content-Encoding': 'gzip',
+      'Content-Length': '16'
+    })
+    res.flushHeaders()
+
+    // The body must arrive in a later packet than the headers for the
+    // regression to manifest. Defer it to a later tick rather than using
+    // a wall-clock setTimeout, which is flaky and adds a fixed delay.
+    setImmediate(() => setImmediate(() => {
+      res.end(Buffer.alloc(16))
+    }))
+  }).listen(0, '127.0.0.1')
+
+  t.after(() => {
+    server.closeAllConnections()
+    server.close()
+  })
+
+  await once(server, 'listening')
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}`, { keepalive: false })
+
+  await t.assert.rejects(response.text(), (err) => {
+    t.assert.strictEqual(err.name, 'TypeError')
+    t.assert.strictEqual(err.cause?.code, 'Z_DATA_ERROR')
+    return true
+  })
+})
