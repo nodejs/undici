@@ -1,11 +1,27 @@
 'use strict'
 
 const assert = require('node:assert')
+const { AsyncLocalStorage } = require('node:async_hooks')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
 const { test } = require('node:test')
 
 const { Agent, interceptors } = require('..')
+
+function entryGate (expected) {
+  let entered = 0
+  let open
+  const opened = new Promise(resolve => { open = resolve })
+  const interceptor = dispatch => {
+    return (opts, handler) => {
+      if (++entered === expected) {
+        open()
+      }
+      return dispatch(opts, handler)
+    }
+  }
+  return { opened, interceptor }
+}
 
 // https://github.com/nodejs/undici/issues/5974
 test('concurrent requests on a cold cache share a single lookup', async (t) => {
@@ -16,15 +32,19 @@ test('concurrent requests on a cold cache share a single lookup', async (t) => {
   await once(server, 'listening')
 
   let lookupCount = 0
-  const dispatcher = new Agent().compose(interceptors.dns({
-    maxTTL: 60000,
-    lookup (origin, options, callback) {
-      lookupCount++
-      setTimeout(() => {
-        callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
-      }, 30)
-    }
-  }))
+  const gate = entryGate(20)
+  const dispatcher = new Agent().compose([
+    interceptors.dns({
+      maxTTL: 60000,
+      lookup (origin, options, callback) {
+        lookupCount++
+        gate.opened.then(() => {
+          callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
+        })
+      }
+    }),
+    gate.interceptor
+  ])
 
   t.after(async () => {
     await dispatcher.destroy()
@@ -65,6 +85,7 @@ test('each concurrent request picks its own address from the shared lookup', asy
 
   let lookupCount = 0
   const dispatchedPorts = []
+  const gate = entryGate(4)
   const dispatcher = new Agent().compose([
     dispatch => {
       return (opts, handler) => {
@@ -76,14 +97,15 @@ test('each concurrent request picks its own address from the shared lookup', asy
       maxTTL: 60000,
       lookup (origin, options, callback) {
         lookupCount++
-        setTimeout(() => {
+        gate.opened.then(() => {
           callback(null, [
             { address: '127.0.0.1', port: portA, family: 4, ttl: 60000 },
             { address: '127.0.0.1', port: portB, family: 4, ttl: 60000 }
           ])
-        }, 30)
+        })
       }
-    })
+    }),
+    gate.interceptor
   ])
 
   t.after(async () => {
@@ -114,20 +136,24 @@ test('a failed lookup is shared by concurrent requests and cleared for retries',
 
   let lookupCount = 0
   let shouldFail = true
-  const dispatcher = new Agent().compose(interceptors.dns({
-    lookup (origin, options, callback) {
-      lookupCount++
-      setTimeout(() => {
-        if (shouldFail) {
-          const error = new Error('getaddrinfo ENOTFOUND dns-retry-test.invalid')
-          error.code = 'ENOTFOUND'
-          callback(error)
-        } else {
-          callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
-        }
-      }, 30)
-    }
-  }))
+  const gate = entryGate(10)
+  const dispatcher = new Agent().compose([
+    interceptors.dns({
+      lookup (origin, options, callback) {
+        lookupCount++
+        gate.opened.then(() => {
+          if (shouldFail) {
+            const error = new Error('getaddrinfo ENOTFOUND dns-retry-test.invalid')
+            error.code = 'ENOTFOUND'
+            callback(error)
+          } else {
+            callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
+          }
+        })
+      }
+    }),
+    gate.interceptor
+  ])
 
   t.after(async () => {
     await dispatcher.destroy()
@@ -170,6 +196,7 @@ test('records that expire while a shared lookup is delivered are resolved again'
   t.mock.method(Date, 'now', () => now)
 
   let lookupCount = 0
+  const gate = entryGate(5)
   const dispatcher = new Agent().compose([
     dispatch => {
       return (opts, handler) => {
@@ -181,11 +208,12 @@ test('records that expire while a shared lookup is delivered are resolved again'
       maxTTL: 5,
       lookup (origin, options, callback) {
         lookupCount++
-        setImmediate(() => {
+        gate.opened.then(() => {
           callback(null, [{ address: '127.0.0.1', family: 4, ttl: 5 }])
         })
       }
-    })
+    }),
+    gate.interceptor
   ])
 
   t.after(async () => {
@@ -224,7 +252,7 @@ test('a lookup that throws does not block later requests for the same hostname',
       if (lookupCount === 1) {
         throw new Error('resolver initialization failed')
       }
-      setImmediate(() => {
+      queueMicrotask(() => {
         callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
       })
     }
@@ -247,4 +275,53 @@ test('a lookup that throws does not block later requests for the same hostname',
   const response = await dispatcher.request({ origin, path: '/', method: 'GET' })
   assert.strictEqual(await response.body.text(), 'ok')
   assert.strictEqual(lookupCount, 2)
+})
+
+test('each concurrent request keeps its own async context across the shared lookup', async (t) => {
+  const server = createServer((req, res) => {
+    res.end('ok')
+  })
+  server.listen(0, '127.0.0.1')
+  await once(server, 'listening')
+
+  const als = new AsyncLocalStorage()
+  const seen = []
+  const gate = entryGate(5)
+  const dispatcher = new Agent().compose([
+    dispatch => {
+      return (opts, handler) => {
+        seen.push(als.getStore())
+        return dispatch(opts, handler)
+      }
+    },
+    interceptors.dns({
+      maxTTL: 60000,
+      lookup (origin, options, callback) {
+        gate.opened.then(() => {
+          callback(null, [{ address: '127.0.0.1', family: 4, ttl: 60000 }])
+        })
+      }
+    }),
+    gate.interceptor
+  ])
+
+  t.after(async () => {
+    await dispatcher.destroy()
+    await new Promise((resolve, reject) => {
+      server.close(err => err ? reject(err) : resolve())
+    })
+  })
+
+  const origin = `http://dns-context-test.invalid:${server.address().port}`
+
+  await Promise.all(
+    Array.from({ length: 5 }, (_, index) =>
+      als.run(index, () =>
+        dispatcher.request({ origin, path: '/', method: 'GET' })
+          .then(res => res.body.dump())
+      )
+    )
+  )
+
+  assert.deepStrictEqual(seen.sort(), [0, 1, 2, 3, 4])
 })
