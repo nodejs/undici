@@ -109,3 +109,75 @@ for (const deduplicateFirst of [true, false]) {
     }
   }
 }
+
+test('a waiting caller whose start callback throws reaches a composed retry interceptor as a failed attempt, not an abort', { timeout: 5000 }, async t => {
+  let hits = 0
+  let primaryResponse
+  const primaryReceived = Promise.withResolvers()
+  const server = createServer((req, res) => {
+    hits++
+    // Hold the response until the waiting caller has joined.
+    primaryResponse = res
+    primaryReceived.resolve()
+  })
+  t.after(() => server.close())
+  server.listen(0)
+  await once(server, 'listening')
+
+  const retriedErrors = []
+  const client = new Client(`http://localhost:${server.address().port}`)
+    // deduplicate() first so it composes innermost: the retry handler then
+    // sits between the caller and the deduplication fan-out, and the waiter's
+    // failure is the retry handler's to observe.
+    .compose(interceptors.deduplicate(), interceptors.retry({
+      minTimeout: 1,
+      maxRetries: 1,
+      retry (err, { state, opts }, cb) {
+        // Record the policy consultation and decline the retry.
+        retriedErrors.push(err.message)
+        cb(err)
+      }
+    }))
+  t.after(() => client.destroy())
+
+  const startError = new Error('start callback failed')
+  const events = []
+
+  const primaryDone = new Promise((resolve, reject) => {
+    client.dispatch({ method: 'GET', path: '/' }, {
+      onRequestStart () {},
+      onResponseStart () {},
+      onResponseData () {},
+      onResponseEnd () { events.push('primary end'); resolve() },
+      onResponseError (controller, err) { reject(err) }
+    })
+  })
+
+  // The origin has the primary request, so the waiting caller attaches to it.
+  await primaryReceived.promise
+
+  const waitingDone = new Promise((resolve) => {
+    client.dispatch({ method: 'GET', path: '/' }, {
+      onRequestStart () { events.push('waiting start'); throw startError },
+      onResponseStart () {},
+      onResponseData () { events.push('waiting data') },
+      onResponseEnd () { events.push('waiting end'); resolve() },
+      onResponseError (controller, err) { events.push(`waiting error: ${err.message}:aborted=${controller.aborted}`); resolve() }
+    })
+  })
+
+  primaryResponse.writeHead(200).end('body')
+
+  await Promise.all([primaryDone, waitingDone])
+  // The waiter's caller is failed with the thrown error instead of hanging.
+  // The failure arrives as a response error (the controller is not aborted),
+  // so the composed retry interceptor's policy is consulted for it. The
+  // policy declines here, and the caller receives the original error.
+  t.assert.deepStrictEqual(events, [
+    'waiting start',
+    'waiting error: start callback failed:aborted=false',
+    'primary end'
+  ])
+  t.assert.deepStrictEqual(retriedErrors, ['start callback failed'])
+  t.assert.strictEqual(hits, 1)
+})

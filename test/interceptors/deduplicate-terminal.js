@@ -227,3 +227,303 @@ for (const terminalEvent of ['end', 'error', 'completion failure']) {
     dispatched[2].onResponseEnd({}, {})
   })
 }
+
+test('a waiting handler whose onRequestStart throws is failed with the error', t => {
+  const events = []
+  const startError = new Error('start failed')
+  const controller = { aborted: false }
+  const trailers = { checksum: 'value' }
+  const handler = new DeduplicationHandler({
+    onRequestStart (receivedController, context) {
+      events.push(['primary start', context])
+    },
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['primary end', receivedTrailers])
+    }
+  }, () => events.push(['cleanup']))
+
+  handler.onRequestStart(controller, null)
+
+  // Joining after the primary started replays the start callbacks at once.
+  let failedController
+  t.assert.strictEqual(handler.addWaitingHandler({
+    onRequestStart () {
+      events.push(['waiting start'])
+      throw startError
+    },
+    onResponseEnd () {
+      events.push(['waiting end'])
+    },
+    onResponseError (receivedController, err) {
+      failedController = receivedController
+      events.push(['waiting error', err])
+    }
+  }), true)
+
+  handler.onResponseEnd(controller, trailers)
+  t.assert.deepStrictEqual(events, [
+    ['primary start', null],
+    ['waiting start'],
+    ['waiting error', startError],
+    ['cleanup'],
+    ['primary end', trailers]
+  ])
+  // The failing callback aborts only that caller, not the shared request.
+  t.assert.strictEqual(failedController.aborted, false)
+})
+
+test('a waiting handler whose deferred onRequestStart throws is failed with the error', t => {
+  const events = []
+  const startError = new Error('start failed')
+  const controller = { aborted: false }
+  const trailers = { checksum: 'value' }
+  const handler = new DeduplicationHandler({
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['primary end', receivedTrailers])
+    }
+  }, () => events.push(['cleanup']))
+
+  // Joining before the primary starts defers the start replay.
+  t.assert.strictEqual(handler.addWaitingHandler({
+    onRequestStart () {
+      events.push(['waiting start'])
+      throw startError
+    },
+    onResponseEnd () {
+      events.push(['waiting end'])
+    },
+    onResponseError (receivedController, err) {
+      events.push(['waiting error', err])
+    }
+  }), true)
+
+  handler.onRequestStart(controller, null)
+  handler.onResponseEnd(controller, trailers)
+  t.assert.deepStrictEqual(events, [
+    ['waiting start'],
+    ['waiting error', startError],
+    ['cleanup'],
+    ['primary end', trailers]
+  ])
+})
+
+test('a waiting handler whose onResponseStart throws is failed without affecting the others', t => {
+  const events = []
+  const startError = new Error('response start failed')
+  const controller = { aborted: false }
+  const trailers = { checksum: 'value' }
+  const handler = new DeduplicationHandler({
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['primary end', receivedTrailers])
+    }
+  }, () => events.push(['cleanup']))
+
+  handler.addWaitingHandler({
+    onResponseStart () {
+      events.push(['waiting response start'])
+      throw startError
+    },
+    onResponseData () {
+      events.push(['waiting data'])
+    },
+    onResponseEnd () {
+      events.push(['waiting end'])
+    },
+    onResponseError (receivedController, err) {
+      events.push(['waiting error', err])
+    }
+  })
+  handler.addWaitingHandler({
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['other end', receivedTrailers])
+    }
+  })
+
+  handler.onRequestStart(controller, null)
+  handler.onResponseStart(controller, 200, {}, 'OK')
+  handler.onResponseData(controller, Buffer.from('body'))
+  handler.onResponseEnd(controller, trailers)
+  t.assert.deepStrictEqual(events, [
+    ['waiting response start'],
+    ['waiting error', startError],
+    ['cleanup'],
+    ['primary end', trailers],
+    ['other end', trailers]
+  ])
+})
+
+test('a waiting handler whose onResponseData throws is failed without affecting the others', t => {
+  const events = []
+  const dataError = new Error('data failed')
+  const controller = { aborted: false }
+  const trailers = { checksum: 'value' }
+  const handler = new DeduplicationHandler({
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['primary end', receivedTrailers])
+    }
+  }, () => events.push(['cleanup']))
+
+  handler.addWaitingHandler({
+    onResponseData () {
+      events.push(['waiting data'])
+      throw dataError
+    },
+    onResponseEnd () {
+      events.push(['waiting end'])
+    },
+    onResponseError (receivedController, err) {
+      events.push(['waiting error', err])
+    }
+  })
+  handler.addWaitingHandler({
+    onResponseData (receivedController, chunk) {
+      events.push(['other data', chunk.toString()])
+    },
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['other end', receivedTrailers])
+    }
+  })
+
+  handler.onRequestStart(controller, null)
+  handler.onResponseStart(controller, 200, {}, 'OK')
+  handler.onResponseData(controller, Buffer.from('one'))
+  handler.onResponseData(controller, Buffer.from('two'))
+  handler.onResponseEnd(controller, trailers)
+  t.assert.deepStrictEqual(events, [
+    ['waiting data'],
+    ['waiting error', dataError],
+    ['other data', 'one'],
+    ['other data', 'two'],
+    ['cleanup'],
+    ['primary end', trailers],
+    ['other end', trailers]
+  ])
+})
+
+test('a paused waiting handler that throws while flushing is failed on resume', t => {
+  const events = []
+  const dataError = new Error('flush failed')
+  const controller = { aborted: false }
+  const trailers = { checksum: 'value' }
+  const handler = new DeduplicationHandler({
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['primary end', receivedTrailers])
+    }
+  }, () => events.push(['cleanup']))
+
+  let waitingController
+  handler.addWaitingHandler({
+    onRequestStart (receivedController) {
+      waitingController = receivedController
+      receivedController.pause()
+    },
+    onResponseData () {
+      events.push(['waiting data'])
+      throw dataError
+    },
+    onResponseEnd () {
+      events.push(['waiting end'])
+    },
+    onResponseError (receivedController, err) {
+      events.push(['waiting error', err])
+    }
+  })
+
+  handler.onRequestStart(controller, null)
+  handler.onResponseData(controller, Buffer.from('body'))
+  handler.onResponseEnd(controller, trailers)
+  t.assert.deepStrictEqual(events, [['cleanup'], ['primary end', trailers]])
+
+  waitingController.resume()
+  t.assert.deepStrictEqual(events, [
+    ['cleanup'],
+    ['primary end', trailers],
+    ['waiting data'],
+    ['waiting error', dataError]
+  ])
+})
+
+test('a waiting handler whose error callback also throws does not affect the others', t => {
+  const events = []
+  const startError = new Error('start failed')
+  const callbackError = new Error('error callback failed')
+  const controller = { aborted: false }
+  const trailers = { checksum: 'value' }
+  const handler = new DeduplicationHandler({
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['primary end', receivedTrailers])
+    }
+  }, () => events.push(['cleanup']))
+
+  handler.addWaitingHandler({
+    onRequestStart () {
+      events.push(['waiting start'])
+      throw startError
+    },
+    onResponseEnd () {
+      events.push(['waiting end'])
+    },
+    onResponseError () {
+      events.push(['waiting error'])
+      throw callbackError
+    }
+  })
+  handler.addWaitingHandler({
+    onResponseEnd (receivedController, receivedTrailers) {
+      events.push(['other end', receivedTrailers])
+    }
+  })
+
+  handler.onRequestStart(controller, null)
+  handler.onResponseData(controller, Buffer.from('body'))
+  handler.onResponseEnd(controller, trailers)
+  t.assert.deepStrictEqual(events, [
+    ['waiting start'],
+    ['waiting error'],
+    ['cleanup'],
+    ['primary end', trailers],
+    ['other end', trailers]
+  ])
+})
+
+test('aborting a waiting handler from its own error callback does not notify it twice', t => {
+  const errors = []
+  const handler = new DeduplicationHandler({ onRequestStart () {}, onResponseStart () {} }, () => {})
+  handler.addWaitingHandler({
+    onRequestStart () {},
+    onResponseStart () { throw new Error('start failed') },
+    onResponseError (controller, err) {
+      errors.push(err.message)
+      controller.abort(new Error('abort from error callback'))
+    }
+  })
+
+  handler.onRequestStart({ aborted: false }, {})
+  handler.onResponseStart({ aborted: false }, 200, {}, 'OK')
+
+  t.assert.deepStrictEqual(errors, ['start failed'])
+})
+
+test('a same-key request dispatched from a waiting handler error callback receives the response start once', t => {
+  const starts = []
+  const handler = new DeduplicationHandler({ onRequestStart () {}, onResponseStart () {} }, () => {})
+  let redispatched = false
+  handler.addWaitingHandler({
+    onRequestStart () {},
+    onResponseStart () { throw new Error('start failed') },
+    onResponseError () {
+      if (redispatched) return
+      redispatched = true
+      handler.addWaitingHandler({
+        onRequestStart () {},
+        onResponseStart () { starts.push('start') },
+        onResponseError () {}
+      })
+    }
+  })
+
+  handler.onRequestStart({ aborted: false }, {})
+  handler.onResponseStart({ aborted: false }, 200, {}, 'OK')
+
+  t.assert.deepStrictEqual(starts, ['start'])
+})
