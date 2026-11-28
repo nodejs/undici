@@ -3,6 +3,7 @@
 const { test } = require('node:test')
 const { once } = require('node:events')
 const { createServer } = require('node:http')
+const { setTimeout: sleep } = require('node:timers/promises')
 const { Cache } = require('../../lib/web/cache/cache')
 const { caches, Request, Response } = require('../../')
 const { closeServerAsPromise } = require('../utils/node-http')
@@ -13,6 +14,28 @@ test('constructor', (t) => {
     message: 'TypeError: Illegal constructor'
   })
 })
+
+for (const invalidUrl of ['invalid-url', 'ftp://example.com/']) {
+  test(`cache.addAll validates ${invalidUrl} before starting fetches`, async (t) => {
+    let requests = 0
+    const server = createServer((req, res) => {
+      requests++
+      res.writeHead(404).end()
+    }).listen(0, '127.0.0.1')
+
+    t.after(closeServerAsPromise(server))
+    await once(server, 'listening')
+
+    const cache = await caches.open('invalid-url')
+    t.after(() => caches.delete('invalid-url'))
+
+    const url = `http://127.0.0.1:${server.address().port}/`
+    await t.assert.rejects(cache.addAll([url, invalidUrl]), TypeError)
+
+    await sleep(100)
+    t.assert.strictEqual(requests, 0)
+  })
+}
 
 // https://github.com/nodejs/undici/issues/4710
 test('cache.match should work after garbage collection', async (t) => {
