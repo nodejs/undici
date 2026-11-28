@@ -32,20 +32,6 @@ describe('EventSourceStream - processEvent', () => {
     stream.processEvent({})
   })
 
-  test('Should set reconnectionTime to 4000 if event contains retry field', (t) => {
-    const stream = new EventSourceStream({
-      eventSourceSettings: {
-        ...defaultEventSourceSettings
-      }
-    })
-
-    stream.processEvent({
-      retry: '4000'
-    })
-
-    t.assert.strictEqual(stream.state.reconnectionTime, 4000)
-  })
-
   test('Dispatches a MessageEvent with data', (t) => {
     const stream = new EventSourceStream({
       eventSourceSettings: {

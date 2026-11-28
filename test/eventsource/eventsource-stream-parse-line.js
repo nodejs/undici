@@ -151,14 +151,15 @@ describe('EventSourceStream - parseLine', () => {
 
     const event = {}
 
-    stream.parseLine(Buffer.from('retry: 1000', 'utf8'), event)
+    stream.parseLine(Buffer.from('retry: 4000', 'utf8'), event)
 
     t.assert.strictEqual(typeof event, 'object')
     t.assert.strictEqual(Object.keys(event).length, 1)
     t.assert.strictEqual(event.data, undefined)
     t.assert.strictEqual(event.id, undefined)
     t.assert.strictEqual(event.event, undefined)
-    t.assert.strictEqual(event.retry, '1000')
+    t.assert.strictEqual(event.retry, '4000')
+    t.assert.strictEqual(stream.state.reconnectionTime, 4000)
   })
 
   test('Should set id field', (t) => {
@@ -236,6 +237,7 @@ describe('EventSourceStream - parseLine', () => {
     t.assert.strictEqual(event.id, undefined)
     t.assert.strictEqual(event.event, undefined)
     t.assert.strictEqual(event.retry, '3000')
+    t.assert.strictEqual(stream.state.reconnectionTime, 3000)
   })
 
   test('bogus id', (t) => {

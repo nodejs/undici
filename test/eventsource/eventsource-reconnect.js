@@ -117,6 +117,45 @@ describe('EventSource - reconnect', () => {
     })
   })
 
+  test('Should use a retry field even if no blank line follows it', (t, done) => {
+    t.plan(3)
+    const clock = FakeTimers.install()
+    after(() => clock.uninstall())
+
+    const server = http.createServer({ joinDuplicateHeaders: true }, (req, res) => {
+      res.writeHead(200, 'OK', { 'Content-Type': 'text/event-stream' })
+      res.write('retry: 100\n')
+      res.end()
+    })
+    after(() => server.close())
+
+    server.listen(0, async () => {
+      const port = server.address().port
+
+      const start = Date.now()
+      const eventSourceInstance = new EventSource(`http://localhost:${port}`)
+
+      let connectionCount = 0
+      eventSourceInstance.onopen = () => {
+        if (++connectionCount === 2) {
+          t.assert.ok(Date.now() - start >= 100)
+          t.assert.ok(Date.now() - start < 1000)
+          eventSourceInstance.close()
+          t.assert.ok(true)
+
+          done()
+        }
+      }
+
+      await once(eventSourceInstance, 'open')
+
+      clock.tick(10)
+      await once(eventSourceInstance, 'error')
+
+      clock.tick(100)
+    })
+  })
+
   for (const [name, retry, options] of [
     ['retry field larger than 2^31-1', '2147483648', undefined],
     ['retry field that parses to Infinity', '9'.repeat(400), undefined],
