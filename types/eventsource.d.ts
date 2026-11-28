@@ -1,4 +1,4 @@
-import { MessageEvent, ErrorEvent } from './websocket'
+import { MessageEvent } from './websocket'
 import Dispatcher from './dispatcher'
 
 import {
@@ -8,7 +8,7 @@ import {
 } from './patch'
 
 interface EventSourceEventMap {
-  error: ErrorEvent
+  error: Event
   message: MessageEvent
   open: Event
 }
@@ -18,7 +18,7 @@ interface EventSource extends EventTarget {
   readonly CLOSED: 2
   readonly CONNECTING: 0
   readonly OPEN: 1
-  onerror: ((this: EventSource, ev: ErrorEvent) => any) | null
+  onerror: ((this: EventSource, ev: Event) => any) | null
   onmessage: ((this: EventSource, ev: MessageEvent) => any) | null
   onopen: ((this: EventSource, ev: Event) => any) | null
   readonly readyState: 0 | 1 | 2
