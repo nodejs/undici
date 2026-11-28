@@ -459,6 +459,36 @@ test('Cookie Set', () => {
   })
   assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
 
+  // A finite maxAge outside the range of the WebIDL long long conversion
+  // must not be serialized. Before this was guarded, the conversion wrapped
+  // the value modulo 2^64, so 2 ** 64 became Max-Age=0 (expiring the cookie
+  // immediately) and 2 ** 64 + 2 ** 32 became Max-Age=4294967296.
+  const outOfRangeMaxAge = [
+    2 ** 63,
+    2 ** 64,
+    2 ** 64 + 2 ** 32,
+    Number.MAX_VALUE,
+    -Number.MAX_VALUE,
+    -(2 ** 64)
+  ]
+  for (const maxAge of outOfRangeMaxAge) {
+    headers = new Headers()
+    setCookie(headers, { name: 'Space', value: 'Cat', maxAge })
+    assert.equal(headers.get('Set-Cookie'), 'Space=Cat')
+  }
+
+  // A large maxAge within the long long range is still serialized.
+  headers = new Headers()
+  setCookie(headers, {
+    name: 'Space',
+    value: 'Cat',
+    maxAge: 2 ** 62
+  })
+  assert.equal(
+    headers.get('Set-Cookie'),
+    'Space=Cat; Max-Age=4611686018427388000'
+  )
+
   headers = new Headers()
   setCookie(headers, { name: '__Secure-Kitty', value: 'Meow' })
   assert.equal(headers.get('Set-Cookie'), '__Secure-Kitty=Meow; Secure')
