@@ -40,11 +40,11 @@ export declare namespace H2CClient {
     keepAliveTimeout?: number;
     /** the maximum allowed `idleTimeout`, in milliseconds, when overridden by *keep-alive* hints from the server. Default: `600e3` milliseconds (10min). */
     keepAliveMaxTimeout?: number;
-    /** A number of milliseconds subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuracies caused by e.g. transport latency. Default: `1e3` milliseconds (1s). */
+    /** A number of milliseconds subtracted from server *keep-alive* hints when overriding `idleTimeout` to account for timing inaccuracies caused by e.g. transport latency. Default: `2e3` milliseconds (2s). */
     keepAliveTimeoutThreshold?: number;
     /** An IPC endpoint, either a Unix domain socket or Windows named pipe. Default: `null`. */
     socketPath?: string;
-    /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `1`. */
+    /** The amount of concurrent requests to be sent over the single TCP/TLS connection according to [RFC7230](https://tools.ietf.org/html/rfc7230#section-6.3.2). Default: `100`. */
     pipelining?: number;
     /** If `true`, an error is thrown when the request content-length header doesn't match the length of the request body. Default: `true`. */
     strictContentLength?: boolean;
