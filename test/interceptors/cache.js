@@ -1453,6 +1453,58 @@ describe('Cache Interceptor', () => {
     await client.close()
   })
 
+  // https://www.rfc-editor.org/rfc/rfc9111.html#section-4.4
+  for (const reqHeaders of [{}, { 'cache-control': 'no-store' }]) {
+    const label = reqHeaders['cache-control'] ? 'with' : 'without'
+    test(`unsafe requests ${label} cache-control: no-store invalidate cached entries`, async () => {
+      let state = 'before-post'
+      let requestsToOrigin = 0
+      const server = createServer((req, res) => {
+        requestsToOrigin++
+        if (req.method === 'POST') {
+          req.resume()
+          req.on('end', () => {
+            state = 'after-post'
+            res.end('ok')
+          })
+          return
+        }
+        res.setHeader('cache-control', 'public, max-age=60')
+        res.end(state)
+      }).listen(0)
+
+      after(() => server.close())
+      await once(server, 'listening')
+
+      const client = new Client(`http://localhost:${server.address().port}`)
+        .compose(interceptors.cache({
+          store: new MemoryCacheStore()
+        }))
+
+      after(() => client.close())
+
+      const get = { origin: 'localhost', method: 'GET', path: '/resource' }
+
+      equal(await (await client.request(get)).body.text(), 'before-post')
+      equal(await (await client.request(get)).body.text(), 'before-post')
+      equal(requestsToOrigin, 1) // second GET served from cache
+
+      const post = await client.request({
+        origin: 'localhost',
+        method: 'POST',
+        path: '/resource',
+        headers: reqHeaders,
+        body: 'x'
+      })
+      equal(post.statusCode, 200)
+      equal(await post.body.text(), 'ok')
+      equal(requestsToOrigin, 2)
+
+      equal(await (await client.request(get)).body.text(), 'after-post')
+      equal(requestsToOrigin, 3) // GET re-fetched after invalidation
+    })
+  }
+
   test('necessary headers are stripped', async () => {
     const headers = [
       // Headers defined in the spec that we need to strip
