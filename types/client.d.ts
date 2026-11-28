@@ -112,7 +112,7 @@ export declare namespace Client {
     /**
      * @description Time interval between PING frames dispatch
      * @default 60000
-     * @deprecated Use h2Options.connectionWindowSize instead
+     * @deprecated Use h2Options.pingInterval instead
      */
     pingInterval?: number;
     /**

@@ -113,7 +113,7 @@ added: v1.0.0
     higher priority through ALPN negotiation. **Default:** `true`.
   * `useH2c` {boolean} _Deprecated: use h2Options.useH2c instead_ Enforces h2c (HTTP/2 cleartext) for non-HTTPS
   connections. **Default:** `false`.
-  * `maxConcurrentStreams` {number} _Deprecated: use h2Options.useH2c instead_ The maximum number of concurrent HTTP/2
+  * `maxConcurrentStreams` {number} _Deprecated: use h2Options.maxConcurrentStreams instead_ The maximum number of concurrent HTTP/2
     streams for a single session. Once h2 is negotiated this — not `pipelining`,
     which is HTTP/1.1 only — is the ceiling used to dispatch in-flight requests.
     The server's `SETTINGS_MAX_CONCURRENT_STREAMS` can lower this limit, but
